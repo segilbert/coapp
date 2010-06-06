@@ -11,7 +11,8 @@
     <RootNamespace>CoApp.CLI</RootNamespace>
     <AssemblyName>CoApp</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -88,6 +89,9 @@
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
       <Name>CoApp.Toolkit</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

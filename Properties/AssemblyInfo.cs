@@ -1,4 +1,10 @@
-﻿using System.Reflection;
+﻿//-----------------------------------------------------------------------
+// <copyright company="Codeplex Foundation">
+//     Copyright (c) 2010 Garrett Serack . All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -6,7 +12,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("CoApp.CLI")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("CoApp command line utility")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Codeplex Foundation")]
 [assembly: AssemblyProduct("CoApp Command Line Interface")]
