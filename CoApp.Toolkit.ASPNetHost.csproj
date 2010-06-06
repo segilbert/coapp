@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</ProjectGuid>
+    <ProjectGuid>{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoApp.Toolkit</RootNamespace>
-    <AssemblyName>CoApp.Toolkit</AssemblyName>
+    <RootNamespace>CoApp.Toolkit.Web</RootNamespace>
+    <AssemblyName>CoApp.Toolkit.Web</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -34,6 +34,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -41,38 +42,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DynamicXml\DynamicAttributes.cs" />
-    <Compile Include="DynamicXml\DynamicNode.cs" />
-    <Compile Include="Engine\PackageManager.cs" />
-    <Compile Include="Extensions\AssemblyExtensions.cs" />
-    <Compile Include="Extensions\CollectionExtensions.cs" />
-    <Compile Include="Extensions\CommandLineExtensions.cs" />
-    <Compile Include="Extensions\ConsoleExtensions.cs" />
-    <Compile Include="Extensions\CookieExtensions.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Extensions\DebugExtensions.cs" />
-    <Compile Include="Extensions\FilesystemExtensions.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="Extensions\WebExtensions.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Extensions\XmlExtensions.cs" />
-    <Compile Include="Scripting\ActiveScriptHost.cs" />
-    <Compile Include="Scripting\Languages\CSharp\CSharpTokenizer.cs" />
-    <Compile Include="Scripting\Languages\GSharp\GSharpProcessor.cs" />
-    <Compile Include="Scripting\Languages\GSharp\GSharpTokenizer.cs" />
-    <Compile Include="Scripting\Utility\Tokenizer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Text\HttpUtility.cs" />
-    <Compile Include="Text\Sgml\SgmlParser.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Text\Sgml\SgmlReader.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Web\ASPNetHost.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="CoApp.Toolkit.csproj">
+      <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
+      <Name>CoApp.Toolkit</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
