@@ -89,6 +89,10 @@
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
       <Name>CoApp.Toolkit</Name>
     </ProjectReference>
+    <ProjectReference Include="..\coapp-toolkit\CoApp.Toolkit.Engine.csproj">
+      <Project>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</Project>
+      <Name>CoApp.Toolkit.Engine</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
