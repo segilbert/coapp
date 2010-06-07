@@ -8,7 +8,7 @@
     <ProjectGuid>{A126ABBC-D13E-432E-9714-4A1BEF84EE89}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoApp.Toolkit.AutoItX3</RootNamespace>
+    <RootNamespace>CoApp.Toolkit</RootNamespace>
     <AssemblyName>CoApp.Toolkit.AutoItX3</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AutoItX3.AssemblyInfo.cs" />
-
     <Compile Include="AutoItX3\AutoIt.cs" />
     <Compile Include="AutoItX3\x64\NativeMethods.cs" />
     <Compile Include="AutoItX3\x86\NativeMethods.cs" />

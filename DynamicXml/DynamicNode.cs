@@ -5,75 +5,74 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.DynamicXml {
-    using System;
     using System.Dynamic;
     using System.Linq;
     using System.Reflection;
     using System.Xml.Linq;
 
     /// <summary>
-    /// Represents a dynamic interface to an XML Node. 
-    /// This allows loosey-goosey access to XML Documents 
-    /// using c# 4.0 and the dynamic keyword
+    ///   Represents a dynamic interface to an XML Node. 
+    ///   This allows loosey-goosey access to XML Documents 
+    ///   using c# 4.0 and the dynamic keyword
     /// </summary>
     public class DynamicNode : DynamicObject {
         /// <summary>
-        ///  The XML Node this object is fronting for.
+        ///   The XML Node this object is fronting for.
         /// </summary>
         private readonly XElement node;
 
         /// <summary>
-        /// The object representing the XML Attributes for the node. Created on demand only.
+        ///   The object representing the XML Attributes for the node. Created on demand only.
         /// </summary>
         private DynamicAttributes attributes;
 
         /// <summary>
-        /// Creates a DynamicXmlNode from an XElement 
+        ///   Creates a DynamicXmlNode from an XElement
         /// </summary>
-        /// <param name="node">An XElement node to use as the actual XML node for this DynamicXmlNode</param>
+        /// <param name = "node">An XElement node to use as the actual XML node for this DynamicXmlNode</param>
         public DynamicNode(XElement node) {
             this.node = node;
         }
 
         /// <summary>
-        /// Creates a DynamicXmlNode From an new XElement with the given name for the node
+        ///   Creates a DynamicXmlNode From an new XElement with the given name for the node
         /// </summary>
-        /// <param name="name">The new XElement node name to use as the actual XML node for this DynamicXmlNode</param>
+        /// <param name = "name">The new XElement node name to use as the actual XML node for this DynamicXmlNode</param>
         public DynamicNode(string name) {
             node = new XElement(name);
         }
 
         /// <summary>
-        /// Returns the number of descendent nodes
+        ///   Returns the number of descendent nodes
         /// </summary>
         public int Count {
             get { return node.DescendantNodes().Count(); }
         }
 
         /// <summary>
-        /// Returns the actual XElement node
+        ///   Returns the actual XElement node
         /// </summary>
         public XElement Node {
             get { return node; }
         }
 
         /// <summary>
-        /// Provides an indexer for the decendent child nodes.
+        ///   Provides an indexer for the decendent child nodes.
         /// </summary>
-        /// <param name="index">the index of the node requested</param>
+        /// <param name = "index">the index of the node requested</param>
         /// <returns></returns>
         public DynamicNode this[int index] {
             get { return new DynamicNode(node.Descendants().ElementAt(index)); }
         }
 
         /// <summary>
-        /// Provides the implementation for operations that set member values. Classes derived from the DynamicObject class can override this method to specify dynamic behavior for operations such as setting a value for a property.
+        ///   Provides the implementation for operations that set member values. Classes derived from the DynamicObject class can override this method to specify dynamic behavior for operations such as setting a value for a property.
         /// </summary>
-        /// <param name="binder">Provides information about the object that called the dynamic operation. The binder.Name property provides the name of the member to which the value is being assigned. For example, for the statement sampleObject.SampleProperty = "Test", where sampleObject is an instance of the class derived from the DynamicObject class, binder.Name returns "SampleProperty". The binder.IgnoreCase property specifies whether the member name is case-sensitive.</param>
-        /// <param name="value">The value to set to the member. For example, for sampleObject.SampleProperty = "Test", where sampleObject is an instance of the class derived from the DynamicObject class, the value is "Test".</param>
+        /// <param name = "binder">Provides information about the object that called the dynamic operation. The binder.Name property provides the name of the member to which the value is being assigned. For example, for the statement sampleObject.SampleProperty = "Test", where sampleObject is an instance of the class derived from the DynamicObject class, binder.Name returns "SampleProperty". The binder.IgnoreCase property specifies whether the member name is case-sensitive.</param>
+        /// <param name = "value">The value to set to the member. For example, for sampleObject.SampleProperty = "Test", where sampleObject is an instance of the class derived from the DynamicObject class, the value is "Test".</param>
         /// <returns>True, if successful</returns>
         public override bool TrySetMember(SetMemberBinder binder, object value) {
-            XElement setNode = node.Element(binder.Name);
+            var setNode = node.Element(binder.Name);
             if(setNode != null) {
                 setNode.SetValue(value);
             }
@@ -85,18 +84,18 @@ namespace CoApp.Toolkit.DynamicXml {
         }
 
         /// <summary>
-        /// Provides the implementation for operations that get member values. Classes derived from the DynamicObject class can override this method to specify dynamic behavior for operations such as getting a value for a property.
-        /// Provides a special case for XML Attributes. If the Member name requested is "Attributes", this will return an DynamicXmlAttributes object
+        ///   Provides the implementation for operations that get member values. Classes derived from the DynamicObject class can override this method to specify dynamic behavior for operations such as getting a value for a property.
+        ///   Provides a special case for XML Attributes. If the Member name requested is "Attributes", this will return an DynamicXmlAttributes object
         /// </summary>
-        /// <param name="binder">Provides information about the object that called the dynamic operation. The binder.Name property provides the name of the member on which the dynamic operation is performed. For example, for the Console.WriteLine(sampleObject.SampleProperty) statement, where sampleObject is an instance of the class derived from the DynamicObject class, binder.Name returns "SampleProperty". The binder.IgnoreCase property specifies whether the member name is case-sensitive.</param>
-        /// <param name="result">The result of the get operation. For example, if the method is called for a property, you can assign the property value to result.</param>
+        /// <param name = "binder">Provides information about the object that called the dynamic operation. The binder.Name property provides the name of the member on which the dynamic operation is performed. For example, for the Console.WriteLine(sampleObject.SampleProperty) statement, where sampleObject is an instance of the class derived from the DynamicObject class, binder.Name returns "SampleProperty". The binder.IgnoreCase property specifies whether the member name is case-sensitive.</param>
+        /// <param name = "result">The result of the get operation. For example, if the method is called for a property, you can assign the property value to result.</param>
         /// <returns>True if successful</returns>
         public override bool TryGetMember(GetMemberBinder binder, out object result) {
             if(binder.Name == "Attributes") {
                 return TryGetAttributes(out result);
             }
 
-            XElement getNode = node.Element(binder.Name);
+            var getNode = node.Element(binder.Name);
 
             if(getNode != null) {
                 result = new DynamicNode(getNode);
@@ -110,9 +109,9 @@ namespace CoApp.Toolkit.DynamicXml {
         }
 
         /// <summary>
-        /// Gets the dynamic attributes for an XML Node
+        ///   Gets the dynamic attributes for an XML Node
         /// </summary>
-        /// <param name="result">The Attributes object</param>
+        /// <param name = "result">The Attributes object</param>
         /// <returns>true if successful</returns>
         private bool TryGetAttributes(out object result) {
             if(attributes == null) {
@@ -124,10 +123,10 @@ namespace CoApp.Toolkit.DynamicXml {
         }
 
         /// <summary>
-        /// Some sort of casting thing.
+        ///   Some sort of casting thing.
         /// </summary>
-        /// <param name="binder">the member</param>
-        /// <param name="result">the result</param>
+        /// <param name = "binder">the member</param>
+        /// <param name = "result">the result</param>
         /// <returns>True if succesful</returns>
         public override bool TryConvert(ConvertBinder binder, out object result) {
             if(binder.Type == typeof(string)) {
@@ -140,14 +139,14 @@ namespace CoApp.Toolkit.DynamicXml {
         }
 
         /// <summary>
-        /// Passes thru function calls to the XElement node when there is no matching function in this class.
+        ///   Passes thru function calls to the XElement node when there is no matching function in this class.
         /// </summary>
-        /// <param name="binder">Method to call</param>
-        /// <param name="args">Arguments</param>
-        /// <param name="result">Result from function</param>
+        /// <param name = "binder">Method to call</param>
+        /// <param name = "args">Arguments</param>
+        /// <param name = "result">Result from function</param>
         /// <returns>True if successful</returns>
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result) {
-            Type xmlType = typeof(XElement);
+            var xmlType = typeof(XElement);
             try {
                 result = xmlType.InvokeMember(binder.Name, BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance, null, node, args);
                 return true;
@@ -159,7 +158,7 @@ namespace CoApp.Toolkit.DynamicXml {
         }
 
         /// <summary>
-        /// Returns the XML Text for the node.
+        ///   Returns the XML Text for the node.
         /// </summary>
         /// <returns>The XML Text</returns>
         public override string ToString() {
@@ -167,9 +166,9 @@ namespace CoApp.Toolkit.DynamicXml {
         }
 
         /// <summary>
-        /// Adds a new child node
+        ///   Adds a new child node
         /// </summary>
-        /// <param name="name">the new node name</param>
+        /// <param name = "name">the new node name</param>
         /// <returns>the DynamicXmlNode for the new node</returns>
         public DynamicNode Add(string name) {
             var e = new XElement(name);

@@ -8,7 +8,7 @@
     <ProjectGuid>{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoApp.Toolkit.Web</RootNamespace>
+    <RootNamespace>CoApp.Toolkit</RootNamespace>
     <AssemblyName>CoApp.Toolkit.Web</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

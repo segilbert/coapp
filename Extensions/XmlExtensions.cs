@@ -5,13 +5,13 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-/// -----------------------------------------------------------------------
-/// Original Code: 
-/// (c) 2009 Microsoft Corporation -- All rights reserved
-/// This code is licensed under the MS-PL
-/// http://www.opensource.org/licenses/ms-pl.html
-/// Courtesy of the Open Source Techology Center: http://port25.technet.com
-/// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// Original Code: 
+// (c) 2009 Microsoft Corporation -- All rights reserved
+// This code is licensed under the MS-PL
+// http://www.opensource.org/licenses/ms-pl.html
+// Courtesy of the Open Source Techology Center: http://port25.technet.com
+// -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Extensions {
     using System.Collections.Generic;
@@ -21,12 +21,12 @@ namespace CoApp.Toolkit.Extensions {
     using System.Xml;
 
     public static class XmlExtensions {
-        private static readonly Dictionary<string, XmlDocument> docCache = new Dictionary<string, XmlDocument>();
+        private static readonly Dictionary<string, XmlDocument> DocCache = new Dictionary<string, XmlDocument>();
 
         /// <summary>
-        /// Returns a list of strings for the inner text of a collection of XmlNodes
+        ///   Returns a list of strings for the inner text of a collection of XmlNodes
         /// </summary>
-        /// <param name="nodeList"></param>
+        /// <param name = "nodeList"></param>
         /// <returns></returns>
         public static List<string> InnerText(this XmlNodeList nodeList) {
             var result = new List<string>();
@@ -37,26 +37,28 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static XmlDocument XmlDoc(this string xmlDoc) {
-            if(docCache.ContainsKey(xmlDoc))
-                return docCache[xmlDoc];
+            if(DocCache.ContainsKey(xmlDoc)) {
+                return DocCache[xmlDoc];
+            }
 
             var doc = new XmlDocument();
             doc.LoadXml(xmlDoc);
-            docCache.Add(xmlDoc, doc);
+            DocCache.Add(xmlDoc, doc);
             return doc;
         }
 
         public static XmlDocument JsonDoc(this string jsonDoc) {
-            if(docCache.ContainsKey(jsonDoc))
-                return docCache[jsonDoc];
+            if(DocCache.ContainsKey(jsonDoc)) {
+                return DocCache[jsonDoc];
+            }
 
-            var stream = new MemoryStream(ASCIIEncoding.Default.GetBytes(jsonDoc));
+            var stream = new MemoryStream(Encoding.Default.GetBytes(jsonDoc));
             var reader = JsonReaderWriterFactory.CreateJsonReader(stream, XmlDictionaryReaderQuotas.Max);
 
             var doc = new XmlDocument();
             doc.Load(reader);
 
-            docCache.Add(jsonDoc, doc);
+            DocCache.Add(jsonDoc, doc);
             return doc;
         }
 
@@ -64,21 +66,22 @@ namespace CoApp.Toolkit.Extensions {
             var stream = new MemoryStream();
             var writer = JsonReaderWriterFactory.CreateJsonWriter(stream);
             xmlDoc.WriteTo(writer);
-            return ASCIIEncoding.Default.GetString(stream.GetBuffer());
+            return Encoding.Default.GetString(stream.GetBuffer());
         }
 
         public static TType JsonDeserialize<TType>(this string jsonText) {
-            var stream = new MemoryStream(ASCIIEncoding.Default.GetBytes(jsonText));
+            var stream = new MemoryStream(Encoding.Default.GetBytes(jsonText));
             var json = new DataContractJsonSerializer(typeof(TType));
-            return (TType)json.ReadObject(stream);
+            return (TType) json.ReadObject(stream);
         }
 
         public static string JsonSerialize(this object obj) {
             var stream = new MemoryStream();
             var json = new DataContractJsonSerializer(obj.GetType());
             json.WriteObject(stream, obj);
-            return ASCIIEncoding.Default.GetString(stream.GetBuffer());
+            return Encoding.Default.GetString(stream.GetBuffer());
         }
+
         public static XmlNodeList XPath(this XmlDocument doc, string XPathExpression, params object[] args) {
             return doc.SelectNodes(XPathExpression.format(args));
         }
@@ -157,7 +160,5 @@ namespace CoApp.Toolkit.Extensions {
         public static XmlNodeList DocumentNodes(this XmlDocument doc) {
             return doc.ChildNodes[1].ChildNodes;
         }
-
-        
     }
 }

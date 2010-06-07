@@ -6,43 +6,43 @@
 
 namespace CoApp.Toolkit.Web {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Reflection;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Web;
     using System.Web.Hosting;
-    using System.Threading;
-    using System.Web.UI;
-    using CoApp.Toolkit.Extensions;
+    using Extensions;
 
     public class WorkerRequest : SimpleWorkerRequest {
-        public object ParameterData = null; 
-        public WorkerRequest( string page, string queryString, TextWriter output ) : base( page, queryString, output ) {}
-        public WorkerRequest(string page, string queryString, TextWriter output,object o ) : base(page, queryString, output) {
-            ParameterData = o; 
+        public object ParameterData;
+
+        public WorkerRequest(string page, string queryString, TextWriter output) : base(page, queryString, output) {
         }
-        public override void SetEndOfSendNotification( EndOfSendNotification callback, object extraData ) {
-            base.SetEndOfSendNotification( callback, extraData );
-            if (ParameterData != null) {
-                HttpContext context = extraData as HttpContext;
-                if( context != null ) {
-                      context.Items.Add("Content",ParameterData);
+
+        public WorkerRequest(string page, string queryString, TextWriter output, object o) : base(page, queryString, output) {
+            ParameterData = o;
+        }
+
+        public override void SetEndOfSendNotification(EndOfSendNotification callback, object extraData) {
+            base.SetEndOfSendNotification(callback, extraData);
+            if(ParameterData != null) {
+                var context = extraData as HttpContext;
+                if(context != null) {
+                    context.Items.Add("Content", ParameterData);
                 }
             }
         }
     }
 
-
-    public class SmallAspNetHost :MarshalByRefObject {
+    public class SmallAspNetHost : MarshalByRefObject {
         public void ProcessRequest(string page) {
             HttpRuntime.ProcessRequest(new WorkerRequest(page, null, Console.Out));
         }
 
-        public void ProcessRequest(string page,object o) {
-            HttpRuntime.ProcessRequest(new WorkerRequest(page, null, Console.Out,o));
+        public void ProcessRequest(string page, object o) {
+            HttpRuntime.ProcessRequest(new WorkerRequest(page, null, Console.Out, o));
         }
 
         public AppDomain GetAppDomain() {
@@ -50,29 +50,30 @@ namespace CoApp.Toolkit.Web {
         }
     }
 
-
     // ‹› 0x8b 0x9b 
     // «» 0xab 0xbb (alt-174, alt-175)
-    public class AspNetRuntime :MarshalByRefObject {
+    public class AspNetRuntime : MarshalByRefObject {
         public string RootFolder { get; private set; }
         private string binFolder;
 
-        public AspNetRuntime(string tmpPathName ) {
+        public AspNetRuntime(string tmpPathName) {
             RootFolder = Path.Combine(Path.GetTempPath(), tmpPathName);
             binFolder = Path.Combine(RootFolder, "bin");
 
-            if( !Directory.Exists(RootFolder) )
+            if(!Directory.Exists(RootFolder)) {
                 Directory.CreateDirectory(RootFolder);
+            }
 
-            if( !Directory.Exists(binFolder) )
+            if(!Directory.Exists(binFolder)) {
                 Directory.CreateDirectory(binFolder);
-            
+            }
+
             AddAssembly(this.Assembly());
-            AddAssembly(Assembly.GetExecutingAssembly() );
+            AddAssembly(Assembly.GetExecutingAssembly());
         }
 
         private void AddAssembly(Assembly asmbly) {
-            string destfile= Path.Combine(binFolder, Path.GetFileName(asmbly.Location));
+            var destfile = Path.Combine(binFolder, Path.GetFileName(asmbly.Location));
             File.Copy(asmbly.Location, destfile, true);
         }
 
@@ -86,40 +87,38 @@ namespace CoApp.Toolkit.Web {
             SmallAspNetHost host = null;
 
             try {
-           
-                host =  (SmallAspNetHost)ApplicationHost.CreateApplicationHost(typeof(SmallAspNetHost), "/", RootFolder);
-                
+                host = (SmallAspNetHost) ApplicationHost.CreateApplicationHost(typeof(SmallAspNetHost), "/", RootFolder);
+
                 aspNetHostIsUnloaded = new ManualResetEvent(false);
 
                 host.GetAppDomain().DomainUnload += HostedDomainHasBeenUnloaded;
-                 
-                foreach(string page in pages) {
-                    string newPage = Path.Combine(RootFolder, Path.GetFileName(page));
-                    string txt = File.ReadAllText(page, Encoding.UTF8);
-                    
-                    txt = txt.Replace("‹", "<%=").Replace("›", "%>").Replace("«", "<%").Replace("»", "%>");
-                    
-                    if(!new Regex(@"\<\%.*@Page.*Language.*\%\>").IsMatch(txt))
-                        txt = @"<%@ Page Language=""c#"" %>"+txt;
 
-                    File.WriteAllText(newPage,txt,Encoding.UTF8);
+                foreach(string page in pages) {
+                    var newPage = Path.Combine(RootFolder, Path.GetFileName(page));
+                    var txt = File.ReadAllText(page, Encoding.UTF8);
+
+                    txt = txt.Replace("‹", "<%=").Replace("›", "%>").Replace("«", "<%").Replace("»", "%>");
+
+                    if(!new Regex(@"\<\%.*@Page.*Language.*\%\>").IsMatch(txt)) {
+                        txt = @"<%@ Page Language=""c#"" %>" + txt;
+                    }
+
+                    File.WriteAllText(newPage, txt, Encoding.UTF8);
 
                     host.ProcessRequest(Path.GetFileName(page));
                 }
-
             }
             finally {
                 // tell the host to unload
-                if(host!= null) {
+                if(host != null) {
                     AppDomain.Unload(host.GetAppDomain());
 
                     // wait for it to unload
                     aspNetHostIsUnloaded.WaitOne();
 
-                    Directory.Delete(RootFolder,true);
+                    Directory.Delete(RootFolder, true);
                 }
             }
         }
-
     }
 }

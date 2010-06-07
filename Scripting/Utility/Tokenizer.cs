@@ -5,14 +5,12 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Scripting.Utility {
-
-    using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
 
     /// <summary>
-    /// Enumeration of different token types
+    ///   Enumeration of different token types
     /// </summary>
     public enum TokenType {
         Plus,
@@ -98,57 +96,59 @@ namespace CoApp.Toolkit.Scripting.Utility {
     }
 
     /// <summary>
-    /// Represents a Token along with the textual representation of the token
+    ///   Represents a Token along with the textual representation of the token
     /// </summary>
     public struct Token {
         /// <summary>
-        /// The TokenType of the token
+        ///   The TokenType of the token
         /// </summary>
         public TokenType Type { get; set; }
-        
+
         /// <summary>
-        /// the data associated with the Token
+        ///   the data associated with the Token
         /// </summary>
         public dynamic Data { get; set; }
 
         /// <summary>
-        /// Indicates whether two instance are equal.
+        ///   Indicates whether two instance are equal.
         /// </summary>
-        /// <param name="first">first instance</param>
-        /// <param name="second">second instance</param>
+        /// <param name = "first">first instance</param>
+        /// <param name = "second">second instance</param>
         /// <returns>True if equal</returns>
-        public static bool operator==(Token first, Token second) {
+        public static bool operator ==(Token first, Token second) {
             return first.Type == second.Type && first.Data == second.Data;
         }
 
         /// <summary>
-        /// Indicates whether two instance are inequal.
+        ///   Indicates whether two instance are inequal.
         /// </summary>
-        /// <param name="first">first instance</param>
-        /// <param name="second">second instance</param>
+        /// <param name = "first">first instance</param>
+        /// <param name = "second">second instance</param>
         /// <returns>True if inequal</returns>
         public static bool operator !=(Token first, Token second) {
             return !(first.Type == second.Type && first.Data == second.Data);
         }
 
         /// <summary>
-        /// Indicates whether this instance and a specified token are equal.
+        ///   Indicates whether this instance and a specified token are equal.
         /// </summary>
         /// <returns>
-        /// true if <paramref name="other"/> and this instance are the same type and represent the same value; otherwise, false.
+        ///   true if <paramref name = "other" /> and this instance are the same type and represent the same value; otherwise, false.
         /// </returns>
-        /// <param name="other">Another object to compare to. </param><filterpriority>2</filterpriority>
+        /// <param name = "other">Another object to compare to. </param>
+        /// <filterpriority>2</filterpriority>
         public bool Equals(Token other) {
             return Equals(other.Type, Type) && Equals(other.Data, Data);
         }
 
         /// <summary>
-        /// Indicates whether this instance and a specified object are equal.
+        ///   Indicates whether this instance and a specified object are equal.
         /// </summary>
         /// <returns>
-        /// true if <paramref name="obj"/> and this instance are the same type and represent the same value; otherwise, false.
+        ///   true if <paramref name = "obj" /> and this instance are the same type and represent the same value; otherwise, false.
         /// </returns>
-        /// <param name="obj">Another object to compare to. </param><filterpriority>2</filterpriority>
+        /// <param name = "obj">Another object to compare to. </param>
+        /// <filterpriority>2</filterpriority>
         public override bool Equals(object obj) {
             if(ReferenceEquals(null, obj)) {
                 return false;
@@ -160,10 +160,10 @@ namespace CoApp.Toolkit.Scripting.Utility {
         }
 
         /// <summary>
-        /// Returns the hash code for this instance.
+        ///   Returns the hash code for this instance.
         /// </summary>
         /// <returns>
-        /// A 32-bit signed integer that is the hash code for this instance.
+        ///   A 32-bit signed integer that is the hash code for this instance.
         /// </returns>
         /// <filterpriority>2</filterpriority>
         public override int GetHashCode() {
@@ -176,83 +176,83 @@ namespace CoApp.Toolkit.Scripting.Utility {
     /// <summary>
     ///   A moderatly generic tokenizer class 
     ///   -----------------------------------
-    /// <para>
-    ///   This is designed to tokenize (not parse or lexically analyze) c#, but is flexible in implementation
-    ///   to handle certainly every c-style language, and probably most languages.</para>
-    /// <para>
-    ///   It should be pretty darned fast. Not the absolute fastest it could run, but a fair balance between
-    ///   speed and complexity I'd wager.</para>
+    ///   <para>
+    ///     This is designed to tokenize (not parse or lexically analyze) c#, but is flexible in implementation
+    ///     to handle certainly every c-style language, and probably most languages.</para>
+    ///   <para>
+    ///     It should be pretty darned fast. Not the absolute fastest it could run, but a fair balance between
+    ///     speed and complexity I'd wager.</para>
     /// </summary>
     [SuppressMessage("Microsoft.StyleCop.CSharp.DocumentationRules", "SA1600:ElementsMustBeDocumented", Justification = "It's too much work.")]
     public class Tokenizer {
         #region Standard Static Tokens
 
-        public static readonly Token Space = new Token { Type = TokenType.WhiteSpace, Data = " " };
-        public static readonly Token Eol = new Token { Type = TokenType.WhiteSpace, Data = "\n" };
-        public static readonly Token Tab = new Token { Type = TokenType.WhiteSpace, Data = "\t" };
+        public static readonly Token Space = new Token {Type = TokenType.WhiteSpace, Data = " "};
+        public static readonly Token Eol = new Token {Type = TokenType.WhiteSpace, Data = "\n"};
+        public static readonly Token Tab = new Token {Type = TokenType.WhiteSpace, Data = "\t"};
 
-        public static readonly Token Plus = new Token { Type = TokenType.Plus, Data = "+" };
-        public static readonly Token PlusPlus = new Token { Type = TokenType.PlusPlus, Data = "++" };
-        public static readonly Token PlusEquals = new Token { Type = TokenType.PlusEquals, Data = "+=" };
+        public static readonly Token Plus = new Token {Type = TokenType.Plus, Data = "+"};
+        public static readonly Token PlusPlus = new Token {Type = TokenType.PlusPlus, Data = "++"};
+        public static readonly Token PlusEquals = new Token {Type = TokenType.PlusEquals, Data = "+="};
 
-        public static readonly Token Minus = new Token { Type = TokenType.Minus, Data = "-" };
-        public static readonly Token MinusMinus = new Token { Type = TokenType.MinusMinus, Data = "--" };
-        public static readonly Token MinusEquals = new Token { Type = TokenType.MinusEquals, Data = "-=" };
-        public static readonly Token DashArrow = new Token { Type = TokenType.DashArrow, Data = "->" };
+        public static readonly Token Minus = new Token {Type = TokenType.Minus, Data = "-"};
+        public static readonly Token MinusMinus = new Token {Type = TokenType.MinusMinus, Data = "--"};
+        public static readonly Token MinusEquals = new Token {Type = TokenType.MinusEquals, Data = "-="};
+        public static readonly Token DashArrow = new Token {Type = TokenType.DashArrow, Data = "->"};
 
-        public static readonly Token Star = new Token { Type = TokenType.Asterisk, Data = "*" };
-        public static readonly Token StarEquals = new Token { Type = TokenType.AsteriskEquals, Data = "*=" };
+        public static readonly Token Star = new Token {Type = TokenType.Asterisk, Data = "*"};
+        public static readonly Token StarEquals = new Token {Type = TokenType.AsteriskEquals, Data = "*="};
 
-        public static readonly Token Equal = new Token { Type = TokenType.Equal, Data = "=" };
-        public static readonly Token EqualEqual = new Token { Type = TokenType.EqualEqual, Data = "==" };
-        public static readonly Token Lambda = new Token { Type = TokenType.Lambda, Data = "=>" };
+        public static readonly Token Equal = new Token {Type = TokenType.Equal, Data = "="};
+        public static readonly Token EqualEqual = new Token {Type = TokenType.EqualEqual, Data = "=="};
+        public static readonly Token Lambda = new Token {Type = TokenType.Lambda, Data = "=>"};
 
-        public static readonly Token Slash = new Token { Type = TokenType.Slash, Data = "/" };
-        public static readonly Token SlashEquals = new Token { Type = TokenType.SlashEquals, Data = "/=" };
+        public static readonly Token Slash = new Token {Type = TokenType.Slash, Data = "/"};
+        public static readonly Token SlashEquals = new Token {Type = TokenType.SlashEquals, Data = "/="};
 
-        public static readonly Token Bar = new Token { Type = TokenType.Bar, Data = "|" };
-        public static readonly Token BarBar = new Token { Type = TokenType.BarBar, Data = "||" };
-        public static readonly Token BarEquals = new Token { Type = TokenType.BarEquals, Data = "|=" };
+        public static readonly Token Bar = new Token {Type = TokenType.Bar, Data = "|"};
+        public static readonly Token BarBar = new Token {Type = TokenType.BarBar, Data = "||"};
+        public static readonly Token BarEquals = new Token {Type = TokenType.BarEquals, Data = "|="};
 
-        public static readonly Token Ampersand = new Token { Type = TokenType.Ampersand, Data = "&" };
-        public static readonly Token AmpersandAmpersand = new Token { Type = TokenType.AmpersandAmpersand, Data = "&&" };
-        public static readonly Token AmpersandEquals = new Token { Type = TokenType.AmpersandEquals, Data = "&=" };
+        public static readonly Token Ampersand = new Token {Type = TokenType.Ampersand, Data = "&"};
+        public static readonly Token AmpersandAmpersand = new Token {Type = TokenType.AmpersandAmpersand, Data = "&&"};
+        public static readonly Token AmpersandEquals = new Token {Type = TokenType.AmpersandEquals, Data = "&="};
 
-        public static readonly Token Percent = new Token { Type = TokenType.Percent, Data = "%" };
-        public static readonly Token PercentEquals = new Token { Type = TokenType.PercentEquals, Data = "%=" };
+        public static readonly Token Percent = new Token {Type = TokenType.Percent, Data = "%"};
+        public static readonly Token PercentEquals = new Token {Type = TokenType.PercentEquals, Data = "%="};
 
-        public static readonly Token LessThan = new Token { Type = TokenType.LessThan, Data = "<" };
-        public static readonly Token LessThanEquals = new Token { Type = TokenType.LessThanEquals, Data = "<=" };
-        public static readonly Token BitShiftLeft = new Token { Type = TokenType.BitShiftLeft, Data = "<<" };
-        public static readonly Token BitShiftLeftEquals = new Token { Type = TokenType.BitShiftLeftEquals, Data = "<<=" };
+        public static readonly Token LessThan = new Token {Type = TokenType.LessThan, Data = "<"};
+        public static readonly Token LessThanEquals = new Token {Type = TokenType.LessThanEquals, Data = "<="};
+        public static readonly Token BitShiftLeft = new Token {Type = TokenType.BitShiftLeft, Data = "<<"};
+        public static readonly Token BitShiftLeftEquals = new Token {Type = TokenType.BitShiftLeftEquals, Data = "<<="};
 
-        public static readonly Token GreaterThan = new Token { Type = TokenType.GreaterThan, Data = ">" };
-        public static readonly Token GreaterThanEquals = new Token { Type = TokenType.GreaterThanEquals, Data = ">=" };
-        public static readonly Token BitShiftRight = new Token { Type = TokenType.BitShiftRight, Data = ">>" };
-        public static readonly Token BitShiftRightEquals = new Token { Type = TokenType.BitShiftRightEquals, Data = ">>=" };
+        public static readonly Token GreaterThan = new Token {Type = TokenType.GreaterThan, Data = ">"};
+        public static readonly Token GreaterThanEquals = new Token {Type = TokenType.GreaterThanEquals, Data = ">="};
+        public static readonly Token BitShiftRight = new Token {Type = TokenType.BitShiftRight, Data = ">>"};
+        public static readonly Token BitShiftRightEquals = new Token {Type = TokenType.BitShiftRightEquals, Data = ">>="};
 
-        public static readonly Token Bang = new Token { Type = TokenType.Bang, Data = "!" };
-        public static readonly Token BangEquals = new Token { Type = TokenType.BangEquals, Data = "!=" };
+        public static readonly Token Bang = new Token {Type = TokenType.Bang, Data = "!"};
+        public static readonly Token BangEquals = new Token {Type = TokenType.BangEquals, Data = "!="};
 
-        public static readonly Token Power = new Token { Type = TokenType.Power, Data = "^" };
-        public static readonly Token PowerEquals = new Token { Type = TokenType.PowerEquals, Data = "^=" };
+        public static readonly Token Power = new Token {Type = TokenType.Power, Data = "^"};
+        public static readonly Token PowerEquals = new Token {Type = TokenType.PowerEquals, Data = "^="};
 
-        public static readonly Token Tilde = new Token { Type = TokenType.Tilde, Data = "~" };
+        public static readonly Token Tilde = new Token {Type = TokenType.Tilde, Data = "~"};
 
-        public static readonly Token QuestionMark = new Token { Type = TokenType.QuestionMark, Data = "?" };
-        public static readonly Token QuestionMarkQuestionMark = new Token { Type = TokenType.QuestionMarkQuestionMark, Data = "??" };
+        public static readonly Token QuestionMark = new Token {Type = TokenType.QuestionMark, Data = "?"};
+        public static readonly Token QuestionMarkQuestionMark = new Token {Type = TokenType.QuestionMarkQuestionMark, Data = "??"};
 
-        public static readonly Token OpenBrace = new Token { Type = TokenType.OpenBrace, Data = "{" };
-        public static readonly Token CloseBrace = new Token { Type = TokenType.CloseBrace, Data = "}" };
-        public static readonly Token OpenBracket = new Token { Type = TokenType.OpenBracket, Data = "[" };
-        public static readonly Token CloseBracket = new Token { Type = TokenType.CloseBracket, Data = "]" };
-        public static readonly Token OpenParenthesis = new Token { Type = TokenType.OpenParenthesis, Data = "(" };
-        public static readonly Token CloseParenthesis = new Token { Type = TokenType.CloseParenthesis, Data = ")" };
+        public static readonly Token OpenBrace = new Token {Type = TokenType.OpenBrace, Data = "{"};
+        public static readonly Token CloseBrace = new Token {Type = TokenType.CloseBrace, Data = "}"};
+        public static readonly Token OpenBracket = new Token {Type = TokenType.OpenBracket, Data = "["};
+        public static readonly Token CloseBracket = new Token {Type = TokenType.CloseBracket, Data = "]"};
+        public static readonly Token OpenParenthesis = new Token {Type = TokenType.OpenParenthesis, Data = "("};
+        public static readonly Token CloseParenthesis = new Token {Type = TokenType.CloseParenthesis, Data = ")"};
 
-        public static readonly Token Dot = new Token { Type = TokenType.Dot, Data = "." };
-        public static readonly Token Comma = new Token { Type = TokenType.Comma, Data = "," };
-        public static readonly Token Colon = new Token { Type = TokenType.Colon, Data = ":" };
-        public static readonly Token Semicolon = new Token { Type = TokenType.Semicolon, Data = ";" };
+        public static readonly Token Dot = new Token {Type = TokenType.Dot, Data = "."};
+        public static readonly Token Comma = new Token {Type = TokenType.Comma, Data = ","};
+        public static readonly Token Colon = new Token {Type = TokenType.Colon, Data = ":"};
+        public static readonly Token Semicolon = new Token {Type = TokenType.Semicolon, Data = ";"};
 
         #endregion
 
@@ -502,7 +502,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token { Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1) });
+            Tokens.Add(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         protected virtual void ParseHexadecimalLiteral() {
@@ -529,7 +529,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token { Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1) });
+            Tokens.Add(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         protected virtual void ParseCharLiteral() {
@@ -550,7 +550,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token { Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1) });
+            Tokens.Add(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         protected virtual void ParseStringLiteral() {
@@ -565,7 +565,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token { Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) + 1) });
+            Tokens.Add(new Token {Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         protected virtual void ParsePower() {
@@ -687,7 +687,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 Index += 2;
                 while(Index < (Text.Length - 1)) {
                     if(Text[Index] == '*' && Text[Index + 1] == '/') {
-                        Tokens.Add(new Token { Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 1) });
+                        Tokens.Add(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 1)});
                         start = -1;
                         break;
                     }
@@ -698,7 +698,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 if(start > -1) {
                     // didn't find the close marker (star slash) 
                     // adding an incomplete comment at the end I guess.
-                    Tokens.Add(new Token { Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 1) });
+                    Tokens.Add(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 1)});
                 }
 
                 Index++;
@@ -711,7 +711,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 Index += 2;
                 while(Index < Text.Length) {
                     if(Text[Index] == '\r' || Text[Index] == '\n') {
-                        Tokens.Add(new Token { Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1) });
+                        Tokens.Add(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
                         start = -1;
                         break;
                     }
@@ -721,7 +721,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
                 if(start > -1) {
                     // adding a comment at the end I guess.
-                    Tokens.Add(new Token { Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1) });
+                    Tokens.Add(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
                 }
 
                 Index++;
@@ -804,7 +804,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
 
                 if(Text[Index] == '\r' || Text[Index] == '\n') {
-                    Tokens.Add(new Token { Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1) });
+                    Tokens.Add(new Token {Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1)});
                     start = -1;
                     break;
                 }
@@ -814,7 +814,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
             if(start > -1) {
                 // adding directive at the end I guess.
-                Tokens.Add(new Token { Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1) });
+                Tokens.Add(new Token {Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1)});
             }
 
             Index++;
@@ -898,11 +898,11 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
 
                 var identifier = new string(Text, start, (Index - start) + 1);
-                Tokens.Add(new Token { Type = Keywords.Contains(identifier) ? TokenType.Keyword : TokenType.Identifier, Data = identifier });
+                Tokens.Add(new Token {Type = Keywords.Contains(identifier) ? TokenType.Keyword : TokenType.Identifier, Data = identifier});
                 return;
             }
 
-            Tokens.Add(new Token { Type = TokenType.Unknown, Data = CurrentCharacter });
+            Tokens.Add(new Token {Type = TokenType.Unknown, Data = CurrentCharacter});
         }
 
         public static List<Token> Tokenize(string text) {

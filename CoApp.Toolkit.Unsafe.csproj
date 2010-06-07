@@ -8,7 +8,7 @@
     <ProjectGuid>{59D1DBB3-5848-4026-9523-BBC7618B7B77}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoApp.Toolkit.Unsafe</RootNamespace>
+    <RootNamespace>CoApp.Toolkit</RootNamespace>
     <AssemblyName>CoApp.Toolkit.Unsafe</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

@@ -5,13 +5,13 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-/// -----------------------------------------------------------------------
-/// Original Code: 
-/// (c) 2009 Microsoft Corporation -- All rights reserved
-/// This code is licensed under the MS-PL
-/// http://www.opensource.org/licenses/ms-pl.html
-/// Courtesy of the Open Source Techology Center: http://port25.technet.com
-/// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// Original Code: 
+// (c) 2009 Microsoft Corporation -- All rights reserved
+// This code is licensed under the MS-PL
+// http://www.opensource.org/licenses/ms-pl.html
+// Courtesy of the Open Source Techology Center: http://port25.technet.com
+// -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Extensions {
     public static class DebugExtensions {
@@ -24,20 +24,23 @@ namespace CoApp.Toolkit.Extensions {
 
             System.Diagnostics.Debug.WriteLine(" Buffer Length: {0} [0x{0:x4}]".format(buf.Length));
 
-            for(int x= 0;x< buf.Length;x+=lnWidth) {
-                for(int y = 0;y < lnWidth;y++) {
-                    if(x+y >= buf.Length)
+            for(var x = 0; x < buf.Length; x += lnWidth) {
+                for(var y = 0; y < lnWidth; y++) {
+                    if(x + y >= buf.Length) {
                         System.Diagnostics.Debug.Write("   ");
-                    else
-                        System.Diagnostics.Debug.Write(" {0:x2}".format(buf[x+y]));
+                    }
+                    else {
+                        System.Diagnostics.Debug.Write(" {0:x2}".format(buf[x + y]));
+                    }
                 }
                 System.Diagnostics.Debug.Write("    ");
 
-                for(int y = 0;y < lnWidth;y++) {
-                    if(x+y >= buf.Length)
+                for(var y = 0; y < lnWidth; y++) {
+                    if(x + y >= buf.Length) {
                         System.Diagnostics.Debug.Write(" ");
+                    }
                     else {
-                        char c = buf[x + y] < 32 || buf[x + y] > 127 ? '.' : (char)buf[x + y];
+                        var c = buf[x + y] < 32 || buf[x + y] > 127 ? '.' : (char) buf[x + y];
                         System.Diagnostics.Debug.Write("{0}".format(c));
                     }
                 }

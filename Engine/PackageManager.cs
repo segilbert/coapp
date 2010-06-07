@@ -5,11 +5,7 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Engine {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using CoApp.Toolkit.Engine.Engine;
     
     public class PackageManager {
         public bool Pretend {get;set;}

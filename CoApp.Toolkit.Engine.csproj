@@ -8,7 +8,7 @@
     <ProjectGuid>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoApp.Toolkit.Engine</RootNamespace>
+    <RootNamespace>CoApp.Toolkit</RootNamespace>
     <AssemblyName>CoApp.Toolkit.Engine</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
