@@ -4,25 +4,14 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Engine {
+namespace CoApp.Toolkit.Engine.Engine {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-    using CoApp.Toolkit.Engine.Engine;
-    
-    public class PackageManager {
-        public bool Pretend {get;set;}
 
-        public PackageManager() {
-        }
-
-        public void Install(List<string> packages) {
-
-        }
-
-        public void Remove(List<string> packages) {
-
-        }
+    public class ProgressMessage {
+        public float Percentage;
+        public string Message;
     }
 }

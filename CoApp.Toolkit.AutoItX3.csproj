@@ -42,6 +42,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Properties\AutoItX3.AssemblyInfo.cs" />
+
     <Compile Include="AutoItX3\AutoIt.cs" />
     <Compile Include="AutoItX3\x64\NativeMethods.cs" />
     <Compile Include="AutoItX3\x86\NativeMethods.cs" />

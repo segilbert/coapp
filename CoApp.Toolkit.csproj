@@ -43,7 +43,6 @@
   <ItemGroup>
     <Compile Include="DynamicXml\DynamicAttributes.cs" />
     <Compile Include="DynamicXml\DynamicNode.cs" />
-    <Compile Include="Engine\PackageManager.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\CommandLineExtensions.cs" />

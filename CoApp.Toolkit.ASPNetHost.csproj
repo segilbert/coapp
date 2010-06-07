@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Properties\AspNetHost.AssemblyInfo.cs" />
     <Compile Include="Web\ASPNetHost.cs" />
   </ItemGroup>
   <ItemGroup>
