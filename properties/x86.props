@@ -2,9 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="UserMacros">
     <TargetPlatform>x86</TargetPlatform>
-    <DDKInstallPath>C:\WinDDK\7600.16385.0\</DDKInstallPath>
     <DDKPlatform>i386</DDKPlatform>
-    <DDK_CRT>$(DDKInstallPath)lib\Crt\$(DDKPlatform)\safecrtnt.lib;$(DDKInstallPath)lib\Crt\$(DDKPlatform)\msvcrt.lib</DDK_CRT>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -18,14 +16,8 @@
     <BuildMacro Include="TargetPlatform">
       <Value>$(TargetPlatform)</Value>
     </BuildMacro>
-    <BuildMacro Include="DDKInstallPath">
-      <Value>$(DDKInstallPath)</Value>
-    </BuildMacro>
     <BuildMacro Include="DDKPlatform">
       <Value>$(DDKPlatform)</Value>
-    </BuildMacro>
-    <BuildMacro Include="DDK_CRT">
-      <Value>$(DDK_CRT)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
