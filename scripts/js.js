@@ -141,7 +141,11 @@ function $$(cmdline) {
             Log(x);
         }
         else if (!proc.StdErr.AtEndOfStream) {
-            $StdErr.push(proc.StdErr.ReadLine());
+            x = proc.StdErr.ReadLine();
+            if (WatchExpression.exec(x))
+                Print(x)
+            $StdErr.push(x);
+                
         }
         $$.WScript.Sleep(10);
     }
