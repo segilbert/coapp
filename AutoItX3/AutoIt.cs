@@ -4,10 +4,10 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace DynamicXml.AutoItX3 {
+namespace CoApp.Toolkit.AutoItX3 {
     using System;
     using System.Text;
-    using NativeMethods = x86.NativeMethods;
+    using x64;
 
     /// <summary>
     /// Some Summary
@@ -44,10 +44,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="disableUserInput">1 = Disable user input 0 = Enable user input</param>
         public static void BlockInput(int disableUserInput) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_BlockInput(disableUserInput);
+                NativeMethods.AU3_BlockInput(disableUserInput);
             }
             else {
-                NativeMethods.AU3_BlockInput(disableUserInput);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_BlockInput(disableUserInput);
             }
         }
 
@@ -64,7 +64,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0.</returns>
         public static int ControlClick(string title, string text, string control, string button, int numClicks, int xcoord, int ycoord) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlClick(title, text, control, button, numClicks, xcoord, ycoord) : NativeMethods.AU3_ControlClick(title, text, control, button, numClicks, xcoord, ycoord);
+            return X64 ? NativeMethods.AU3_ControlClick(title, text, control, button, numClicks, xcoord, ycoord) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlClick(title, text, control, button, numClicks, xcoord, ycoord);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0.</returns>
         public static int ControlClick(string title, string control) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlClick(title, string.Empty, control, string.Empty, 1, 0, 0) : NativeMethods.AU3_ControlClick(title, string.Empty, control, string.Empty, 1, 0, 0);
+            return X64 ? NativeMethods.AU3_ControlClick(title, string.Empty, control, string.Empty, 1, 0, 0) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlClick(title, string.Empty, control, string.Empty, 1, 0, 0);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0.</returns>
         public static int ControlDisable(string title, string text, string control) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlDisable(title, text, control) : NativeMethods.AU3_ControlDisable(title, text, control);
+            return X64 ? NativeMethods.AU3_ControlDisable(title, text, control) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlDisable(title, text, control);
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0.</returns>
         public static int ControlEnable(string title, string text, string control) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlEnable(title, text, control) : NativeMethods.AU3_ControlEnable(title, text, control);
+            return X64 ? NativeMethods.AU3_ControlEnable(title, text, control) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlEnable(title, text, control);
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0.</returns>
         public static int ControlFocus(string title, string text, string control) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlFocus(title, text, control) : NativeMethods.AU3_ControlFocus(title, text, control);
+            return X64 ? NativeMethods.AU3_ControlFocus(title, text, control) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlFocus(title, text, control);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0.</returns>
         public static int ControlFocus(string title, string control) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlFocus(title, string.Empty, control) : NativeMethods.AU3_ControlFocus(title, string.Empty, control);
+            return X64 ? NativeMethods.AU3_ControlFocus(title, string.Empty, control) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlFocus(title, string.Empty, control);
         }
 
         /// <summary>
@@ -141,10 +141,10 @@ namespace DynamicXml.AutoItX3 {
             var retText = new byte[50];
 
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_ControlGetHandle(title, text, control, retText, retText.Length);
+                NativeMethods.AU3_ControlGetHandle(title, text, control, retText, retText.Length);
             }
             else {
-                NativeMethods.AU3_ControlGetHandle(title, text, control, retText, retText.Length);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlGetHandle(title, text, control, retText, retText.Length);
             }
 
             //----------------------------------------------------------------------
@@ -164,17 +164,17 @@ namespace DynamicXml.AutoItX3 {
         public static Position2D ControlGetPos(string title, string text, string control) {
             Position2D pos;
             if (X64) {
-                pos.Xpos = AutoItX3.x64.NativeMethods.AU3_ControlGetPosX(title, text, control);
-                pos.Ypos = AutoItX3.x64.NativeMethods.AU3_ControlGetPosY(title, text, control);
-                pos.Height = AutoItX3.x64.NativeMethods.AU3_ControlGetPosHeight(title, text, control);
-                pos.Width = AutoItX3.x64.NativeMethods.AU3_ControlGetPosWidth(title, text, control);
+                pos.Xpos = NativeMethods.AU3_ControlGetPosX(title, text, control);
+                pos.Ypos = NativeMethods.AU3_ControlGetPosY(title, text, control);
+                pos.Height = NativeMethods.AU3_ControlGetPosHeight(title, text, control);
+                pos.Width = NativeMethods.AU3_ControlGetPosWidth(title, text, control);
                 return pos;
             }
 
-            pos.Xpos = NativeMethods.AU3_ControlGetPosX(title, text, control);
-            pos.Ypos = NativeMethods.AU3_ControlGetPosY(title, text, control);
-            pos.Height = NativeMethods.AU3_ControlGetPosHeight(title, text, control);
-            pos.Width = NativeMethods.AU3_ControlGetPosWidth(title, text, control);
+            pos.Xpos = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlGetPosX(title, text, control);
+            pos.Ypos = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlGetPosY(title, text, control);
+            pos.Height = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlGetPosHeight(title, text, control);
+            pos.Width = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlGetPosWidth(title, text, control);
 
             return pos;
         }
@@ -188,7 +188,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0 if window/control is not found.</returns>
         public static int ControlHide(string title, string text, string control) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlHide(title, text, control) : NativeMethods.AU3_ControlHide(title, text, control);
+            return X64 ? NativeMethods.AU3_ControlHide(title, text, control) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlHide(title, text, control);
         }
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace DynamicXml.AutoItX3 {
         public static int ControlMove(string title, string text, string control, int vsX, int vsY) {
             int height = ControlGetPos(title, text, control).Height;
             int width = ControlGetPos(title, text, control).Width;
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width) : NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width);
+            return X64 ? NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width);
         }
 
         /// <summary>
@@ -220,7 +220,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0 if window/control is not found.</returns>
         public static int ControlMove(string title, string text, string control, int vsX, int vsY, int height, int width) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width) : NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width);
+            return X64 ? NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlMove(title, text, control, vsX, vsY, height, width);
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0 if window/control is not found.</returns>
         public static int ControlSend(string title, string text, string control, string sendText, int mode) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlSend(title, text, control, sendText, mode) : NativeMethods.AU3_ControlSend(title, text, control, sendText, mode);
+            return X64 ? NativeMethods.AU3_ControlSend(title, text, control, sendText, mode) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlSend(title, text, control, sendText, mode);
         }
 
         /// <summary>
@@ -251,7 +251,7 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>Success:   Returns 1.
         /// Failure:  Returns 0 if window/control is not found.</returns>
         public static int ControlShow(string title, string text, string control) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ControlShow(title, text, control) : NativeMethods.AU3_ControlShow(title, text, control);
+            return X64 ? NativeMethods.AU3_ControlShow(title, text, control) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ControlShow(title, text, control);
         }
 
         /// <summary>
@@ -276,12 +276,12 @@ namespace DynamicXml.AutoItX3 {
             int mousex;
             int mousey;
             if(X64) {
-                mousex = AutoItX3.x64.NativeMethods.AU3_MouseGetPosX();
-                mousey = AutoItX3.x64.NativeMethods.AU3_MouseGetPosY();
-            }
-            else {
                 mousex = NativeMethods.AU3_MouseGetPosX();
                 mousey = NativeMethods.AU3_MouseGetPosY();
+            }
+            else {
+                mousex = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseGetPosX();
+                mousey = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseGetPosY();
             }
 
             return MouseClick(button, mousex, mousey);
@@ -302,12 +302,12 @@ namespace DynamicXml.AutoItX3 {
             // MouseClick wasn't working with out first MouseMove call
             //----------------------------------------------------------------------
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_MouseMove(xcoord, ycoord, 10);
-                return AutoItX3.x64.NativeMethods.AU3_MouseClick(button, xcoord, ycoord, clicks, speed);
+                NativeMethods.AU3_MouseMove(xcoord, ycoord, 10);
+                return NativeMethods.AU3_MouseClick(button, xcoord, ycoord, clicks, speed);
             }
             
-            NativeMethods.AU3_MouseMove(xcoord, ycoord, 10);
-            return NativeMethods.AU3_MouseClick(button, xcoord, ycoord, clicks, speed);
+            global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseMove(xcoord, ycoord, 10);
+            return global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseClick(button, xcoord, ycoord, clicks, speed);
         }
 
         /// <summary>
@@ -324,7 +324,7 @@ namespace DynamicXml.AutoItX3 {
         /// Failure: Returns 0, the button is not in the list.
         /// </returns>
         public static int MouseClickDrag(string button, int xcoord1, int ycoord1, int xcoord2, int ycoord2, int speed) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_MouseClickDrag(button, xcoord1, ycoord1, xcoord2, ycoord2, speed) : NativeMethods.AU3_MouseClickDrag(button, xcoord1, ycoord1, xcoord2, ycoord2, speed);
+            return X64 ? NativeMethods.AU3_MouseClickDrag(button, xcoord1, ycoord1, xcoord2, ycoord2, speed) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseClickDrag(button, xcoord1, ycoord1, xcoord2, ycoord2, speed);
         }
 
         /// <summary>
@@ -333,10 +333,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="button">The button to click: "left", "right", "middle", "main", "menu", "primary", "secondary".</param>
         public static void MouseDown(string button) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_MouseDown(button);
+                NativeMethods.AU3_MouseDown(button);
             }
             else {
-                NativeMethods.AU3_MouseDown(button);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseDown(button);
             }
         }
 
@@ -347,11 +347,11 @@ namespace DynamicXml.AutoItX3 {
         public static PointXY MouseGetPos() {
             PointXY point;
             if(X64) {
-                point.X = AutoItX3.x64.NativeMethods.AU3_MouseGetPosX();
-                point.Y = AutoItX3.x64.NativeMethods.AU3_MouseGetPosY();
-            } else {
                 point.X = NativeMethods.AU3_MouseGetPosX();
                 point.Y = NativeMethods.AU3_MouseGetPosY();
+            } else {
+                point.X = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseGetPosX();
+                point.Y = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseGetPosY();
             }
 
             return point;
@@ -374,10 +374,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="speed">[optional] the speed to move the mouse in the range 1 (fastest) to 100 (slowest). A speed of 0 will move the mouse instantly. Default speed is 10.</param>
         public static void MouseMove(int xcoord, int ycoord, int speed) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_MouseMove(xcoord, ycoord, speed);
+                NativeMethods.AU3_MouseMove(xcoord, ycoord, speed);
             }
             else {
-                NativeMethods.AU3_MouseMove(xcoord, ycoord, speed);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseMove(xcoord, ycoord, speed);
             }
         }
 
@@ -387,10 +387,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="button">The button to click: "left", "right", "middle", "main", "menu", "primary", "secondary".</param>
         public static void MouseUp(string button) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_MouseUp(button);
+                NativeMethods.AU3_MouseUp(button);
             }
             else {
-                NativeMethods.AU3_MouseUp(button);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_MouseUp(button);
             }
         }
 
@@ -410,14 +410,14 @@ namespace DynamicXml.AutoItX3 {
             if(X64) {
                 for(int xcoord = left; xcoord <= right; xcoord += step) {
                     for(int ycoord = top; ycoord <= bottom; ycoord += step) {
-                        sum += AutoItX3.x64.NativeMethods.AU3_PixelGetColor(xcoord, ycoord);
+                        sum += NativeMethods.AU3_PixelGetColor(xcoord, ycoord);
                     }
                 }
             }
             else {
                 for(int xcoord = left; xcoord <= right; xcoord += step) {
                     for(int ycoord = top; ycoord <= bottom; ycoord += step) {
-                        sum += NativeMethods.AU3_PixelGetColor(xcoord, ycoord);
+                        sum += global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_PixelGetColor(xcoord, ycoord);
                     }
                 }
             }
@@ -444,7 +444,7 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="ycoord">y coordinate of pixel.</param>
         /// <returns>The Pixel Color</returns>
         public static int PixelGetColor(int xcoord, int ycoord) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_PixelGetColor(xcoord, ycoord) : NativeMethods.AU3_PixelGetColor(xcoord, ycoord);
+            return X64 ? NativeMethods.AU3_PixelGetColor(xcoord, ycoord) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_PixelGetColor(xcoord, ycoord);
         }
 
         /// <summary>
@@ -456,10 +456,10 @@ namespace DynamicXml.AutoItX3 {
         /// <returns>The Pixel Color</returns>
         public static int PixelGetColor(int xcoord, int ycoord, IntPtr handle) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_AutoItSetOption("PixelCoordMode", 2);
+                NativeMethods.AU3_AutoItSetOption("PixelCoordMode", 2);
             }
             else {
-                NativeMethods.AU3_AutoItSetOption("PixelCoordMode", 2);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_AutoItSetOption("PixelCoordMode", 2);
             }
 
             return 0;
@@ -501,10 +501,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="process">The title or PID of the process to terminate.</param>
         public static void ProcessClose(string process) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_ProcessClose(process);
+                NativeMethods.AU3_ProcessClose(process);
             }
             else {
-                NativeMethods.AU3_ProcessClose(process);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ProcessClose(process);
             }
         }
 
@@ -514,7 +514,7 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="process">The name or PID of the process to check. </param>
         /// <returns>true if it exist, false otherwise</returns>
         public static bool ProcessExists(string process) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_ProcessExists(process) != 0 : NativeMethods.AU3_ProcessExists(process) != 0;
+            return X64 ? NativeMethods.AU3_ProcessExists(process) != 0 : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ProcessExists(process) != 0;
         }
 
         /// <summary>
@@ -524,10 +524,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="timeout">[optional] Specifies how long to wait (in seconds). Default is to wait indefinitely.</param>
         public static void ProcessWait(string process, int timeout) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_ProcessWait(process, timeout);
+                NativeMethods.AU3_ProcessWait(process, timeout);
             }
             else {
-                NativeMethods.AU3_ProcessWait(process, timeout);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ProcessWait(process, timeout);
             }
         }
 
@@ -538,10 +538,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="timeout">[optional] Specifies how long to wait (in seconds). Default is to wait indefinitely.</param>
         public static void ProcessWaitClose(string process, int timeout) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_ProcessWaitClose(process, timeout);
+                NativeMethods.AU3_ProcessWaitClose(process, timeout);
             }
             else {
-                NativeMethods.AU3_ProcessWaitClose(process, timeout);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ProcessWaitClose(process, timeout);
             }
         }
 
@@ -575,10 +575,10 @@ namespace DynamicXml.AutoItX3 {
         /// </param>
         public static void Run(string process, string dir, Visibility showflag) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_Run(process, dir, showflag);
+                NativeMethods.AU3_Run(process, dir, showflag);
             }
             else {
-                NativeMethods.AU3_Run(process, dir, showflag);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_Run(process, dir, showflag);
             }
         }
 
@@ -635,10 +635,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="text">The sequence of keys to send.</param>
         public static void Send(int mode, string text) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_Send(text, mode);
+                NativeMethods.AU3_Send(text, mode);
             }
             else {
-                NativeMethods.AU3_Send(text, mode);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_Send(text, mode);
             }
         }
 
@@ -668,7 +668,7 @@ namespace DynamicXml.AutoItX3 {
                 for(int a = 0; a < text.Length; a++) {
                     SetOptions("AuXWrapper.SendKeyDownDelay", rand.Next(10, 25));
                     Console.WriteLine(Convert.ToString(text[a]));
-                    AutoItX3.x64.NativeMethods.AU3_Send(text[a].ToString(), 0);
+                    NativeMethods.AU3_Send(text[a].ToString(), 0);
                     /* Bing_Bot.Macro.delay(rand.Next(speedMin, speedMax)); */
                 }
             }
@@ -676,7 +676,7 @@ namespace DynamicXml.AutoItX3 {
                 for(int a = 0; a < text.Length; a++) {
                     SetOptions("AuXWrapper.SendKeyDownDelay", rand.Next(10, 25));
                     Console.WriteLine(Convert.ToString(text[a]));
-                    NativeMethods.AU3_Send(text[a].ToString(), 0);
+                    global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_Send(text[a].ToString(), 0);
                     /* Bing_Bot.Macro.delay(rand.Next(speedMin, speedMax)); */
                 }
             }
@@ -700,10 +700,10 @@ namespace DynamicXml.AutoItX3 {
         /// </param>
         public static void SetOptions(string option, int value) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_AutoItSetOption(option, value);
+                NativeMethods.AU3_AutoItSetOption(option, value);
             }
             else {
-                NativeMethods.AU3_AutoItSetOption(option, value);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_AutoItSetOption(option, value);
             }
         }
 
@@ -784,10 +784,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="milliseconds">Amount of time to pause (in milliseconds).</param>
         public static void Sleep(int milliseconds) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_Sleep(milliseconds);
+                NativeMethods.AU3_Sleep(milliseconds);
             }
             else {
-                NativeMethods.AU3_Sleep(milliseconds);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_Sleep(milliseconds);
             }           
         }
 
@@ -799,10 +799,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="ycoord">[optional] The y position of the tooltip.</param>
         public static void ToolTip(string tip, int xcoord, int ycoord) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_ToolTip(tip, xcoord, ycoord);
+                NativeMethods.AU3_ToolTip(tip, xcoord, ycoord);
             }
             else {
-                NativeMethods.AU3_ToolTip(tip, xcoord, ycoord);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_ToolTip(tip, xcoord, ycoord);
             }
         }
 
@@ -830,10 +830,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="title">the complete title of the window to activate, case sensitive</param>
         public static void WinActivate(string title) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_WinActivate(title, string.Empty);
+                NativeMethods.AU3_WinActivate(title, string.Empty);
             }
             else {
-                NativeMethods.AU3_WinActivate(title, string.Empty);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinActivate(title, string.Empty);
             }
         }
 
@@ -844,12 +844,12 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="waitactivetimeout">[optional] Timeout in seconds</param>
         public static void WinActivate(string title, int waitactivetimeout) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_WinActivate(title, string.Empty);
-                AutoItX3.x64.NativeMethods.AU3_WinWaitActive(title, string.Empty, waitactivetimeout);
-            }
-            else {
                 NativeMethods.AU3_WinActivate(title, string.Empty);
                 NativeMethods.AU3_WinWaitActive(title, string.Empty, waitactivetimeout);
+            }
+            else {
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinActivate(title, string.Empty);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinWaitActive(title, string.Empty, waitactivetimeout);
             }
 
             System.Threading.Thread.Sleep(1000);
@@ -862,10 +862,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="text">[optional] The text of the window to activate.</param>
         public static void WinActivate(string title, string text) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_WinActivate(title, text);
+                NativeMethods.AU3_WinActivate(title, text);
             }
             else {
-                NativeMethods.AU3_WinActivate(title, text);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinActivate(title, text);
             }
         }
 
@@ -878,7 +878,7 @@ namespace DynamicXml.AutoItX3 {
         /// Failure: Returns 0 otherwise.
         /// </returns>
         public static int WinExists(string title) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_WinExists(title, string.Empty) : NativeMethods.AU3_WinExists(title, string.Empty);
+            return X64 ? NativeMethods.AU3_WinExists(title, string.Empty) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinExists(title, string.Empty);
         }
 
         /// <summary>
@@ -891,7 +891,7 @@ namespace DynamicXml.AutoItX3 {
         /// Failure: Returns 0 otherwise.
         /// </returns>
         public static int WinExists(string title, string text) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_WinExists(title, text) : NativeMethods.AU3_WinExists(title, text);
+            return X64 ? NativeMethods.AU3_WinExists(title, text) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinExists(title, text);
         }
 
         /// <summary>
@@ -905,10 +905,10 @@ namespace DynamicXml.AutoItX3 {
             //----------------------------------------------------------------------
             var retText = new byte[50];
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_WinGetHandle(title, string.Empty, retText, retText.Length);
+                NativeMethods.AU3_WinGetHandle(title, string.Empty, retText, retText.Length);
             }
             else {
-                NativeMethods.AU3_WinGetHandle(title, string.Empty, retText, retText.Length);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetHandle(title, string.Empty, retText, retText.Length);
             }
 
             //----------------------------------------------------------------------
@@ -930,10 +930,10 @@ namespace DynamicXml.AutoItX3 {
             var byteRetText = new byte[10000];
 
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_WinGetText(title, text, byteRetText, byteRetText.Length);
+                NativeMethods.AU3_WinGetText(title, text, byteRetText, byteRetText.Length);
             }
             else {
-                NativeMethods.AU3_WinGetText(title, text, byteRetText, byteRetText.Length);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetText(title, text, byteRetText, byteRetText.Length);
             }
 
             //----------------------------------------------------------------------
@@ -960,15 +960,15 @@ namespace DynamicXml.AutoItX3 {
         public static Position2D WinGetPos(string title, string text) {
             Position2D pos;
             if(X64) {
-                pos.Xpos = AutoItX3.x64.NativeMethods.AU3_WinGetPosX(title, text);
-                pos.Ypos = AutoItX3.x64.NativeMethods.AU3_WinGetPosY(title, text);
-                pos.Height = AutoItX3.x64.NativeMethods.AU3_WinGetPosHeight(title, text);
-                pos.Width = AutoItX3.x64.NativeMethods.AU3_WinGetPosWidth(title, text);
-            } else {
                 pos.Xpos = NativeMethods.AU3_WinGetPosX(title, text);
                 pos.Ypos = NativeMethods.AU3_WinGetPosY(title, text);
                 pos.Height = NativeMethods.AU3_WinGetPosHeight(title, text);
                 pos.Width = NativeMethods.AU3_WinGetPosWidth(title, text);
+            } else {
+                pos.Xpos = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetPosX(title, text);
+                pos.Ypos = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetPosY(title, text);
+                pos.Height = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetPosHeight(title, text);
+                pos.Width = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetPosWidth(title, text);
             }
 
             return pos;
@@ -984,11 +984,11 @@ namespace DynamicXml.AutoItX3 {
             int width;
             int height;
             if(X64) {
-                width = AutoItX3.x64.NativeMethods.AU3_WinGetPosWidth(title, string.Empty);
-                height = AutoItX3.x64.NativeMethods.AU3_WinGetPosHeight(title, string.Empty);
-            } else {
                 width = NativeMethods.AU3_WinGetPosWidth(title, string.Empty);
                 height = NativeMethods.AU3_WinGetPosHeight(title, string.Empty);
+            } else {
+                width = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetPosWidth(title, string.Empty);
+                height = global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinGetPosHeight(title, string.Empty);
             }
 
             WinMove(title, xcoord, ycoord, width, height);
@@ -1004,10 +1004,10 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="height">[optional] New height of the window.</param>
         public static void WinMove(string title, int xcoord, int ycoord, int width, int height) {
             if(X64) {
-                AutoItX3.x64.NativeMethods.AU3_WinMove(title, string.Empty, xcoord, ycoord, width, height);
+                NativeMethods.AU3_WinMove(title, string.Empty, xcoord, ycoord, width, height);
             }
             else {
-                NativeMethods.AU3_WinMove(title, string.Empty, xcoord, ycoord, width, height);
+                global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinMove(title, string.Empty, xcoord, ycoord, width, height);
             }
         }
 
@@ -1039,7 +1039,7 @@ namespace DynamicXml.AutoItX3 {
         /// <param name="title">The title of the window to check.</param>
         /// <returns>Good Question. Some status value?</returns>
         public static int WinWait(string title) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_WinWait(title, string.Empty, 3000) : NativeMethods.AU3_WinWait(title, string.Empty, 3000);
+            return X64 ? NativeMethods.AU3_WinWait(title, string.Empty, 3000) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinWait(title, string.Empty, 3000);
         }
 
         /// <summary>
@@ -1053,7 +1053,7 @@ namespace DynamicXml.AutoItX3 {
         /// Failure: Returns 0 if timeout occurred.
         /// </returns>
         public static int WinWaitActive(string title, string text, int timeout) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_WinWaitActive(title, text, timeout) : NativeMethods.AU3_WinWaitActive(title, text, timeout);
+            return X64 ? NativeMethods.AU3_WinWaitActive(title, text, timeout) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinWaitActive(title, text, timeout);
         }
 
         /// <summary>
@@ -1066,7 +1066,7 @@ namespace DynamicXml.AutoItX3 {
         /// Failure: Returns 0 if timeout occurred.
         /// </returns>
         public static int WinWaitActive(string title, int timeout) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_WinWaitActive(title, string.Empty, timeout) : NativeMethods.AU3_WinWaitActive(title, string.Empty, timeout);
+            return X64 ? NativeMethods.AU3_WinWaitActive(title, string.Empty, timeout) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinWaitActive(title, string.Empty, timeout);
         }
 
         /// <summary>
@@ -1078,7 +1078,7 @@ namespace DynamicXml.AutoItX3 {
         /// Failure: Returns 0 if timeout occurred.
         /// </returns>
         public static int WinWaitActive(string title) {
-            return X64 ? AutoItX3.x64.NativeMethods.AU3_WinWaitActive(title, string.Empty, 3000) : NativeMethods.AU3_WinWaitActive(title, string.Empty, 3000);
+            return X64 ? NativeMethods.AU3_WinWaitActive(title, string.Empty, 3000) : global::CoApp.Toolkit.AutoItX3.x86.NativeMethods.AU3_WinWaitActive(title, string.Empty, 3000);
         }
 
         #endregion

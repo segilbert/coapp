@@ -4,8 +4,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace DynamicXml.AutoItX3.x86 {
+namespace CoApp.Toolkit.AutoItX3.x86 {
     using System.Runtime.InteropServices;
+    using CoApp.Toolkit.AutoItX3;
 
     /// <summary>
     /// Native Code Access for the X86 version of the AutoItX3 library

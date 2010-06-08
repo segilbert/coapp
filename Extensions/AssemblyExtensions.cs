@@ -86,7 +86,7 @@ namespace CoApp.Toolkit.Extensions {
                     @"{0} {1} Version {2} for {3}
 {4}. All rights reserved
 {5}
--------------------------------------------------------------------------------".format(assembly.Company(), assembly.Title(), assembly.Version(), "x86", assembly.Copyright().Replace("©", "(c)"), assembly.Comments());
+-------------------------------------------------------------------------------".format(assembly.Company(), assembly.Title(), assembly.Version(), IntPtr.Size == 8? "x64":"x86", assembly.Copyright().Replace("©", "(c)"), assembly.Comments());
             }
             return logo;
         }
