@@ -827,6 +827,36 @@ function dir(path, rxFilter) {
     return null;
 }
 
+
+function tree(path, rxFilter) {
+    path = path || ".";
+    if( path.constructor == RegExp )  {
+        rxFilter = path;
+        path = ".";
+    }
+    rxFilter = rxFilter || /.*/i
+    if (typeof (rxFilter) == "string")
+        rxFilter = new RegExp(rxFilter);
+
+    var f = $$.fso.GetFolder(FormatArguments(path, arguments));
+    
+    if (f) {
+        var result = [];
+        
+        for( var e = new Enumerator(f.SubFolders); !e.atEnd(); e.moveNext()) {
+            var txt = "" + e.item();
+            if (rxFilter.exec(txt))
+                result[txt] = $$.fso.GetFolder(txt);
+                    
+            for(var each in set = tree( txt, rxFilter ) )
+                result[each] = set[each];
+        }
+        return result;
+    }
+    return null;
+}
+
+
 function which(filenameToFind) {
     filenameToFind = FormatArguments(arguments);
     if( exists(filenameToFind) )

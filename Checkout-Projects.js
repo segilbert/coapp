@@ -26,6 +26,18 @@ $$('"{$BZR}" branch lp:coapp-toolkit');
 Print('Checking out Scan tool...');
 $$('"{$BZR}" branch lp:coapp-scan');
 
+Print('Checking out mkProject tool...');
+$$('"{$BZR}" branch lp:coapp-mkproject');
+
+Print('Checking out mkPackage tool...');
+$$('"{$BZR}" branch lp:coapp-mkpackage');
+
+Print('Checking out mkSpec tool...');
+$$('"{$BZR}" branch lp:coapp-mkspec');
+
+Print('Checking out SmartManifest tool...');
+$$('"{$BZR}" branch lp:coapp-smartmanifest');
+
 
 function Fail(message) {
     Print("[{$LASTCMD}]");
