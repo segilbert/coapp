@@ -23,6 +23,10 @@ $$('"{$BZR}" branch lp:coapp-cli');
 Print('Checking out Toolkit...');
 $$('"{$BZR}" branch lp:coapp-toolkit');
 
+Print('Checking out Scan tool...');
+$$('"{$BZR}" branch lp:coapp-scan');
+
+
 function Fail(message) {
     Print("[{$LASTCMD}]");
     Print("---[StdOut]-----------");
