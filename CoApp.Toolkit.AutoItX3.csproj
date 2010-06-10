@@ -48,8 +48,12 @@
     <Compile Include="AutoItX3\x86\NativeMethods.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="AutoItX3\AutoItX3.dll" />
-    <Content Include="AutoItX3\AutoItX3_x64.dll" />
+    <Content Include="AutoItX3\AutoItX3.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="AutoItX3\AutoItX3_x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CoApp.Toolkit.csproj">
