@@ -38,6 +38,9 @@ $$('"{$BZR}" branch lp:coapp-mkspec');
 Print('Checking out SmartManifest tool...');
 $$('"{$BZR}" branch lp:coapp-smartmanifest');
 
+Print('Checking out Metadata directory...');
+$$('"{$BZR}" branch lp:coapp-metadata');
+
 
 function Fail(message) {
     Print("[{$LASTCMD}]");
