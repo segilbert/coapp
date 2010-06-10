@@ -441,7 +441,17 @@ var Collection =  {
                 push(e.item());
             return join(' ');
         }    
-    }
+    },
+    
+    ToQuotedString : function( collection ) {
+    with([]){
+        for (var e = new Enumerator(collection); !e.atEnd(); e.moveNext()) {
+            var eitem=e.item();
+            push(eitem.indexOf(' ') > -1 ? '"'+eitem+'"': eitem);
+        }
+        return join(' ');
+        }
+    }    
 };
 
 var Assert = {
@@ -494,7 +504,7 @@ var Assert = {
     },
     IsConsole: function() {
         if( !/CScript/i.exec(WScript.FullName) ) {
-            WScript.echo("This build script must be run from the console script processor\r\n\r\nYou can either type\r\n\r\n   cscript "+WScript.ScriptName+" \r\n\r\nat the command line, or type \r\n\r\n   cscript /H:CScript \r\n\r\nto set the default to the console script processor (recommended)")
+            WScript.echo("This script must be run from the console script processor\r\n\r\nYou can either type\r\n\r\n   cscript "+WScript.ScriptName+" \r\n\r\nat the command line, or type \r\n\r\n   cscript /H:CScript \r\n\r\nto set the default to the console script processor (recommended)")
             WScript.Quit();
         }
     },
@@ -827,6 +837,28 @@ function dir(path, rxFilter) {
     return null;
 }
 
+function files(path, rxFilter) {
+    path = path || ".";
+    if( path.constructor == RegExp )  {
+        rxFilter = path;
+        path = ".";
+    }
+    rxFilter = rxFilter || /.*/i
+    if (typeof (rxFilter) == "string")
+        rxFilter = new RegExp(rxFilter);
+
+    var f = $$.fso.GetFolder(FormatArguments(path, arguments));
+    if (f) {
+        var result = [];
+        for (var e = new Enumerator(f.Files); !e.atEnd(); e.moveNext()) {
+            var txt = "" + e.item();
+            if (rxFilter.exec(txt))
+                result[txt] = $$.fso.GetFile(txt); // index is filename, 
+        }
+        return result;
+    }
+    return null;
+}
 
 function tree(path, rxFilter) {
     path = path || ".";
@@ -850,6 +882,31 @@ function tree(path, rxFilter) {
                     
             for(var each in set = tree( txt, rxFilter ) )
                 result[each] = set[each];
+        }
+        return result;
+    }
+    return null;
+}
+
+function directories(path, rxFilter) {
+    path = path || ".";
+    if( path.constructor == RegExp )  {
+        rxFilter = path;
+        path = ".";
+    }
+    rxFilter = rxFilter || /.*/i
+    if (typeof (rxFilter) == "string")
+        rxFilter = new RegExp(rxFilter);
+
+    var f = $$.fso.GetFolder(FormatArguments(path, arguments));
+    
+    if (f) {
+        var result = [];
+        
+        for( var e = new Enumerator(f.SubFolders); !e.atEnd(); e.moveNext()) {
+            var txt = "" + e.item();
+            if (rxFilter.exec(txt))
+                result[txt] = $$.fso.GetFolder(txt);
         }
         return result;
     }

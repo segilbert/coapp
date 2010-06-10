@@ -1,3 +1,12 @@
 CoApp.5.0.ReSharper.user
 CoApp.sdf
 CoApp.suo
+coapp-cli
+coapp-engine
+coapp-metadata
+coapp-mkPackage
+coapp-mkProject
+coapp-mkSpec
+coapp-scan
+coapp-SmartManifest
+coapp-toolkit
