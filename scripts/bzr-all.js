@@ -26,6 +26,8 @@ switch( $Command ) {
         break;
         
     case "push":
+    case "merge":
+    case "pull":
         $CmdString = '"{$BZR}" {$Command} --directory {each} ';
         break;
         

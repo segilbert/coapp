@@ -38,7 +38,8 @@ var KnownLibraries = {
     RestorePoints:0,
     Speech:0,
     JSON:0,
-    MD5:0
+    MD5:0,
+    VHD:0
 };
 
 Function.prototype.Extend = function(fns){
@@ -200,8 +201,9 @@ $$.Extend( {
                 cmdline = cmdline.replace(/`/g,'"');
                 cmdline = cmdline.replace(/\\/g,'\\\\');
                 for(var each in KnownLibraries )
-                    if( cmdline.indexOf(each) > -1 )
+                    if( cmdline.indexOf(each) > -1 ) { 
                         Use(each);
+                    }
                 echo(eval(cmdline));
             }
         }
@@ -411,8 +413,9 @@ var Environment = {
             var t = typeof ($Globals[each]);
             if (t == 'string' || t == 'number') {
                 if (each.indexOf("$") == 0) {
-                    if (IsNullOrEmpty($Globals[each]))
-                        $$.procEnvironment.Remove(each.substring(1));
+                    if (IsNullOrEmpty($Globals[each])) try {
+                        $$.procEnvironment.Remove(each.substring(1)); 
+                        } catch( exc ) {} 
                     else
                         $$.procEnvironment(each.substring(1)) = $Globals[each];
                 }
