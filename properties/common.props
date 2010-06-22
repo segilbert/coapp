@@ -21,7 +21,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(BaseOutDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ext\include;$(BaseOutDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINDOWS;WINNT;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -33,7 +33,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>$(BaseOutDir)lib\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ext\lib;;$(BaseOutDir)lib\</AdditionalLibraryDirectories>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
