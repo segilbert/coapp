@@ -8,7 +8,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir>$(BaseOutDir)bin</OutDir>
+    <OutDir>$(BaseOutDir)bin\</OutDir>
     <IntDir>$(SolutionDir)intermediate\$(TargetPlatform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
