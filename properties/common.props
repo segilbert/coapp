@@ -3,16 +3,25 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="stage.props" />
   </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <BaseOutDir>$(SolutionDir)output\$(TargetPlatform)\$(Configuration)\</BaseOutDir>
+  </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir>$(SolutionDir)output\$(TargetPlatform)\$(Configuration)\bin\</OutDir>
+    <OutDir>$(BaseOutDir)</OutDir>
     <IntDir>$(SolutionDir)intermediate\$(TargetPlatform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <ItemGroup>
+    <BuildMacro Include="BaseOutDir">
+      <Value>$(BaseOutDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(OutDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BaseOutDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINDOWS;WINNT;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -23,6 +32,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
