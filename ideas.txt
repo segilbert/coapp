@@ -1,0 +1,103 @@
+
+coapp directory set <url>       sets the repository-directory to <url>
+coapp directory clear           removes the repository-directory 
+
+coapp repo list                 lists all the repositories in the directory and added locals
+coapp repo block <url>          blocks a repository that is in the directory 
+coapp repo add <url>            adds a localally recognized repo 
+coapp repo remove <url|name>    removes a repository <url> or by <name>
+
+coapp list packages             lists the installed packages
+coapp find <package*>           lists all the known packages that match 
+
+coapp install <package*>        installs the package <package>
+coapp install <url>             installs the package (or everything in a package feed) at <url>.
+
+coapp trim                      removes (non-app) packages that are not used or protected
+
+coapp update [package*]         updates a package (or everything not frozen)
+
+coapp set <package*> KEY VALUE  sets the value of a local property on a package
+coapp clear <package*> KEY      clears the value of a local property on a package
+
+coapp set package <package*> KEY VALUE  sets the value of a local property on a package
+coapp clear package <package*> KEY      clears the value of a local property on a package
+
+coapp set <table> FIELD VALUE
+
+coapp set --table=co_system_property directory=http://coapp.org
+coapp set directory http://coapp.org
+// UPDATE co_property SET value='http://coapp.org' WHERE key='directory'
+
+coapp set --table=co_pkg_property --where:name=grep frozen=true
+coapp set package grep frozen=true
+// UPDATE co_pkg_property SET frozen=true WHERE name=grep
+
+coapp list --table=co_repository 
+coapp list repository
+// SELECT * from co_repository 
+
+coapp add --table=co_repository name=codeplex url=http://codeplex.com/packages.atom.xml
+coapp add repository codeplex http://codeplex.com/packages.atom.xml 
+// INSERT INTO co_repository ( name, url ) VALUES ( 'codeplex', 'http://codeplex.com/packages.atom.xml' )
+
+coapp set repository codeplex block=true
+coapp set repository --where:name=codeplex block=true
+// UPDATE co_repository_property SET value=true WHERE name=codeplex, propertyname=block 
+
+coapp set package --where:name=grep frozen=true
+
+
+Known Local Properties:
+-----------------------
+    boolean protected           package can not be removed 
+    boolean frozen              package can not be updated 
+    boolean block               package can not be installed 
+
+    
+Tables:
+-----------------------
+    system 
+    repository
+    package 
+    
+    
+
+Syntatic Sugar:
+-----------------------
+coapp protect <package*>        coapp set <package*> protected true
+coapp unprotect <package*>      coapp set <package*> protected true
+
+
+
+A canoniacl package name is specified: 
+    [repo:]name[-MM.NN][.RR][.BB]
+
+where 
+    [repo:] is the common name (optionally specified)
+    name    is the package name
+    [-MM.NN] is the major/minor build number (optionally specified)
+    [RR] is the revision number (optionally specified)
+    [BB] is the build number (optionally specified)
+
+
+coapp set grep block true 
+
+
+
+
+coapp install apache
+coapp install coapp:apache
+coapp install apache-1.3
+coapp install apache-1.3.0.1
+coapp install coapp:notepad.*
+coapp install codeplex:phpsql
+
+coapp install http://foo.bar/package.msi 
+
+
+apt-get install {package}
+apt-get remove {package}
+apt-get --purge remove {package}
+
+apt-get update
