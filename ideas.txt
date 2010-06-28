@@ -25,27 +25,27 @@ coapp clear package <package*> KEY      clears the value of a local property on 
 
 coapp set <table> FIELD VALUE
 
-coapp set --table=co_system_property directory=http://coapp.org
+coapp set table=co_system_property directory=http://coapp.org
 coapp set directory http://coapp.org
 // UPDATE co_property SET value='http://coapp.org' WHERE key='directory'
 
-coapp set --table=co_pkg_property --where:name=grep frozen=true
+coapp set table=co_pkg_property where:name=grep frozen=true
 coapp set package grep frozen=true
 // UPDATE co_pkg_property SET frozen=true WHERE name=grep
 
-coapp list --table=co_repository 
+coapp list table=co_repository 
 coapp list repository
 // SELECT * from co_repository 
 
-coapp add --table=co_repository name=codeplex url=http://codeplex.com/packages.atom.xml
+coapp add table=co_repository name=codeplex url=http://codeplex.com/packages.atom.xml
 coapp add repository codeplex http://codeplex.com/packages.atom.xml 
 // INSERT INTO co_repository ( name, url ) VALUES ( 'codeplex', 'http://codeplex.com/packages.atom.xml' )
 
 coapp set repository codeplex block=true
-coapp set repository --where:name=codeplex block=true
+coapp set repository where:name=codeplex block=true
 // UPDATE co_repository_property SET value=true WHERE name=codeplex, propertyname=block 
 
-coapp set package --where:name=grep frozen=true
+coapp set package where:name=grep frozen=true
 
 
 Known Local Properties:
@@ -70,7 +70,7 @@ coapp unprotect <package*>      coapp set <package*> protected true
 
 
 
-A canoniacl package name is specified: 
+A canonical package name is specified: 
     [repo:]name[-MM.NN][.RR][.BB]
 
 where 
@@ -92,6 +92,8 @@ coapp install apache-1.3
 coapp install apache-1.3.0.1
 coapp install coapp:notepad.*
 coapp install codeplex:phpsql
+
+coapp install lp:gimp 
 
 coapp install http://foo.bar/package.msi 
 

@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright company="Codeplex Foundation">
+// <copyright company="CoApp Project">
 //     Copyright (c) 2010 Garrett Serack. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
@@ -16,8 +16,8 @@ Usage:
 
 CoApp-cli [options] <command> <parameters>
 
-    Options:
-    --------
+Options:
+--------
     --help                      this help
     --nologo                    don't display the logo
     --load-config=<file>        loads configuration from <file>
@@ -25,16 +25,76 @@ CoApp-cli [options] <command> <parameters>
 
     --pretend                   doesn't actually alter the system
 
+    --max-packages=<number>     overrides the maximum number of packages that
+                                can be installed at once (default 25)
     
-
-    Available Commands:
-    -------------------
-
-    install                     installs a package
-
-    remove                      removes a package
-
+    --override-protect          ignores any protect flags on packages 
+    --override-frozen           ignores any frozen flags on packages
+    --override-block            ignores any blocak flags on packages
     
+Package Commands
+----------------
+    list packages               lists the installed packages
+    find <package*>             lists all the known packages that match 
+
+    install <package*>...       installs the package <package>
+    install <msi-url>           gets the msi at <msi-url> and installs it
+    install <pkg-url>           gets the package feed at <pkg-url> and installs
+                                everything in the feed
+
+    uninstall <package*>...     removes the package <package>
+    uninstall <pkg-url>         removes all the packages in the feed
+
+    update                      updates all packages not frozen
+    update <package*>...        updates [package] to the latest version
+    update <pkg-url>            updates all packages from feed at <url>
+  
+    freeze <package*>...        places a freeze on the <package>
+    protect <package*>...       protects package <package> from being removed
+    block <package*>...         blocks <package> from being installed
+
+    unfreeze <package*>...      removes a freeze on the <package>
+    unprotect <package*>...     allows package <package> to be removed
+    unblock <package*>...       allows <package> to be installed
+
+    trim                        removes (non-app) packages that are not used 
+                                or protected
+
+Repository Commands
+-------------------
+    list repo                 lists all the repositories in the directory 
+                              and added locals
+                                
+    add <url>                 adds a localally recognized repository 
+    remove <url|name>         removes a repository <url> or by <name>
+    block <url|name>          blocks a repository at <url> even if it is 
+                              in the directory 
+    unblock <url|name>        unblocks a repository at <url> 
+                              
+
+Repository Directory Commands
+-----------------------------
+    show-directory            returns the URL for the repository directory
+    set-directory <url>       sets the URL repository directory 
+    clear-directory <url>     clear the URL for the repository directory
+
+Notes:
+-------
+<package*>      indicates a partial, wildcard or complete package name 
+
+                A canonical package name is specified: 
+                    
+                    [repo:]name[-MM.NN][.RR][.BB]
+
+                where 
+                
+                    [repo:] is the common name (optional)
+                    name    is the package name (supports wildcards [*,?])
+                    [-MM.NN] is the major/minor build number (optional)
+                    [RR] is the revision number (optional)
+                    [BB] is the build number (optional)
+
+<package*>...   indicates one or more packages    
 ";
 
         private static int Main(string[] args) {
@@ -94,13 +154,75 @@ CoApp-cli [options] <command> <parameters>
                         pkgManager.Install(parameters);
                         break;
 
-                    case "remove":
+                    case "uninstall":
                         if(parameters.Count < 1) {
-                            return Fail("Command 'remove' requires at least one package. \r\n\r\n    Use --help for command line help.");
+                            return Fail("Command 'uninstall' requires at least one package. \r\n\r\n    Use --help for command line help.");
                         }
 
                         pkgManager.Remove(parameters);
                         break;
+
+                    case "list":
+                        // dual purpose
+                        if(parameters.Count != 1) {
+                            return Fail("Command 'list' requires a parameter: either 'packages' or 'repo'. \r\n\r\n    Use --help for command line help.");
+                        }
+                        /*
+                        if(parameters[0].ToLower() == "packages")
+                            pkgManager.ListPackages();
+
+
+                        */
+
+                        break;
+                    
+                    case "find":
+                        if(parameters.Count < 1) {
+                            return Fail("Command 'find' requires at least one partial package name. \r\n\r\n    Use --help for command line help.");
+                        }
+
+                        break;
+
+                    case "update":
+                        break;
+
+                    case "freeze":
+                        break;
+                    case "unfreeze":
+                        break;
+                    case "protect":
+                        break;
+                    case "unprotect":
+                        break;
+                    case "block":
+                            // dual purpose
+                        break;
+                    case "unblock":
+                        break;
+
+                    case "trim":
+                        break;
+                    case "add":
+                        break;
+                    case "remove":
+                        break;
+
+                    case "show-directory":
+                        "Repository Directory URL: [{0}]".Print(pkgManager.RepostoryDirectoryUrl);
+                        break;
+                        
+                    case "set-directory":
+                        if(parameters.Count != 1) {
+                            return Fail("Command 'set-directory' requires the URL for the repository directory . \r\n\r\n    Use --help for command line help.");
+                        }
+
+                        pkgManager.RepostoryDirectoryUrl = parameters[0];
+                        "Repository Directory URL: [{0}]".Print(pkgManager.RepostoryDirectoryUrl);
+
+                        break;
+                    case "clear-directory":
+                        break;
+
 
                     default:
                         return Fail("Unknown Command [{0}]. \r\n\r\n    Use --help for command line help.".format(command));
@@ -118,7 +240,7 @@ CoApp-cli [options] <command> <parameters>
         public int Fail(string text, params object[] par) {
             Logo();
             using(new ConsoleColors(ConsoleColor.Red, ConsoleColor.Black))
-                Console.WriteLine("Error:{0}", text.format(par));
+                Console.WriteLine("Error: {0}", text.format(par));
             return 1;
         }
 

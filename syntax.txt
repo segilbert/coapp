@@ -1,0 +1,79 @@
+Package Commands
+----------------
+coapp list packages             lists the installed packages
+coapp find <package*>           lists all the known packages that match 
+
+coapp install <package*>...     installs the package <package>
+coapp install <msi-url>         gets the msi at <msi-url> and installs it
+coapp install <pkg-url>         gets the package feed at <pkg-url> and installs
+                                everything in the feed
+
+coapp uninstall <package*>...   removes the package <package>
+coapp uninstall <pkg-url>       removes all the packages in the feed
+
+coapp update                    updates all packages not frozen
+coapp update <package*>...      updates [package] to the latest version
+coapp update <pkg-url>          updates all packages from feed at <url>
+  
+coapp freeze <package*>...      places a freeze on the <package>
+coapp protect <package*>...     protects package <package> from being removed
+coapp block <package*>...       blocks <package> from being installed
+
+coapp unfreeze <package*>...    removes a freeze on the <package>
+coapp unprotect <package*>...   allows package <package> to be removed
+coapp unblock <package*>...     allows <package> to be installed
+
+coapp trim                      removes (non-app) packages that are not used 
+                                or protected
+
+Repository Commands
+-------------------
+coapp list repo                 lists all the repositories in the directory 
+                                and added locals
+                                
+coapp add <url>                 adds a localally recognized repository 
+coapp remove <url|name>         removes a repository <url> or by <name>
+coapp block <url>               blocks a repository at <url> even if it is 
+                                in the directory 
+
+Repository Directory Commands
+-----------------------------
+coapp show-directory            returns the URL for the repository directory
+coapp set-directory <url>       sets the URL repository directory 
+coapp clear-directory <url>     clear the URL for the repository directory
+
+
+Switches
+--------
+    --max-packages=<number>     overrides the maximum number of packages that
+                                can be installed at once (default 25)
+    
+    --override-protect          ignores any protect flags on packages 
+    --override-frozen           ignores any frozen flags on packages
+    --override-block            ignores any blocak flags on packages
+    
+    --dry-run                   lists what would be done. No changes are made
+    
+Notes:
+-------
+<package*>      indicates a partial, wildcard or complete package name 
+
+                A canonical package name is specified: 
+                    
+                    [repo:]name[-MM.NN][.RR][.BB]
+
+                where 
+                
+                    [repo:] is the common name (optional)
+                    name    is the package name (supports wildcards [*,?])
+                    [-MM.NN] is the major/minor build number (optional)
+                    [RR] is the revision number (optional)
+                    [BB] is the build number (optional)
+
+<package*>...   indicates one or more packages 
+
+
+
+
+[1]  - There should be a threshold for the number of packages that it will 
+       install without asking for a confirmation 
