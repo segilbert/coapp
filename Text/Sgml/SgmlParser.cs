@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------
-// <copyright company="Codeplex Foundation">
+// <copyright company="CoApp Project">
 //     Copyright (c) 2002 Microsoft Corporation. All rights reserved. (Chris Lovett)
 //     Copyright (c) 2007-2008 MindTouch. All rights reserved.
 //     Copyright (c) 2010 Garrett Serack . All rights reserved.

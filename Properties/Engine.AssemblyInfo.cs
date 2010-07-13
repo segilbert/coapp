@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright company="Codeplex Foundation">
+// <copyright company="CoApp Project">
 //     Copyright (c) 2010 Garrett Serack . All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("CoApp.Toolkit.Engine")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Codeplex Foundation")]
+[assembly: AssemblyCompany("CoApp Project")]
 [assembly: AssemblyProduct("CoApp.Toolkit")]
 [assembly: AssemblyCopyright("Copyright © Garrett Serack, CoApp Contributors 2010")]
 [assembly: AssemblyTrademark("")]
