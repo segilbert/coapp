@@ -13,7 +13,7 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(OutDir)include;$(DDKInstallPath)inc\crt\;$(DDKInstallPath)inc\api\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OutDir)include;$(DDKInstallPath)inc\crt\;$(DDKInstallPath)inc\api\;%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
   </ItemDefinitionGroup>

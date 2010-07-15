@@ -4,6 +4,12 @@
 /// http://www.opensource.org/licenses/ms-pl.html
 /// Courtesy of the Open Source Techology Center: http://port25.technet.com
 /// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+// <copyright>
+//     Copyright (c) 2010 Garrett Serack. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
 
 //-------------------------------------------------------------------------
 // Scripting library
@@ -33,13 +39,15 @@ var $StdOutString= "";
 var $StdErr= [];
 var $Children = [];
 var WatchExpression = /error/i;
+var FilterExpression = /XXXNOMATCH/i;
 
 var KnownLibraries = {
     RestorePoints:0,
     Speech:0,
     JSON:0,
     MD5:0,
-    VHD:0
+    VHD:0,
+    CSharp:0
 };
 
 Function.prototype.Extend = function(fns){
@@ -137,15 +145,17 @@ function $$(cmdline) {
         if (!proc.StdOut.AtEndOfStream) {
             x = proc.StdOut.ReadLine();
             $StdOut.push(x);
-            if (WatchExpression.exec(x))
+            if (WatchExpression.test(x) && !FilterExpression.test(x)) {
                 Print(x);
+            }
             Log(x);
         }
         else if (!proc.StdErr.AtEndOfStream) {
             x = proc.StdErr.ReadLine();
-            if (WatchExpression.exec(x))
-                Print(x)
             $StdErr.push(x);
+            if (WatchExpression.test(x) && !FilterExpression.test(x)) {
+                Print(x);
+            }  
                 
         }
         $$.WScript.Sleep(10);
@@ -175,6 +185,13 @@ $$.Extend( {
     
     Run : function(){
         return $$(FormatArguments(arguments));
+    },
+
+    RunQuiet : function(){
+        $Globals.FilterExpression = /.*/i;
+        var result = $$(FormatArguments(arguments));
+        $Globals.FilterExpression = /XXXNOMATCH/i;
+        return result;
     },
     
     RunAsync : function(cmdline) {
@@ -414,7 +431,7 @@ var Environment = {
             if (t == 'string' || t == 'number') {
                 if (each.indexOf("$") == 0) {
                     if (IsNullOrEmpty($Globals[each])) try {
-                        $$.procEnvironment.Remove(each.substring(1)); 
+                        $$.procEnvironment.Remove(each.substring(1));
                         } catch( exc ) {} 
                     else
                         $$.procEnvironment(each.substring(1)) = $Globals[each];
@@ -454,7 +471,7 @@ var Collection =  {
         }
         return join(' ');
         }
-    }    
+    }
 };
 
 var Assert = {
@@ -1046,7 +1063,6 @@ function ReplaceInFile( filename , searchForRx , replaceWith ) {
     replaceWith = FormatArguments( replaceWith , arguments );
     
     var text = ReadAll(filename);
-    // if(!searchForRx.exec(text) )
         text = text.replace(searchForRx,replaceWith);
     WriteAll(filename, text);  
 }
