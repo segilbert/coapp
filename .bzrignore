@@ -26,3 +26,7 @@ ipch
 intermediate
 output
 detours.opensdf
+PerpetualSync
+jscript-toolkit
+detours.sln
+CoApp.opensdf
