@@ -66,6 +66,7 @@ namespace CoApp.Toolkit.Extensions {
                     firstarg++;
                     continue;
                 }
+
                 if(!switches.ContainsKey(arg)) {
                     switches.Add(arg, new List<string>());
                 }
@@ -82,6 +83,8 @@ namespace CoApp.Toolkit.Extensions {
             }
 
             var param = "";
+            var category = "";
+
             string arg;
             int pos;
             if(File.Exists(file)) {
@@ -98,10 +101,18 @@ namespace CoApp.Toolkit.Extensions {
 
                     param = "";
 
+                    if(arg.IndexOf("[") == 0) {
+                        // category 
+                        category = arg.Substring(1, arg.IndexOf(']')-1).Trim();
+                        continue;
+                    }
+
                     if(string.IsNullOrEmpty(arg) || arg.StartsWith(";") || arg.StartsWith("#")) // comments
                     {
                         continue;
                     }
+                    
+                    arg = "{0}-{1}".format(arg, category);
 
                     if((pos = arg.IndexOf("=")) > -1) {
                         param = arg.Substring(pos + 1);
@@ -186,5 +197,49 @@ namespace CoApp.Toolkit.Extensions {
             }
             return parameters;
         }
+
+        public const string HelpConfigSyntax = @"
+Advanced Command Line Configuration Files 
+-----------------------------------------
+You may pass any double-dashed command line options in a configuration file 
+that is loaded with --load-config=<file>.
+
+Inside the configuration file, omit the double dash prefix; simply put 
+each option on a seperate line.
+
+On the command line:
+
+    --some-option=foo 
+
+would become the following inside the configuration file: 
+
+    some-option=foo
+
+Additionally, options in the configuration file can be grouped together in 
+categories. The category is simply syntatic sugar for simplifying the command
+line.
+
+Categories are declared with the square brackets: [] 
+
+The category is appended to options that follow its declaration.
+
+A configuration file expressed as:
+
+some-option=foo
+some-option=bar
+some-option=bin
+other-option=baz
+ignore-option=bug
+
+can also be expressed as:
+
+[option]
+some=foo
+some=bar
+some=bin
+other=baz
+ignore=bug
+
+";
     }
 }
