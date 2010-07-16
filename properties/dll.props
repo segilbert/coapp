@@ -6,8 +6,6 @@
   <ItemDefinitionGroup>
     <Link>
       <ImportLibrary>$(BaseOutDir)lib\$(TargetName).lib</ImportLibrary>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
 </Project>
