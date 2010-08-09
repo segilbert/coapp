@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+  <dependency>
+    <dependentAssembly>
+      <!-- example:
+        <assemblyIdentity type='win32' name='Microsoft.VC90.CRT' version='9.0.30729.1' processorArchitecture='*' publicKeyToken='1fc8b3b9a1e18e3b' /> 
+        
+        should be something like:
+        
+        <assemblyIdentity type='win32' name='coapp.engine' version='0.0.0.1' processorArchitecture='*' publicKeyToken='0000000000000000' /> 
+        
+        and we'll let policy fix the version (until we need to force-fix the version because of feature requirements.
+        
+        -->
+    </dependentAssembly>
+  </dependency>
+</assembly>
