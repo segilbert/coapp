@@ -17,11 +17,14 @@ var $LOGFILENAME = "{$COAPP_DIR}\\script.log";
 Print('Checking out Engine...');
 $$('"{$BZR}" branch lp:coapp-engine');
 
-Print('Checking out Cli...');
-$$('"{$BZR}" branch lp:coapp-cli');
+Print('Checking out Bootstrap...');
+$$('"{$BZR}" branch lp:coapp-bootstrap');
 
 Print('Checking out Toolkit...');
 $$('"{$BZR}" branch lp:coapp-toolkit');
+
+Print('Checking out Cli...');
+$$('"{$BZR}" branch lp:coapp-cli');
 
 Print('Checking out Scan tool...');
 $$('"{$BZR}" branch lp:coapp-scan');
@@ -37,9 +40,6 @@ $$('"{$BZR}" branch lp:coapp-mkspec');
 
 Print('Checking out SmartManifest tool...');
 $$('"{$BZR}" branch lp:coapp-smartmanifest');
-
-Print('Checking out Metadata directory...');
-$$('"{$BZR}" branch lp:coapp-metadata');
 
 
 function Fail(message) {
