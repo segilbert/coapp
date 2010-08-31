@@ -4,12 +4,12 @@
     <Import Project="stage.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros">
-    <BaseOutDir>$(SolutionDir)output\$(TargetPlatform)\$(Configuration)\</BaseOutDir>
+    <BaseOutDir>$(SolutionDir)..\output\$(TargetPlatform)\$(Configuration)\</BaseOutDir>
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir>$(BaseOutDir)bin\</OutDir>
-    <IntDir>$(SolutionDir)intermediate\$(TargetPlatform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir>$(SolutionDir)..\intermediate\$(TargetPlatform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemGroup>
@@ -26,11 +26,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>$(SolutionDir)ext\lib;;$(BaseOutDir)lib\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ext\lib;$(BaseOutDir)lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>

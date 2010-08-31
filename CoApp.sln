@@ -1,34 +1,34 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit", "coapp-toolkit\CoApp.Toolkit.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit", "..\coapp-toolkit\CoApp.Toolkit.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.CLI", "coapp-cli\CoApp.CLI.csproj", "{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.CLI", "..\coapp-cli\CoApp.CLI.csproj", "{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC} = {8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.AutoItX3", "coapp-toolkit\CoApp.Toolkit.AutoItX3.csproj", "{A126ABBC-D13E-432E-9714-4A1BEF84EE89}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.AutoItX3", "..\coapp-toolkit\CoApp.Toolkit.AutoItX3.csproj", "{A126ABBC-D13E-432E-9714-4A1BEF84EE89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Unsafe", "coapp-toolkit\CoApp.Toolkit.Unsafe.csproj", "{59D1DBB3-5848-4026-9523-BBC7618B7B77}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Unsafe", "..\coapp-toolkit\CoApp.Toolkit.Unsafe.csproj", "{59D1DBB3-5848-4026-9523-BBC7618B7B77}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.ASPNetHost", "coapp-toolkit\CoApp.Toolkit.ASPNetHost.csproj", "{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.ASPNetHost", "..\coapp-toolkit\CoApp.Toolkit.ASPNetHost.csproj", "{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Engine", "coapp-toolkit\CoApp.Toolkit.Engine.csproj", "{CC917E10-0068-4E91-8D3D-76CB446F7E43}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Engine", "..\coapp-toolkit\CoApp.Toolkit.Engine.csproj", "{CC917E10-0068-4E91-8D3D-76CB446F7E43}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-engine", "coapp-engine\coapp-engine.vcxproj", "{A6224D3F-5682-43FB-8817-EB8EBE011A66}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-engine", "..\coapp-engine\coapp-engine.vcxproj", "{A6224D3F-5682-43FB-8817-EB8EBE011A66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Scan", "coapp-scan\CoApp.Scan.csproj", "{5E958A69-637E-4807-8DCE-5DDA6B254AFE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Scan", "..\coapp-scan\CoApp.Scan.csproj", "{5E958A69-637E-4807-8DCE-5DDA6B254AFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.mkPackage", "coapp-mkPackage\CoApp.mkPackage.csproj", "{5E958A69-8192-4807-8DCE-5DDA6B254AFE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.mkPackage", "..\coapp-mkPackage\CoApp.mkPackage.csproj", "{5E958A69-8192-4807-8DCE-5DDA6B254AFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.mkProject", "coapp-mkProject\CoApp.mkProject.csproj", "{BDC4A28C-B786-43FE-B14F-AB411403B49B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.mkProject", "..\coapp-mkProject\CoApp.mkProject.csproj", "{BDC4A28C-B786-43FE-B14F-AB411403B49B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.mkSpec", "coapp-mkSpec\CoApp.mkSpec.csproj", "{068134AB-30BD-4C0A-B842-1309236C79C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.mkSpec", "..\coapp-mkSpec\CoApp.mkSpec.csproj", "{068134AB-30BD-4C0A-B842-1309236C79C8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.SmartManifest", "coapp-SmartManifest\CoApp.SmartManifest.csproj", "{33552499-10E3-49DD-9079-EF5D60DED624}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.SmartManifest", "..\coapp-SmartManifest\CoApp.SmartManifest.csproj", "{33552499-10E3-49DD-9079-EF5D60DED624}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-bootstrap", "coapp-bootstrap\coapp-bootstrap.vcxproj", "{7CA121E2-DA8A-4318-92FA-14101826F04C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-bootstrap", "..\coapp-bootstrap\coapp-bootstrap.vcxproj", "{7CA121E2-DA8A-4318-92FA-14101826F04C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

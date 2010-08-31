@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="UserMacros">
-    <DDK_CRT>$(DDKInstallPath)lib\Crt\$(DDKPlatform)\safecrtnt.lib;$(DDKInstallPath)lib\Crt\$(DDKPlatform)\msvcrt.lib</DDK_CRT>
+    <DDK_CRT>$(DDKInstallPath)lib\Crt\$(DDKPlatform)\safecrtnt.lib;$(DDKInstallPath)lib\Crt\$(DDKPlatform)\msvcrt$(D_FOR_DEBUG).lib</DDK_CRT>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>

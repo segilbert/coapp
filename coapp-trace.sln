@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-trace", "coapp-trace\coapp-trace.vcxproj", "{28647173-877A-46DD-AF8F-560F4A13E019}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-trace", "..\coapp-trace\coapp-trace.vcxproj", "{28647173-877A-46DD-AF8F-560F4A13E019}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A78AC150-FED4-4A87-A5D9-E99AB5E316AB} = {A78AC150-FED4-4A87-A5D9-E99AB5E316AB}
+		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2} = {4D4611C4-EDEA-4F57-AD84-774C9BB946D2}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detoured", "detours\detoured.vcxproj", "{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detoured", "..\detours\detoured.vcxproj", "{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours", "detours\detours.vcxproj", "{A78AC150-FED4-4A87-A5D9-E99AB5E316AB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours", "..\detours\detours.vcxproj", "{A78AC150-FED4-4A87-A5D9-E99AB5E316AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "trace", "coapp-trace\trace.vcxproj", "{3CC911A1-A40F-4820-B2CF-CA76357E45D0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "trace", "..\coapp-trace\trace.vcxproj", "{3CC911A1-A40F-4820-B2CF-CA76357E45D0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A78AC150-FED4-4A87-A5D9-E99AB5E316AB} = {A78AC150-FED4-4A87-A5D9-E99AB5E316AB}
 		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2} = {4D4611C4-EDEA-4F57-AD84-774C9BB946D2}

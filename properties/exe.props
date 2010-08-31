@@ -3,7 +3,9 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="common.props" />
   </ImportGroup>
+  <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile />
+    <Link />
   </ItemDefinitionGroup>
 </Project>
