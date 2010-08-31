@@ -9,8 +9,14 @@ namespace CoApp.cli {
     using Toolkit.Engine;
     using Toolkit.Extensions;
 
+    /// <summary>
+    ///     Main Program for command line coapp tool
+    /// </summary>
     internal class Program {
-        private const string help = @"
+        /// <summary>
+        /// Command line help information
+        /// </summary>
+        private const string HelpMessage = @"
 Usage:
 -------
 
@@ -36,6 +42,7 @@ Package Commands
 ----------------
     list packages               lists the installed packages
     find <package*>             lists all the known packages that match 
+    show 
 
     install <package*>...       installs the package <package>
     install <msi-url>           gets the msi at <msi-url> and installs it
@@ -97,16 +104,32 @@ Notes:
 <package*>...   indicates one or more packages    
 ";
 
+        /// <summary>
+        ///     Main entrypoint for CLI.
+        /// </summary>
+        /// <param name="args">
+        /// The command line arguments
+        /// </param>
+        /// <returns>
+        ///     int value representing the ERRORLEVEL.
+        /// </returns>
         private static int Main(string[] args) {
-            return new Program().main(args);
+            return new Program().Startup(args);
         }
 
-        private int main(string[] args) {
+        /// <summary>
+        ///     The (non-static) startup method 
+        /// </summary>
+        /// <param name="args">
+        /// The command line arguments.
+        /// </param>
+        /// <returns>
+        ///     Process return code.
+        /// </returns>
+        private int Startup(string[] args) {
             var pkgManager = new PackageManager();
             var options = args.Switches();
             var parameters = args.Parameters();
-
-            #region Parse Options 
 
             foreach(var arg in options.Keys) {
                 var argumentParameters = options[arg];
@@ -123,7 +146,7 @@ Notes:
                         break;
 
                     case "nologo":
-                        this.Assembly().SetLogo("");
+                        this.Assembly().SetLogo(string.Empty);
                         break;
 
                     case "help":
@@ -133,9 +156,8 @@ Notes:
                         return Fail("Unknown parameter [--{0}]", arg);
                 }
             }
-            Logo();
 
-            #endregion
+            Logo();
 
             if(parameters.Count < 1) {
                 return Fail("Missing Command. \r\n\r\n    Use --help for command line help.");
@@ -167,6 +189,7 @@ Notes:
                         if(parameters.Count != 1) {
                             return Fail("Command 'list' requires a parameter: either 'packages' or 'repo'. \r\n\r\n    Use --help for command line help.");
                         }
+
                         /*
                         if(parameters[0].ToLower() == "packages")
                             pkgManager.ListPackages();
@@ -223,7 +246,6 @@ Notes:
                     case "clear-directory":
                         break;
 
-
                     default:
                         return Fail("Unknown Command [{0}]. \r\n\r\n    Use --help for command line help.".format(command));
                 }
@@ -237,24 +259,51 @@ Notes:
 
         #region fail/help/logo
 
+        /// <summary>
+        ///     Displays a failure message.
+        /// </summary>
+        /// <param name="text">
+        /// The text format string.
+        /// </param>
+        /// <param name="par">
+        /// The parameters for the formatted string.
+        /// </param>
+        /// <returns>
+        ///     returns 1 (usually passed out as the process end code)
+        /// </returns>
         public int Fail(string text, params object[] par) {
             Logo();
-            using(new ConsoleColors(ConsoleColor.Red, ConsoleColor.Black))
+            using(new ConsoleColors(ConsoleColor.Red, ConsoleColor.Black)) {
                 Console.WriteLine("Error: {0}", text.format(par));
+            }
+
             return 1;
         }
 
+        /// <summary>
+        ///     Displays the program help.
+        /// </summary>
+        /// <returns>
+        ///     returns 0.
+        /// </returns>
         private int Help() {
             Logo();
-            using(new ConsoleColors(ConsoleColor.White, ConsoleColor.Black))
-                help.Print();
+            using (new ConsoleColors(ConsoleColor.White, ConsoleColor.Black)) {
+                HelpMessage.Print();
+            }
+
             return 0;
         }
 
+        /// <summary>
+        ///     Displays the program logo.
+        /// </summary>
         private void Logo() {
-            using(new ConsoleColors(ConsoleColor.Cyan, ConsoleColor.Black))
+            using (new ConsoleColors(ConsoleColor.Cyan, ConsoleColor.Black)) {
                 this.Assembly().Logo().Print();
-            this.Assembly().SetLogo("");
+            }
+
+            this.Assembly().SetLogo(string.Empty);
         }
 
         #endregion
