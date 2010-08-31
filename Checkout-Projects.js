@@ -9,6 +9,7 @@ var $BZR = Assert.Executable("bzr.exe");
 
 // change to the directory where this script is.
 var $COAPP_DIR = cd(Assert.Folder($ScriptPath));
+$COAPP_DIR = cd("..");
 
 //Log File
 var $LOGFILENAME = "{$COAPP_DIR}\\script.log";
