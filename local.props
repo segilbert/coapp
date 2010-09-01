@@ -3,31 +3,23 @@
   <PropertyGroup Label="UserMacros"  Condition=" Exists('c:\WinDDK\7600.16385.0\license.rtf')" >
     <DDKInstallPath>C:\WinDDK\7600.16385.0\</DDKInstallPath>
   </PropertyGroup>
-  
   <PropertyGroup Label="UserMacros"  Condition=" Exists('c:\WinDDK\7600.16385.1\license.rtf')" >
     <DDKInstallPath>C:\WinDDK\7600.16385.1\</DDKInstallPath>
   </PropertyGroup>
-  
   <PropertyGroup Label="UserMacros">
     <CommonOutputDir>$(SolutionDir)..\</CommonOutputDir>
-    <!-- 
+    <!--
     if you want it all to end up in a subdir of the solution folder:
     <CommonOutputDir>$(SolutionDir)..\coapp-solution\</CommonOutputDir>
     -->
-    
   </PropertyGroup>
-
-
-
   <ItemGroup>
     <BuildMacro Include="DDKInstallPath">
       <Value>$(DDKInstallPath)</Value>
     </BuildMacro>
-    
     <BuildMacro Include="CommonOutputDir">
       <Value>$(CommonOutputDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
-    
   </ItemGroup>
 </Project>
