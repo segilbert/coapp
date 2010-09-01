@@ -4,12 +4,12 @@
     <Import Project="stage.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros">
-    <BaseOutDir>$(SolutionDir)..\output\$(TargetPlatform)\$(Configuration)\</BaseOutDir>
+    <BaseOutDir>$(CommonOutputDir)output\$(TargetPlatform)\$(Configuration)\</BaseOutDir>
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir>$(BaseOutDir)bin\</OutDir>
-    <IntDir>$(SolutionDir)..\intermediate\$(TargetPlatform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir>$(CommonOutputDir)\intermediate\$(TargetPlatform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemGroup>
