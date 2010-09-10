@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.mkSpec", "..\coapp-mk
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.SmartManifest", "..\coapp-SmartManifest\CoApp.SmartManifest.csproj", "{33552499-10E3-49DD-9079-EF5D60DED624}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "coapp-testpackagemaker", "..\coapp-testpackagemaker\coapp-testpackagemaker.csproj", "{24200A95-ABD9-4301-B54B-3A94FC9AD509}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -122,6 +124,14 @@ Global
 		{33552499-10E3-49DD-9079-EF5D60DED624}.Release|x64.Build.0 = Release|x64
 		{33552499-10E3-49DD-9079-EF5D60DED624}.Release|x86.ActiveCfg = Release|x86
 		{33552499-10E3-49DD-9079-EF5D60DED624}.Release|x86.Build.0 = Release|x86
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Debug|x64.ActiveCfg = Debug|x64
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Debug|x64.Build.0 = Debug|x64
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Debug|x86.ActiveCfg = Debug|x86
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Debug|x86.Build.0 = Debug|x86
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Release|x64.ActiveCfg = Release|x64
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Release|x64.Build.0 = Release|x64
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Release|x86.ActiveCfg = Release|x86
+		{24200A95-ABD9-4301-B54B-3A94FC9AD509}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
