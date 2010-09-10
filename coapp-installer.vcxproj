@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{7CA121E2-DA8A-4318-92FA-14101826F04C}</ProjectGuid>
+    <ProjectGuid>{7CA121E2-DA8A-4318-9123-14101826F04C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>coappbootstrap</RootNamespace>
+    <RootNamespace>coappinstaller</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -56,7 +56,6 @@
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\debug.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -65,7 +64,6 @@
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\debug.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -74,7 +72,6 @@
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\release.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -83,7 +80,6 @@
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\release.props" />
     <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -189,7 +185,7 @@
   <ItemGroup>
     <ClCompile Include="BootstrapGUI.c" />
     <ClCompile Include="BootstrapUtility.c" />
-    <ClCompile Include="CoAppBootstrap.c" />
+    <ClCompile Include="CoAppinstaller.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="bitmap1.bmp" />
@@ -202,6 +198,7 @@
   <ItemGroup>
     <ClInclude Include="BootstrapGUI.h" />
     <ClInclude Include="BootstrapUtility.h" />
+    <ClInclude Include="CoAppEnginePrototypes.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
