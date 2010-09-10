@@ -16,10 +16,41 @@
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Diagnostics;
+    using System.IO;
     using System.Reflection;
 
     public static class AssemblyExtensions {
         private static string logo;
+
+
+        // warning: case sensitive. 
+        public static string ExtractFileResourceToTemp(this Assembly assembly, string name) {
+            var tempPath = Path.Combine(Path.GetTempPath(), name);
+            var s = assembly.GetManifestResourceStream(name);
+            if(s == null) {
+                // not specified exactly
+                var n = assembly.GetManifestResourceNames();
+                foreach(var each in n) {
+                    if( each.EndsWith("."+name)) {
+                        name = each;
+                        break;
+                    }
+                }
+            }
+            return ExtractFileResourceToPath(assembly, name, tempPath);
+        }
+
+        public static string ExtractFileResourceToPath(this Assembly assembly, string name, string filePath) {
+            var s = assembly.GetManifestResourceStream(name);
+            var buf = new byte[s.Length];
+
+            var targetFile = new FileStream(filePath, FileMode.Create);
+            var sz = s.Read(buf, 0, buf.Length);
+            targetFile.Write(buf, 0, sz);
+            s.Close();
+            targetFile.Close();
+            return filePath;
+        }
 
         public static Assembly Assembly(this object obj) {
             return obj.GetType().Assembly;

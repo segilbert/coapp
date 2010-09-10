@@ -23,7 +23,7 @@ namespace CoApp.Toolkit.Utility
     public class ProcessUtility
     {
         private Process currentProcess;
-        private readonly string executable;
+        public readonly string Executable;
 
         private StringBuilder sErr = new StringBuilder();
         private StringBuilder sOut = new StringBuilder();
@@ -82,7 +82,7 @@ namespace CoApp.Toolkit.Utility
 
         public ProcessUtility(string filename)
         {
-            executable = filename;
+            Executable = filename;
         }
 
         public void WaitForExit()
@@ -100,7 +100,7 @@ namespace CoApp.Toolkit.Utility
             sErr = new StringBuilder();
             sOut = new StringBuilder();
 
-            currentProcess = new Process { StartInfo = { FileName = executable, Arguments = string.Format(arguments, args), WorkingDirectory = Environment.CurrentDirectory, RedirectStandardError = true, RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false } };
+            currentProcess = new Process { StartInfo = { FileName = Executable, Arguments = string.Format(arguments, args), WorkingDirectory = Environment.CurrentDirectory, RedirectStandardError = true, RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false } };
 
             currentProcess.ErrorDataReceived += CurrentProcess_ErrorDataReceived;
             currentProcess.OutputDataReceived += CurrentProcess_OutputDataReceived;
@@ -121,7 +121,7 @@ namespace CoApp.Toolkit.Utility
             catch (Exception e)
             {
                 currentProcess = null;
-                sErr.AppendFormat("Failed to execute program [{0}]\r\n   {1}", executable, e.Message);
+                sErr.AppendFormat("Failed to execute program [{0}]\r\n   {1}", Executable, e.Message);
                 return 100;
             }
 
@@ -139,7 +139,7 @@ namespace CoApp.Toolkit.Utility
             catch (Exception e)
             {
                 currentProcess = null;
-                sErr.AppendFormat("Failed to execute program [{0}]\r\n   {1}", executable, e.Message);
+                sErr.AppendFormat("Failed to execute program [{0}]\r\n   {1}", Executable, e.Message);
                 return 100;
             }
 

@@ -111,8 +111,8 @@ namespace CoApp.Toolkit.Extensions {
                     {
                         continue;
                     }
-                    
-                    arg = "{0}-{1}".format(arg, category);
+
+                    arg = "{0}-{1}".format(category, arg);
 
                     if((pos = arg.IndexOf("=")) > -1) {
                         param = arg.Substring(pos + 1);
