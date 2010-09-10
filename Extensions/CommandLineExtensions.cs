@@ -112,6 +112,7 @@ namespace CoApp.Toolkit.Extensions {
                         continue;
                     }
 
+                    if(!string.IsNullOrEmpty(category))
                     arg = "{0}-{1}".format(category, arg);
 
                     if((pos = arg.IndexOf("=")) > -1) {
