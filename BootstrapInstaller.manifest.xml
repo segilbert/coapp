@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+  <dependency>
+    <dependentAssembly>
+      <!-- CoApp uses this manifest to find the -->
+      <assemblyIdentity type="win32" name="coapp-engine" version="1.0.0.0" processorArchitecture="*" publicKeyToken="0da32de74420310f" language="*" />
+    </dependentAssembly>
+  </dependency>
+</assembly>

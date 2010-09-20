@@ -24,6 +24,7 @@
 #define BUFSIZE				8192
 
 HWND StatusDialog = 0;
+BOOL Ready = FALSE;
 
 void SetStatusMessage(  const wchar_t* format, ... ) {
 	va_list args;
@@ -141,6 +142,8 @@ int ShowGUI( HINSTANCE hInstance ) {
 	// set Large Message Text Font
 	SendMessage( GetDlgItem( StatusDialog, IDC_STATICTEXT3), WM_SETFONT, (WPARAM)bigTextFont ,TRUE);
 	SetLargeMessageText(L"Installing CoApp...");
+
+	Ready = TRUE;
 
 	// main thread message pump.
 	while ((status = GetMessage(& message, 0, 0, 0)) != 0){

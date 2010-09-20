@@ -23,7 +23,8 @@
 
 #define BUFSIZE 8192
 #define FINISH(text_msg) {/* LogMessage(text_msg); */ goto fin;}
-
+void SetProgressValue( int percentage );
+void SetStatusMessage(  const wchar_t* format, ... );
 
 wchar_t* DuplicateString( const wchar_t* text ) {
 	size_t size;
@@ -61,55 +62,67 @@ wchar_t* DuplicateString( const wchar_t* text ) {
 	return result;
 }
 
+wchar_t* GetPathFromRegistry() {
+	LSTATUS status;
+	HKEY key;
+	int index=0;
+	wchar_t* name = (wchar_t*)malloc(BUFSIZE);
+	wchar_t* value = (wchar_t*)malloc(BUFSIZE);
+	DWORD nameSize = BUFSIZE;
+	DWORD valueSize = BUFSIZE;
+	DWORD dataType = REG_SZ;
+
+	status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\CoApp",&key);
+	if( status != ERROR_SUCCESS ) {
+		status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Wow6432Node",&key);
+		if( status != ERROR_SUCCESS )
+			goto release_value;
+
+	}
+
+	do {
+
+		status = RegEnumValue(key, index, name, &nameSize, NULL, &dataType,(LPBYTE)value, &valueSize);
+		if( status != ERROR_SUCCESS )
+			goto release_value;
+		
+		if( lstrcmpi(L"CoAppInstaller", name) == 0 )
+			goto release_name;
+
+		index++;
+	}while( status != ERROR_SUCCESS );
+
+
+release_value:  // called when the keys don't exist.
+		free(value);
+		value = NULL;
+
+release_name:
+		free(name);
+		name = NULL;
+		
+	return value;
+
+}
+
 wchar_t* GetModulePath( HMODULE module ) {
-	wchar_t* result = NULL;
+	wchar_t* result = (wchar_t*)malloc(BUFSIZE);
+	wchar_t* position = NULL;
+	int length=0;
 
-	PASSEMBLY_FILE_DETAILED_INFORMATION pAssemblyInfo = NULL;
-	ACTIVATION_CONTEXT_QUERY_INDEX QueryIndex;
-	BOOL fSuccess = FALSE;
-	SIZE_T cbRequired;
-	HANDLE hActCtx = INVALID_HANDLE_VALUE;
-	BYTE bTemporaryBuffer[4096];
-	PVOID pvDataBuffer = (PVOID)bTemporaryBuffer;
-	SIZE_T cbAvailable = sizeof(bTemporaryBuffer);
+	ZeroMemory(result, BUFSIZE);
+	
 
-	// Request the first file in the root assembly
-	QueryIndex.ulAssemblyIndex = 1;
-	QueryIndex.ulFileIndexInAssembly = 0;
+	length = GetModuleFileName(module, result, BUFSIZE);
+	position = result+length;
+	while( position >= result && position[0] != L'\\')
+		position--;
+	position[1] = 0;
 
-	// Attempt to use our stack-based buffer first - if that's not large
-	// enough, allocate from the heap and try again.
-	fSuccess = QueryActCtxW( QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE,  module,  (PVOID)&QueryIndex,  FileInformationInAssemblyOfAssemblyInActivationContext, pvDataBuffer, cbAvailable, &cbRequired);
-
-	// Failed, because the buffer was too small.
-	if (!fSuccess && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-		// Allocate what we need from the heap - fail if there isn't enough memory to do so.        
-		pvDataBuffer = malloc(cbRequired);
-
-		if (pvDataBuffer == NULL) {
-			// ("Unable to allocate buffer in GetModulePath");
-			goto fin;
-		}
-
-		cbAvailable = cbRequired;
-
-		// If this fails again, exit out.
-		fSuccess = QueryActCtxW( QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE,  module, (PVOID)&QueryIndex, FileInformationInAssemblyOfAssemblyInActivationContext,pvDataBuffer, cbAvailable, &cbRequired);
-	}
-
-	if (fSuccess) {
-		// Now that we've found the assembly info, cast our target buffer back to
-		// the assembly info pointer.  Use pAssemblyInfo->lpFileName
-		pAssemblyInfo = (PASSEMBLY_FILE_DETAILED_INFORMATION)pvDataBuffer;
-	}
-
-fin:
-
-	if (pvDataBuffer && (pvDataBuffer != bTemporaryBuffer)) {
-        free(pvDataBuffer);
-    }
 	return result;
 }
+
+
 
 
 ///
@@ -122,7 +135,6 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 
 	wchar_t urlPath[BUFSIZE];
 	wchar_t urlHost[BUFSIZE];
-
 	void* pszOutBuffer;
 
 	HINTERNET  session = NULL;
@@ -131,6 +143,8 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	DWORD bytesDownloaded = 0;
 	DWORD bytesAvailable = 0;
 	DWORD bytesWritten = 0;
+	DWORD contentLength;
+	DWORD tmp = sizeof(DWORD);
 	HANDLE localFile;
 
 	ZeroMemory(&urlComponents, sizeof(urlComponents));
@@ -144,8 +158,11 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	if(!WinHttpCrackUrl(URL, (DWORD)wcslen(URL), 0, &urlComponents))
 		FINISH( L"URL not valid" );
 
+	SetProgressValue( 15 );
 	wcsncpy_s( urlHost , BUFSIZE, URL+urlComponents.dwSchemeLength+3 ,urlComponents.dwHostNameLength );
 	wcsncpy_s( urlPath , BUFSIZE, URL+urlComponents.dwSchemeLength+urlComponents.dwHostNameLength+3, urlComponents.dwUrlPathLength );
+
+	SetStatusMessage(L"Contacting Server");
 
 	// Use WinHttpOpen to obtain a session handle.
 	if(!(session = WinHttpOpen( L"CoAppBootstrapper/1.0",  WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0)))
@@ -155,6 +172,7 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	if (!(connection = WinHttpConnect( session, urlHost, urlComponents.nPort, 0)))
 		FINISH( L"Unable to connect to URL for download" );
 
+	SetProgressValue( 20 );
 	// Create an HTTP request handle.
 	if (!(request = WinHttpOpenRequest( connection, L"GET",urlPath , NULL, WINHTTP_NO_REFERER,  WINHTTP_DEFAULT_ACCEPT_TYPES, 0)))
 		FINISH( L"Unable to open request for download" );
@@ -163,12 +181,19 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	if(!(WinHttpSendRequest( request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)))
 		FINISH( L"Unable to send request for download" );
  
+	SetProgressValue( 25 );
 	// End the request.
 	if(!(WinHttpReceiveResponse( request, NULL)))
 		FINISH( L"Unable to receive response for download" );
 
+	
 	if( INVALID_HANDLE_VALUE == (localFile = CreateFile(destinationFilename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,  FILE_ATTRIBUTE_NORMAL,NULL)))
 		FINISH( (L"Unable to create output file [%s]",destinationFilename ));
+
+	SetStatusMessage(L"Downloading");
+
+	WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &contentLength, &tmp , NULL);
+	tmp=0;
 
 	// Keep checking for data until there is nothing left.
 	do  {
@@ -192,8 +217,11 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 
 		if (!WinHttpReadData( request, (LPVOID)pszOutBuffer, bytesAvailable, &bytesDownloaded)) 
 			FINISH( L"ReadData Failure" )
-		else 
-			WriteFile( localFile, pszOutBuffer, bytesAvailable, &bytesWritten, NULL ); 
+		
+		WriteFile( localFile, pszOutBuffer, bytesDownloaded, &bytesWritten, NULL ); 
+		tmp+=bytesDownloaded;
+
+		SetProgressValue( (tmp*25/contentLength )+25);
 		
 		// Free the memory allocated to the buffer.
 		free(pszOutBuffer);
@@ -215,4 +243,49 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 		WinHttpCloseHandle(connection);
 	if (session) 
 		WinHttpCloseHandle(session);
+}
+
+wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly ) {
+	wchar_t* result = NULL;
+
+	ACTCTX_SECTION_KEYED_DATA ReturnedData;
+	ACTCTX ActivationContext;
+	ULONG_PTR WinSxSCookie = 0;
+	BOOL fSuccess = FALSE;
+	HANDLE ActivationContextHandle = INVALID_HANDLE_VALUE;
+	
+	ZeroMemory(&ActivationContext,sizeof(ACTCTX));
+	ZeroMemory(&ReturnedData,sizeof(ACTCTX_SECTION_KEYED_DATA));
+	ReturnedData.cbSize = sizeof(ACTCTX_SECTION_KEYED_DATA);
+	ActivationContext.cbSize = sizeof(ACTCTX);
+	ActivationContext.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
+	ActivationContext.hModule = module;
+	ActivationContext.lpResourceName = MAKEINTRESOURCE(resourceIdForManifest);
+
+	ActivationContextHandle = CreateActCtx(&ActivationContext);
+	if( ActivationContextHandle == INVALID_HANDLE_VALUE )
+		goto fin;
+
+	fSuccess = ActivateActCtx(ActivationContextHandle, &WinSxSCookie);
+	if( !fSuccess  )
+		goto release;
+	
+	fSuccess = FindActCtxSectionString(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX,NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, itemInAssembly, &ReturnedData);
+	if( !fSuccess  )
+		goto deactivate;
+
+	result = (wchar_t*)malloc(BUFSIZE);
+	if( !SearchPath(NULL, itemInAssembly, NULL, BUFSIZE, result, NULL) ) {
+		free( result );
+		result = NULL;
+	}
+
+deactivate:
+	DeactivateActCtx(0, WinSxSCookie);
+
+release:
+	ReleaseActCtx(ActivationContextHandle);
+
+fin:
+	return result;
 }

@@ -10,6 +10,7 @@
 
 
 extern HWND StatusDialog;
+extern BOOL Ready;
 
 void SetStatusMessage(  const wchar_t* format, ... );
 INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lParam);
