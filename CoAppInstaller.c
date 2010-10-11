@@ -36,10 +36,10 @@ LPWSTR CommandLine;
 ///     Linked List structure for package processing
 /// </summary>
 struct package_t {
-	wchar_t* name;
-	wchar_t* URL;
-	wchar_t* localpath;
-	struct package_t* next;
+    wchar_t* name;
+    wchar_t* URL;
+    wchar_t* localpath;
+    struct package_t* next;
 };
 
 
@@ -57,169 +57,175 @@ BOOL IsShuttingDown = FALSE;
 int TaskCount = 0;
 
 void LogMessageInternal( const wchar_t* text ) {
-	// actually log the message
-	
+    // actually log the message
+    
 }
 
 void LogMessage( const wchar_t* format, ... ) {
-	va_list args;
-	wchar_t* text = (wchar_t*)malloc(BUFSIZE);
+    va_list args;
+    wchar_t* text = (wchar_t*)malloc(BUFSIZE);
 
-	va_start(args, format);
-	vswprintf(text,format, args);
-	LogMessageInternal(text);
-	
-	free(text);
+    va_start(args, format);
+    vswprintf(text,format, args);
+    LogMessageInternal(text);
+    
+    free(text);
 }
 
 
 void Shutdown() {
-	IsShuttingDown = TRUE;
-	LogMessage(L"Shutting down");
-	PostQuitMessage(0);
+    IsShuttingDown = TRUE;
+    LogMessage(L"Shutting down");
+    PostQuitMessage(0);
 }
 
 int IsCoAppInstalled( ) {
-	// manually load the DLL 
-	SetStatusMessage(L"Validating Installer Engine.");
+    // manually load the DLL 
+    SetStatusMessage(L"Validating Installer Engine.");
 
-	if( NULL == CoAppModule )  {
-		CoAppModule = LoadLibrary( L"coapp-engine" );
+    if( NULL == CoAppModule )  {
+        CoAppModule = LoadLibrary( L"coapp-engine" );
 
-		if( NULL == CoAppModule ) {
-			//
-			// TODO: We should really do somthing with this error.
-			//
-			// ??? = GetLastError();
-			return 0;
-		}
-		LogMessage(L"CoApp Engine Loaded");
+        if( NULL == CoAppModule ) {
+            //
+            // TODO: We should really do somthing with this error.
+            //
+            // ??? = GetLastError();
+            return 0;
+        }
+        LogMessage(L"CoApp Engine Loaded");
 
-		coapp_install = (coapp_install_prototype*)GetProcAddress( CoAppModule, "coapp_install");
-		if( NULL == coapp_install ){
-			LogMessage(L"Unable to get locate coapp_install function");
-			FreeLibrary( CoAppModule );
-			CoAppModule = NULL;
-			return 0;
-		}
+        coapp_install = (coapp_install_prototype*)GetProcAddress( CoAppModule, "coapp_install");
+        if( NULL == coapp_install ){
+            LogMessage(L"Unable to get locate coapp_install function");
+            FreeLibrary( CoAppModule );
+            CoAppModule = NULL;
+            return 0;
+        }
 
-		coapp_resolve = (coapp_resolve_prototype*)GetProcAddress( CoAppModule, "coapp_resolve");
-		if( NULL == coapp_resolve ){
-			LogMessage(L"Unable to get locate coapp_resolve function");
-			FreeLibrary( CoAppModule );
-			CoAppModule = NULL;
-			return 0;
-		}
+        coapp_resolve = (coapp_resolve_prototype*)GetProcAddress( CoAppModule, "coapp_resolve");
+        if( NULL == coapp_resolve ){
+            LogMessage(L"Unable to get locate coapp_resolve function");
+            FreeLibrary( CoAppModule );
+            CoAppModule = NULL;
+            return 0;
+        }
 
-		coapp_download = (coapp_download_prototype*)GetProcAddress( CoAppModule, "coapp_download");
-		if( NULL == coapp_download ){
-			LogMessage(L"Unable to get locate coapp_download function");
-			FreeLibrary( CoAppModule );
-			CoAppModule = NULL;
-			return 0;
-		}
-	}
-	SetStatusMessage(L"Installer Engine Validated.");
-	return 1;
+        coapp_download = (coapp_download_prototype*)GetProcAddress( CoAppModule, "coapp_download");
+        if( NULL == coapp_download ){
+            LogMessage(L"Unable to get locate coapp_download function");
+            FreeLibrary( CoAppModule );
+            CoAppModule = NULL;
+            return 0;
+        }
+    }
+    SetStatusMessage(L"Installer Engine Validated.");
+    return 1;
 }
 
 __int32 ResolvePackageHandler(const wchar_t* name, const wchar_t* location, const wchar_t* url) {
-	struct package_t* node = (struct package_t*)malloc( sizeof(struct package_t) );
-	
-	node->name = DuplicateString(name);
-	node->localpath = DuplicateString(location);
-	node->URL = DuplicateString(url);
-	node->next = packageList;
+    struct package_t* node = (struct package_t*)malloc( sizeof(struct package_t) );
+    
+    node->name = DuplicateString(name);
+    node->localpath = DuplicateString(location);
+    node->URL = DuplicateString(url);
+    node->next = packageList;
 
-	packageList = node;
+    packageList = node;
 
-	return 0;
+    return 0;
 }
 
 
 int DownloadProgressHandler(const wchar_t* current_message, int download_status, __int64 bytes_downloaded, __int64 total_bytes  ) {
-	if( IsShuttingDown ) 
-		return 1;
+    if( IsShuttingDown ) 
+        return 1;
 
-	// TODO: set some message
+    // TODO: set some message
 
-	return 0;
+    return 0;
 }
 unsigned __stdcall DownloadPackages( void* pArguments ){
-	
-	struct package_t* downloadList = packageList;
+    
+    struct package_t* downloadList = packageList;
 
-	if( IsShuttingDown )
-		goto fin;
+    if( IsShuttingDown )
+        goto fin;
 
-	while( downloadList ) {
-		if( downloadList->localpath == NULL ) {
-			downloadList->localpath = TempFileName( L"name" , L".msi" );
-			coapp_download( downloadList->URL, downloadList->localpath , DownloadProgressHandler);
-		}
+    while( downloadList ) {
+        if( downloadList->localpath == NULL ) {
+            downloadList->localpath = TempFileName( L"name" , L".msi" );
+            coapp_download( downloadList->URL, downloadList->localpath , DownloadProgressHandler);
+        }
 
-		downloadList = downloadList->next;
-	}
+        downloadList = downloadList->next;
+    }
 
 
-	fin:
-	_endthreadex( 0 );
-	DownloadPackagesThread = NULL;
-	return 0;
+    fin:
+    _endthreadex( 0 );
+    DownloadPackagesThread = NULL;
+    return 0;
 }
 
 
 unsigned __stdcall InstallPackages( void* pArguments ){
-	int tryCount=4;
+    int tryCount=4;
 
-	SetStatusMessage(L"");
-	SetLargeMessageText(L"");
-	SetProgressValue( 100 );
+    SetStatusMessage(L"");
+    SetLargeMessageText(L"");
+    SetProgressValue( 100 );
 
-	// stage 1: Ensure CoApp is Installed
-	while(--tryCount > 0) {
-		if( IsShuttingDown )
-			goto fin;
+    // stage 1: Ensure CoApp is Installed
+    while(--tryCount > 0) {
+        if( IsShuttingDown )
+            goto fin;
 
-		if( !IsCoAppInstalled() ) {
-		}
-	}
+        if( !IsCoAppInstalled() ) {
+        }
+    }
 
-	if( IsShuttingDown )
-		goto fin;
+    if( IsShuttingDown )
+        goto fin;
 
-	if( !IsCoAppInstalled() ) {
-		// we seem to have failed to download an install the CoApp Engine
-		// Too Bad
-		Shutdown();
-	}
+    if( !IsCoAppInstalled() ) {
+        // we seem to have failed to download an install the CoApp Engine
+        // Too Bad
+        Shutdown();
+    }
 
-	if( IsShuttingDown )
-		goto fin;
+    if( IsShuttingDown )
+        goto fin;
 
-	
-	// stage 2: Get the dependency graph for the package
-	coapp_resolve( L"foo.xml" , ResolvePackageHandler);
-	
-	// stage 3: Start downloading the dependencies
-	DownloadPackagesThread = (HANDLE)_beginthreadex(NULL, 0, &DownloadPackages, NULL, 0, &DownloadPackagesThreadId);
+    
+    // stage 2: Get the dependency graph for the package
+    coapp_resolve( L"foo.xml" , ResolvePackageHandler);
+    
+    // stage 3: Start downloading the dependencies
+    DownloadPackagesThread = (HANDLE)_beginthreadex(NULL, 0, &DownloadPackages, NULL, 0, &DownloadPackagesThreadId);
 
-	// stage 4: start installing packages as they are available.
-	fin:
-	_endthreadex( 0 );
-	InstallPackagesThread = NULL;
-	return 0;
+    // stage 4: start installing packages as they are available.
+    fin:
+    _endthreadex( 0 );
+    InstallPackagesThread = NULL;
+    return 0;
 }
 
 
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR pszCmdLine, int nCmdShow) {
 
-	CommandLine = pszCmdLine;
+    INITCOMMONCONTROLSEX iccs;
+    CommandLine = pszCmdLine;
 
-	// start worker thread
-	InstallPackagesThread = (HANDLE)_beginthreadex(NULL, 0, &InstallPackages, NULL, 0, &InstallPackagesThreadId);
-	
-	// show the pretty gui
-	return ShowGUI( hInstance);
+    // load comctl32 v6, in particular the progress bar class
+    iccs.dwSize = sizeof(INITCOMMONCONTROLSEX); // Naughty! :)
+    iccs.dwICC  = ICC_PROGRESS_CLASS;
+    InitCommonControlsEx(&iccs);
+
+    // start worker thread
+    InstallPackagesThread = (HANDLE)_beginthreadex(NULL, 0, &InstallPackages, NULL, 0, &InstallPackagesThreadId);
+    
+    // show the pretty gui
+    return ShowGUI( hInstance);
 }
