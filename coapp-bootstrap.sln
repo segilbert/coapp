@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-bootstrap", "..\coapp-bootstrap\coapp-bootstrap.vcxproj", "{7CA121E2-DA8A-4318-92FA-14101826F04C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-installer", "..\coapp-bootstrap\coapp-installer.vcxproj", "{7CA121E2-DA8A-4318-9123-14101826F04C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,14 +19,6 @@ Global
 		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Release|x64.Build.0 = Release|x64
 		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Release|x86.ActiveCfg = Release|Win32
 		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Release|x86.Build.0 = Release|Win32
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Debug|x64.ActiveCfg = Debug|x64
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Debug|x64.Build.0 = Debug|x64
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Debug|x86.ActiveCfg = Debug|Win32
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Debug|x86.Build.0 = Debug|Win32
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Release|x64.ActiveCfg = Release|x64
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Release|x64.Build.0 = Release|x64
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Release|x86.ActiveCfg = Release|Win32
-		{7CA121E2-DA8A-4318-9123-14101826F04C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
