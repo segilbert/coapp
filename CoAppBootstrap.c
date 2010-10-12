@@ -131,6 +131,11 @@ void doInstallCoApp() {
         SetStatusMessage(L"Downloading Installer Engine");
         DownloadFile( L"http://coapp.org/coapp-engine.msi", coappInstallerMSIFile );
         SetProgressValue( 50 );
+
+		if(!IsEmbeddedSignatureValid(coappInstallerMSIFile )) {
+			MessageBox(NULL, L"Sorry, I couldn’t verify the CoApp-Engine package wasn’t tampered with and therefore cannot continue.\r\n\r\nPlease report this to the CoApp project.", L"A problem has occurred.", MB_ICONERROR );
+			ExitProcess(2);
+		}
         
         SetStatusMessage(L"Installing Engine");
         Sleep(500);

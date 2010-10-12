@@ -18,3 +18,4 @@ wchar_t* TempFileName(wchar_t* name,wchar_t* extension);
 void DownloadFile(wchar_t* URL, wchar_t* destinationFilename);
 wchar_t* GetPathFromRegistry();
 wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly );
+BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile);
