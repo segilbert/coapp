@@ -34,170 +34,177 @@ LPWSTR CommandLine;
 wchar_t* CoAppInstallerPath = NULL;
 
 void Shutdown() {
-	IsShuttingDown = TRUE;
-	PostQuitMessage(0);
+    IsShuttingDown = TRUE;
+    PostQuitMessage(0);
 }
 
 int FileExists(const wchar_t* installerPath) {
-	WIN32_FILE_ATTRIBUTE_DATA fileData;
+    WIN32_FILE_ATTRIBUTE_DATA fileData;
 
-	if( installerPath == NULL )
-		return 0;
+    if( installerPath == NULL )
+        return 0;
 
-	return GetFileAttributesEx( installerPath, GetFileExInfoStandard, &fileData);
+    return GetFileAttributesEx( installerPath, GetFileExInfoStandard, &fileData);
 }
 
 int IsCoAppInstalled( ) {
-	// check if there is a registry setting for the tiny installer
-	CoAppInstallerPath = GetPathFromRegistry();
+    // check if there is a registry setting for the tiny installer
+    CoAppInstallerPath = GetPathFromRegistry();
 
-	if( FileExists(CoAppInstallerPath) )
-		return TRUE;
+    if( FileExists(CoAppInstallerPath) )
+        return TRUE;
 
-	if(NULL != CoAppInstallerPath)
-		free(CoAppInstallerPath);
+    if(NULL != CoAppInstallerPath)
+        free(CoAppInstallerPath);
 
-	// if not, there damn well better be one in the WinSxS assembly
-	CoAppInstallerPath = GetWinSxSResourcePathViaManifest((HMODULE)ApplicationInstance, INSTALLER_MANFIEST_ID, L"coapp-installer.exe");
-	return (NULL != CoAppInstallerPath);
+    // if not, there damn well better be one in the WinSxS assembly
+    CoAppInstallerPath = GetWinSxSResourcePathViaManifest((HMODULE)ApplicationInstance, INSTALLER_MANFIEST_ID, L"coapp-installer.exe");
+    return (NULL != CoAppInstallerPath);
 }
 int maxTicks;
 int tickValue;
 
 int _stdcall BasicUIHandler(LPVOID pvContext, UINT iMessageType, LPCWSTR szMessage) {
-	INSTALLMESSAGE mt;
+    INSTALLMESSAGE mt;
     UINT uiFlags;
-	int value[4];
-	int index;
-	const wchar_t* pChar;
+    int value[4];
+    int index;
+    const wchar_t* pChar;
 
-	ZeroMemory(&value, sizeof(value) );
+    ZeroMemory(&value, sizeof(value) );
 
-	if( IsShuttingDown )
-		return IDCANCEL;
+    if( IsShuttingDown )
+        return IDCANCEL;
 
-	if (!szMessage)
-	    return 0;
+    if (!szMessage)
+        return 0;
     
     mt = (INSTALLMESSAGE)(0xFF000000 & (UINT)iMessageType);
     uiFlags = 0x00FFFFFF & iMessageType;
 
-	switch (mt) {
-		case INSTALLMESSAGE_PROGRESS:
-			pChar = szMessage;
+    switch (mt) {
+        case INSTALLMESSAGE_PROGRESS:
+            pChar = szMessage;
 
-			while(*pChar) { // real men do real pointer 'rithmatic
-				index = *pChar++ - L'1';
-		
-				while(*pChar < L'0' || *pChar > L'9' )
-					pChar++; // skip up to next number
+            while(*pChar) { // real men do real pointer 'rithmatic
+                index = *pChar++ - L'1';
+        
+                while(*pChar < L'0' || *pChar > L'9' )
+                    pChar++; // skip up to next number
 
-				while(*pChar >= L'0' && *pChar <= L'9' ) {
-					value[index]*=10;
-					value[index]+=*pChar++-L'0';
-				}
+                while(*pChar >= L'0' && *pChar <= L'9' ) {
+                    value[index]*=10;
+                    value[index]+=*pChar++-L'0';
+                }
 
-				while(*pChar && (*pChar < L'0' || *pChar > L'9' ))
-					pChar++; // skip up to next number	
-			}
-			switch( value[0] ) {
-				case 0: // reset
-					if( maxTicks == 0 && value[1] > 0 ) {
-						maxTicks = value[1];
-						tickValue = 0;
-					}
-					break;
-				case 1: // Progress Message
-					break;
-				case 2: // Increment
-					if( maxTicks > 0 ){
-						tickValue+=value[1];
-						SetProgressValue(50+ ((tickValue*100/maxTicks)/2) );
-					}
-					break;
-				case 3: // customaction
-					break;
+                while(*pChar && (*pChar < L'0' || *pChar > L'9' ))
+                    pChar++; // skip up to next number	
+            }
+            switch( value[0] ) {
+                case 0: // reset
+                    if( maxTicks == 0 && value[1] > 0 ) {
+                        maxTicks = value[1];
+                        tickValue = 0;
+                    }
+                    break;
+                case 1: // Progress Message
+                    break;
+                case 2: // Increment
+                    if( maxTicks > 0 ){
+                        tickValue+=value[1];
+                        SetProgressValue(50+ ((tickValue*100/maxTicks)/2) );
+                    }
+                    break;
+                case 3: // customaction
+                    break;
 
-			}
-			break;
-	}
-	return IDOK;
+            }
+            break;
+    }
+    return IDOK;
 }
 
 void doInstallCoApp() {
-	wchar_t* coappInstallerMSIFile = TempFileName(L"coapp-install", L"msi");
-	SetProgressValue( 25 );
-	if( NULL != coappInstallerMSIFile ) {
-		SetStatusMessage(L"Downloading Installer Engine");
-		DownloadFile( L"http://coapp.org/coapp-engine.msi", coappInstallerMSIFile );
-		SetProgressValue( 50 );
-		
-		SetStatusMessage(L"Installing Engine");
-		Sleep(500);
-		MsiSetInternalUI( INSTALLUILEVEL_NONE , 0); 
-		MsiSetExternalUI( BasicUIHandler, INSTALLLOGMODE_PROGRESS, L"COAPP");
-		MsiInstallProduct( coappInstallerMSIFile, NULL);
+    wchar_t* coappInstallerMSIFile = TempFileName(L"coapp-install", L"msi");
+    SetProgressValue( 25 );
+    if( NULL != coappInstallerMSIFile ) {
+        SetStatusMessage(L"Downloading Installer Engine");
+        DownloadFile( L"http://coapp.org/coapp-engine.msi", coappInstallerMSIFile );
+        SetProgressValue( 50 );
+        
+        SetStatusMessage(L"Installing Engine");
+        Sleep(500);
+        MsiSetInternalUI( INSTALLUILEVEL_NONE , 0); 
+        MsiSetExternalUI( BasicUIHandler, INSTALLLOGMODE_PROGRESS, L"COAPP");
+        MsiInstallProduct( coappInstallerMSIFile, NULL);
 
-		free(coappInstallerMSIFile);
-	}	
+        free(coappInstallerMSIFile);
+    }	
 }
 
 int Launch() {
-	wchar_t commandLine[32768];
+    wchar_t commandLine[32768];
 
-	STARTUPINFO StartupInfo;
-	PROCESS_INFORMATION ProcInfo;
+    STARTUPINFO StartupInfo;
+    PROCESS_INFORMATION ProcInfo;
 
-	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
-	StartupInfo.cb = sizeof( STARTUPINFO );
-	wsprintf( commandLine, L"\"%s\" %s", CoAppInstallerPath, CommandLine);
+    ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
+    StartupInfo.cb = sizeof( STARTUPINFO );
+    wsprintf( commandLine, L"\"%s\" %s", CoAppInstallerPath, CommandLine);
 
-	CreateProcess( CoAppInstallerPath, commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
-	
-	ExitProcess(0);
-	return 0;
+    CreateProcess( CoAppInstallerPath, commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
+    
+    ExitProcess(0);
+    return 0;
 }
 
 unsigned __stdcall InstallCoApp( void* pArguments ){
-	while(!Ready)
-		Sleep(300);
+    while(!Ready)
+        Sleep(300);
 
-	SetStatusMessage(L"");
-	SetLargeMessageText(L"Installing CoApp...");
-	SetProgressValue( 10 );
+    SetStatusMessage(L"");
+    SetLargeMessageText(L"Installing CoApp...");
+    SetProgressValue( 10 );
 
-	if( IsShuttingDown )
-		goto fin;
+    if( IsShuttingDown )
+        goto fin;
 
-	doInstallCoApp();
+    doInstallCoApp();
 
-	if( IsShuttingDown )
-		goto fin;
+    if( IsShuttingDown )
+        goto fin;
 
-	if( IsCoAppInstalled() ) {
-		SetProgressValue( 100 );
-		Launch();
-	}
+    if( IsCoAppInstalled() ) {
+        SetProgressValue( 100 );
+        Launch();
+    }
 
 fin:
-	ExitProcess(0);
-	_endthreadex( 0 );
-	WorkerThread = NULL;
-	
-	return 0;
+    ExitProcess(0);
+    _endthreadex( 0 );
+    WorkerThread = NULL;
+    
+    return 0;
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR pszCmdLine, int nCmdShow) {
-	CommandLine = pszCmdLine;
-	ApplicationInstance = hInstance;
+    
+    INITCOMMONCONTROLSEX iccs;
+    CommandLine = pszCmdLine;
+    ApplicationInstance = hInstance;
 
-	// check for CoApp 
-	if( IsCoAppInstalled() ) 
-		return Launch();
+    // load comctl32 v6, in particular the progress bar class
+    iccs.dwSize = sizeof(INITCOMMONCONTROLSEX); // Naughty! :)
+    iccs.dwICC  = ICC_PROGRESS_CLASS;
+    InitCommonControlsEx(&iccs);
 
-	// not there? install it.--- start worker thread
-	WorkerThread = (HANDLE)_beginthreadex(NULL, 0, &InstallCoApp, NULL, 0, &WorkerThreadId);
+    // check for CoApp 
+    if( IsCoAppInstalled() ) 
+        return Launch();
 
-	// And, show the GUI
-	return ShowGUI(hInstance);
+    // not there? install it.--- start worker thread
+    WorkerThread = (HANDLE)_beginthreadex(NULL, 0, &InstallCoApp, NULL, 0, &WorkerThreadId);
+
+    // And, show the GUI
+    return ShowGUI(hInstance);
 }
