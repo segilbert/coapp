@@ -6,7 +6,7 @@
     // msvcrt.lib		    : Baked in CRT (Windows XP SP3 and up).
     // msvcrt_winxp.obj : Implementation of some downlevel APIs, like except_handler4_common.
     -->
-    <DDK_CRT>$(DDKInstallPath)lib\Crt\$(DDKPlatform)\safecrtnt.lib;$(DDKInstallPath)lib\Crt\$(DDKPlatform)\msvcrt$(D_FOR_DEBUG).lib;$(DDKInstallPath)lib\wxp\i386\msvcrt_winxp.obj</DDK_CRT>
+    <DDK_CRT>$(DDKInstallPath)lib\Crt\$(DDKPlatform)\safecrtnt.lib;$(DDKInstallPath)lib\Crt\$(DDKPlatform)\msvcrt.lib;$(DDKInstallPath)lib\wxp\i386\msvcrt_winxp.obj</DDK_CRT>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
