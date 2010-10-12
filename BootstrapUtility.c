@@ -111,7 +111,6 @@ wchar_t* GetModulePath( HMODULE module ) {
 	int length=0;
 
 	ZeroMemory(result, BUFSIZE);
-	
 
 	length = GetModuleFileName(module, result, BUFSIZE);
 	position = result+length;
@@ -121,9 +120,6 @@ wchar_t* GetModulePath( HMODULE module ) {
 
 	return result;
 }
-
-
-
 
 ///
 /// <summary> 
@@ -258,11 +254,15 @@ wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManif
 	ZeroMemory(&ReturnedData,sizeof(ACTCTX_SECTION_KEYED_DATA));
 	ReturnedData.cbSize = sizeof(ACTCTX_SECTION_KEYED_DATA);
 	ActivationContext.cbSize = sizeof(ACTCTX);
-	ActivationContext.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
+	ActivationContext.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID ; 
+	
 	ActivationContext.hModule = module;
+	
+	ActivationContext.lpSource = GetModulePath( module );
 	ActivationContext.lpResourceName = MAKEINTRESOURCE(resourceIdForManifest);
 
 	ActivationContextHandle = CreateActCtx(&ActivationContext);
+	
 	if( ActivationContextHandle == INVALID_HANDLE_VALUE )
 		goto fin;
 
@@ -287,5 +287,6 @@ release:
 	ReleaseActCtx(ActivationContextHandle);
 
 fin:
+	free((void*)ActivationContext.lpSource);
 	return result;
 }
