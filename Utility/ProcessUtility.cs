@@ -91,6 +91,14 @@ namespace CoApp.Toolkit.Utility
                 currentProcess.WaitForExit();
         }
 
+        public void ExecAsync(string[] args) {
+            var commandLine = new StringBuilder();
+            foreach(var arg in args) {
+                commandLine.AppendFormat(@"""{0}"" ", arg);
+            }
+            ExecAsync(commandLine.ToString());
+        }
+
         public void ExecAsync(string arguments, params string[] args)
         {
             if (IsRunning)
@@ -111,15 +119,21 @@ namespace CoApp.Toolkit.Utility
             currentProcess.BeginOutputReadLine();
         }
 
+        public int Exec(string[] args) {
+            var commandLine = new StringBuilder();
+            foreach(var arg in args) {
+                commandLine.AppendFormat(@"""{0}"" ", arg);
+            }
+            return Exec(commandLine.ToString());
+        }
+
         public int Exec(string arguments, params string[] args)
         {
-            try
-            {
+            try {
                 ExecAsync(arguments, args);
                 WaitForExit();
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 currentProcess = null;
                 sErr.AppendFormat("Failed to execute program [{0}]\r\n   {1}", Executable, e.Message);
                 return 100;
@@ -130,14 +144,12 @@ namespace CoApp.Toolkit.Utility
 
         public int ExecWithStdin(string stdIn, string arguments, params string[] args)
         {
-            try
-            {
+            try {
                 ExecAsync(arguments, args);
                 SendToStandardIn(stdIn);
                 WaitForExit();
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 currentProcess = null;
                 sErr.AppendFormat("Failed to execute program [{0}]\r\n   {1}", Executable, e.Message);
                 return 100;

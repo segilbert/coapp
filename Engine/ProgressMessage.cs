@@ -6,8 +6,5 @@
 
 namespace CoApp.Toolkit.Engine {
 
-    public class ProgressMessage {
-        public float Percentage;
-        public string Message;
-    }
+
 }
