@@ -105,7 +105,7 @@ release_name:
 
 }
 
-wchar_t* GetModulePath( HMODULE module ) {
+wchar_t* GetModuleFolder( HMODULE module ) {
 	wchar_t* result = (wchar_t*)malloc(BUFSIZE);
 	wchar_t* position = NULL;
 	int length=0;
@@ -121,6 +121,12 @@ wchar_t* GetModulePath( HMODULE module ) {
 	return result;
 }
 
+wchar_t* GetModuleFullPath( HMODULE module ) {
+	wchar_t* result = (wchar_t*)malloc(BUFSIZE);
+	ZeroMemory(result, BUFSIZE);
+	GetModuleFileName(module, result, BUFSIZE);
+	return result;
+}
 ///
 /// <summary> 
 ///		Downloads a file from a URL 
@@ -258,7 +264,7 @@ wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManif
 	
 	ActivationContext.hModule = module;
 	
-	ActivationContext.lpSource = GetModulePath( module );
+	ActivationContext.lpSource = GetModuleFullPath( module );
 	ActivationContext.lpResourceName = MAKEINTRESOURCE(resourceIdForManifest);
 
 	ActivationContextHandle = CreateActCtx(&ActivationContext);
