@@ -90,6 +90,8 @@ namespace CoApp.Toolkit.Scripting.Utility {
         NumericLiteral,
         CharLiteral,
 
+        SelectorParameter,
+
         WhiteSpace,
 
         Unknown
@@ -108,6 +110,11 @@ namespace CoApp.Toolkit.Scripting.Utility {
         ///   the data associated with the Token
         /// </summary>
         public dynamic Data { get; set; }
+
+        /// <summary>
+        ///    the data in its raw state.
+        /// </summary>
+        public dynamic RawData { get; set; }
 
         /// <summary>
         ///   Indicates whether two instance are equal.
@@ -285,162 +292,166 @@ namespace CoApp.Toolkit.Scripting.Utility {
             RecognizeNextCharacter();
         }
 
+        
+
         protected virtual void Tokenize() {
             for(Index = 0; Index < Text.Length; Index++) {
                 RecognizeNextCharacter();
 
-                switch(CurrentCharacter) {
-                    case '~':
-                        Tokens.Add(Tilde);
-                        break;
-
-                    case '?':
-                        ParseQuestionMark();
-                        break;
-
-                    case '{':
-                        Tokens.Add(OpenBrace);
-                        break;
-
-                    case '}':
-                        Tokens.Add(CloseBrace);
-                        break;
-
-                    case '[':
-                        Tokens.Add(OpenBracket);
-                        break;
-
-                    case ']':
-                        Tokens.Add(CloseBracket);
-                        break;
-
-                    case '(':
-                        Tokens.Add(OpenParenthesis);
-                        break;
-
-                    case ')':
-                        Tokens.Add(CloseParenthesis);
-                        break;
-
-                    case '.':
-                        Tokens.Add(Dot);
-                        break;
-
-                    case ',':
-                        Tokens.Add(Comma);
-                        break;
-
-                    case ':':
-                        Tokens.Add(Colon);
-                        break;
-
-                    case ';':
-                        Tokens.Add(Semicolon);
-                        break;
-
-                    case '\r':
-                        if(NextCharacter == '\n') {
-                            Index++;
-                        }
-
-                        Tokens.Add(Eol);
-                        break;
-
-                    case '\n':
-                        Tokens.Add(Eol);
-                        break;
-
-                    case '\t':
-                        Tokens.Add(Tab);
-                        break;
-
-                    case ' ':
-                        Tokens.Add(Space);
-                        break;
-
-                    case '+':
-                        ParsePlus();
-                        break;
-
-                    case '-':
-                        ParseMinus();
-                        break;
-
-                    case '*':
-                        ParseStar();
-                        break;
-
-                    case '=':
-                        ParseEquals();
-                        break;
-
-                    case '/':
-                        ParseSlash();
-                        break;
-
-                    case '|':
-                        ParseBar();
-                        break;
-
-                    case '&':
-                        ParseAmpersand();
-                        break;
-
-                    case '%':
-                        ParsePercent();
-                        break;
-
-                    case '<':
-                        ParseLessThan();
-                        break;
-
-                    case '>':
-                        ParseGreaterThan();
-                        break;
-
-                    case '!':
-                        ParseBang();
-                        break;
-
-                    case '^':
-                        ParsePower();
-                        break;
-
-                    case '#':
-                        ParsePound();
-                        break;
-
-                    case '\'':
-                        ParseCharLiteral();
-                        break;
-
-                    case '"':
-                        ParseStringLiteral();
-                        break;
-
-                    case '0':
-                        if(NextCharacter == 'x' || NextCharacter == 'X') {
-                            ParseHexadecimalLiteral();
+                if(!PoachParse()) {
+                    switch(CurrentCharacter) {
+                        case '~':
+                            Tokens.Add(Tilde);
                             break;
-                        }
 
-                        ParseNumericLiteral();
-                        break;
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                    case '8':
-                    case '9':
-                        ParseNumericLiteral();
-                        break;
+                        case '?':
+                            ParseQuestionMark();
+                            break;
 
-                    default:
-                        ParseOther();
-                        break;
+                        case '{':
+                            Tokens.Add(OpenBrace);
+                            break;
+
+                        case '}':
+                            Tokens.Add(CloseBrace);
+                            break;
+
+                        case '[':
+                            Tokens.Add(OpenBracket);
+                            break;
+
+                        case ']':
+                            Tokens.Add(CloseBracket);
+                            break;
+
+                        case '(':
+                            Tokens.Add(OpenParenthesis);
+                            break;
+
+                        case ')':
+                            Tokens.Add(CloseParenthesis);
+                            break;
+
+                        case '.':
+                            Tokens.Add(Dot);
+                            break;
+
+                        case ',':
+                            Tokens.Add(Comma);
+                            break;
+
+                        case ':':
+                            Tokens.Add(Colon);
+                            break;
+
+                        case ';':
+                            Tokens.Add(Semicolon);
+                            break;
+
+                        case '\r':
+                            if(NextCharacter == '\n') {
+                                Index++;
+                            }
+
+                            Tokens.Add(Eol);
+                            break;
+
+                        case '\n':
+                            Tokens.Add(Eol);
+                            break;
+
+                        case '\t':
+                            Tokens.Add(Tab);
+                            break;
+
+                        case ' ':
+                            Tokens.Add(Space);
+                            break;
+
+                        case '+':
+                            ParsePlus();
+                            break;
+
+                        case '-':
+                            ParseMinus();
+                            break;
+
+                        case '*':
+                            ParseStar();
+                            break;
+
+                        case '=':
+                            ParseEquals();
+                            break;
+
+                        case '/':
+                            ParseSlash();
+                            break;
+
+                        case '|':
+                            ParseBar();
+                            break;
+
+                        case '&':
+                            ParseAmpersand();
+                            break;
+
+                        case '%':
+                            ParsePercent();
+                            break;
+
+                        case '<':
+                            ParseLessThan();
+                            break;
+
+                        case '>':
+                            ParseGreaterThan();
+                            break;
+
+                        case '!':
+                            ParseBang();
+                            break;
+
+                        case '^':
+                            ParsePower();
+                            break;
+
+                        case '#':
+                            ParsePound();
+                            break;
+
+                        case '\'':
+                            ParseCharLiteral();
+                            break;
+
+                        case '"':
+                            ParseStringLiteral();
+                            break;
+
+                        case '0':
+                            if(NextCharacter == 'x' || NextCharacter == 'X') {
+                                ParseHexadecimalLiteral();
+                                break;
+                            }
+
+                            ParseNumericLiteral();
+                            break;
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                            ParseNumericLiteral();
+                            break;
+
+                        default:
+                            ParseOther();
+                            break;
+                    }
                 }
             }
         }
@@ -565,7 +576,12 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token {Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) + 1)});
+            var rawData = new string(Text, start, (Index - start) + 1);
+            var data = rawData;
+            data = data.Replace("\\\\", "\\");// .Replace("\\r", "\r").Replace("\\n", "\n").Replace("\\t", "\t");
+            data = data.Substring(1, data.Length - 2);
+            
+            Tokens.Add(new Token {Type = TokenType.StringLiteral, RawData = rawData, Data = data});
         }
 
         protected virtual void ParsePower() {
@@ -687,7 +703,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 Index += 2;
                 while(Index < (Text.Length - 1)) {
                     if(Text[Index] == '*' && Text[Index + 1] == '/') {
-                        Tokens.Add(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 1)});
+                        Tokens.Add(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 2)});
                         start = -1;
                         break;
                     }
@@ -834,7 +850,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
         /// <summary>
         ///   Returns true if the current character is in the UNICODE classes: Lu Ll Lt Lm Lo NI _
         /// </summary>
-        protected bool IsCurrentCharacterIdentifierStartCharacter {
+        protected virtual bool IsCurrentCharacterIdentifierStartCharacter {
             get {
                 if(CurrentCharacter == '_') {
                     return true;
@@ -857,7 +873,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
         /// <summary>
         ///   Returns true if the current character is in the UNICODE classes: Lu Ll Lt Lm Lo NI _ Nd Pc Cf Mn Mc
         /// </summary>
-        protected bool IsCurrentCharacterIdentifierPartCharacter {
+        protected virtual bool IsCurrentCharacterIdentifierPartCharacter {
             get {
                 if(CurrentCharacter == '_') {
                     return true;
@@ -884,6 +900,10 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
         protected virtual void ParseOther() {
             ParseIdentifier(Index);
+        }
+
+        protected virtual bool PoachParse() {
+            return false;
         }
 
         protected void ParseIdentifier(int start) {

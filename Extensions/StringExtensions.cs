@@ -18,6 +18,8 @@ namespace CoApp.Toolkit.Extensions {
     using System.Text.RegularExpressions;
 
     public static class StringExtensions {
+        public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
+        
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
         }
@@ -47,5 +49,27 @@ namespace CoApp.Toolkit.Extensions {
             Int32.TryParse(str, out i);
             return i;
         }
+
+        public static bool OnlyContains(this string str, char[] characters ) {
+            
+            for(int x = 0;x<str.Length;x++) {
+                char ch = str[x];
+                bool found = false;
+                for(int y=0;y<characters.Length ; y++) {
+                    if( ch == characters[y] ) {
+                        found = true;
+                        break;
+                    }
+                }
+                if( !found )
+                    return false;
+            }
+            return true;
+        }
+
+        public static bool OnlyContains(this string str, string characters) {
+            return OnlyContains(str,characters.ToCharArray());
+        }
+
     }
 }
