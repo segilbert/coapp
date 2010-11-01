@@ -57,10 +57,21 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
-    <Compile Include="Scripting\ActiveScriptHost.cs" />
+    <Compile Include="Scripting\Target.cs" />
+    <Compile Include="Scripting\Utility\ActiveScriptHost.cs" />
     <Compile Include="Scripting\Languages\CSharp\CSharpTokenizer.cs" />
     <Compile Include="Scripting\Languages\GSharp\GSharpProcessor.cs" />
     <Compile Include="Scripting\Languages\GSharp\GSharpTokenizer.cs" />
+    <Compile Include="Scripting\PropertySheet.cs" />
+    <Compile Include="Scripting\PropertySheetParser.cs" />
+    <Compile Include="Scripting\PropertySheetTokenizer.cs" />
+    <Compile Include="Scripting\Rule.cs" />
+    <Compile Include="Scripting\RuleProperty.cs" />
+    <Compile Include="Scripting\TargetSchema.cs">
+      <DependentUpon>TargetSchema.xsd</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Text\HttpUtility.cs" />
@@ -73,6 +84,14 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Installer\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Scripting\TargetSchema.xsd">
+      <Generator>XsdTool</Generator>
+      <LastGenOutput>TargetSchema.cs</LastGenOutput>
+      <CustomToolNamespace>CoApp.Toolkit.Scripting</CustomToolNamespace>
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
