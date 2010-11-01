@@ -1,4 +1,10 @@
-﻿namespace CoApp.Toolkit.Scan
+﻿//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2010 Trevor Dennis. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace CoApp.Toolkit.Scan
 {
     using System;
     using System.IO;
