@@ -57,6 +57,11 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
+    <Compile Include="Scan\ProjectScanner.cs" />
+    <Compile Include="Scan\Types\ScannedDefine.cs" />
+    <Compile Include="Scan\Types\ScannedFile.cs" />
+    <Compile Include="Scan\Types\ScannedFileType.cs" />
+    <Compile Include="Scan\Types\ScanReport.cs" />
     <Compile Include="Scripting\Target.cs" />
     <Compile Include="Scripting\Utility\ActiveScriptHost.cs" />
     <Compile Include="Scripting\Languages\CSharp\CSharpTokenizer.cs" />
