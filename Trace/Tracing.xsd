@@ -11,16 +11,17 @@
     <xs:documentation>11/01/2010 [GS] 0.2: Refactorized.</xs:documentation>
   </xs:annotation>
 
-  <xs:element name="Trace">
+  <xs:element name="Trace" type="Process"/>
+    <!--
     <xs:complexType>
       <xs:sequence>
         <xs:element name="process" type="Process" />
       </xs:sequence>
-      <xs:attribute name="started" type="xs:dateTime"  />
-      <xs:attribute name="stopped" type="xs:dateTime"  />
+      <xs:attribute name="started" type="xs:dateTime" use="required" />
+      <xs:attribute name="stopped" type="xs:dateTime" use="required" />
     </xs:complexType>
   </xs:element>
-  
+  -->
   
   <xs:complexType name="Process">
     <xs:sequence >
@@ -76,10 +77,10 @@
     <xs:attribute name="extension" type="xs:string" use="required" />
     <xs:attribute name="folder" type="xs:string" />
     <xs:attribute name="relativePath" type="xs:string" />
-    <xs:attribute name="read" type="xs:boolean"  />
-    <xs:attribute name="write" type="xs:boolean"  />
-    <xs:attribute name="created" type="xs:boolean"  />
-    <xs:attribute name="deleted" type="xs:boolean"  />
+    <xs:attribute name="read" type="xs:boolean"  use="required" />
+    <xs:attribute name="write" type="xs:boolean"  use="required" />
+    <xs:attribute name="created" type="xs:boolean"  use="required" />
+    <xs:attribute name="deleted" type="xs:boolean"  use="required" />
   </xs:complexType>
 
 </xs:schema>

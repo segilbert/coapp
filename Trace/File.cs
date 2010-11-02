@@ -10,5 +10,20 @@ namespace CoApp.Toolkit.Trace {
     using Scripting;
 
     public partial class File {
+        private string fullPath;
+
+        [XmlIgnore]
+        public string FullPath {
+            get { return fullPath; }
+            set {
+                fullPath = value.ToLower();
+
+                extension = Path.GetExtension(fullPath);
+                name = Path.GetFileName(fullPath);
+                folder = Path.GetDirectoryName(fullPath);
+            }
+        }
+
+        
     }
 }

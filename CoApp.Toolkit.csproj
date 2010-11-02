@@ -52,6 +52,7 @@
     </Compile>
     <Compile Include="Extensions\DebugExtensions.cs" />
     <Compile Include="Extensions\FilesystemExtensions.cs" />
+    <Compile Include="Extensions\LinqExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Extensions\WebExtensions.cs">
       <SubType>Code</SubType>
@@ -86,12 +87,16 @@
     <Compile Include="Text\Sgml\SgmlReader.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Trace\CommandLine.cs" />
+    <Compile Include="Trace\File.cs" />
+    <Compile Include="Trace\Process.cs" />
     <Compile Include="Trace\Trace.cs" />
     <Compile Include="Trace\Tracing.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Tracing.xsd</DependentUpon>
     </Compile>
+    <Compile Include="Trace\Variable.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Installer\" />

@@ -21,35 +21,7 @@ using System.Collections.Generic;
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="", IsNullable=false)]
-    public partial class Trace {
-        
-        /// <remarks/>
-        public Process process;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.DateTime started;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool startedSpecified;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public System.DateTime stopped;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool stoppedSpecified;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlRootAttribute("Trace", Namespace="", IsNullable=false)]
     public partial class Process {
         
         /// <remarks/>
@@ -131,32 +103,16 @@ using System.Collections.Generic;
         public bool read;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool readSpecified;
-        
-        /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public bool write;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool writeSpecified;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public bool created;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool createdSpecified;
-        
-        /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public bool deleted;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool deletedSpecified;
     }
     
     /// <remarks/>
