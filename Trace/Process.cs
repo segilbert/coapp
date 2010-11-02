@@ -63,11 +63,34 @@ namespace CoApp.Toolkit.Trace {
             }
         }
 
+        public class ProcessIndexer {
+            private List<Process> processList;
+            public ProcessIndexer(List<Process> collection) {
+                processList = collection;
+            }
+
+            public Process this[int PID] {
+                get {
+                    var result = processList.Where(x => x.id == PID).FirstOrDefault();
+
+                    if(result == null) {
+                        result = new Process() { id = PID };
+                        processList.Add(result);
+                    }
+
+                    return result;
+                }
+            }
+        }
+
+
         [XmlIgnore]
         public FileIndexer Files;
+        public ProcessIndexer Processes;
 
         public Process() {
            Files = new FileIndexer(files);
+           Processes = new ProcessIndexer(process);
            
         }
     }
