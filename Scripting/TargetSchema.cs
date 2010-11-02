@@ -29,6 +29,9 @@ using System.Collections.Generic;
         public List<Dependency> dependency = new List<Dependency>();
         
         /// <remarks/>
+        public Metadata metadata;
+        
+        /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("group")]
         public List<Group> group = new List<Group>();
         
@@ -207,5 +210,28 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string path;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class Metadata {
+        
+        /// <remarks/>
+        public string author;
+        
+        /// <remarks/>
+        public string authorVersion;
+        
+        /// <remarks/>
+        public string product;
+        
+        /// <remarks/>
+        public string version;
+        
+        /// <remarks/>
+        public string publisher;
     }
 }

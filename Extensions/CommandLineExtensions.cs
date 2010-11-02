@@ -226,21 +226,20 @@ The category is appended to options that follow its declaration.
 
 A configuration file expressed as:
 
-some-option=foo
-some-option=bar
-some-option=bin
-other-option=baz
-ignore-option=bug
+source-option=foo
+source-option=bar
+source-option=bin
+source-add=baz
+source-ignore=bug
 
 can also be expressed as:
 
-[option]
-some=foo
-some=bar
-some=bin
-other=baz
+[source]
+option=foo
+option=bar
+option=bin
+add=baz
 ignore=bug
-
 ";
     }
 }
