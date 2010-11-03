@@ -12,7 +12,7 @@ namespace CoApp.Toolkit.Trace {
     using System.Linq;
     using System.Xml.Serialization;
 
-    public partial class Trace : IEnumerable<Process> {
+    public partial class Trace  {
         private static XmlSerializer _serializer = new XmlSerializer(typeof(Trace));
 
         public static Trace Load(string path) {
@@ -26,14 +26,6 @@ namespace CoApp.Toolkit.Trace {
             using(FileStream fs = new FileStream(path, FileMode.Create)) {
                 _serializer.Serialize(fs, this);
             }
-        }
-
-        public IEnumerator<Process> GetEnumerator() {
-            return processes.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return processes.GetEnumerator();
         }
 
         [XmlIgnore]

@@ -12,7 +12,7 @@ namespace CoApp.Toolkit.Trace {
     using System.Linq;
     using System.Xml.Serialization;
 
-    public partial class Process : IEnumerable<Process> {
+    public partial class Process  {
 
         private static XmlSerializer _serializer = new XmlSerializer(typeof(Process));
 
@@ -48,14 +48,6 @@ namespace CoApp.Toolkit.Trace {
 
             processes.Add(process);
             return process;
-        }
-
-        public IEnumerator<Process> GetEnumerator() {
-            return processes.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return processes.GetEnumerator();
         }
     }
 }
