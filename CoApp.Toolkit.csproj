@@ -89,6 +89,7 @@
     </Compile>
     <Compile Include="Trace\CommandLine.cs" />
     <Compile Include="Trace\File.cs" />
+    <Compile Include="Trace\Indexers.cs" />
     <Compile Include="Trace\Process.cs" />
     <Compile Include="Trace\Trace.cs" />
     <Compile Include="Trace\Tracing.cs">

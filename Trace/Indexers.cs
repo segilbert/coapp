@@ -1,0 +1,52 @@
+﻿//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2010 Garrett Serack. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace CoApp.Toolkit.Trace {
+    using System.Collections.Generic;
+    using System.Linq;
+
+    public class FileIndexer {
+        private List<File> fileList;
+        public FileIndexer(List<File> collection) {
+            fileList = collection;
+        }
+
+        public File this[string path] {
+            get {
+                path = path.ToLower();
+
+                var result = fileList.Where(x => x.FullPath.Equals(path)).FirstOrDefault();
+
+                if(result == null) {
+                    result = new File() { FullPath = path };
+                    fileList.Add(result);
+                }
+
+                return result;
+            }
+        }
+    }
+
+    public class ProcessIndexer {
+        private List<Process> processList;
+        public ProcessIndexer(List<Process> collection) {
+            processList = collection;
+        }
+
+        public Process this[int PID] {
+            get {
+                var result = processList.Where(x => x.id == PID).FirstOrDefault();
+
+                if(result == null) {
+                    result = new Process() { id = PID };
+                    processList.Add(result);
+                }
+
+                return result;
+            }
+        }
+    }
+}

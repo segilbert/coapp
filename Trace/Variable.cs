@@ -9,6 +9,6 @@ namespace CoApp.Toolkit.Trace {
     using System.Xml.Serialization;
     using Scripting;
 
-    public partial class Variable {
+    public partial class Variable  {
     }
 }

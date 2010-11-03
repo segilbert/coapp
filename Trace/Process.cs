@@ -5,13 +5,13 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Trace {
+    using System.Collections;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Xml.Serialization;
-    using Scripting;
 
-    public partial class Process {
+    public partial class Process : IEnumerable<Process> {
 
         private static XmlSerializer _serializer = new XmlSerializer(typeof(Process));
 
@@ -28,70 +28,25 @@ namespace CoApp.Toolkit.Trace {
             }
         }
 
-        /*
-        public class Indexer<T>{
-            public <T
-            public T this [string index] {
-                get {
-                    
-                }
-                set {
-                    
-                }
-            }
-        }*/
-
-        public class FileIndexer {
-            private List<File> fileList;
-            public FileIndexer(List<File> collection) {
-                fileList = collection;
-            }
-
-            public File this[ string path ] {
-                get {
-                    path = path.ToLower();
-
-                    var result = fileList.Where(x => x.FullPath.Equals(path)).FirstOrDefault();
-
-                    if(result == null) {
-                        result = new File() {FullPath = path};
-                        fileList.Add(result);
-                    }
-
-                    return result;
-                }
-            }
-        }
-
-        public class ProcessIndexer {
-            private List<Process> processList;
-            public ProcessIndexer(List<Process> collection) {
-                processList = collection;
-            }
-
-            public Process this[int PID] {
-                get {
-                    var result = processList.Where(x => x.id == PID).FirstOrDefault();
-
-                    if(result == null) {
-                        result = new Process() { id = PID };
-                        processList.Add(result);
-                    }
-
-                    return result;
-                }
-            }
-        }
-
-
         [XmlIgnore]
         public FileIndexer Files;
+
+        [XmlIgnore]
         public ProcessIndexer Processes;
 
         public Process() {
            Files = new FileIndexer(files);
-           Processes = new ProcessIndexer(process);
+           Processes = new ProcessIndexer(processes);
            
+        }
+
+
+        public IEnumerator<Process> GetEnumerator() {
+            return processes.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            return processes.GetEnumerator();
         }
     }
 }

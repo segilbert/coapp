@@ -21,7 +21,28 @@ using System.Collections.Generic;
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlRootAttribute("Trace", Namespace="", IsNullable=false)]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="", IsNullable=false)]
+    public partial class Trace {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("processes")]
+        public List<Process> processes = new List<Process>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime started;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public System.DateTime stopped;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class Process {
         
         /// <remarks/>
@@ -36,8 +57,8 @@ using System.Collections.Generic;
         public List<File> files = new List<File>();
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("process")]
-        public List<Process> process = new List<Process>();
+        [System.Xml.Serialization.XmlElementAttribute("processes")]
+        public List<Process> processes = new List<Process>();
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
