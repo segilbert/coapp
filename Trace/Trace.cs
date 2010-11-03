@@ -10,9 +10,7 @@ namespace CoApp.Toolkit.Trace {
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
-    using Scripting;
 
     public partial class Trace : IEnumerable<Process> {
         private static XmlSerializer _serializer = new XmlSerializer(typeof(Trace));
