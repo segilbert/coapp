@@ -5,6 +5,7 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Trace {
+    using System;
     using System.Collections;
     using System.Collections.Generic;
     using System.IO;
@@ -40,6 +41,14 @@ namespace CoApp.Toolkit.Trace {
            
         }
 
+        public Process Add(Process process) {
+            var result = processes.Where(x => x.id == process.id).FirstOrDefault();
+            if(result != null)
+                throw new Exception("Duplicate Process IDs in Trace file not permitted.");
+
+            processes.Add(process);
+            return process;
+        }
 
         public IEnumerator<Process> GetEnumerator() {
             return processes.GetEnumerator();
