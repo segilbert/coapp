@@ -13,6 +13,9 @@
 // Courtesy of the Open Source Techology Center: http://port25.technet.com
 // -----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Collections.Specialized;
+
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.IO;
@@ -66,9 +69,42 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name = "relativePath"></param>
         /// <returns></returns>
         public static string ResolveRelativePath(this string assumedCurrentDirectory, string relativePath) {
+
             return null;
         }
 
+        public static string RelativePathTo(this string currentDirectory, string pathToMakeRelative) {
+            if (string.IsNullOrEmpty(currentDirectory))
+                throw new ArgumentNullException("currentDirectory");
+
+            if (string.IsNullOrEmpty(pathToMakeRelative))
+                throw new ArgumentNullException("pathToMakeRelative");
+
+            currentDirectory = Path.GetFullPath(currentDirectory);
+            pathToMakeRelative = Path.GetFullPath(pathToMakeRelative);
+
+            if (!Path.GetPathRoot(currentDirectory).Equals(Path.GetPathRoot(pathToMakeRelative), StringComparison.CurrentCultureIgnoreCase))
+                return pathToMakeRelative;
+
+            var relativePath = new List<string>();
+            var currentDirectoryElements = currentDirectory.Split(Path.DirectorySeparatorChar);
+            var pathToMakeRelativeElements = pathToMakeRelative.Split(Path.DirectorySeparatorChar);
+            var commonDirectories = 0;
+
+            for (; commonDirectories < Math.Min(currentDirectoryElements.Length, pathToMakeRelativeElements.Length); commonDirectories++) {
+                if (!currentDirectoryElements[commonDirectories].Equals(pathToMakeRelativeElements[commonDirectories], StringComparison.CurrentCultureIgnoreCase))
+                    break;
+            }
+
+            for (var index = commonDirectories; index < currentDirectoryElements.Length; index++)
+                if (currentDirectoryElements[index].Length > 0)
+                    relativePath.Add("..");
+
+            for (var index = commonDirectories; index < pathToMakeRelativeElements.Length; index++)
+                relativePath.Add(pathToMakeRelativeElements[index]);
+
+            return string.Join(Path.DirectorySeparatorChar.ToString(), relativePath);
+        }
         public static string CanonicalizePath(this string filename, string filenameHint) {
             var result = filename;
             /*

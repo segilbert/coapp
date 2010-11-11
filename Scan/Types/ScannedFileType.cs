@@ -14,7 +14,7 @@
 		/// </summary>
 		Source,
 		/// <summary>
-		/// C code file which may include header files
+		/// C code file (headers are seperate)
 		/// </summary>
 		C,
 		/// <summary>
@@ -69,10 +69,24 @@
 		/// Object code files which contain compiled code
 		/// </summary>
 		Object,
-		/// <summary>
-		/// Configuration files
-		/// </summary>
-		Configuration
+        /// <summary>
+        /// Resource files (*.rc)
+        /// </summary>
+        Resource,
+        /// <summary>
+        /// Header files (*.h, etc)
+        /// </summary>
+        Header,
+        /// <summary>
+        /// Xml files (*.xml, etc)
+        /// </summary>
+        Xml,
+        /// <summary>
+        /// Configuration files
+        /// </summary>
+        Configuration,
+
+        Invalid
 
 	}
 }

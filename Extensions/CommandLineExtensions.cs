@@ -30,6 +30,16 @@ namespace CoApp.Toolkit.Extensions {
         private static Dictionary<string, List<string>> switches;
         private static List<string> parameters;
 
+        public static List<string> Switches(this string[] args,string key) {
+            if (switches == null) 
+                Switches(args);
+
+            if (switches.ContainsKey(key))
+                return switches[key];
+
+            return new List<string>();
+        }
+
         public static Dictionary<string, List<string>> Switches(this string[] args) {
             if(switches != null) {
                 return switches;

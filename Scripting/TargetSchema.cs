@@ -209,7 +209,12 @@ using System.Collections.Generic;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
+        [System.ComponentModel.DefaultValueAttribute("")]
         public string path;
+        
+        public Group() {
+            this.path = "";
+        }
     }
     
     /// <remarks/>

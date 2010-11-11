@@ -4,6 +4,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Extensions;
+
 namespace CoApp.Toolkit.Scan.Types
 {
     using System.Collections.Generic;
@@ -16,12 +18,19 @@ namespace CoApp.Toolkit.Scan.Types
 	[XmlRoot("file")]
 	public class ScannedFile
 	{
-		/// <summary>
-		/// Gets or sets the numeric ID of the file.
-		/// </summary>
-		/// <value>The ID.</value>
-		[XmlAttribute("id")]
-		public int ID { get; set; }
+        /// <summary>
+        /// Gets or sets the numeric ID of the file.
+        /// </summary>
+        /// <value>The ID.</value>
+        [XmlIgnore]
+        public bool Used { get; set; }
+
+        /// <summary>
+        /// Gets or sets the numeric ID of the file.
+        /// </summary>
+        /// <value>The ID.</value>
+        [XmlAttribute("id")]
+        public int ID { get; set; }
 
 		/// <summary>
 		/// Gets or sets the directory the file was found in.
@@ -35,7 +44,14 @@ namespace CoApp.Toolkit.Scan.Types
 		/// </summary>
 		/// <value>The full name.</value>
 		[XmlIgnore]
-		internal string FullName { get; set; }
+		public string FullName { get; set; }
+
+        /// <summary>
+        /// Gets the relative path 
+        /// </summary>
+        public string GetRelativePath(string directory) {
+            return directory.RelativePathTo(FullName);
+        }
 
 		/// <summary>
 		/// Gets or sets the name of the file.
@@ -44,12 +60,19 @@ namespace CoApp.Toolkit.Scan.Types
 		[XmlAttribute("name")]
 		public string Name { get; set; }
 
-		/// <summary>
-		/// Gets or sets the type of file.
-		/// </summary>
-		/// <value>The type.</value>
-		[XmlAttribute("type")]
-		public ScannedFileType Type { get; set; }
+        /// <summary>
+        /// Gets or sets the type of file.
+        /// </summary>
+        /// <value>The type.</value>
+        [XmlAttribute("type")]
+        public ScannedFileType Type { get; set; }
+
+        /// <summary>
+        /// Does the file have a main() function.
+        /// </summary>
+        /// <value>The type.</value>
+        [XmlAttribute("hasMain")]
+        public bool HasMain{ get; set; }
 
 		//[XmlArray("includes"), XmlArrayItem("fileid", typeof(int))]
 		[XmlIgnore]
@@ -92,7 +115,7 @@ namespace CoApp.Toolkit.Scan.Types
 			if (fileName == "changes" || fileName.StartsWith("changes.")) return ScannedFileType.Document;
 			if (fileName == "config" || fileName == "configure" || fileName.StartsWith("configure.")) return ScannedFileType.BuildFile;
 			if (fileName == "copyright" || fileName == "version") return ScannedFileType.Document;
-
+            if (fileName == "copying" || fileName == "news" || fileName == "authors" || fileName == "manifest" || fileName == "changelog") return ScannedFileType.Document;
 			return ScannedFileType.Unknown;
 		}
 
@@ -113,12 +136,12 @@ namespace CoApp.Toolkit.Scan.Types
 			{ ".c", ScannedFileType.C },
 			{ ".cpp", ScannedFileType.C},
 			{ ".cxx", ScannedFileType.C},
-			{ ".h", ScannedFileType.C},
-			{ ".hpp", ScannedFileType.C},
-			{ ".hxx", ScannedFileType.C},
+			{ ".h", ScannedFileType.Header},
+			{ ".hpp", ScannedFileType.Header},
+			{ ".hxx", ScannedFileType.Header},
 			{ ".cc", ScannedFileType.C},
-			{ ".hh", ScannedFileType.C},
-			{ ".rc", ScannedFileType.Source},
+			{ ".hh", ScannedFileType.Header},
+			{ ".rc", ScannedFileType.Resource},
 			{ ".asm", ScannedFileType.Assembly},
 			{ ".pas", ScannedFileType.Pascal},
 			{ ".inc", ScannedFileType.Pascal},
@@ -131,6 +154,7 @@ namespace CoApp.Toolkit.Scan.Types
 			{ ".obj", ScannedFileType.Object},
 
 			{ ".bat", ScannedFileType.Script},
+            { ".cmd", ScannedFileType.Script},
 			{ ".js", ScannedFileType.Script},
 			{ ".vbs", ScannedFileType.Script},
 			{ ".sh", ScannedFileType.Script},
@@ -144,6 +168,7 @@ namespace CoApp.Toolkit.Scan.Types
 			{ ".php", ScannedFileType.Script},
 			{ ".phps", ScannedFileType.Script},
 			{ ".m4", ScannedFileType.Script},
+            { ".awk", ScannedFileType.Script},
 
 			{ ".png", ScannedFileType.Media},
 			{ ".gif", ScannedFileType.Media},
@@ -170,10 +195,16 @@ namespace CoApp.Toolkit.Scan.Types
 			{ ".mak", ScannedFileType.BuildFile},
 			{ ".sln", ScannedFileType.BuildFile},
 			{ ".csproj", ScannedFileType.BuildFile},
+            { ".vcproj", ScannedFileType.BuildFile},
+            { ".vcxproj", ScannedFileType.BuildFile},
+            { ".spec", ScannedFileType.BuildFile},
+            { ".cps", ScannedFileType.BuildFile},
 			{ ".config", ScannedFileType.Configuration},
+            { ".properties", ScannedFileType.Configuration},
 
 			{ ".txt", ScannedFileType.Document},
-			{ ".xml", ScannedFileType.Document},
+            { ".man", ScannedFileType.Document},
+			{ ".xml", ScannedFileType.Xml},
 			{ ".xslt", ScannedFileType.Document},
 			{ ".doc", ScannedFileType.Document},
 			{ ".docx", ScannedFileType.Document},

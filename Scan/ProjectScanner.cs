@@ -84,6 +84,7 @@ namespace CoApp.Toolkit.Scan
 				if (Verbose) Console.WriteLine("Analyzing {0}", file);
 				AnalyzeDefines(report, file);
 				AnalyzeIncludes(report, file);
+			    AnalyzeSourceClues(report, file);
 			}
 		}
 
@@ -152,6 +153,20 @@ namespace CoApp.Toolkit.Scan
 				#endregion
 			}
 		}
+
+        /// <summary>
+        /// Analyzes the given file for clues as to its purpose (looks for main(), etc)
+        /// </summary>
+        /// <param name="report"></param>
+        /// <param name="file"></param>
+        private void AnalyzeSourceClues(ScanReport report, ScannedFile file) {
+            string fileContents;
+            Match m;
+
+            fileContents = File.ReadAllText(file.FullName);
+            if(Regex.IsMatch(fileContents, @"int\s*main\s*\(", RegexOptions.Singleline) || Regex.IsMatch(fileContents, @"void\s*main\s*\(", RegexOptions.Singleline))
+                file.HasMain = true;
+        }
 
 		/// <summary>
 		/// Analyzes the files for include statements.  Information is saved in the report.

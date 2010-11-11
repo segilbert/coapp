@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Console\ConsoleException.cs" />
     <Compile Include="DynamicXml\DynamicAttributes.cs" />
     <Compile Include="DynamicXml\DynamicNode.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
