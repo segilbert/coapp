@@ -5,9 +5,10 @@
 //-----------------------------------------------------------------------
 
 using System;
+using CoApp.Toolkit.Scripting;
 using CoApp.Toolkit.Scripting.Utility;
 
-namespace CoApp.Toolkit.Scripting {
+namespace CoApp.Toolkit.Spec {
     public class PropertySheetParser {
     
         private enum ParseState {

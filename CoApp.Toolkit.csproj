@@ -64,17 +64,17 @@
     <Compile Include="Scan\Types\ScannedFile.cs" />
     <Compile Include="Scan\Types\ScannedFileType.cs" />
     <Compile Include="Scan\Types\ScanReport.cs" />
-    <Compile Include="Scripting\Target.cs" />
+    <Compile Include="Spec\Target.cs" />
     <Compile Include="Scripting\Utility\ActiveScriptHost.cs" />
     <Compile Include="Scripting\Languages\CSharp\CSharpTokenizer.cs" />
     <Compile Include="Scripting\Languages\GSharp\GSharpProcessor.cs" />
     <Compile Include="Scripting\Languages\GSharp\GSharpTokenizer.cs" />
-    <Compile Include="Scripting\PropertySheet.cs" />
-    <Compile Include="Scripting\PropertySheetParser.cs" />
-    <Compile Include="Scripting\PropertySheetTokenizer.cs" />
-    <Compile Include="Scripting\Rule.cs" />
-    <Compile Include="Scripting\RuleProperty.cs" />
-    <Compile Include="Scripting\TargetSchema.cs">
+    <Compile Include="Spec\PropertySheet.cs" />
+    <Compile Include="Spec\PropertySheetParser.cs" />
+    <Compile Include="Spec\PropertySheetTokenizer.cs" />
+    <Compile Include="Spec\Rule.cs" />
+    <Compile Include="Spec\RuleProperty.cs" />
+    <Compile Include="Spec\TargetSchema.cs">
       <DependentUpon>TargetSchema.xsd</DependentUpon>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -104,10 +104,10 @@
     <Folder Include="Installer\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Scripting\TargetSchema.xsd">
+    <None Include="Spec\TargetSchema.xsd">
       <Generator>XsdTool</Generator>
       <LastGenOutput>TargetSchema.cs</LastGenOutput>
-      <CustomToolNamespace>CoApp.Toolkit.Scripting</CustomToolNamespace>
+      <CustomToolNamespace>CoApp.Toolkit.Spec</CustomToolNamespace>
       <SubType>Designer</SubType>
     </None>
     <None Include="Trace\Tracing.xsd">

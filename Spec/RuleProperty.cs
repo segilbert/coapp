@@ -7,7 +7,7 @@
 using System;
 using CoApp.Toolkit.Extensions;
 
-namespace CoApp.Toolkit.Scripting {
+namespace CoApp.Toolkit.Spec {
     public class RuleProperty {
         public string Name;
 

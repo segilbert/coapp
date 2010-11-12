@@ -6,8 +6,9 @@
 
 using System.Collections.Generic;
 using System.Text;
+using CoApp.Toolkit.Scripting;
 
-namespace CoApp.Toolkit.Scripting {
+namespace CoApp.Toolkit.Spec {
     public class Rule {
         public string Selector;
         public string Class;

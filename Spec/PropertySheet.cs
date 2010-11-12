@@ -6,8 +6,9 @@
 
 using System.Collections.Generic;
 using System.Text;
+using CoApp.Toolkit.Scripting;
 
-namespace CoApp.Toolkit.Scripting {
+namespace CoApp.Toolkit.Spec {
     public class PropertySheet {
         public Dictionary<string, Rule> Rules = new Dictionary<string, Rule>();
 

@@ -4,10 +4,10 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Scripting {
-    using System.IO;
-    using System.Xml.Serialization;
+using System.IO;
+using System.Xml.Serialization;
 
+namespace CoApp.Toolkit.Spec {
     public partial class Target {
         private static XmlSerializer _serializer = new XmlSerializer(typeof(Target));
 

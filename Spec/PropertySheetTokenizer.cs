@@ -7,7 +7,7 @@
 using System.Collections.Generic;
 using CoApp.Toolkit.Scripting.Utility;
 
-namespace CoApp.Toolkit.Scripting {
+namespace CoApp.Toolkit.Spec {
     public class PropertySheetTokenizer : Tokenizer {
 
         /// <summary>
