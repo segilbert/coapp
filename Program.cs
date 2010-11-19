@@ -6,6 +6,7 @@
 
 namespace CoApp.cli {
     using System;
+    using System.Linq;
     using Toolkit.Engine;
     using Toolkit.Extensions;
 
@@ -128,6 +129,7 @@ Notes:
         /// </returns>
         private int Startup(string[] args) {
             var pkgManager = new PackageManager();
+
             var options = args.Switches();
             var parameters = args.Parameters();
 
@@ -159,34 +161,34 @@ Notes:
 
             Logo();
 
-            if(parameters.Count < 1) {
+            if(parameters.Count() < 1) {
                 return Fail("Missing Command. \r\n\r\n    Use --help for command line help.");
             }
 
-            var command = parameters[0].ToLower();
-            parameters.RemoveAt(0);
+            var command = parameters.FirstOrDefault().ToLower();
+            // parameters.RemoveAt(0);
 
             try {
                 switch(command) {
                     case "install":
-                        if(parameters.Count < 1) {
+                        if(parameters.Count() < 1) {
                             return Fail("Command 'install' requires at least one package. \r\n\r\n    Use --help for command line help.");
                         }
 
-                        pkgManager.Install(parameters);
+//                        pkgManager.Install(parameters);
                         break;
 
                     case "uninstall":
-                        if(parameters.Count < 1) {
+                        if(parameters.Count() < 1) {
                             return Fail("Command 'uninstall' requires at least one package. \r\n\r\n    Use --help for command line help.");
                         }
 
-                        pkgManager.Remove(parameters);
+                        // pkgManager.Remove(parameters);
                         break;
 
                     case "list":
                         // dual purpose
-                        if(parameters.Count != 1) {
+                        if(parameters.Count() != 1) {
                             return Fail("Command 'list' requires a parameter: either 'packages' or 'repo'. \r\n\r\n    Use --help for command line help.");
                         }
 
@@ -200,7 +202,7 @@ Notes:
                         break;
                     
                     case "find":
-                        if(parameters.Count < 1) {
+                        if(parameters.Count() < 1) {
                             return Fail("Command 'find' requires at least one partial package name. \r\n\r\n    Use --help for command line help.");
                         }
 
@@ -231,16 +233,16 @@ Notes:
                         break;
 
                     case "show-directory":
-                        "Repository Directory URL: [{0}]".Print(pkgManager.RepostoryDirectoryUrl);
+                        // "Repository Directory URL: [{0}]".Print(pkgManager.RepostoryDirectoryUrl);
                         break;
                         
                     case "set-directory":
-                        if(parameters.Count != 1) {
+                        if(parameters.Count() != 1) {
                             return Fail("Command 'set-directory' requires the URL for the repository directory . \r\n\r\n    Use --help for command line help.");
                         }
 
-                        pkgManager.RepostoryDirectoryUrl = parameters[0];
-                        "Repository Directory URL: [{0}]".Print(pkgManager.RepostoryDirectoryUrl);
+                        // pkgManager.RepostoryDirectoryUrl = parameters[0];
+                        // "Repository Directory URL: [{0}]".Print(pkgManager.RepostoryDirectoryUrl);
 
                         break;
                     case "clear-directory":
