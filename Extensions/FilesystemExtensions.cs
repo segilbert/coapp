@@ -50,6 +50,7 @@ namespace CoApp.Toolkit.Extensions {
             return string.Empty;
         }
 
+        /*
         /// <summary>
         ///   Returns the relative path from the fixedPath for the desiredPath
         /// </summary>
@@ -72,6 +73,11 @@ namespace CoApp.Toolkit.Extensions {
 
             return null;
         }
+        */
+
+       public static string ChangeFileExtensionTo(this string currentFilename, string newExtension) {
+           return Path.Combine(Path.GetDirectoryName(currentFilename)??"", Path.GetFileNameWithoutExtension(currentFilename) + "." + newExtension);
+       }
 
         public static string RelativePathTo(this string currentDirectory, string pathToMakeRelative) {
             if (string.IsNullOrEmpty(currentDirectory))

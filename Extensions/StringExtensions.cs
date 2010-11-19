@@ -15,6 +15,8 @@
 
 namespace CoApp.Toolkit.Extensions {
     using System;
+    using System.Security.Cryptography;
+    using System.Text;
     using System.Text.RegularExpressions;
 
     public static class StringExtensions {
@@ -69,6 +71,26 @@ namespace CoApp.Toolkit.Extensions {
 
         public static bool OnlyContains(this string str, string characters) {
             return OnlyContains(str,characters.ToCharArray());
+        }
+
+        public static Guid CreateGuid(this string str ) {
+            Guid guid;
+            if( !Guid.TryParse(str,out guid)) {
+                guid = new Guid(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(str)));
+            }
+            return guid;
+        }
+
+       public static bool IsWildcardMatch(this string text, string wildcardMask) {
+            var mask = new Regex(
+                '^' +
+                wildcardMask
+                    .Replace(".", "[.]")
+                    .Replace("*", ".*")
+                    .Replace("?", ".")
+                + '$',
+                RegexOptions.IgnoreCase);
+            return mask.IsMatch(text);
         }
 
     }

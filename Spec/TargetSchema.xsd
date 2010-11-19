@@ -12,13 +12,13 @@
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="Dependency">
-    <xs:attribute name="id" type="xs:string" />
-    <xs:attribute name="filename" type="xs:string" />
-    <xs:attribute name="filelocation" type="xs:string" />
+    <xs:sequence>
+      <xs:element name="file" type="File" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
     <xs:attribute name="class" type="xs:string" />
     <xs:attribute name="name" type="xs:string" use="required" />
     <xs:attribute name="version" type="xs:string" />
-    <xs:attribute name="isLegacyLibrary" type="xs:string" use="required" />
+    <xs:attribute name="legacy" type="xs:boolean" use="required" />
   </xs:complexType>
   <xs:complexType name="Metadata">
     <xs:sequence>
@@ -30,9 +30,9 @@
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="File">
-    <xs:attribute name="id" type="xs:string" />
-    <xs:attribute name="filename" type="xs:string" />
-    <xs:attribute name="filelocation" type="xs:string" />
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="location" type="xs:string" />
+    <xs:attribute name="extension" type="xs:string" />
     <xs:attribute name="class" type="xs:string" />
     <xs:attribute name="version" type="xs:string" />
   </xs:complexType>
@@ -41,7 +41,6 @@
       <xs:element name="group" type="Group" minOccurs="0" maxOccurs="unbounded" />
       <xs:element name="file" type="File" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
-    <xs:attribute name="id" type="xs:string" />
     <xs:attribute name="class" type="xs:string" />
     <xs:attribute name="name" type="xs:string" />
     <xs:attribute name="path" type="xs:string" default="" />
@@ -51,7 +50,6 @@
       <xs:element name="script" type="Script" />
       <xs:element name="command" type="Command" />
     </xs:choice>
-    <xs:attribute name="id" type="xs:string" />
     <xs:attribute name="class" type="xs:string" />
     <xs:attribute name="condition" type="xs:string" />
     <xs:attribute name="priority" type="xs:integer" />
@@ -62,14 +60,14 @@
   <xs:complexType name="Script" >
     <xs:simpleContent>
       <xs:extension base="xs:string" >
-        <xs:attribute name="id" type="xs:string" />
+        <xs:attribute name="name" type="xs:string" />
         <xs:attribute name="class" type="xs:string" />
         <xs:attribute name="language" type="xs:string" use="required" />
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
   <xs:complexType name="Command">
-    <xs:attribute name="id" type="xs:string" />
+    <xs:attribute name="name" type="xs:string" />
     <xs:attribute name="class" type="xs:string" />
     <xs:attribute name="executable" type="xs:string" use="required" />
     <xs:attribute name="parameters" type="xs:string" use="required" />

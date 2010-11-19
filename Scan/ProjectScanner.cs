@@ -161,7 +161,6 @@ namespace CoApp.Toolkit.Scan
         /// <param name="file"></param>
         private void AnalyzeSourceClues(ScanReport report, ScannedFile file) {
             string fileContents;
-            Match m;
 
             fileContents = File.ReadAllText(file.FullName);
             if(Regex.IsMatch(fileContents, @"int\s*main\s*\(", RegexOptions.Singleline) || Regex.IsMatch(fileContents, @"void\s*main\s*\(", RegexOptions.Singleline))

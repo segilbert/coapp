@@ -16,10 +16,13 @@
 namespace CoApp.Toolkit.Extensions {
     public static class DebugExtensions {
         public static void Debug(this string buf, params object[] args) {
+#if DEBUG
             System.Diagnostics.Debug.WriteLine(buf.format(args));
+#endif
         }
 
         public static void Debug(this byte[] buf) {
+#if DEBUG
             const int lnWidth = 16;
 
             System.Diagnostics.Debug.WriteLine(" Buffer Length: {0} [0x{0:x4}]".format(buf.Length));
@@ -47,6 +50,8 @@ namespace CoApp.Toolkit.Extensions {
                 System.Diagnostics.Debug.WriteLine("");
             }
             System.Diagnostics.Debug.WriteLine("");
+#endif
         }
+
     }
 }

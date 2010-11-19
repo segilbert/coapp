@@ -64,6 +64,9 @@
     <Compile Include="Scan\Types\ScannedFile.cs" />
     <Compile Include="Scan\Types\ScannedFileType.cs" />
     <Compile Include="Scan\Types\ScanReport.cs" />
+    <Compile Include="Spec\Dependency.cs" />
+    <Compile Include="Spec\File.cs" />
+    <Compile Include="Spec\Link.cs" />
     <Compile Include="Spec\Target.cs" />
     <Compile Include="Scripting\Utility\ActiveScriptHost.cs" />
     <Compile Include="Scripting\Languages\CSharp\CSharpTokenizer.cs" />

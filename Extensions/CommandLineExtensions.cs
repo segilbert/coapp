@@ -16,6 +16,7 @@
 namespace CoApp.Toolkit.Extensions {
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Text.RegularExpressions;
 
@@ -27,10 +28,21 @@ namespace CoApp.Toolkit.Extensions {
     }
 
     public static class CommandLineExtensions {
-        private static Dictionary<string, List<string>> switches;
-        private static List<string> parameters;
+        private static Dictionary<string, IEnumerable<string>> switches;
+        private static IEnumerable<string> parameters;
 
-        public static List<string> Switches(this string[] args,string key) {
+        public static IEnumerable<string> GetParametersForSwitchOrNull(this IEnumerable<string> args, string key) {
+            if(switches == null)
+                Switches(args);
+
+            if(switches.ContainsKey(key))
+                return switches[key];
+
+            return null;
+        }
+
+
+        public static IEnumerable<string> GetParametersForSwitch(this IEnumerable<string> args,string key) {
             if (switches == null) 
                 Switches(args);
 
@@ -40,13 +52,19 @@ namespace CoApp.Toolkit.Extensions {
             return new List<string>();
         }
 
-        public static Dictionary<string, List<string>> Switches(this string[] args) {
+        public static string SwitchValue(this IEnumerable<string> args, string key) {
+            if(args.Switches().ContainsKey(key))
+                return args.GetParametersForSwitch(key).FirstOrDefault();
+            return null;
+        }
+
+        public static Dictionary<string, IEnumerable<string>> Switches(this IEnumerable<string> args) {
             if(switches != null) {
                 return switches;
             }
 
-            var firstarg = 0;
-            switches = new Dictionary<string, List<string>>();
+            // var firstarg = 0;
+            switches = new Dictionary<string, IEnumerable<string>>();
 
             // load a <exe>.properties file in the same location as the executing assembly.
             var assemblypath = Assembly.GetEntryAssembly().Location;
@@ -55,16 +73,18 @@ namespace CoApp.Toolkit.Extensions {
                 propertiespath.LoadConfiguration();
             }
 
-            while(firstarg < args.Length && args[firstarg].StartsWith("--")) {
-                var arg = args[firstarg].Substring(2).ToLower();
+            var argEnumerator = args.GetEnumerator();
+            //while(firstarg < args.Length && args[firstarg].StartsWith("--")) {
+            while(argEnumerator.MoveNext() && argEnumerator.Current.StartsWith("--"))  {
+                var arg = argEnumerator.Current.Substring(2).ToLower();
                 var param = "";
                 int pos;
 
                 if((pos = arg.IndexOf("=")) > -1) {
-                    param = args[firstarg].Substring(pos + 3);
+                    param = argEnumerator.Current.Substring(pos + 3);
                     arg = arg.Substring(0, pos);
                     if(string.IsNullOrEmpty(param) || string.IsNullOrEmpty(arg)) {
-                        "Invalid Option :{0}".Print(args[firstarg].Substring(2).ToLower());
+                        "Invalid Option :{0}".Print(argEnumerator.Current.Substring(2).ToLower());
                         switches.Clear();
                         switches.Add("help", new List<string>());
                         return switches;
@@ -73,7 +93,7 @@ namespace CoApp.Toolkit.Extensions {
                 if(arg.Equals("load-config")) {
                     // loads the config file, and then continues parsing this line.
                     LoadConfiguration(param);
-                    firstarg++;
+                    // firstarg++;
                     continue;
                 }
 
@@ -81,15 +101,15 @@ namespace CoApp.Toolkit.Extensions {
                     switches.Add(arg, new List<string>());
                 }
 
-                switches[arg].Add(param);
-                firstarg++;
+                ((List<string>)switches[arg]).Add(param);
+                // firstarg++;
             }
             return switches;
         }
 
         public static void LoadConfiguration(this string file) {
             if(switches == null) {
-                switches = new Dictionary<string, List<string>>();
+                switches = new Dictionary<string, IEnumerable<string>>();
             }
 
             var param = "";
@@ -140,7 +160,7 @@ namespace CoApp.Toolkit.Extensions {
                         switches.Add(arg, new List<string>());
                     }
 
-                    switches[arg].Add(param);
+                    ((List<string>)switches[arg]).Add(param);
                 }
             }
             else {
@@ -154,7 +174,7 @@ namespace CoApp.Toolkit.Extensions {
         //      @"\s*[;,]\s*(?!(?<=(?:^|[;,])\s*""(?:[^""]|""""|\\"")*[;,])(?:[^""]|""""|\\"")*""\s*(?:[;,]|$))"
         //  http://regexlib.com/REDetails.aspx?regexp_id=621
         //      @",(?!(?<=(?:^|,)\s*\x22(?:[^\x22]|\x22\x22|\\\x22)*,)(?:[^\x22]|\x22\x22|\\\x22)*\x22\s*(?:,|$))"
-        public static List<ComplexOption> GetComplexOptions(this List<string> rawParameterList) {
+        public static IEnumerable<ComplexOption> GetComplexOptions(this IEnumerable<string> rawParameterList) {
             var optionList = new List<ComplexOption>();
             foreach(string p in rawParameterList) {
                 var m = Regex.Match(p, @"\[(?>\"".*?\""|\[(?<DEPTH>)|\](?<-DEPTH>)|[^[]]?)*\](?(DEPTH)(?!))");
@@ -190,23 +210,11 @@ namespace CoApp.Toolkit.Extensions {
             return optionList;
         }
 
-        public static List<string> Parameters(this string[] args) {
-            if(parameters != null) {
-                return parameters;
-            }
-
-            var index = 0;
-            parameters = new List<string>();
-
-            while(index < args.Length && args[index].StartsWith("--")) {
-                index++;
-            }
-
-            while(index < args.Length) {
-                parameters.Add(args[index]);
-                index++;
-            }
-            return parameters;
+        // public static List<string> Parameters(this string[] args) {
+        public static IEnumerable<string> Parameters(this IEnumerable<string> args) {
+            return parameters ?? (parameters = from argument in args
+                                               where !(argument.StartsWith("--"))
+                                               select argument);
         }
 
         public const string HelpConfigSyntax = @"

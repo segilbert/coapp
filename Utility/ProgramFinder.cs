@@ -101,7 +101,7 @@ namespace CoApp.Toolkit.Utility {
 
         public string FindFile(string fileName, string minimumToolVersion)
         {
-            string result = GetCachedPath(fileName);
+            string result = GetCachedPath(fileName, minimumToolVersion);
 
             if (string.IsNullOrEmpty(result))
             {
@@ -110,7 +110,7 @@ namespace CoApp.Toolkit.Utility {
                     result = Path.Combine(path, fileName);
                     if (File.Exists(result) && IsToolVersionGood(result, minimumToolVersion))
                     {
-                        SetCachedPath(fileName, result);
+                        SetCachedPath(fileName, result, minimumToolVersion);
                         return result;
                     }
                 }
@@ -119,7 +119,7 @@ namespace CoApp.Toolkit.Utility {
                     result = Path.Combine(path, fileName);
                     if (File.Exists(result) && IsToolVersionGood(result, minimumToolVersion))
                     {
-                        SetCachedPath(fileName, result);
+                        SetCachedPath(fileName, result, minimumToolVersion);
                         return result;
                     }
                 }
@@ -128,7 +128,7 @@ namespace CoApp.Toolkit.Utility {
                     result = FindFileRecursively(path, fileName, minimumToolVersion);
                     if (!string.IsNullOrEmpty(result))
                     {
-                        SetCachedPath(fileName, result);
+                        SetCachedPath(fileName, result, minimumToolVersion);
                         return result;
                     }
                 }
@@ -146,7 +146,7 @@ namespace CoApp.Toolkit.Utility {
             string result = null;
             try
             {
-                regkey = Registry.CurrentUser.CreateSubKey(@"Software\gsToolkit\Tools");
+                regkey = Registry.CurrentUser.CreateSubKey(@"Software\CoApp\Tools");
 
                 if (null == regkey)
                     return null;
@@ -168,12 +168,20 @@ namespace CoApp.Toolkit.Utility {
             return result;
         }
 
+        private string GetCachedPath(string toolEntry, string minimumToolVersion) {
+            return GetCachedPath( toolEntry +"-"+ minimumToolVersion);
+        }
+
+        private void SetCachedPath(string toolEntry, string location, string minimumToolVersion) {
+            SetCachedPath(toolEntry +"-"+ minimumToolVersion, location);
+        }
+
         private void SetCachedPath(string toolEntry, string location)
         {
             RegistryKey regkey = null;
             try
             {
-                regkey = Registry.CurrentUser.CreateSubKey(@"Software\gsToolkit\Tools");
+                regkey = Registry.CurrentUser.CreateSubKey(@"Software\CoApp\Tools");
 
                 if (null == regkey)
                     return;
@@ -253,7 +261,7 @@ namespace CoApp.Toolkit.Utility {
         private bool IsNewer(string version1, string version2)
         {
             string[] v1 = version1.Split('.');
-            string[] v2 = version1.Split('.');
+            string[] v2 = version2.Split('.');
 
             for (int i = 0; i < v1.Length; i++)
             {
