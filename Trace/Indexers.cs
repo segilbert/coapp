@@ -5,6 +5,7 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Trace {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -25,6 +26,20 @@ namespace CoApp.Toolkit.Trace {
                     fileList.Add(result);
                 }
 
+                return result;
+            }
+        }
+    }
+    public class FileIndexerByHandle {
+        private List<File> fileList;
+
+        public FileIndexerByHandle(List<File> collection) {
+            fileList = collection;
+        }
+
+        public File this[IntPtr handle] {
+            get {
+                var result = fileList.Where(x => x.Handle.Equals(handle)).FirstOrDefault();
                 return result;
             }
         }

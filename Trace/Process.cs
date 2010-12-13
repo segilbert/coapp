@@ -33,12 +33,14 @@ namespace CoApp.Toolkit.Trace {
         public FileIndexer Files;
 
         [XmlIgnore]
+        public FileIndexerByHandle FilesByHandle;
+
+        [XmlIgnore]
         public ProcessIndexer Processes;
 
         public Process() {
            Files = new FileIndexer(files);
            Processes = new ProcessIndexer(processes);
-           
         }
 
         public Process Add(Process process) {

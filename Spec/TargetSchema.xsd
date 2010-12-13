@@ -35,6 +35,7 @@
     <xs:attribute name="extension" type="xs:string" />
     <xs:attribute name="class" type="xs:string" />
     <xs:attribute name="version" type="xs:string" />
+    <xs:attribute name="action" type="xs:string" />
   </xs:complexType>
   <xs:complexType name="Group">
     <xs:sequence>

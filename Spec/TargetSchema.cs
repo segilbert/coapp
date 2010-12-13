@@ -100,6 +100,10 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string version;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string action;
     }
     
     /// <remarks/>

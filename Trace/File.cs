@@ -5,12 +5,16 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Trace {
+    using System;
     using System.IO;
     using System.Xml.Serialization;
     using Scripting;
 
     public partial class File {
         private string fullPath;
+
+        [XmlIgnore]
+        public IntPtr Handle { get; set; }
 
         [XmlIgnore]
         public string FullPath {
