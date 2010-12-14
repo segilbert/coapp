@@ -134,6 +134,14 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public bool deleted;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public bool moved;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string movedTo;
     }
     
     /// <remarks/>
