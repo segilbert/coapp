@@ -31,17 +31,17 @@ namespace CoApp.Toolkit.Trace {
         [XmlIgnore]
         public ProcessIndexer Processes;
 
-        public Process Add(Process process) {
-            var result = processes.Where(x => x.id == process.id).FirstOrDefault();
+        public Process Add(Process aProcess) {
+            var result = process.Where(x => x.id == aProcess.id).FirstOrDefault();
             if(result != null)
                 throw new Exception("Duplicate Process IDs in Trace file not permitted.");
 
-            processes.Add(process);
-            return process;
+            process.Add(aProcess);
+            return aProcess;
         }
 
         public Trace() {
-            Processes = new ProcessIndexer(processes);
+            Processes = new ProcessIndexer(process);
         }
     }
 }

@@ -26,8 +26,8 @@ using System.Collections.Generic;
     public partial class Trace {
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("processes")]
-        public List<Process> processes = new List<Process>();
+        [System.Xml.Serialization.XmlElementAttribute("process")]
+        public List<Process> process = new List<Process>();
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
@@ -57,8 +57,8 @@ using System.Collections.Generic;
         public List<File> files = new List<File>();
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("processes")]
-        public List<Process> processes = new List<Process>();
+        [System.Xml.Serialization.XmlElementAttribute("process")]
+        public List<Process> process = new List<Process>();
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]

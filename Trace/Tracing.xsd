@@ -15,7 +15,7 @@
   <xs:element name="Trace">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="processes" type="Process" minOccurs="0" maxOccurs="unbounded" />
+        <xs:element name="process" type="Process" minOccurs="0" maxOccurs="unbounded" />
       </xs:sequence>
       <xs:attribute name="started" type="xs:dateTime" use="required" />
       <xs:attribute name="stopped" type="xs:dateTime" use="required" />
@@ -28,7 +28,7 @@
       <xs:element name="commandLine" type="CommandLine" minOccurs="0" maxOccurs="1" />
       <xs:element name="environment" type="Environment" minOccurs="0" maxOccurs="1" />
       <xs:element name="files" type="Files" minOccurs="0" maxOccurs="1"/>
-      <xs:element name="processes" type="Process" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="process" type="Process" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute name="id" type="xs:long" use="required" />
     <xs:attribute name="currentDirectory" type="xs:string"  />

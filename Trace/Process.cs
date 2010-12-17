@@ -6,8 +6,6 @@
 
 namespace CoApp.Toolkit.Trace {
     using System;
-    using System.Collections;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Xml.Serialization;
@@ -40,17 +38,17 @@ namespace CoApp.Toolkit.Trace {
 
         public Process() {
            Files = new FileIndexer(files);
-           Processes = new ProcessIndexer(processes);
+           Processes = new ProcessIndexer(process);
            FilesByHandle = new FileIndexerByHandle(files);
         }
 
-        public Process Add(Process process) {
-            var result = processes.Where(x => x.id == process.id).FirstOrDefault();
+        public Process Add(Process aProcess) {
+            var result = process.Where(x => x.id == aProcess.id).FirstOrDefault();
             if(result != null)
                 throw new Exception("Duplicate Process IDs in Trace file not permitted.");
 
-            processes.Add(process);
-            return process;
+            process.Add(aProcess);
+            return aProcess;
         }
     }
 }
