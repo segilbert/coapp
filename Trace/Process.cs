@@ -41,6 +41,7 @@ namespace CoApp.Toolkit.Trace {
         public Process() {
            Files = new FileIndexer(files);
            Processes = new ProcessIndexer(processes);
+           FilesByHandle = new FileIndexerByHandle(files);
         }
 
         public Process Add(Process process) {

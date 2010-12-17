@@ -30,6 +30,7 @@ namespace CoApp.Toolkit.Trace {
             }
         }
     }
+
     public class FileIndexerByHandle {
         private List<File> fileList;
 
@@ -39,7 +40,7 @@ namespace CoApp.Toolkit.Trace {
 
         public File this[IntPtr handle] {
             get {
-                var result = fileList.Where(x => x.Handle.Equals(handle)).FirstOrDefault();
+                var result = fileList.Where(x => x.Handle.Equals(handle)).LastOrDefault();
                 return result;
             }
         }
@@ -51,7 +52,7 @@ namespace CoApp.Toolkit.Trace {
             processList = collection;
         }
 
-        public Process this[int PID] {
+        public Process this[long PID] {
             get {
                 var result = processList.Where(x => x.id == PID).FirstOrDefault();
 

@@ -62,7 +62,7 @@ using System.Collections.Generic;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public int id;
+        public long id;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
