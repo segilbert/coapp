@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
 //     Original Copyright (c) 2009 Microsoft Corporation. All rights reserved.
-//     Changes Copyright (c) 2010  Garrett Serack. All rights reserved.
+//     Changes Copyright (c) 2010  Eric Schultz, Garrett Serack. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
