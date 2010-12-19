@@ -18,6 +18,7 @@ namespace CoApp.Toolkit.Utility {
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Diagnostics;
 
     public class ProgramFinder
     {
@@ -287,32 +288,19 @@ namespace CoApp.Toolkit.Utility {
 
         }
 
-        unsafe public virtual string GetToolVersion(string FileName)
+        public virtual string GetToolVersion(string FileName)
         {
-            int handle;
-            // Figure out how much version info there is:
-            int size = NativeMethods.GetFileVersionInfoSize(FileName, out handle);
-
-            if (0 == size)
+            
+            try
+            {
+                FileVersionInfo info = FileVersionInfo.GetVersionInfo(FileName);
+                return info.FileVersion;
+               // info.FileVersion
+            }
+            catch
+            {
                 return null;
-
-            byte[] buffer = new byte[size];
-
-            if (!NativeMethods.GetFileVersionInfo(FileName, handle, size, buffer))
-                return null;
-
-            short* subBlock;
-            uint len;
-            // Get the locale info from the version info:
-            if (!NativeMethods.VerQueryValue(buffer, @"\VarFileInfo\Translation", out subBlock, out len))
-                return null;
-
-            string spv = @"\StringFileInfo\" + subBlock[0].ToString("X4") + subBlock[1].ToString("X4") + @"\ProductVersion";
-
-            // Get the ProductVersion value for this program:
-            string versionInfo;
-
-            return !NativeMethods.VerQueryValue(buffer, spv, out versionInfo, out len) ? null : versionInfo;
+            }
         }
 
         public static ExecutableInfo GetExeType(string filename)
