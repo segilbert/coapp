@@ -295,7 +295,6 @@ namespace CoApp.Toolkit.Utility {
             {
                 FileVersionInfo info = FileVersionInfo.GetVersionInfo(FileName);
                 return info.FileVersion;
-               // info.FileVersion
             }
             catch
             {
