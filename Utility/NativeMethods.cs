@@ -17,18 +17,6 @@ namespace CoApp.Toolkit.Utility
     using System;
     using System.Runtime.InteropServices;
 
-    class NativeMethods
-    {
-        [DllImport("version.dll")]
-        public static extern int GetFileVersionInfoSize(string sFileName, out int handle);
-        [DllImport("version.dll")]
-        public static extern bool GetFileVersionInfo(string sFileName, int handle, int size, byte[] infoBuffer);
-        [DllImport("version.dll")]
-        unsafe public static extern bool VerQueryValue(byte[] pBlock, string pSubBlock, out string pValue, out uint len);
-        [DllImport("version.dll")]
-        unsafe public static extern bool VerQueryValue(byte[] pBlock, string pSubBlock, out short* pValue, out uint len);
-    }
-
     public enum MachineType
     {
         Native = 0,
