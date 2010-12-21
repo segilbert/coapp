@@ -161,5 +161,26 @@ namespace CoApp.Toolkit.Extensions {
 
             return result;
         }
+        public static string FormatFilename(this string filename, params string[] parameters) {
+            var result = filename;
+            /*
+                {date}      - the current date (y-m-d)
+                {date-long} - the date in long format
+                {time}      - the current time (Hh:mm:ss)
+                {time-long} - the current time in long fmt
+                {ticks}     - the current timestamp as tics
+                {counter}   - a running counter
+             *
+            */
+           
+            result = result.Replace(@"{counter}", "" + counter++);
+            result = result.Replace(@"{date}", DateTime.Now.ToString("yyyy-MM-dd"));
+            result = result.Replace(@"{date-long}", DateTime.Now.ToString("MMMM dd YYYY"));
+            result = result.Replace(@"{time}", DateTime.Now.ToString("hhmmss"));
+            result = result.Replace(@"{time-long}", DateTime.Now.ToString("HHmmssffff"));
+            result = result.Replace(@"{ticks}", "" + DateTime.Now.Ticks);
+
+            return result.format(parameters);
+        }
     }
 }
