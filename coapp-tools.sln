@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "coapp-testpackagemaker", ".
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DllExport", "..\DllExport\DllExport.csproj", "{201258A6-4FB1-4448-BBC0-37D2A8967916}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickTool", "..\quicktool\QuickTool.csproj", "{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -224,6 +226,20 @@ Global
 		{201258A6-4FB1-4448-BBC0-37D2A8967916}.Release|x64.Build.0 = Release|x64
 		{201258A6-4FB1-4448-BBC0-37D2A8967916}.Release|x86.ActiveCfg = Release|x86
 		{201258A6-4FB1-4448-BBC0-37D2A8967916}.Release|x86.Build.0 = Release|x86
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Debug|Win32.ActiveCfg = Debug|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Debug|x64.ActiveCfg = Debug|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Debug|x64.Build.0 = Debug|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Debug|x86.ActiveCfg = Debug|x86
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Debug|x86.Build.0 = Debug|x86
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Release|Mixed Platforms.Build.0 = Release|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Release|Win32.ActiveCfg = Release|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Release|x64.ActiveCfg = Release|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Release|x64.Build.0 = Release|x64
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Release|x86.ActiveCfg = Release|x86
+		{8E2605A9-54DF-4E63-ABA8-27D5C03DAC09}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
