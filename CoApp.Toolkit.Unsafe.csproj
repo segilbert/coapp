@@ -49,7 +49,12 @@
     <Compile Include="Utility\ProcessUtility.cs" />
     <Compile Include="Utility\ProgramFinder.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="CoApp.Toolkit.csproj">
+      <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
+      <Name>CoApp.Toolkit</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

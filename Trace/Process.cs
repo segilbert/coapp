@@ -4,11 +4,14 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
+
 namespace CoApp.Toolkit.Trace {
     using System;
     using System.IO;
     using System.Linq;
     using System.Xml.Serialization;
+    using CoApp.Toolkit.Extensions;
 
     public partial class Process  {
 
@@ -36,19 +39,25 @@ namespace CoApp.Toolkit.Trace {
         [XmlIgnore]
         public ProcessIndexer Processes;
 
+        [XmlIgnore]
+        internal List<Process> ParentCollection;
+
         public Process() {
            Files = new FileIndexer(files);
            Processes = new ProcessIndexer(process);
            FilesByHandle = new FileIndexerByHandle(files);
         }
 
+        /*
         public Process Add(Process aProcess) {
-            var result = process.Where(x => x.id == aProcess.id).FirstOrDefault();
+            var result = process.Traverse(c => c.process).Where(x => x.id == aProcess.id).FirstOrDefault();
             if(result != null)
                 throw new Exception("Duplicate Process IDs in Trace file not permitted.");
 
             process.Add(aProcess);
+            aProcess.Parent = this;
             return aProcess;
         }
+         * */
     }
 }

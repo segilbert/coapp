@@ -18,7 +18,10 @@ namespace CoApp.Toolkit.Utility {
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
+    using System.Linq.Expressions;
     using System.Diagnostics;
+    using CoApp.Toolkit.Extensions;
 
     public class ProgramFinder
     {
@@ -75,6 +78,23 @@ namespace CoApp.Toolkit.Utility {
         {
             AddPathsToList(paths, commonSearchLocations);
         }
+
+
+        public void foo () {
+            string filename = "";
+            
+            var files = commonSearchLocations.Union(searchLocations).AsParallel().SelectMany(directory => Directory.EnumerateFiles(directory, filename, SearchOption.TopDirectoryOnly))
+                .Union(recursiveSearchLocations.AsParallel().SelectMany(directory => Directory.EnumerateFiles(directory, filename, SearchOption.AllDirectories)));
+
+            files = files.Where(file => GetExeType(file) == ExecutableInfo.x64);
+   
+
+            // var f = files.MaxElement(GetToolVersionNumeric);
+            
+
+            // var f = from file in files where 
+        }
+
 
         private string FindFileRecursively(string directory, string toolFilename, string minimumToolVersion)
         {
@@ -290,7 +310,6 @@ namespace CoApp.Toolkit.Utility {
 
         public virtual string GetToolVersion(string FileName)
         {
-            
             try
             {
                 FileVersionInfo info = FileVersionInfo.GetVersionInfo(FileName);
@@ -299,6 +318,18 @@ namespace CoApp.Toolkit.Utility {
             catch
             {
                 return null;
+            }
+        }
+
+        public virtual ulong GetToolVersionNumeric(string FileName) {
+            try
+            {
+                FileVersionInfo info = FileVersionInfo.GetVersionInfo(FileName);
+                return (((ulong)info.FileMajorPart) << 48) + (((ulong)info.FileMinorPart) << 32) + (((ulong)info.FileBuildPart) << 16) + (ulong)info.ProductMinorPart;
+            }
+            catch
+            {
+                return 0;
             }
         }
 

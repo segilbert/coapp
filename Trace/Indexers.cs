@@ -8,6 +8,7 @@ namespace CoApp.Toolkit.Trace {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using CoApp.Toolkit.Extensions;
 
     public class FileIndexer {
         private List<File> fileList;
@@ -48,20 +49,25 @@ namespace CoApp.Toolkit.Trace {
 
     public class ProcessIndexer {
         private List<Process> processList;
+
         public ProcessIndexer(List<Process> collection) {
             processList = collection;
         }
 
         public Process this[long PID] {
             get {
-                var result = processList.Where(x => x.id == PID).FirstOrDefault();
+                lock (processList) {
+                    var result = processList.Traverse(c => c.process).Where(x => x.id == PID).FirstOrDefault();
+                    // var result = processList.Where(x => x.id == PID).FirstOrDefault();)
 
-                if(result == null) {
-                    result = new Process() { id = PID };
-                    processList.Add(result);
+                    if (result == null) {
+                        result = new Process() {id = PID, ParentCollection = processList};
+
+                        processList.Add(result);
+                    }
+                    return result;
                 }
-
-                return result;
+                
             }
         }
     }
