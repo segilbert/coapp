@@ -60,6 +60,11 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
+    <Compile Include="Package\mkPackage.cs">
+      <DependentUpon>mkPackage.xsd</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="Scan\ProjectScanner.cs" />
     <Compile Include="Scan\Types\ScannedDefine.cs" />
     <Compile Include="Scan\Types\ScannedFile.cs" />
@@ -108,6 +113,12 @@
     <Folder Include="Installer\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Package\mkPackage.xsd">
+      <Generator>XsdTool</Generator>
+      <LastGenOutput>mkPackage.cs</LastGenOutput>
+      <CustomToolNamespace>CoApp.Toolkit.Package</CustomToolNamespace>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Spec\TargetSchema.xsd">
       <Generator>XsdTool</Generator>
       <LastGenOutput>TargetSchema.cs</LastGenOutput>
