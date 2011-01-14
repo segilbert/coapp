@@ -17,6 +17,7 @@ namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Linq;
     using System.Text.RegularExpressions;
 
     public static class StringExtensions {
@@ -73,6 +74,20 @@ namespace CoApp.Toolkit.Extensions {
             return OnlyContains(str,characters.ToCharArray());
         }
 
+        public static int PositionOfFirstCharacterNotIn(this string str, char[] characters) {
+            int p = 0;
+            while( p < str.Length) {
+                if (!characters.Contains(str[p]))
+                    return p;
+                p++;
+            }
+            return p;
+        }
+        public static int PositionOfFirstCharacterNotIn(this string str, string characters) {
+            return PositionOfFirstCharacterNotIn(str, characters.ToCharArray());
+        }
+
+
         public static Guid CreateGuid(this string str ) {
             Guid guid;
             if( !Guid.TryParse(str,out guid)) {
@@ -86,6 +101,7 @@ namespace CoApp.Toolkit.Extensions {
                 '^' +
                 wildcardMask
                     .Replace(".", "[.]")
+                    .Replace("\\", "\\\\")
                     .Replace("*", ".*")
                     .Replace("?", ".")
                 + '$',

@@ -28,6 +28,8 @@ namespace CoApp.Toolkit.Utility
     [Flags]
     public enum ExecutableInfo
     {
+        none = 0x0000,
+
         x86 = 0x0001,
         x64 = 0x0002,
 

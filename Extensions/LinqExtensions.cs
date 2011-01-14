@@ -41,7 +41,6 @@ namespace CoApp.Toolkit.Extensions {
                     }
                 }
             }
-            if (first) throw new InvalidOperationException("Sequence is empty.");
             return maxObj;
         }
 
