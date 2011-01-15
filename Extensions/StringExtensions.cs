@@ -15,14 +15,14 @@
 
 namespace CoApp.Toolkit.Extensions {
     using System;
+    using System.Linq;
     using System.Security.Cryptography;
     using System.Text;
-    using System.Linq;
     using System.Text.RegularExpressions;
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
-        
+
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
         }
@@ -53,50 +53,51 @@ namespace CoApp.Toolkit.Extensions {
             return i;
         }
 
-        public static bool OnlyContains(this string str, char[] characters ) {
-            
-            for(int x = 0;x<str.Length;x++) {
+        public static bool OnlyContains(this string str, char[] characters) {
+            for (int x = 0; x < str.Length; x++) {
                 char ch = str[x];
                 bool found = false;
-                for(int y=0;y<characters.Length ; y++) {
-                    if( ch == characters[y] ) {
+                for (int y = 0; y < characters.Length; y++) {
+                    if (ch == characters[y]) {
                         found = true;
                         break;
                     }
                 }
-                if( !found )
+                if (!found) {
                     return false;
+                }
             }
             return true;
         }
 
         public static bool OnlyContains(this string str, string characters) {
-            return OnlyContains(str,characters.ToCharArray());
+            return OnlyContains(str, characters.ToCharArray());
         }
 
         public static int PositionOfFirstCharacterNotIn(this string str, char[] characters) {
             int p = 0;
-            while( p < str.Length) {
-                if (!characters.Contains(str[p]))
+            while (p < str.Length) {
+                if (!characters.Contains(str[p])) {
                     return p;
+                }
                 p++;
             }
             return p;
         }
+
         public static int PositionOfFirstCharacterNotIn(this string str, string characters) {
             return PositionOfFirstCharacterNotIn(str, characters.ToCharArray());
         }
 
-
-        public static Guid CreateGuid(this string str ) {
+        public static Guid CreateGuid(this string str) {
             Guid guid;
-            if( !Guid.TryParse(str,out guid)) {
+            if (!Guid.TryParse(str, out guid)) {
                 guid = new Guid(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(str)));
             }
             return guid;
         }
 
-       public static bool IsWildcardMatch(this string text, string wildcardMask) {
+        public static bool IsWildcardMatch(this string text, string wildcardMask) {
             var mask = new Regex(
                 '^' +
                 wildcardMask
@@ -109,5 +110,36 @@ namespace CoApp.Toolkit.Extensions {
             return mask.IsMatch(text);
         }
 
+        public static bool IsTrue(this string text) {
+            return text.Equals("true", StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        public static bool IsFalse(this string text) {
+            return text.Equals("false", StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        public static byte[] ToByteArray(this string text) {
+            return Encoding.UTF8.GetBytes(text);
+        }
+
+        public static string ToUtf8String(this byte[] bytes) {
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        public static byte[] Protect(this string text, string salt = "CoAppToolkit") {
+            return ProtectedData.Protect((text ?? string.Empty).ToByteArray(), salt.ToByteArray(), DataProtectionScope.CurrentUser);
+        }
+
+        public static string Unprotect(this byte[] data, string salt = "CoAppToolkit") {
+            if (data == null || data.Length == 0)
+                return string.Empty;
+            try {
+                return ProtectedData.Unprotect(data, salt.ToByteArray(), DataProtectionScope.CurrentUser).ToUtf8String();    
+            }
+            catch {
+                /* suppress */
+            }
+            return string.Empty;
+        }
     }
 }
