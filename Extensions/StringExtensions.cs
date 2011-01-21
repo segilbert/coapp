@@ -141,5 +141,17 @@ namespace CoApp.Toolkit.Extensions {
             }
             return string.Empty;
         }
+
+        public static UInt64 VersionStringToUInt64(this string version) {
+            if (string.IsNullOrEmpty(version))
+                return 0;
+            var vers = version.Split('.');
+            var major = vers.Length > 0 ? vers[0].ToInt32(0) : 0;
+            var minor = vers.Length > 1 ? vers[1].ToInt32(0) : 0;
+            var build = vers.Length > 2 ? vers[2].ToInt32(0) : 0;
+            var revision = vers.Length > 3 ? vers[3].ToInt32(0) : 0;
+
+            return (((UInt64)major) << 48) + (((UInt64)minor) << 32) + (((UInt64)build) << 16) + (UInt64)revision;
+        }
     }
 }

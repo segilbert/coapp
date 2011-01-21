@@ -8,10 +8,11 @@ namespace CoApp.Toolkit.Trace {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using CoApp.Toolkit.Extensions;
+    using Extensions;
 
     public class FileIndexer {
-        private List<File> fileList;
+        private readonly List<File> fileList;
+
         public FileIndexer(List<File> collection) {
             fileList = collection;
         }
@@ -20,20 +21,21 @@ namespace CoApp.Toolkit.Trace {
             get {
                 path = path.ToLower();
 
-                var result = fileList.Where(x => x.FullPath.Equals(path)).FirstOrDefault();
+                lock (fileList) {
+                    var result = fileList.Where(x => x.FullPath.Equals(path)).LastOrDefault();
 
-                if(result == null) {
-                    result = new File() { FullPath = path };
-                    fileList.Add(result);
+                    if (result == null) {
+                        result = new File {FullPath = path};
+                        fileList.Add(result);
+                    }
+                    return result;
                 }
-
-                return result;
             }
         }
     }
 
     public class FileIndexerByHandle {
-        private List<File> fileList;
+        private readonly List<File> fileList;
 
         public FileIndexerByHandle(List<File> collection) {
             fileList = collection;
@@ -41,33 +43,33 @@ namespace CoApp.Toolkit.Trace {
 
         public File this[IntPtr handle] {
             get {
-                var result = fileList.Where(x => x.Handle.Equals(handle)).LastOrDefault();
-                return result;
+                lock (fileList) {
+                    var result = fileList.Where(x => x.Handle.Equals(handle)).LastOrDefault();
+                    return result;
+                }
             }
         }
     }
 
     public class ProcessIndexer {
-        private List<Process> processList;
+        private readonly List<Process> processList;
 
         public ProcessIndexer(List<Process> collection) {
             processList = collection;
         }
 
-        public Process this[long PID] {
+        public Process this[int pid] {
             get {
                 lock (processList) {
-                    var result = processList.Traverse(c => c.process).Where(x => x.id == PID).FirstOrDefault();
-                    // var result = processList.Where(x => x.id == PID).FirstOrDefault();)
+                    var result = processList.Traverse(c => c.process).Where(x => x.id == pid).LastOrDefault();
 
                     if (result == null) {
-                        result = new Process() {id = PID, ParentCollection = processList};
+                        result = new Process {id = pid, ParentCollection = processList};
 
                         processList.Add(result);
                     }
                     return result;
                 }
-                
             }
         }
     }

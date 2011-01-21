@@ -33,7 +33,7 @@ namespace CoApp.Toolkit.Utility {
         public static ProgramFinder ProgramFilesSys32AndDotNet;
         private static readonly Dictionary<string, ExecutableInfo> ExeTypeCache = new Dictionary<string, ExecutableInfo>();
         private static readonly Dictionary<string, string> ToolVersionCache = new Dictionary<string, string>();
-        private static readonly Dictionary<string, ulong> ToolVersionNumericCache = new Dictionary<string, ulong>();
+        private static readonly Dictionary<string, UInt64> ToolVersionNumericCache = new Dictionary<string, UInt64>();
 
         public static bool IgnoreCache;
 
@@ -91,7 +91,7 @@ namespace CoApp.Toolkit.Utility {
                     return result;
             }
 
-            var ver = VersionStringToUnsignedLong(minimumVersion);
+            var ver = minimumVersion.VersionStringToUInt64();
 
             var files = commonSearchLocations.Union(searchLocations).AsParallel().SelectMany(
                 directory => DirectoryEnumerateFilesSmarter(directory, filename, SearchOption.TopDirectoryOnly))
@@ -169,18 +169,6 @@ namespace CoApp.Toolkit.Utility {
             }
         }
 
-        private static ulong VersionStringToUnsignedLong(string version) {
-            if (string.IsNullOrEmpty(version))
-                return 0;
-            var vers = version.Split('.');
-            var major = vers.Length > 0 ? vers[0].ToInt32(0) : 0;
-            var minor = vers.Length > 1 ? vers[1].ToInt32(0) : 0;
-            var build = vers.Length > 2 ? vers[2].ToInt32(0) : 0;
-            var revision = vers.Length > 3 ? vers[3].ToInt32(0) : 0;
-
-            return (((ulong)major) << 48) + (((ulong)minor) << 32) + (((ulong)build) << 16) + (ulong)revision;
-        }
-
         public static string GetToolVersion(string fileName) {
             try {
                 if (ToolVersionCache.ContainsKey(fileName))
@@ -218,11 +206,11 @@ namespace CoApp.Toolkit.Utility {
         }
 
 
-        public static ulong GetToolVersionNumeric(string fileName) {
+        public static UInt64 GetToolVersionNumeric(string fileName) {
             if (ToolVersionNumericCache.ContainsKey(fileName))
                 return ToolVersionNumericCache[fileName];
 
-            var fv = VersionStringToUnsignedLong(GetToolVersion(fileName));
+            var fv = GetToolVersion(fileName).VersionStringToUInt64();
             ToolVersionNumericCache.Add(fileName,fv);
             return fv;
         }

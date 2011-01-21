@@ -46,6 +46,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -53,12 +54,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\Exceptions\ConfigurationException.cs" />
+    <Compile Include="Engine\Exceptions\PackageMissingException.cs" />
+    <Compile Include="Engine\Exceptions\InvalidPackageException.cs" />
+    <Compile Include="Engine\Exceptions\PackageNotFoundException.cs" />
     <Compile Include="Engine\NativeMethods.cs" />
+    <Compile Include="Engine\Package.cs" />
     <Compile Include="Engine\PackageManager.cs" />
+    <Compile Include="Engine\PackageManagerSettings.cs" />
     <Compile Include="Engine\ProgressMessage.cs" />
+    <Compile Include="Engine\Registrar.cs" />
     <Compile Include="Properties\Engine.AssemblyInfo.cs" />
+    <Compile Include="Engine\Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="CoApp.Toolkit.csproj">
+      <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
+      <Name>CoApp.Toolkit</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Engine\Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
