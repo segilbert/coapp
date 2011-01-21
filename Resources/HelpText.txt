@@ -1,0 +1,24 @@
+Usage:
+-------
+
+CoApp-cli [options] <command> <parameters>
+
+Options:
+--------
+    --help                  this help
+    --nologo                don't display the logo
+    --load-config=<file>    loads configuration from <file>
+    --verbose               prints verbose messages
+
+    --pretend               doesn't actually alter the system
+
+Commands:
+---------    
+
+    install <pkg>           Installs the package files listed on 
+                            the command line
+
+    uninstall <pkg>         Removes the package files listed on 
+                            the command line
+
+    list packages           Lists the packages that are installed.
