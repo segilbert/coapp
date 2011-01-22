@@ -4,12 +4,14 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Console {
+namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
-    using Extensions;
+    using CoApp.Toolkit.Extensions;
 
-    public class ConsoleException : Exception {
-        public ConsoleException(string reason, params object[] parameters) : base(reason.format(parameters)) {
+    public class PackageNotFoundException : Exception {
+        public string PackagePath;
+        public PackageNotFoundException(string packagePath) {
+            PackagePath = packagePath;
         }
     }
 }

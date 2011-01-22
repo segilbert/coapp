@@ -87,7 +87,7 @@ namespace CoApp.Toolkit.Extensions {
                     var cookie = new Cookie(bits[5], bits[6]) {
                                                                   Domain = bits[0],
                                                                   Path = bits[2],
-                                                                  Secure = bits[3].Equals("TRUE", StringComparison.CurrentCultureIgnoreCase),
+                                                                  Secure = bits[3].IsTrue(),
                                                                   Expires = (new DateTime(1970, 1, 1, 0, 0, 0)).AddSeconds(bits[4].ToInt32())
                                                               };
                     cookieList.AddCookie(cookie);

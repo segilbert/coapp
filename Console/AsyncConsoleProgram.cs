@@ -1,0 +1,116 @@
+﻿//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2010 Garrett Serack . All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace CoApp.Toolkit.Console {
+    using System;
+    using System.Collections.Generic;
+    using System.Reflection;
+    using System.Resources;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Extensions;
+
+    public abstract class AsyncConsoleProgram {
+        protected abstract ResourceManager Res { get; }
+
+        protected abstract int Main(IEnumerable<string> args);
+        protected CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+
+        /// <summary>
+        /// Adds the new action to the parent task
+        /// </summary>
+        /// <param name="action"></param>
+        protected void TaskAdd(Action action) {
+            Task.Factory.StartNew(action, TaskCreationOptions.AttachedToParent);
+        }
+
+        protected virtual int Startup(IEnumerable<string> args) {
+            var task = Task.Factory.StartNew(() => { Main(args); }, CancellationTokenSource.Token);
+            try {
+                Console.CancelKeyPress += (x, y) => {
+                    if (!CancellationTokenSource.IsCancellationRequested) {
+                        Console.WriteLine("Operation Cancelled...");
+                        CancellationTokenSource.Cancel();
+                        if (y.SpecialKey == ConsoleSpecialKey.ControlBreak) {
+                            // can't cancel so we just block on the task.
+                            task.Wait();
+                        }
+                    }
+                    y.Cancel = true;
+                };
+                task.Wait();
+            }
+            catch( AggregateException ae ) {
+                ae.Handle(HandleExecption);
+                return 1;
+            }
+            return 0;
+        }
+
+        bool HandleExecption(Exception ex ) {
+            if (ex is ConsoleException) {
+                Fail(ex.Message);
+                return true;
+            }
+            if (ex is AggregateException) {
+                (ex as AggregateException).Handle(HandleExecption);
+                return true;
+            }
+            return false;
+        }
+
+        #region fail/help/logo
+
+        /// <summary>
+        ///   Displays a failure message.
+        /// </summary>
+        /// <param name = "text">
+        ///   The text format string.
+        /// </param>
+        /// <param name = "par">
+        ///   The parameters for the formatted string.
+        /// </param>
+        /// <returns>
+        ///   returns 1 (usually passed out as the process end code)
+        /// </returns>
+        protected int Fail(string text, params object[] par) {
+            Logo();
+            using (new ConsoleColors(ConsoleColor.Red, ConsoleColor.Black)) {
+                Console.WriteLine("Error: {0}", text.format(par));
+            }
+
+            return 1;
+        }
+
+        /// <summary>
+        ///   Displays the program help.
+        /// </summary>
+        /// <returns>
+        ///   returns 0.
+        /// </returns>
+        protected int Help() {
+            Logo();
+            using (new ConsoleColors(ConsoleColor.White, ConsoleColor.Black)) {
+                Res.GetString("HelpText").Print();
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        ///   Displays the program logo.
+        /// </summary>
+        protected void Logo() {
+            using (new ConsoleColors(ConsoleColor.Cyan, ConsoleColor.Black)) {
+                this.Assembly().Logo().Print();
+            }
+
+            this.Assembly().SetLogo(string.Empty);
+        }
+
+        #endregion
+    }
+}

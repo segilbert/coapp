@@ -27,7 +27,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\output\any\release\bin\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;SIGN_ASSEMBLY</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -35,6 +35,8 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -42,6 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\Settings.cs" />
+    <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleException.cs" />
     <Compile Include="DynamicXml\DynamicAttributes.cs" />
     <Compile Include="DynamicXml\DynamicNode.cs" />
@@ -60,7 +64,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
-    <Compile Include="Package\mkPackage.cs">
+    <Compile Include="Network\Ftp.cs" />
+	<Compile Include="Package\mkPackage.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>mkPackage.xsd</DependentUpon>
@@ -75,6 +80,8 @@
     <Compile Include="Scan\Types\ScannedFile.cs" />
     <Compile Include="Scan\Types\ScannedFileType.cs" />
     <Compile Include="Scan\Types\ScanReport.cs" />
+    <Compile Include="Configuration\Indexers.cs" />
+    <Compile Include="Configuration\QuickSettings.cs" />
     <Compile Include="Spec\Dependency.cs" />
     <Compile Include="Spec\File.cs" />
     <Compile Include="Spec\Link.cs" />
@@ -113,6 +120,14 @@
       <DependentUpon>Tracing.xsd</DependentUpon>
     </Compile>
     <Compile Include="Trace\Variable.cs" />
+    <Compile Include="Win32\ClipboardNotifier.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Win32\PEInfo.cs" />
+    <Compile Include="Win32\NativeCode.cs" />
+    <Compile Include="Win32\SystemHotkey.cs">
+      <SubType>Component</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Installer\" />
