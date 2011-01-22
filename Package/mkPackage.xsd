@@ -1,0 +1,1356 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+<![CDATA[
+//
+// <copyright company="CoApp Project">
+//     Copyright (c) 2010-2011 Eric Schultz. All rights reserved.
+//     
+//     Certain types included from WiX project,
+//     Copyright (c) 2010 Windows Installer Xml
+// </copyright>
+//
+]]>
+-->
+<xs:schema id="InputSchema"
+    targetNamespace="http://coapp.org/ns/mkPackage.xsd"
+    elementFormDefault="qualified"
+    xmlns="http://coapp.org/ns/mkPackage.xsd"
+    xmlns:mstns="http://coapp.org/ns/mkPackage.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xse="http://schemas.microsoft.com/wix/2005/XmlSchemaExtension"
+>
+  <xs:annotation>
+    <xs:documentation>Schema for mkPackage input files. IMPORTANT CONVENTION: Attribute names that start with a 
+    lower-case letter will be automatically created by mkPackage.</xs:documentation>
+  </xs:annotation>
+  <xs:element name="Package">
+    <xs:annotation>
+      <xs:documentation>Represents a CoApp package.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+
+      <xs:sequence minOccurs="1">
+        <xs:element ref="Tags" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="Dependencies" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="Publisher" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="Properties" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="BindingPolicy" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="Urls" minOccurs="0" maxOccurs="1" />
+        <xs:sequence minOccurs="1">
+          <xs:element ref="SharedLib" minOccurs="0"/>
+          <xs:element ref="DeveloperLib" minOccurs="0"/>
+          <xs:element ref="AppRole" minOccurs="0"/>
+          <xs:element ref="DriverRole" minOccurs="0"/>
+        </xs:sequence>
+        <xs:element ref="features" minOccurs="0" maxOccurs="1" />
+        
+      </xs:sequence> 
+      
+      <xs:attribute name="Name" type="Id" use="required">
+        <xs:annotation>
+          <xs:documentation>The name of your package.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Version" type="VersionType" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            The version of your package. Must be of the form X.X.X.X where X is an integer from 0-65534. 
+            If you have some other type of versioning system, i.e.: 1.0k, that goes in the AuthorVersion attribute of Properties element.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+
+      <xs:attribute name="Arch" type="Arch" use="required">
+        <xs:annotation>
+          <xs:documentation>The architecture the package runs on. See the Arch type for details.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+
+      <xs:attribute name="Platform" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The platform your package runs on. Currently this is only meaningful if you are making a .NET package,
+          in which case you should enter MSIL (and set Arch to any).</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+
+      <xs:attribute name="proddir_id" type="Id"/>
+      <xs:attribute name="package_guid" type="Guid"/>
+      <xs:attribute name="product_guid" type="Guid"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- groups -->
+  <xs:element name="Tags">
+    <xs:annotation>
+      <xs:documentation>Holds all the tags for a given package.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence minOccurs="0">
+        <xs:element ref="Tag" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Dependencies">
+    <xs:annotation>
+      <xs:documentation>Holds all the dependencies for a given package.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="Dependency"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="InstallProperties">
+    <xs:complexType>
+      <xs:sequence minOccurs="1" maxOccurs="unbounded">
+        <xs:element ref="Property"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <!--others-->
+  <xs:element name="Tag">
+    <xs:complexType>
+      <xs:attribute name="Type" type="xs:string" use="required"/>
+      <xs:attribute name="Value" type="xs:string" use="required"/>
+      <xs:attribute name="tag_guid" type="Guid" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Property">
+    <xs:complexType>
+      <xs:attribute name="Type" type="xs:string" use="required"/>
+      <xs:attribute name="Link" type="xs:string" use="required"/>
+      <xs:attribute name="Target" type="xs:string" use="required"/>
+      <xs:attribute name="prop_guid" type="Guid" use="optional"/>
+    </xs:complexType>  
+  </xs:element>
+  
+  
+  <xs:element name="Dependency">
+    <xs:annotation>
+      <xs:documentation>Some packages are dependent on other packages. In those cases,
+      each of the other packages are described using a Dependency element.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="package_id" type="Guid" use="optional"/>
+      <xs:attribute name="Name" type="Id" use="required">
+        <xs:annotation>
+          <xs:documentation>The name of the dependency.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Version" type="VersionType" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            The particular version of the dependency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+
+      <xs:attribute name="Arch" type="Arch" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            The architecture of the dependency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="PublicKeyToken" type="PublicKeyToken" use="required">
+        <xs:annotation>
+          <xs:documentation>The public key token of the publisher that signed the dependency.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Publisher">
+    <xs:complexType>
+      <xs:attribute name="Name" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>The name of publisher. This name must match the name on the certificate used for signing
+          this package.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="PublicKeyToken" type="PublicKeyToken" use="required">
+        <xs:annotation>
+          <xs:documentation>The public key token of the publisher. Must match the public key token on the 
+          certificate used for signing this package.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="directory_id" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Properties">
+    <xs:annotation>
+      <xs:documentation>These are properties of the package itself.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType >
+      <xs:attribute name="DisplayName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The "friendly" name of the package. This can include pretty much any character.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Description" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>An end-user readable description of the software.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Icon" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The file path to the package's icon.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="PublishDate" type="xs:date">
+        <xs:annotation>
+          <xs:documentation>The release date of the package.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="AuthorVersion" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The version used by the author. An example would be Windows Vista. 
+          It's package version would be 6000.x.x.x but it's AuthorVersion would be 'Vista'</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="icon_id" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="BindingPolicy">
+    <xs:annotation>
+      <xs:documentation>States which versions of this package that this specific version replaces and which other 
+      software should use. Example: An update to the version 1 branch of Apache might replaces versions: 1.0.0.0-1.x.x.x but 
+      it wouldn't replace anything from the version 2 branch (something with a version like 2.x.x.x)</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="MinimumVersion" type="VersionType">
+        <xs:annotation>
+          <xs:documentation>The minimum version of this package that this specific version replaces.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="MaximumVersion" type="VersionType">
+        <xs:annotation>
+          <xs:documentation>The maximum version of this package that this specific version replaces.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  
+  <xs:complexType name="Role">
+    <xs:sequence minOccurs="0" maxOccurs="1">
+      <xs:element ref="License" minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="Registry" minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="InstallProperties" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+    <xs:attribute name="type" use="optional"/>
+    <xs:attribute name="Flavor" use="optional" type="xs:string"/>
+    <xs:attribute name="role_guid" use="optional" type="Guid"/>
+  </xs:complexType>
+
+  <xs:element name="StaticLib">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+
+        <xs:element ref="File" />
+        <xs:element ref="Folder"/>
+
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ImportLib">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+
+        <xs:element ref="File" />
+        <xs:element ref="Folder"/>
+
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  
+  
+  <xs:complexType name="FileSysItem">
+    <xs:annotation>
+      <xs:documentation>A file system item. The base type of all major</xs:documentation>
+    </xs:annotation>
+  </xs:complexType>
+
+  <xs:element name="Folder">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="FileSysItem">
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+          
+            <xs:element ref="File" />
+            <xs:element ref="Folder"/>
+
+          </xs:choice>
+    
+          <!-- make this a valid folder name-->
+          <xs:attribute name="Name" type="xs:string" use="required"/>
+      
+          <xs:attribute name="folder_id" type="Id" use="optional"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="FileType">
+    <xs:complexContent>
+      <xs:extension base="FileSysItem">
+        <xs:attribute name="name" type="xs:string"/>
+        <xs:attribute name="Src" type="xs:string" use="required"/>
+        <xs:attribute name="ext" type="xs:string"/>
+        <xs:attribute name="component_guid" type ="Guid" use="optional"/>
+        <xs:attribute name="component_id" type="Id" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+    
+  </xs:complexType>
+  
+  <xs:element name="File">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="FileType"/>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="LibFile">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="FileType">
+          <xs:attribute name="Compiler" type="xs:string" use="optional"/>
+          <xs:attribute name="Arch" type="Arch" use="required"/>
+        </xs:extension>
+        
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ExeFile">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="FileType">
+          <xs:attribute name="Compiler" type="xs:string" use="optional"/>
+          <xs:attribute name="Arch" type="Arch" use="required"/>
+        </xs:extension>
+
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  
+  
+  <xs:element name="License">
+    <xs:complexType mixed="true">
+
+      <xs:attribute name="Url" type="xs:anyURI"/>
+      <xs:attribute name="license_guid" type="Guid"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Assembly">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base ="FileType">
+          <xs:sequence>
+            <xs:element ref="Manifest" minOccurs="0" maxOccurs="1"/>
+            <xs:element ref="CatFile" minOccurs="0" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+              <xs:element ref="File"/>
+            </xs:choice>
+          </xs:sequence>
+          <!-- restrict this to valid types-->
+          <xs:attribute name="type" type="xs:string"/>
+          <!-- restrict this to valid archs-->
+          <xs:attribute name="Arch" type="Arch" use="required"/>
+          <xs:attribute name="Platform" type="xs:string" use="required"/>
+          <xs:attribute name="CreateManifestAndCat" type="xs:boolean" use="optional"/>
+        </xs:extension>            
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PolicyAssembly">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Manifest" minOccurs="1" maxOccurs="1"/>
+        <xs:element ref="CatFile" minOccurs="1" maxOccurs="1"/>
+        
+      </xs:sequence>
+      <!-- restrict this to valid types-->
+      <xs:attribute name="type" type="xs:string"/>
+      <!-- restrict this to valid archs-->
+      <xs:attribute name="Arch" type="Arch" use="required"/>
+      <xs:attribute name="Platform" type="xs:string" use="required"/>
+  
+    </xs:complexType>
+  </xs:element>
+
+
+  <xs:element name="Driver">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="FileType">
+          <xs:sequence>
+            <xs:element ref="File"/>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="Manifest">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="FileType"/>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="CatFile">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="FileType"/>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="Files">
+    <xs:complexType >
+      <xs:sequence>
+        <xs:element ref="Assembly" minOccurs="1" maxOccurs="1"/>
+        <xs:element ref="PolicyAssembly" minOccurs="0" maxOccurs="unbounded" />
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="File"/>
+          <xs:element ref="Folder"/>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+ 
+  <xs:element name="Includes">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="StaticLibs" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="ImportLibs" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="Headers" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+
+          <xs:element ref="File"/>
+          <xs:element ref="Folder"/>
+        </xs:choice>
+      </xs:sequence>
+      
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Registry">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="RegistryKey"/>
+        <xs:element ref="RegistryValue"/>
+        <xs:element ref="RemoveRegistryKey"/>
+        <xs:element ref="RemoveRegistryValue"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="StaticLibs">
+    <xs:complexType>
+      <xs:sequence minOccurs="1" maxOccurs="unbounded">
+        <xs:element ref="LibFile"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ImportLibs">
+    <xs:complexType>
+      <xs:sequence minOccurs="1" maxOccurs="unbounded">
+        <xs:element ref="LibFile"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Headers">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="File"/>
+          <xs:element ref="Folder"/>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attribute name="dir_id" type="Id" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CodeFiles">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="File"/>
+        <xs:element ref="Folder"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DriverFiles">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Driver" minOccurs="1" maxOccurs="unbounded"/>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="File"/>
+          <xs:element ref="Folder"/>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="AppFiles">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ExeFile" minOccurs="1" maxOccurs="unbounded"/>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="File"/>
+          <xs:element ref="Folder"/>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+ 
+  <xs:element name="features">
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element ref="comp"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="comp">
+    <xs:complexType>
+      <xs:attribute name="component_id" use="required" type="Id"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Urls">
+    <xs:complexType>
+      <xs:sequence minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="Url"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="Url">
+    <xs:complexType>
+      <xs:attribute name="URL" type="xs:string" use="required"/>
+      <xs:attribute name="Type" type="xs:string" use="required"/>
+      <xs:attribute name="url_guid" type="Guid" use="optional"/>
+    </xs:complexType>  
+  </xs:element>
+
+
+  <!-- Role Extensions -->
+  <xs:element name="SharedLib">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Role">
+          <xs:sequence>
+            <xs:element ref="Files"/>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DeveloperLib">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Role">
+          <xs:sequence>
+            <xs:element ref="Includes"/>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+
+  <xs:element name="SourceCode">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Role">
+          <xs:sequence>
+            <xs:element ref="CodeFiles"/>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DriverRole">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Role">
+          <xs:sequence>
+            <xs:element ref="DriverFiles"/>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="AppRole">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Role">
+          <xs:sequence>
+            <xs:element ref="AppFiles"/>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  
+  <!-- simple types -->
+  <xs:simpleType name="Id">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9A-Za-z_]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Arch">
+    <xs:annotation>
+      <xs:documentation>Represents a type of architecture that a package is targeted to.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="x86">
+        <xs:annotation>
+          <xs:documentation>32-bit Intel-compatible archecture, often called Win32.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="x64">
+        <xs:annotation>
+          <xs:documentation>64-bit architecture, sometimes called Win64, AMD64 or Intel64.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="any">
+        <xs:annotation>
+          <xs:documentation>
+            Architecture independent. Used when a package works on any architecture.
+            .NET, Java and Python are all types of packages that might be use this.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+ 
+  <!--should this have some sort of length restriction?-->
+  <xs:simpleType name="PublicKeyToken">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9A-Fa-f]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  
+  
+  <!-- from wix-->
+
+
+  <xs:simpleType name="VersionType">
+    <xs:annotation>
+      <xs:documentation>Values of this type will look like: "x.x.x.x" where x is an integer from 0 to 65534.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(\d{1,5}\.){3}\d{1,5}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  <xs:simpleType name="Guid">
+    <xs:annotation>
+      <xs:documentation>Values of this type will look like: "01234567-89AB-CDEF-0123-456789ABCDEF" or "{01234567-89AB-CDEF-0123-456789ABCDEF}".</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[{(]?[0-9A-Fa-f]{8}\-?[0-9A-Fa-f]{4}\-?[0-9A-Fa-f]{4}\-?[0-9A-Fa-f]{4}\-?[0-9A-Fa-f]{12}[})]?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+
+  <xs:element name="RegistryKey">
+    <xs:annotation>
+      <xs:documentation>
+        Used for organization of child RegistryValue elements or to create a registry key
+        (and optionally remove it during uninstallation).
+      </xs:documentation>
+      <xs:appinfo>
+        <!--xse:msiRef table="Registry" href="http://msdn.microsoft.com/library/aa371168.aspx"/>
+        <xse:howtoRef href="read_a_registry_entry.htm">How To: Read a registry entry during installation</xse:howtoRef>
+        <xse:howtoRef href="write_a_registry_entry.htm">How To: Write a registry entry during installation</xse:howtoRef>-->
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="RegistryKey"/>
+        <xs:element ref="RegistryValue"/>
+        <xs:element ref="Permission" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation>ACL permission</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element ref="PermissionEx">
+          <xs:annotation>
+            <xs:documentation>Can also configure the ACLs for this registry key.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:any namespace="##other" processContents="lax">
+          <xs:annotation>
+            <xs:documentation>
+              Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+              elements at this point in the schema.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:any>
+      </xs:choice>
+      <xs:attribute name="Id" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Primary key used to identify this particular entry.  If this attribute is not specified, an identifier will be
+            generated by hashing the parent Component identifier, Root, Key, and Name.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Action">
+        <xs:annotation>
+          <xs:documentation>
+            This is the action that will be taken for this registry value.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="create">
+              <xs:annotation>
+                <xs:documentation>
+                  Creates the key, if absent, when the parent component is installed.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="createAndRemoveOnUninstall">
+              <xs:annotation>
+                <xs:documentation>
+                  Creates the key, if absent, when the parent component is installed then remove the key with all its values and subkeys when the parent component is uninstalled.
+                  Note that this value is useful only if your program creates additional values or subkeys under this key and you want an uninstall to remove them. MSI already
+                  removes all values and subkeys that it creates, so this option just adds additional overhead to uninstall.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="none">
+              <xs:annotation>
+                <xs:documentation>
+                  Does nothing; this element is used merely in WiX authoring for organization and does nothing to the final output.
+                  This is the default value.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Key" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The localizable key for the registry value.
+            If the parent element is a RegistryKey, this value may be omitted to use the
+            path of the parent, or if its specified it will be appended to the path of the parent.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Root" type="RegistryRootType">
+        <xs:annotation>
+          <xs:documentation>
+            The predefined root key for the registry value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RegistryValue">
+    <xs:annotation>
+      <xs:documentation>
+        Used to create a registry value.  For multi-string values, this can be used to prepend or append values.
+
+        For legacy authoring: Use several of these elements to specify each registry value in a multiString registry value.  This element
+        cannot be used if the Value attribute is specified unless the Type attribute is set to 'multiString'.  The
+        values should go in the text area of the RegistryValue element.
+      </xs:documentation>
+      <xs:appinfo>
+        <!--
+        <xse:msiRef table="Registry" href="http://msdn.microsoft.com/library/aa371168.aspx"/>
+        <xse:howtoRef href="write_a_registry_entry.htm">How To: Write a registry entry during installation</xse:howtoRef>-->
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="Permission"/>
+        <xs:element ref="PermissionEx">
+          <xs:annotation>
+            <xs:documentation>Can also configure the ACLs for this registry value.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element ref="MultiStringValue"/>
+        <xs:any namespace="##other" processContents="lax">
+          <xs:annotation>
+            <xs:documentation>
+              Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+              elements at this point in the schema.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:any>
+      </xs:choice>
+      <xs:attribute name="Id" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Primary key used to identify this particular entry.  If this attribute is not specified, an identifier will be
+            generated by hashing the parent Component identifier, Root, Key, and Name.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Root" type="RegistryRootType">
+        <xs:annotation>
+          <xs:documentation>
+            The predefined root key for the registry value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Key" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The localizable key for the registry value.
+            If the parent element is a RegistryKey, this value may be omitted to use the
+            path of the parent, or if its specified it will be appended to the path of the parent.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The localizable registry value name.  If this attribute is not provided the default value for the registry key will
+            be set instead.  The Windows Installer allows several special values to be set for this attribute.  You should not
+            use them in WiX.  Instead use appropriate values in the Action attribute to get the desired behavior.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Value" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Set this attribute to the localizable registry value.  This value is formatted.  The Windows Installer allows
+            several special values to be set for this attribute.  You should not use them in WiX.  Instead use appropriate
+            values in the Type attribute to get the desired behavior.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <!-- unfortunately, this attribute cannot yet be set to required due to backwards-compatibility, once the Registry element is removed, this should be required -->
+      <xs:attribute name="Type">
+        <xs:annotation>
+          <xs:documentation>
+            Set this attribute to the type of the desired registry key.  This attribute must be specified whenever the Value
+            attribute or a child RegistryValue element is specified.    This attribute
+            should only be set when the value of the Action attribute does not include the word 'remove'.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="string">
+              <xs:annotation>
+                <xs:documentation>
+                  The value is interpreted and stored as a string (REG_SZ).
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="integer">
+              <xs:annotation>
+                <xs:documentation>
+                  The value is interpreted and stored as an integer (REG_DWORD).
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="binary">
+              <xs:annotation>
+                <xs:documentation>
+                  The value is interpreted and stored as a hexadecimal value (REG_BINARY).
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="expandable">
+              <xs:annotation>
+                <xs:documentation>
+                  The value is interpreted and stored as an expandable string (REG_EXPAND_SZ).
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="multiString">
+              <xs:annotation>
+                <xs:documentation>
+                  The value is interpreted and stored as a multiple strings (REG_MULTI_SZ).
+                  Please note that this value will only result in a multi-string value if there is more than one registry value
+                  or the Action attribute's value is 'append' or 'prepend'.  Otherwise a string value will be created.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Action">
+        <xs:annotation>
+          <xs:documentation>
+            This is the action that will be taken for this registry value.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="append">
+              <xs:annotation>
+                <xs:documentation>
+                  Appends the specified value(s) to a multiString registry value.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="prepend">
+              <xs:annotation>
+                <xs:documentation>
+                  Prepends the specified value(s) to a multiString registry value.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="write">
+              <xs:annotation>
+                <xs:documentation>
+                  Writes a registry value.  This is the default value.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="KeyPath" type="YesNoType">
+        <xs:annotation>
+          <xs:documentation>
+            Set this attribute to 'yes' to make this registry key the KeyPath of the parent component.
+            Only one resource (registry, file, etc) can be the KeyPath of a component.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RemoveRegistryKey">
+    <xs:annotation>
+      <xs:documentation>
+        Used for removing registry keys and all child keys either during install or uninstall.
+      </xs:documentation>
+      <xs:appinfo>
+        <!--
+        <xse:msiRef table="Registry" href="http://msdn.microsoft.com/library/aa371168.aspx"/>
+        <xse:msiRef table="RemoveRegistry" href="http://msdn.microsoft.com/library/aa371208.aspx"/>-->
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Primary key used to identify this particular entry.  If this attribute is not specified, an identifier will be
+            generated by hashing the parent Component identifier, Root, Key, and Name.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Action">
+        <xs:annotation>
+          <xs:documentation>
+            This is the action that will be taken for this registry value.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="removeOnInstall">
+              <xs:annotation>
+                <xs:documentation>
+                  Removes a key with all its values and subkeys when the parent component is installed.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="removeOnUninstall">
+              <xs:annotation>
+                <xs:documentation>
+                  Removes a key with all its values and subkeys when the parent component is uninstalled.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:enumeration>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Key" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The localizable key for the registry value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Root" type="RegistryRootType">
+        <xs:annotation>
+          <xs:documentation>
+            The predefined root key for the registry value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RemoveRegistryValue">
+    <xs:annotation>
+      <xs:documentation>
+        Used to remove a registry value during installation.
+        There is no standard way to remove a single registry value during uninstall (but you can remove an entire key with RemoveRegistryKey).
+      </xs:documentation>
+      <xs:appinfo>
+        <!--<xse:msiRef table="RemoveRegistry" href="http://msdn.microsoft.com/library/aa371208.aspx"/>-->
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Primary key used to identify this particular entry.  If this attribute is not specified, an identifier will be
+            generated by hashing the parent Component identifier, Root, Key, and Name.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Key" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The localizable key for the registry value.
+            If the parent element is a RegistryKey, this value may be omitted to use the
+            path of the parent, or if its specified it will be appended to the path of the parent.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The localizable registry value name.  If this attribute is not provided the default value for the registry key will
+            be set instead.  The Windows Installer allows several special values to be set for this attribute.  You should not
+            use them in WiX.  Instead use appropriate values in the Action attribute to get the desired behavior.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Root" type="RegistryRootType">
+        <xs:annotation>
+          <xs:documentation>
+            The predefined root key for the registry value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+
+  <xs:simpleType name="RegistryRootType">
+    <xs:annotation>
+      <xs:documentation>Values of this type represent possible registry roots.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:NMTOKEN">
+      <xs:enumeration value="HKMU">
+        <xs:annotation>
+          <xs:documentation>
+            A per-user installation will make the operation occur under HKEY_CURRENT_USER.
+            A per-machine installation will make the operation occur under HKEY_LOCAL_MACHINE.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="HKCR">
+        <xs:annotation>
+          <xs:documentation>
+            Operation occurs under HKEY_CLASSES_ROOT.  When using Windows 2000 or later, the installer writes or removes the value
+            from the HKCU\Software\Classes hive during per-user installations.  When using Windows 2000 or later operating systems,
+            the installer writes or removes the value from the HKLM\Software\Classes hive during per-machine installations.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="HKCU">
+        <xs:annotation>
+          <xs:documentation>
+            Operation occurs under HKEY_CURRENT_USER.  It is recommended to set the KeyPath='yes' attribute when setting this value for writing values
+            in order to ensure that the installer writes the necessary registry entries when there are multiple users on the same computer.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="HKLM">
+        <xs:annotation>
+          <xs:documentation>
+            Operation occurs under HKEY_LOCAL_MACHINE.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="HKU">
+        <xs:annotation>
+          <xs:documentation>
+            Operation occurs under HKEY_USERS.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="YesNoType">
+    <xs:annotation>
+      <xs:documentation>Values of this type will either be "yes" or "no".</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base='xs:NMTOKEN'>
+      <xs:enumeration value="no"/>
+      <xs:enumeration value="yes"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="Permission">
+    <xs:annotation>
+      <xs:documentation>
+        Sets ACLs on File, Registry, or CreateFolder.  When under a Registry element, this cannot be used
+        if the Action attribute's value is remove or removeKeyOnInstall.  This element has no Id attribute.
+        The table and key are taken from the parent element.
+      </xs:documentation>
+      <xs:appinfo>
+        <!--<xse:msiRef table="LockPermissions" href="http://msdn.microsoft.com/library/aa369774.aspx"/>-->
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Domain" type="xs:string">
+      </xs:attribute>
+      <xs:attribute name="User" use="required" type="xs:string">
+      </xs:attribute>
+      <!-- Common ACLs -->
+      <xs:attribute name="Read" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="Delete" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="ReadPermission" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="ChangePermission" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="TakeOwnership" type="YesNoType">
+      </xs:attribute>
+      <!-- Folder and File ACLs -->
+      <xs:attribute name="ReadAttributes" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="WriteAttributes" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="ReadExtendedAttributes" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="WriteExtendedAttributes" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="Synchronize" type="YesNoType">
+      </xs:attribute>
+      <!-- Folder only ACLs -->
+      <xs:attribute name="CreateFile" type="YesNoType">
+        <xs:annotation>
+          <xs:documentation>For a directory, the right to create a file in the directory.  Only valid under a 'CreateFolder' parent.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="CreateChild" type="YesNoType">
+        <xs:annotation>
+          <xs:documentation>For a directory, the right to create a subdirectory.  Only valid under a 'CreateFolder' parent.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="DeleteChild" type="YesNoType">
+        <xs:annotation>
+          <xs:documentation>For a directory, the right to delete a directory and all the files it contains, including read-only files.  Only valid under a 'CreateFolder' parent.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Traverse" type="YesNoType">
+        <xs:annotation>
+          <xs:documentation>For a directory, the right to traverse the directory.  By default, users are assigned the BYPASS_TRAVERSE_CHECKING privilege, which ignores the FILE_TRAVERSE access right.  Only valid under a 'CreateFolder' parent.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <!-- File only ACLs -->
+      <xs:attribute name="Append" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="Execute" type="YesNoType">
+      </xs:attribute>
+      <!-- File and Registry ACLs -->
+      <xs:attribute name="Write" type="YesNoType">
+      </xs:attribute>
+      <!-- Registry only ACLs -->
+      <xs:attribute name="CreateSubkeys" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="EnumerateSubkeys" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="Notify" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="CreateLink" type="YesNoType">
+      </xs:attribute>
+      <!-- Generic ACLs, mapped by system to appropriate permissions -->
+      <xs:attribute name="GenericAll" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="GenericExecute" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="GenericWrite" type="YesNoType">
+      </xs:attribute>
+      <xs:attribute name="GenericRead" type="YesNoType">
+        <xs:annotation>
+          <xs:documentation>specifying this will fail to grant read access</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PermissionEx">
+    <xs:annotation>
+      <xs:documentation>
+        Sets ACLs on File, Registry, or CreateFolder.  When under a Registry element, this cannot be used
+        if the Action attribute's value is remove or removeKeyOnInstall.  This element is only available
+        when installing with MSI 5.0.  For downlevel support, see the PermissionEx element from the
+        WixUtilExtension.
+      </xs:documentation>
+      <xs:appinfo>
+        <!--<xse:msiRef table="MsiLockPermissionsEx" href="http://msdn.microsoft.com/library/aa369774.aspx"/>-->
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Condition" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Optional condition that controls whether the permissions are applied.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+
+      <xs:attribute name="Id" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Primary key used to identify this particular entry. If this is not specified the parent element's Id attribute
+            will be used instead.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Sddl" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>
+            Security descriptor to apply to parent object.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MultiStringValue">
+    <xs:annotation>
+      <xs:documentation>
+        Use several of these elements to specify each registry value in a multiString registry value.  This element
+        cannot be used if the Value attribute is specified unless the Type attribute is set to 'multiString'.  The
+        values should go in the text area of the MultiStringValue element.
+      </xs:documentation>
+      <xs:appinfo>
+        <!--<xse:msiRef table="Registry" href="http://msdn.microsoft.com/library/aa371168.aspx"/>-->
+      </xs:appinfo>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="Condition">
+    <xs:annotation>
+      <xs:documentation>
+        Conditions for components, controls, features, and products. The condition is specified in the inner text of the element.
+      </xs:documentation>
+      <xs:appinfo>
+        <!--
+        <xse:msiRef table="Component" href="http://msdn.microsoft.com/library/aa368007.aspx"/>
+        <xse:msiRef table="ControlCondition" href="http://msdn.microsoft.com/library/aa368035.aspx"/>
+        <xse:msiRef table="Condition" href="http://msdn.microsoft.com/library/aa368014.aspx"/>
+        <xse:msiRef table="LaunchCondition" href="http://msdn.microsoft.com/library/aa369752.aspx"/>
+        <xse:howtoRef href="block_install_on_os.htm">How To: Block installation based on OS version</xse:howtoRef>
+        <xse:howtoRef href="check_the_version_number.htm">How To: Check the version number of a file during installation</xse:howtoRef>-->
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              Under a Component element, the condition becomes the condition of the component.  Under a Control element,
+              the condition becomes a ControlCondition entry.  Under a Feature element, the condition becomes a Condition
+              entry.  Under a Fragment or Product element, the condition becomes a LaunchCondition entry.
+            </xs:documentation>
+          </xs:annotation>
+          <xs:attribute name="Action">
+            <xs:annotation>
+              <xs:documentation>
+                Used only under Control elements and is required.  Allows specific actions to be applied to a control based
+                on the result of this condition.
+              </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:NMTOKEN">
+                <xs:enumeration value="default">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Set the Control as the default. Only used under Control elements.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="enable">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Enable the Control. Only used under Control elements.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="disable">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Disable the Control. Only used under Control elements.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="hide">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Hide the Control. Only used under Control elements.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="show">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Display the Control. Only used under Control elements.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Level" type="xs:integer">
+            <xs:annotation>
+              <xs:documentation>
+                Used only under Feature elements and is required.  Allows modifying the level of a Feature based on the
+                result of this condition.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="Message" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Used only under Fragment or Product elements and is required.  Set the value to the text to display when the
+                condition fails and the installation must be terminated.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  
+</xs:schema>
