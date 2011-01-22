@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
 //     Original Copyright (c) 2009 Microsoft Corporation. All rights reserved.
-//     Changes Copyright (c) 2010  Garrett Serack. All rights reserved.
+//     Changes Copyright (c) 2011 Eric Schultz, 2010  Garrett Serack. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -154,8 +154,41 @@ namespace CoApp.Toolkit.Extensions {
             return (((UInt64)major) << 48) + (((UInt64)minor) << 32) + (((UInt64)build) << 16) + (UInt64)revision;
         }
 
-        public static string UInt64VersiontoString(this UInt64 version) {
-            return string.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF,(version >> 32) & 0xFFFF,(version >> 16) & 0xFFFF,(version) & 0xFFFF);
+        public static string UInt64VersiontoString(this UInt64 version)
+        {
+            return string.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF, (version >> 32) & 0xFFFF, (version >> 16) & 0xFFFF, (version) & 0xFFFF);
+        }
+        /// <summary>
+        /// Calculates the MD5 hash of a string. Additionally all the letters in the hash are in uppercase.
+        /// </summary>
+        /// <param name="input">a string to a calculate the hash for</param>
+        /// <returns>MD5 hash of the string</returns>
+        public static string MD5Hash(this string input)
+        {
+            StringBuilder sb = new StringBuilder();
+            using (MD5 hasher = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.Unicode.GetBytes(input);
+                byte[] hashedInput = hasher.ComputeHash(inputBytes);
+
+
+                foreach (byte b in hashedInput)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+
+            }
+            return sb.ToString().ToUpper();
+        }
+
+        /// <summary>
+        /// Creates a safe directory ID for MSI for a possibly non-safe one.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns>Your safe directory ID</returns>
+        public static string MakeSafeDirectoryId(this string input)
+        {
+            return Regex.Replace(input, @"\s|\.|\-", "_");
         }
     }
 }
