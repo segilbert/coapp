@@ -175,6 +175,7 @@ namespace CoApp.Toolkit.Utility {
                     return ToolVersionCache[fileName];
 
                 FileVersionInfo info = FileVersionInfo.GetVersionInfo(fileName);
+                
                 string fv = info.FileVersion;
                 if( !string.IsNullOrEmpty(fv) ) {
                     fv = fv.Substring(0, fv.PositionOfFirstCharacterNotIn("0123456789."));
@@ -232,13 +233,18 @@ namespace CoApp.Toolkit.Utility {
                             var idh = (IMAGE_DOS_HEADER*) pData;
                             var inhs = (IMAGE_NT_HEADERS32*) (idh->e_lfanew + pData);
 
+
+
                             result = inhs->OptionalHeader.Magic == 0x20b
                                          ? (((IMAGE_NT_HEADERS64*) inhs)->OptionalHeader.DataDirectory.Size > 0
                                                 ? ExecutableInfo.x64 | ExecutableInfo.managed
                                                 : ExecutableInfo.x64 | ExecutableInfo.native)
-                                         : (inhs->OptionalHeader.DataDirectory.Size > 0
-                                                ? ExecutableInfo.x86 | ExecutableInfo.managed
-                                                : ExecutableInfo.x86 | ExecutableInfo.native);
+                                         : (inhs->OptionalHeader.DataDirectory.Size == 0
+                                                ? ExecutableInfo.x86 | ExecutableInfo.native
+                                                : ( true ? 
+                                                ExecutableInfo.x86 | ExecutableInfo.managed:
+                                                ExecutableInfo.Any | ExecutableInfo.managed
+                                                ));
                         }
                     }
                 }

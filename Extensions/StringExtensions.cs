@@ -153,5 +153,9 @@ namespace CoApp.Toolkit.Extensions {
 
             return (((UInt64)major) << 48) + (((UInt64)minor) << 32) + (((UInt64)build) << 16) + (UInt64)revision;
         }
+
+        public static string UInt64VersiontoString(this UInt64 version) {
+            return string.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF,(version >> 32) & 0xFFFF,(version >> 16) & 0xFFFF,(version) & 0xFFFF);
+        }
     }
 }

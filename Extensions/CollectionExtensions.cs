@@ -16,6 +16,7 @@
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Text;
 
     public static class CollectionExtensions {
@@ -101,6 +102,11 @@ namespace CoApp.Toolkit.Extensions {
                 sb.Append(s);
             }
             return sb.ToString();
+        }
+
+        public static void AddRange<T>(this Collection<T> destination, IEnumerable<T> collection) {
+            foreach (var i in collection)
+                destination.Add(i);
         }
     }
 }

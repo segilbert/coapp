@@ -32,6 +32,7 @@ namespace CoApp.Toolkit.Utility
 
         x86 = 0x0001,
         x64 = 0x0002,
+        Any = 0x0004,
 
         native = 0x0010,
         managed = 0x0020
@@ -195,4 +196,30 @@ namespace CoApp.Toolkit.Utility
         [FieldOffset(60)]
         public int e_lfanew;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMAGE_COR20_HEADER {
+        // Header versioning
+        public uint cb;
+        public ushort MajorRuntimeVersion;
+        public ushort MinorRuntimeVersion;
+
+        // Symbol table and startup information
+        public IMAGE_DATA_DIRECTORY MetaData;
+        public uint Flags;
+        public uint EntryPointToken;
+
+        // Binding information
+        public IMAGE_DATA_DIRECTORY Resources;
+        public IMAGE_DATA_DIRECTORY StrongNameSignature;
+
+        // Regular fixup and binding information
+        public IMAGE_DATA_DIRECTORY CodeManagerTable;
+        public IMAGE_DATA_DIRECTORY VTableFixups;
+        public IMAGE_DATA_DIRECTORY ExportAddressTableJumps;
+
+        // Precompiled image info (internal use only - set to zero)
+        public IMAGE_DATA_DIRECTORY ManagedNativeHeader;
+
+    }//struct IMAGE_COR20_HEADER
 }

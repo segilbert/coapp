@@ -7,31 +7,20 @@
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.IO;
     using System.Linq;
     using Exceptions;
+    using Extensions;
 
     public class Registrar {
-        private static Registrar instance = new Registrar();
-
-        private List<Package> packages = new List<Package>();
-        public int PackageStatus { get; set; }
-
-        public static Package GetPackage(string packageName, string architecture, UInt64 version, string publicKeyToken) {
-            return instance._GetPackage(packageName, architecture, version, publicKeyToken);
+        private static readonly ObservableCollection<Package> packages = new ObservableCollection<Package>();
+        public static int StateCounter;
+        static Registrar() {
+            packages.CollectionChanged += (x, y) => { StateCounter++; };
         }
 
-        public static Package GetPackage(string packagePath) {
-            return instance._GetPackage(packagePath);
-        }
-
-        public static void LocateSuitablePackage(Package package) {
-            instance._LocateSuitablePackage(package);
-        }
-
-        
-
-        private Package _GetPackage(string packageName, string architecture, UInt64 version, string publicKeyToken) {
+        public static Package GetPackage(string packageName, string architecture, UInt64 version, string publicKeyToken, string packageId) {
             var pkg = (packages.Where(package =>
                 package.Architecture == architecture &&
                 package.Version == version &&
@@ -39,14 +28,14 @@ namespace CoApp.Toolkit.Engine {
                 package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
 
             if( pkg == null ) {
-                pkg = new Package(packageName, architecture, version, publicKeyToken);
+                pkg = new Package(packageName, architecture, version, publicKeyToken, packageId);
                 packages.Add(pkg);
             }
 
             return pkg;
         }
 
-        private Package _GetPackage(string packagePath) {
+        public static Package GetPackage(string packagePath) {
             var localPackagePath = Path.GetFullPath(packagePath);
 
             var pkg =
@@ -68,12 +57,12 @@ namespace CoApp.Toolkit.Engine {
                         package.PublicKeyToken == pkgDetails.PublicKeyToken &&
                             package.Name.Equals(pkgDetails.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
             
-
-
             if (pkg == null) {
-                pkg = new Package(pkgDetails.Name, pkgDetails.Architecture, pkgDetails.Version, pkgDetails.PublicKeyToken) {
-                    Dependencies = pkgDetails.dependencies
-                };
+                pkg = new Package(pkgDetails.Name, pkgDetails.Architecture, pkgDetails.Version, pkgDetails.PublicKeyToken,
+                    pkgDetails.packageId);
+                
+                pkg.Dependencies.Clear();
+                pkg.Dependencies.AddRange(pkg.Dependencies);
 
                 packages.Add(pkg);
             }
@@ -81,7 +70,7 @@ namespace CoApp.Toolkit.Engine {
             return pkg;
         }
 
-        private void _LocateSuitablePackage(Package package) {
+        public static void LocateSuitablePackage(Package package) {
             // anything superceedent in the list of known packages?
             var pkgs = (packages.Where(p =>
                p.Architecture == package.Architecture &&
