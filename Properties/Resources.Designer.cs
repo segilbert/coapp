@@ -84,13 +84,10 @@ namespace CoApp.CLI.Properties {
         ///
         ///    --pretend               doesn&apos;t actually alter the system
         ///
-        ///Commands:
-        ///---------    
+        ///	--as-specified[=&lt;pkg&gt;]	Install the specific package(s) specified 
+        ///							even if a newer version is available. 
         ///
-        ///    install &lt;pkg&gt;           Installs the package files listed on 
-        ///                            the command line
-        ///
-        ///    uninstal [rest of string was truncated]&quot;;.
+        ///	--upgrade[=&lt;pkg&gt;]		Accept any newer v [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string HelpText {
             get {
@@ -131,6 +128,15 @@ namespace CoApp.CLI.Properties {
         internal static string MissingParameterForList {
             get {
                 return ResourceManager.GetString("MissingParameterForList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Option {0} requires a location..
+        /// </summary>
+        internal static string OptionRequiresLocation {
+            get {
+                return ResourceManager.GetString("OptionRequiresLocation", resourceCulture);
             }
         }
         

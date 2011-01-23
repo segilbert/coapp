@@ -21,6 +21,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en")]
+#if SIGN_ASSEMBLY
+// disable warning about using /keyfile instead of AssemblyKeyFile
+#pragma warning disable 1699
+[assembly: AssemblyKeyFileAttribute(@"..\coapp-signing\coapp-release.snk")]
+#pragma warning restore 1699
+#endif
 
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -41,5 +47,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+
+[assembly: AssemblyVersion("1.0.0.*")]
+// by removing the following it defaults to the generated number above.
+// [assembly: AssemblyFileVersion("1.0.0.0")]

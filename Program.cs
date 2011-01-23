@@ -14,6 +14,8 @@ namespace CoApp.CLI {
     using Toolkit.Engine;
     using Toolkit.Engine.Exceptions;
     using Toolkit.Extensions;
+    using Toolkit.Utility;
+    using Toolkit.Win32;
 
     /// <summary>
     ///   Main Program for command line coapp tool
@@ -65,7 +67,33 @@ namespace CoApp.CLI {
                             pkgManager.Pretend = true;
                             break;
 
-                            /* global switches */
+                        case "as-specified":
+                            pkgManager.PackagesAsSpecified = argumentParameters.Count() == 0 ? new[] { "*" } : argumentParameters;
+                            break;
+
+                        case "upgrade":
+                            pkgManager.PackagesAreUpgradable = argumentParameters.Count() == 0 ? new[] { "*" } : argumentParameters;
+                            break;
+
+                        case "no-scan":
+                            pkgManager.DoNotScanLocations = argumentParameters.Count() == 0 ? new[] { "*" } : argumentParameters;
+                            break;
+
+                        case "scan":
+                            if (argumentParameters.Count() == 0)
+                                throw new ConsoleException(Resources.OptionRequiresLocation.format("--scan"));
+
+                            pkgManager.AdditionalScanLocations = argumentParameters;
+                            break;
+
+                        case "recursive-scan":
+                            if (argumentParameters.Count() == 0)
+                                throw new ConsoleException(Resources.OptionRequiresLocation.format("--recursive-scan"));
+
+                            pkgManager.AdditionalRecursiveScanLocations = argumentParameters;
+                            break;
+
+                        /* global switches */
                         case "load-config":
                             // all ready done, but don't get too picky.
                             break;
@@ -162,6 +190,9 @@ namespace CoApp.CLI {
             }
             catch (InvalidPackageException ip) {
                 throw new ConsoleException(Resources.InvalidPackage, ip.PackagePath);
+            }
+            catch (PackageInstallFailed pif) {
+                throw new ConsoleException("Critical Package failed to install" );
             }
         }
     }

@@ -12,6 +12,23 @@ Options:
 
     --pretend               doesn't actually alter the system
 
+	--as-specified[=<pkg>]	Install the specific package(s) specified 
+							even if a newer version is available. 
+
+	--upgrade[=<pkg>]		Accept any newer version of the package if 
+							one is available.
+
+	--scan=<location>		Adds the location as a place to find additional
+							packages. 			
+
+	--recursive-scan=<loc>	Adds the location and folders all below as a place 
+							to find additional packages. 			
+
+	--no-scan[=<location>]	Doesn't scan the location for additional 
+							packages. 			
+
+	
+
 Commands:
 ---------    
 

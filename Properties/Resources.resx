@@ -154,4 +154,7 @@
   <data name="InvalidPackage" xml:space="preserve">
     <value>The given file is not a valid package [{0}]</value>
   </data>
+  <data name="OptionRequiresLocation" xml:space="preserve">
+    <value>Option {0} requires a location.</value>
+  </data>
 </root>

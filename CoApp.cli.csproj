@@ -45,7 +45,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\output\x86\release\bin\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;SIGN_ASSEMBLY</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -79,6 +79,12 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DelaySign>false</DelaySign>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -128,6 +134,10 @@
     <ProjectReference Include="..\coapp-toolkit\CoApp.Toolkit.Engine.csproj">
       <Project>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</Project>
       <Name>CoApp.Toolkit.Engine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\coapp-toolkit\CoApp.Toolkit.Unsafe.csproj">
+      <Project>{59D1DBB3-5848-4026-9523-BBC7618B7B77}</Project>
+      <Name>CoApp.Toolkit.Unsafe</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
