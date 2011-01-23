@@ -59,6 +59,8 @@
     <Compile Include="Engine\Exceptions\PackageMissingException.cs" />
     <Compile Include="Engine\Exceptions\InvalidPackageException.cs" />
     <Compile Include="Engine\Exceptions\PackageNotFoundException.cs" />
+    <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
+    <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
     <Compile Include="Engine\NativeMethods.cs" />
     <Compile Include="Engine\Package.cs" />
     <Compile Include="Engine\PackageManager.cs" />
