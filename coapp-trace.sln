@@ -10,8 +10,17 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit", "..\coapp-toolkit\CoApp.Toolkit.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours", "..\managed-detours\detours.vcxproj", "{2BDE3A15-0C09-470D-92FD-4AAEF7B6C6E2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2} = {4D4611C4-EDEA-4F57-AD84-774C9BB946D2}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detoured", "..\detours\detoured.vcxproj", "{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detoured", "..\managed-detours\detoured.vcxproj", "{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-noconsole", "..\coapp-trace\trace-noconsole.csproj", "{BFE87A0C-D0AA-4348-AB44-F62351022A49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-x64", "..\coapp-trace\trace-x64.csproj", "{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-noconsole-x64", "..\coapp-trace\trace-noconsole-x64.csproj", "{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,7 +31,6 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}.Debug|x64.ActiveCfg = Debug|x64
-		{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}.Debug|x64.Build.0 = Debug|x64
 		{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}.Debug|x86.ActiveCfg = Debug|x86
 		{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}.Debug|x86.Build.0 = Debug|x86
 		{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}.Release|x64.ActiveCfg = Release|x64
@@ -53,6 +61,27 @@ Global
 		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}.Release|x64.Build.0 = Release|x64
 		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}.Release|x86.ActiveCfg = Release|Win32
 		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}.Release|x86.Build.0 = Release|Win32
+		{BFE87A0C-D0AA-4348-AB44-F62351022A49}.Debug|x64.ActiveCfg = Debug|x64
+		{BFE87A0C-D0AA-4348-AB44-F62351022A49}.Debug|x86.ActiveCfg = Debug|x86
+		{BFE87A0C-D0AA-4348-AB44-F62351022A49}.Debug|x86.Build.0 = Debug|x86
+		{BFE87A0C-D0AA-4348-AB44-F62351022A49}.Release|x64.ActiveCfg = Release|x64
+		{BFE87A0C-D0AA-4348-AB44-F62351022A49}.Release|x64.Build.0 = Release|x64
+		{BFE87A0C-D0AA-4348-AB44-F62351022A49}.Release|x86.ActiveCfg = Release|x86
+		{BFE87A0C-D0AA-4348-AB44-F62351022A49}.Release|x86.Build.0 = Release|x86
+		{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}.Debug|x64.ActiveCfg = Debug|x64
+		{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}.Debug|x64.Build.0 = Debug|x64
+		{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}.Debug|x86.ActiveCfg = Debug|x86
+		{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}.Release|x64.ActiveCfg = Release|x64
+		{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}.Release|x64.Build.0 = Release|x64
+		{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}.Release|x86.ActiveCfg = Release|x86
+		{B0C9F2B4-303A-4DFF-A9C7-41E19CCA78F3}.Release|x86.Build.0 = Release|x86
+		{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}.Debug|x64.ActiveCfg = Debug|x64
+		{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}.Debug|x64.Build.0 = Debug|x64
+		{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}.Debug|x86.ActiveCfg = Debug|x86
+		{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}.Release|x64.ActiveCfg = Release|x64
+		{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}.Release|x64.Build.0 = Release|x64
+		{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}.Release|x86.ActiveCfg = Release|x86
+		{A43AE65C-5486-4E67-BFE3-6DB3EFDEBA9B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
