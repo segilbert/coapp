@@ -94,10 +94,10 @@ namespace CoApp.Toolkit.Utility {
             var ver = minimumVersion.VersionStringToUInt64();
 
             var files = commonSearchLocations.Union(searchLocations).AsParallel().SelectMany(
-                directory => DirectoryEnumerateFilesSmarter(directory, filename, SearchOption.TopDirectoryOnly))
+                directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.TopDirectoryOnly))
                 .Union(
                     recursiveSearchLocations.AsParallel().SelectMany(
-                        directory => DirectoryEnumerateFilesSmarter(directory, filename, SearchOption.AllDirectories)));
+                        directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.AllDirectories)));
 
             files = files.Where(file => (GetExeType(file) & executableType) == executableType && GetToolVersionNumeric(file) >= ver);
 
@@ -189,23 +189,6 @@ namespace CoApp.Toolkit.Utility {
             }
         }
 
-        private static IEnumerable<string> DirectoryEnumerateFilesSmarter(string path, string searchPattern, SearchOption searchOption) {
-            IEnumerable<string> result = Enumerable.Empty<string>();
-            
-            try {
-                result = Directory.EnumerateFiles(path, searchPattern, SearchOption.TopDirectoryOnly);
-            }
-            catch { }
-
-            if (searchOption == SearchOption.AllDirectories) {
-                try {
-                    result = result.Union(Directory.EnumerateDirectories(path).Aggregate(result, (current, directory) => current.Union(DirectoryEnumerateFilesSmarter(directory, searchPattern, SearchOption.AllDirectories))));
-                }
-                catch { }
-            }
-            return result;
-        }
-
 
         public static UInt64 GetToolVersionNumeric(string fileName) {
             if (ToolVersionNumericCache.ContainsKey(fileName))
@@ -232,8 +215,6 @@ namespace CoApp.Toolkit.Utility {
                         fixed (byte* pData = buffer) {
                             var idh = (IMAGE_DOS_HEADER*) pData;
                             var inhs = (IMAGE_NT_HEADERS32*) (idh->e_lfanew + pData);
-
-
 
                             result = inhs->OptionalHeader.Magic == 0x20b
                                          ? (((IMAGE_NT_HEADERS64*) inhs)->OptionalHeader.DataDirectory.Size > 0
