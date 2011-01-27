@@ -8,78 +8,80 @@ namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.IO;
     using System.Linq;
     using Exceptions;
     using Extensions;
     using Microsoft.Deployment.WindowsInstaller;
 
     public class Package {
-        // read only: 
-        internal readonly string Name;
-        internal readonly UInt64 Version;
-        internal readonly string Architecture;
-        internal readonly string PublicKeyToken;
-        internal readonly string ProductCode;
+        public readonly string Architecture;
+        public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
+        public readonly string Name;
+        public readonly string ProductCode;
+        public readonly string PublicKeyToken;
+        public readonly UInt64 Version;
+        internal bool DoNotSupercede; // TODO: it's possible these could be contradictory
+        internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
+        internal bool UserSpecified;
 
-        // Private containment
-        private string cosmeticName;
-
-        private bool? isInstalled;
-        private bool couldNotDownload;
-        private bool packageFailedInstall;
-        private string localPackagePath;
-        private Uri remoteLocation;
+        private string _cosmeticName;
+        private bool _couldNotDownload;
+        private bool? _isInstalled;
+        private string _localPackagePath;
+        private bool _packageFailedInstall;
+        private Uri _remoteLocation;
         private Package _supercedent;
+
+        internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) {
+            Name = name;
+            Version = version;
+            Architecture = architecture;
+            PublicKeyToken = publicKeyToken;
+            ProductCode = productCode;
+            Changed();
+            Dependencies.CollectionChanged += (x, y) => Changed();
+        }
 
         // set once only:
         internal UInt64 PolicyMinimumVersion { get; set; }
         internal UInt64 PolicyMaximumVersion { get; set; }
-        internal bool UserSpecified;
-        internal bool DoNotSupercede; // TODO: it's possible these could be contradictory
-        internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
 
         // Causes notifications:
-        internal string LocalPackagePath {
-            get { return localPackagePath; }
+        public string LocalPackagePath {
+            get { return _localPackagePath; }
             set {
-                if (value != localPackagePath) {
-                    localPackagePath = value;
+                if (value != _localPackagePath) {
+                    _localPackagePath = value;
                     Changed();
                 }
             }
         }
 
         internal Uri RemoteLocation {
-            get { return remoteLocation; }
+            get { return _remoteLocation; }
             set {
-                if (value != remoteLocation) {
-                    remoteLocation = value;
+                if (value != _remoteLocation) {
+                    _remoteLocation = value;
                     Changed();
                 }
             }
         }
 
-        internal readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
-
-        internal Package Supercedent {
+        public Package Supercedent {
             get { return _supercedent; }
             set {
                 if (value != _supercedent) {
                     _supercedent = value;
-                    // Changed();
                 }
             }
         }
 
-        internal bool ThisPackageIsNotInstallable;
-
-        
-
-        internal bool PackageFailedInstall {
-            get { return packageFailedInstall; }
+        public bool PackageFailedInstall {
+            get { return _packageFailedInstall; }
             set {
-                if (packageFailedInstall != value) {
-                    packageFailedInstall = value;
+                if (_packageFailedInstall != value) {
+                    _packageFailedInstall = value;
                     Changed();
                 }
             }
@@ -87,33 +89,37 @@ namespace CoApp.Toolkit.Engine {
 
         public string CosmeticName {
             get {
-                return cosmeticName ??
-                    (cosmeticName = "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+                return _cosmeticName ??
+                    (_cosmeticName = "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
             }
         }
+
+        public bool CanSatisfy { get; set; }
 
         public bool AllowedToSupercede {
             get { return UpgradeAsNeeded || (!UserSpecified && !DoNotSupercede); }
         }
 
-        internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) {
-            Name = name;
-            Version = version;
-            Architecture = architecture;
-            PublicKeyToken = publicKeyToken;
-            this.ProductCode = productCode;
-            Changed();
-            Dependencies.CollectionChanged += (x, y) => Changed();
+        public bool PotentiallyInstallable {
+            get {
+                if (CouldNotDownload || _packageFailedInstall) {
+                    return false;
+                }
+                return (!string.IsNullOrEmpty(LocalPackagePath) || RemoteLocation != null);
+            }
         }
 
-        private static void Changed() {
-            Registrar.Updated(); 
+        public bool HasLocalFile {
+            get { return string.IsNullOrEmpty(_localPackagePath) ? false : File.Exists(_localPackagePath) ? true : false; }
+        }
+
+        public bool HasRemoteLocation {
+            get { return RemoteLocation == null ? false : RemoteLocation.IsAbsoluteUri ? true : false; }
         }
 
         public bool IsInstalled {
             get {
-                return isInstalled ?? (isInstalled = ((Func<bool>) (() => {
-                    
+                return _isInstalled ?? (_isInstalled = ((Func<bool>) (() => {
                     try {
                         Installer.OpenProduct(ProductCode).Close();
                         Changed();
@@ -124,18 +130,40 @@ namespace CoApp.Toolkit.Engine {
                     return false;
                 }))()).Value;
             }
+            set { _isInstalled = value; }
         }
 
         public bool CouldNotDownload {
-            get { return couldNotDownload; }
+            get { return _couldNotDownload; }
             set {
-                if (value != couldNotDownload) {
-                    couldNotDownload = value;
+                if (value != _couldNotDownload) {
+                    _couldNotDownload = value;
                     Changed();
                 }
             }
         }
 
+        public bool IsPackageSatisfied {
+            get { return IsInstalled || !string.IsNullOrEmpty(LocalPackagePath) && RemoteLocation != null && Supercedent != null; }
+        }
+
+        public bool DependenciesKnown {
+            get { return (Dependencies != null); }
+        }
+
+        public bool AllDependenciesKnown {
+            get {
+                if (!DependenciesKnown) {
+                    return false;
+                }
+
+                return !Dependencies.Any(i => i.AllDependenciesKnown == false);
+            }
+        }
+
+        private static void Changed() {
+            Registrar.Updated();
+        }
 
         internal static dynamic GetCoAppPackageFileDetails(string localPackagePath) {
             Session installSession = null;
@@ -148,6 +176,10 @@ namespace CoApp.Toolkit.Engine {
 
             try {
                 var name = installSession.GetProductProperty("ProductName");
+                if(!installSession.Database.Tables.Contains("CO_PACKAGE")) {
+                    throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
+                }
+
                 var view =
                     installSession.Database.OpenView(installSession.Database.Tables["CO_PACKAGE"].SqlSelectString +
                         " WHERE `name` = '{0}'".format(name));
@@ -175,7 +207,6 @@ namespace CoApp.Toolkit.Engine {
                     view.Close();
                 }
 
-
                 dynamic result =
                     new {
                         Name = name,
@@ -187,7 +218,6 @@ namespace CoApp.Toolkit.Engine {
                         policy_max_version = maxPolicy,
                         dependencies = new List<Package>()
                     };
-
 
                 if (installSession.Database.Tables.Contains("CO_DEPENDENCY")) {
                     // dependencies
@@ -220,76 +250,28 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        public void EnsureDependenciesAreUnderstood() {
-            if (IsInstalled) {
-                return;
-            }
-
-            if (DependenciesKnown) {
-                foreach (var p in Dependencies) {
-                    EnsureDependenciesAreUnderstood();
-                }
-            }
-
-            // do we have a local package?
-            if (IsPackageSatisfied) {
-                ResolvePackage();
-                if (IsPackageSatisfied) {
-                    throw new PackageMissingException(Name, Architecture, Version, PublicKeyToken);
-                }
-            }
-        }
-
-        public IEnumerable<Package> DependenciesToInstall {
-            get { return null; }
-        }
-
         public void Install() {
-            Installer.InstallProduct(localPackagePath, @"""TARGETDIR={0}"" COAPP_INSTALLED=1".format(PackageManagerSettings.CoAppRootDirectory));
-            isInstalled = true;
-        }
+            try {
+                Installer.InstallProduct(_localPackagePath,
+                    @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS".format(PackageManagerSettings.CoAppInstalledDirectory));
+                _isInstalled = true;
+                // if( Installer.RebootInitiated || Installer.RebootRequired )
 
-        public void ResolvePackage() {
-        }
-
-        public bool IsPackageSatisfied {
-            get { return IsInstalled || !string.IsNullOrEmpty(LocalPackagePath) && RemoteLocation != null && Supercedent != null; }
-        }
-
-
-        public bool DependenciesKnown {
-            get { return (Dependencies != null); }
-        }
-
-        public bool AllDependenciesKnown {
-            get {
-                if (!DependenciesKnown) {
-                    return false;
-                }
-
-                return !Dependencies.Any(i => i.AllDependenciesKnown == false);
+            }
+            catch {
+                throw new PackageInstallFailedException(this);
             }
         }
 
-        public bool DependenciesSatisfied {
-            get {
-                if (IsInstalled) {
-                    return true;
-                }
-
-                if (!DependenciesKnown) {
-                    return false;
-                }
-
-                return !Dependencies.Any(p => !p.DependenciesSatisfied);
+        public void Remove() {
+            try {
+                Installer.InstallProduct(_localPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+                _isInstalled = false;
+            }
+            catch {
+                throw new PackageRemoveFailedException(this);
             }
         }
 
-
-        /*
-        public IEnumerable<Package> PackageDependencies() {
-            Installer.OpenPackage(LocalPackagePath, true);
-        }
-         * */
     }
 }
