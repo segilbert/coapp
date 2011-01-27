@@ -1,7 +1,7 @@
 Usage:
 -------
 
-CoApp-cli [options] <command> <parameters>
+CoApp [options] <command> <parameters>
 
 Options:
 --------
@@ -12,22 +12,22 @@ Options:
 
     --pretend               doesn't actually alter the system
 
-	--as-specified[=<pkg>]	Install the specific package(s) specified 
-							even if a newer version is available. 
+    --as-specified[=<pkg>]  Install the specific package(s) specified 
+                            even if a newer version is available. 
 
-	--upgrade[=<pkg>]		Accept any newer version of the package if 
-							one is available.
+    --upgrade[=<pkg>]       Accept any newer version of the package if 
+                            one is available.
 
-	--scan=<location>		Adds the location as a place to find additional
-							packages. 			
+    --scan=<location>       Adds the location as a place to find additional
+                            packages.             
 
-	--recursive-scan=<loc>	Adds the location and folders all below as a place 
-							to find additional packages. 			
+    --recursive-scan=<loc>  Adds the location and folders all below as a place 
+                            to find additional packages.             
 
-	--no-scan[=<location>]	Doesn't scan the location for additional 
-							packages. 			
+    --no-scan[=<location>]  Doesn't scan the location for additional 
+                            packages.             
 
-	
+    --flush-cache           Drops cached information.
 
 Commands:
 ---------    
@@ -35,7 +35,7 @@ Commands:
     install <pkg>           Installs the package files listed on 
                             the command line
 
-    uninstall <pkg>         Removes the package files listed on 
+    remove <pkg>            Removes the package files listed on 
                             the command line
 
     list packages           Lists the packages that are installed.

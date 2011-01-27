@@ -61,7 +61,43 @@ namespace CoApp.CLI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Use --help for command line help..
+        ///   Looks up a localized string similar to To the force the use the version given, use --as-specified={0} .
+        /// </summary>
+        internal static string AsSpecifiedHint {
+            get {
+                return ResourceManager.GetString("AsSpecifiedHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to To automatically accept the latest version, use --upgrade={0}.
+        /// </summary>
+        internal static string AutoAcceptHint {
+            get {
+                return ResourceManager.GetString("AutoAcceptHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not download.
+        /// </summary>
+        internal static string CouldNotDownload {
+            get {
+                return ResourceManager.GetString("CouldNotDownload", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to Install.
+        /// </summary>
+        internal static string FailedToInstall {
+            get {
+                return ResourceManager.GetString("FailedToInstall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use --help for command line assistance..
         /// </summary>
         internal static string ForCommandLineHelp {
             get {
@@ -73,7 +109,7 @@ namespace CoApp.CLI.Properties {
         ///   Looks up a localized string similar to Usage:
         ///-------
         ///
-        ///CoApp-cli [options] &lt;command&gt; &lt;parameters&gt;
+        ///CoApp [options] &lt;command&gt; &lt;parameters&gt;
         ///
         ///Options:
         ///--------
@@ -84,10 +120,10 @@ namespace CoApp.CLI.Properties {
         ///
         ///    --pretend               doesn&apos;t actually alter the system
         ///
-        ///	--as-specified[=&lt;pkg&gt;]	Install the specific package(s) specified 
-        ///							even if a newer version is available. 
+        ///    --as-specified[=&lt;pkg&gt;]  Install the specific package(s) specified 
+        ///                            even if a newer version is available. 
         ///
-        ///	--upgrade[=&lt;pkg&gt;]		Accept any newer v [rest of string was truncated]&quot;;.
+        ///    --upgrade[=&lt;p [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string HelpText {
             get {
@@ -114,7 +150,7 @@ namespace CoApp.CLI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Missing Command..
+        ///   Looks up a localized string similar to Missing command..
         /// </summary>
         internal static string MissingCommand {
             get {
@@ -132,6 +168,15 @@ namespace CoApp.CLI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Missing {0} {1}.
+        /// </summary>
+        internal static string MissingPkgText {
+            get {
+                return ResourceManager.GetString("MissingPkgText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Option {0} requires a location..
         /// </summary>
         internal static string OptionRequiresLocation {
@@ -141,7 +186,43 @@ namespace CoApp.CLI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Package Not Found: {0}.
+        ///   Looks up a localized string similar to The package {0} can not be installed because the following dependencies can not be installed:.
+        /// </summary>
+        internal static string PackageDependenciesCantInstall {
+            get {
+                return ResourceManager.GetString("PackageDependenciesCantInstall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package {0} failed to install.
+        /// </summary>
+        internal static string PackageFailedInstall {
+            get {
+                return ResourceManager.GetString("PackageFailedInstall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified package {0} has multiple matches:.
+        /// </summary>
+        internal static string PackageHasMultipleMatches {
+            get {
+                return ResourceManager.GetString("PackageHasMultipleMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package {0} can be possibly upgraded to a newer version..
+        /// </summary>
+        internal static string PackageHasPossibleNewerVersion {
+            get {
+                return ResourceManager.GetString("PackageHasPossibleNewerVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package not found: {0}.
         /// </summary>
         internal static string PackageNotFound {
             get {
@@ -150,34 +231,25 @@ namespace CoApp.CLI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to hello.
+        ///   Looks up a localized string similar to Command &apos;remove&apos; requires at least one package..
         /// </summary>
-        internal static string text1 {
+        internal static string RemoveRequiresPackageName {
             get {
-                return ResourceManager.GetString("text1", resourceCulture);
+                return ResourceManager.GetString("RemoveRequiresPackageName", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to GarrettSerack.
+        ///   Looks up a localized string similar to The following newer packages can supercede the package:.
         /// </summary>
-        internal static string text2 {
+        internal static string TheFollowingPackageSupercede {
             get {
-                return ResourceManager.GetString("text2", resourceCulture);
+                return ResourceManager.GetString("TheFollowingPackageSupercede", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Command &apos;uninstall&apos; requires at least one package..
-        /// </summary>
-        internal static string UninstallRequiresPackageName {
-            get {
-                return ResourceManager.GetString("UninstallRequiresPackageName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unknown Command [{0}].
+        ///   Looks up a localized string similar to Unknown command [{0}].
         /// </summary>
         internal static string UnknownCommand {
             get {

@@ -121,40 +121,64 @@
   <data name="HelpText" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\HelpText.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
-  <data name="text1" xml:space="preserve">
-    <value>hello</value>
-  </data>
-  <data name="text2" xml:space="preserve">
-    <value>GarrettSerack</value>
-  </data>
   <data name="UnknownParameter" xml:space="preserve">
     <value>Unknown parameter [--{0}]</value>
   </data>
   <data name="MissingCommand" xml:space="preserve">
-    <value>Missing Command.</value>
+    <value>Missing command.</value>
   </data>
   <data name="ForCommandLineHelp" xml:space="preserve">
-    <value>Use --help for command line help.</value>
+    <value>Use --help for command line assistance.</value>
   </data>
   <data name="UnknownCommand" xml:space="preserve">
-    <value>Unknown Command [{0}]</value>
+    <value>Unknown command [{0}]</value>
   </data>
   <data name="MissingParameterForList" xml:space="preserve">
     <value>Command 'list' requires a parameter: either 'packages' or 'repo'.</value>
   </data>
-  <data name="UninstallRequiresPackageName" xml:space="preserve">
-    <value>Command 'uninstall' requires at least one package.</value>
+  <data name="RemoveRequiresPackageName" xml:space="preserve">
+    <value>Command 'remove' requires at least one package.</value>
   </data>
   <data name="InstallRequiresPackageName" xml:space="preserve">
     <value>Command 'install' requires at least one package.</value>
   </data>
   <data name="PackageNotFound" xml:space="preserve">
-    <value>Package Not Found: {0}</value>
+    <value>Package not found: {0}</value>
   </data>
   <data name="InvalidPackage" xml:space="preserve">
     <value>The given file is not a valid package [{0}]</value>
   </data>
   <data name="OptionRequiresLocation" xml:space="preserve">
     <value>Option {0} requires a location.</value>
+  </data>
+  <data name="PackageFailedInstall" xml:space="preserve">
+    <value>Package {0} failed to install</value>
+  </data>
+  <data name="PackageDependenciesCantInstall" xml:space="preserve">
+    <value>The package {0} can not be installed because the following dependencies can not be installed:</value>
+  </data>
+  <data name="PackageHasPossibleNewerVersion" xml:space="preserve">
+    <value>Package {0} can be possibly upgraded to a newer version.</value>
+  </data>
+  <data name="TheFollowingPackageSupercede" xml:space="preserve">
+    <value>The following newer packages can supercede the package:</value>
+  </data>
+  <data name="AutoAcceptHint" xml:space="preserve">
+    <value>To automatically accept the latest version, use --upgrade={0}</value>
+  </data>
+  <data name="AsSpecifiedHint" xml:space="preserve">
+    <value>To the force the use the version given, use --as-specified={0} </value>
+  </data>
+  <data name="PackageHasMultipleMatches" xml:space="preserve">
+    <value>The specified package {0} has multiple matches:</value>
+  </data>
+  <data name="CouldNotDownload" xml:space="preserve">
+    <value>Could not download</value>
+  </data>
+  <data name="FailedToInstall" xml:space="preserve">
+    <value>Failed to Install</value>
+  </data>
+  <data name="MissingPkgText" xml:space="preserve">
+    <value>Missing {0} {1}</value>
   </data>
 </root>
