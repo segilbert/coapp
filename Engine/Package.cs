@@ -19,39 +19,40 @@ namespace CoApp.Toolkit.Engine {
         internal readonly UInt64 Version;
         internal readonly string Architecture;
         internal readonly string PublicKeyToken;
+        internal readonly string ProductCode;
 
         // Private containment
         private string cosmeticName;
-        private readonly string productCode;
+
         private bool? isInstalled;
+        private bool couldNotDownload;
+        private bool packageFailedInstall;
         private string localPackagePath;
         private Uri remoteLocation;
-        private Package superceedent;
+        private Package _supercedent;
 
         // set once only:
         internal UInt64 PolicyMinimumVersion { get; set; }
         internal UInt64 PolicyMaximumVersion { get; set; }
-        internal bool DoNotSuperceed;
+        internal bool UserSpecified;
+        internal bool DoNotSupercede; // TODO: it's possible these could be contradictory
+        internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
 
         // Causes notifications:
-        internal string LocalPackagePath { 
-            get {
-                return localPackagePath;
-            } 
-            set { 
-                if( value != localPackagePath ) {
+        internal string LocalPackagePath {
+            get { return localPackagePath; }
+            set {
+                if (value != localPackagePath) {
                     localPackagePath = value;
                     Changed();
                 }
             }
         }
 
-        internal Uri RemoteLocation  { 
-            get {
-                return remoteLocation;
-            } 
-            set { 
-                if( value != remoteLocation ) {
+        internal Uri RemoteLocation {
+            get { return remoteLocation; }
+            set {
+                if (value != remoteLocation) {
                     remoteLocation = value;
                     Changed();
                 }
@@ -60,19 +61,29 @@ namespace CoApp.Toolkit.Engine {
 
         internal readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
 
-        internal Package Superceedent {
-            get {
-                return superceedent;
-            }
+        internal Package Supercedent {
+            get { return _supercedent; }
             set {
-                if (value != superceedent) {
-                    superceedent = value;
-                    Changed();
+                if (value != _supercedent) {
+                    _supercedent = value;
+                    // Changed();
                 }
             }
         }
 
         internal bool ThisPackageIsNotInstallable;
+
+        
+
+        internal bool PackageFailedInstall {
+            get { return packageFailedInstall; }
+            set {
+                if (packageFailedInstall != value) {
+                    packageFailedInstall = value;
+                    Changed();
+                }
+            }
+        }
 
         public string CosmeticName {
             get {
@@ -81,32 +92,47 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        public bool AllowedToSupercede {
+            get { return UpgradeAsNeeded || (!UserSpecified && !DoNotSupercede); }
+        }
+
         internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) {
             Name = name;
             Version = version;
             Architecture = architecture;
             PublicKeyToken = publicKeyToken;
-            this.productCode = productCode;
+            this.ProductCode = productCode;
             Changed();
-            Dependencies.CollectionChanged += (x,y) => Changed();
+            Dependencies.CollectionChanged += (x, y) => Changed();
         }
 
         private static void Changed() {
-            Registrar.StateCounter++;
+            Registrar.Updated(); 
         }
 
         public bool IsInstalled {
             get {
-                return isInstalled ?? (isInstalled = ((Func<bool>)(() => {
-                    Changed();
+                return isInstalled ?? (isInstalled = ((Func<bool>) (() => {
+                    
                     try {
-                        Installer.OpenProduct(productCode).Close();
+                        Installer.OpenProduct(ProductCode).Close();
+                        Changed();
                         return true;
                     }
                     catch {
                     }
                     return false;
                 }))()).Value;
+            }
+        }
+
+        public bool CouldNotDownload {
+            get { return couldNotDownload; }
+            set {
+                if (value != couldNotDownload) {
+                    couldNotDownload = value;
+                    Changed();
+                }
             }
         }
 
@@ -136,27 +162,53 @@ namespace CoApp.Toolkit.Engine {
                 var version = record.GetString("version").VersionStringToUInt64();
                 var pkt = record.GetString("public_key_token");
                 view.Close();
+                UInt64 minPolicy = 0;
+                UInt64 maxPolicy = 0;
 
-                var dependencies = new List<Package>();
-
-                // dependencies
-                view =
-                    installSession.Database.OpenView(
-                        "SELECT CO_PACKAGE.package_id, CO_PACKAGE.name, CO_PACKAGE.arch, CO_PACKAGE.version, CO_PACKAGE.public_key_token, CO_DEPENDENCY.dependency_id FROM CO_PACKAGE, CO_DEPENDENCY WHERE CO_PACKAGE.package_id = CO_DEPENDENCY.dependency_id");
-                view.Execute();
-                record = view.Fetch();
-                while (record != null) {
-                    pkgid = record.GetString("package_id");
-                    name = record.GetString("name");
-                    arch = record.GetString("arch");
-                    version = record.GetString("version").VersionStringToUInt64();
-                    pkt = record.GetString("public_key_token");
-
-                    dependencies.Add(Registrar.GetPackage(name, arch, version, pkt, pkgid));
-
+                if (installSession.Database.Tables.Contains("CO_BINDING_POLICY")) {
+                    view = installSession.Database.OpenView(installSession.Database.Tables["CO_BINDING_POLICY"].SqlSelectString);
+                    view.Execute();
                     record = view.Fetch();
+
+                    minPolicy = record.GetString("minimum_version").VersionStringToUInt64();
+                    maxPolicy = record.GetString("maximum_version").VersionStringToUInt64();
+                    view.Close();
                 }
-                return new {Name = name, Version = version, Architecture = arch, PublicKeyToken = pkt, dependencies, packageId = pkgid};
+
+
+                dynamic result =
+                    new {
+                        Name = name,
+                        Version = version,
+                        Architecture = arch,
+                        PublicKeyToken = pkt,
+                        packageId = pkgid,
+                        policy_min_version = minPolicy,
+                        policy_max_version = maxPolicy,
+                        dependencies = new List<Package>()
+                    };
+
+
+                if (installSession.Database.Tables.Contains("CO_DEPENDENCY")) {
+                    // dependencies
+                    view =
+                        installSession.Database.OpenView(
+                            "SELECT CO_PACKAGE.package_id, CO_PACKAGE.name, CO_PACKAGE.arch, CO_PACKAGE.version, CO_PACKAGE.public_key_token, CO_DEPENDENCY.dependency_id FROM CO_PACKAGE, CO_DEPENDENCY WHERE CO_PACKAGE.package_id = CO_DEPENDENCY.dependency_id");
+                    view.Execute();
+                    record = view.Fetch();
+                    while (record != null) {
+                        pkgid = record.GetString("package_id");
+                        name = record.GetString("name");
+                        arch = record.GetString("arch");
+                        version = record.GetString("version").VersionStringToUInt64();
+                        pkt = record.GetString("public_key_token");
+
+                        result.dependencies.Add(Registrar.GetPackage(name, arch, version, pkt, pkgid));
+
+                        record = view.Fetch();
+                    }
+                }
+                return result;
             }
             catch (InstallerException) {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
@@ -188,20 +240,22 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        public IEnumerable<Package> DependenciesToInstall { get { return null; }}
+        public IEnumerable<Package> DependenciesToInstall {
+            get { return null; }
+        }
 
         public void Install() {
-
+            Installer.InstallProduct(localPackagePath, @"""TARGETDIR={0}"" COAPP_INSTALLED=1".format(PackageManagerSettings.CoAppRootDirectory));
+            isInstalled = true;
         }
 
         public void ResolvePackage() {
         }
 
         public bool IsPackageSatisfied {
-            get { return IsInstalled || !string.IsNullOrEmpty(LocalPackagePath) && RemoteLocation != null && Superceedent != null; }
+            get { return IsInstalled || !string.IsNullOrEmpty(LocalPackagePath) && RemoteLocation != null && Supercedent != null; }
         }
 
-        
 
         public bool DependenciesKnown {
             get { return (Dependencies != null); }

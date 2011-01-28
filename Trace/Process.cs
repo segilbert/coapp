@@ -31,6 +31,9 @@ namespace CoApp.Toolkit.Trace {
         public FileIndexer Files;
 
         [XmlIgnore]
+        public EnvironmentVariableIndexer Environment;
+
+        [XmlIgnore]
         public FileIndexerByHandle FilesByHandle;
 
         [XmlIgnore]
@@ -39,10 +42,12 @@ namespace CoApp.Toolkit.Trace {
         [XmlIgnore]
         internal List<Process> ParentCollection;
 
-        public Process() {
+        public Process()
+        {
            Files = new FileIndexer(files);
            Processes = new ProcessIndexer(process);
            FilesByHandle = new FileIndexerByHandle(files);
+           Environment = new EnvironmentVariableIndexer(environment);
         }
     }
 }

@@ -34,6 +34,29 @@ namespace CoApp.Toolkit.Trace {
         }
     }
 
+    public class EnvironmentVariableIndexer
+    {
+        private readonly List<Variable> envList;
+
+        public EnvironmentVariableIndexer(List<Variable> collection)
+        {
+            envList = collection;
+        }
+
+        public Variable this[string varname]
+        {
+            get {
+                varname = varname.ToLower();
+
+                lock (envList)
+                {
+                    var result = envList.Where(x => x.name.Equals(varname)).LastOrDefault();
+                    return result;
+                }
+            }
+        }
+    }
+
     public class FileIndexerByHandle {
         private readonly List<File> fileList;
 

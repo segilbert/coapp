@@ -14,6 +14,9 @@ namespace CoApp.Toolkit.Engine {
     using Microsoft.Win32;
 
     public class PackageManagerSettings {
+        private static Settings userSettings = new Settings("CoAppPackageManager");
+        private static Settings systemSettings = new Settings("CoAppPackageManager", Registry.LocalMachine);
+
         public static SettingsStringIndexer StringSetting = new SettingsStringIndexer(userSettings);
         public static SettingsBooleanIndexer BoolSetting = new SettingsBooleanIndexer(userSettings);
         public static SettingsIntIndexer IntSetting = new SettingsIntIndexer(userSettings);
@@ -30,8 +33,6 @@ namespace CoApp.Toolkit.Engine {
         public static SettingsEncryptedStringIndexer SystemEncryptedStringSetting =
             new SettingsEncryptedStringIndexer(systemSettings);
 
-        private static Settings userSettings = new Settings("CoAppPackageManager");
-        private static Settings systemSettings = new Settings("CoAppPackageManager", Registry.LocalMachine);
 
         private static string DEFAULT_COAPP_ROOT {
             get { return Path.GetFullPath(Environment.ExpandEnvironmentVariables(@"%SystemDrive%\coapp")); }
@@ -85,6 +86,18 @@ namespace CoApp.Toolkit.Engine {
 
                 // Warning: the user might not have permissions to set this value
                 SystemStringSetting["RootDirectory"] = newRootDirectory;
+            }
+        }
+
+        public static string CoAppPackageCache {
+            get {
+                var result = Path.Combine(CoAppRootDirectory, ".packageCache");
+                if (!Directory.Exists(result)) {
+                    Directory.CreateDirectory(result);
+                    var di = new DirectoryInfo(result);
+                    di.Attributes = FileAttributes.Hidden;
+                }
+                return result;
             }
         }
     }

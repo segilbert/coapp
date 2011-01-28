@@ -19,6 +19,7 @@ using System.Collections.Specialized;
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.IO;
+    using System.Linq;
 
     public static class FilesystemExtensions {
         private static int counter;
@@ -181,6 +182,27 @@ namespace CoApp.Toolkit.Extensions {
             result = result.Replace(@"{ticks}", "" + DateTime.Now.Ticks);
 
             return result.format(parameters);
+        }
+
+
+        public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption, IEnumerable<string> skipPathPatterns = null) {
+            IEnumerable<string> result = Enumerable.Empty<string>();
+
+            try {
+                if (skipPathPatterns != null ? skipPathPatterns.Any(pattern => path.IsWildcardMatch(pattern)) : false)
+                    return result;
+
+                result = Directory.EnumerateFiles(path, searchPattern, SearchOption.TopDirectoryOnly);
+            }
+            catch { }
+
+            if (searchOption == SearchOption.AllDirectories) {
+                try {
+                    result = result.Union(Directory.EnumerateDirectories(path).Aggregate(result, (current, directory) => current.Union(DirectoryEnumerateFilesSmarter(directory, searchPattern, SearchOption.AllDirectories))));
+                }
+                catch { }
+            }
+            return result;
         }
 
         /// <summary>
