@@ -54,18 +54,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs" />
+    <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs" />
     <Compile Include="Engine\Exceptions\ConfigurationException.cs" />
-    <Compile Include="Engine\Exceptions\PackageInstallFailed.cs" />
+    <Compile Include="Engine\Exceptions\PackageInstallFailedException.cs" />
+    <Compile Include="Engine\Exceptions\PackageIsNotInstalledException.cs" />
     <Compile Include="Engine\Exceptions\PackageMissingException.cs" />
     <Compile Include="Engine\Exceptions\InvalidPackageException.cs" />
     <Compile Include="Engine\Exceptions\PackageNotFoundException.cs" />
     <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
     <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
+    <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs" />
     <Compile Include="Engine\NativeMethods.cs" />
     <Compile Include="Engine\Package.cs" />
+    <Compile Include="Engine\PackageExtensions.cs" />
     <Compile Include="Engine\PackageManager.cs" />
     <Compile Include="Engine\PackageManagerSettings.cs" />
-    <Compile Include="Engine\ProgressMessage.cs" />
+    <Compile Include="Engine\PackageInstallerMessage.cs" />
     <Compile Include="Engine\Registrar.cs" />
     <Compile Include="Properties\Engine.AssemblyInfo.cs" />
     <Compile Include="Engine\Properties\Resources.Designer.cs">

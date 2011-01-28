@@ -43,6 +43,8 @@ namespace CoApp.Toolkit.Extensions {
             }
             return maxObj;
         }
-
+        public static IEnumerable<T> AsArray<T>(this T source) {
+            return new[] {source};
+        }
     }
 }

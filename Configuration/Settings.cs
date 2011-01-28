@@ -21,7 +21,7 @@ namespace CoApp.Toolkit.Configuration {
             this.hive = hive;
         }
 
-        internal object this[string settingName] {
+        public object this[string settingName] {
             get {
                 RegistryKey regkey = null;
                 try {
@@ -51,7 +51,10 @@ namespace CoApp.Toolkit.Configuration {
                         return;
                     }
 
-                    if (value is long) {
+                    if (value == null) {
+                        regkey.DeleteValue(settingName);
+                    }
+                    else if (value is long) {
                         regkey.SetValue(settingName, value, RegistryValueKind.QWord);
                     }
                     else {

@@ -14,6 +14,9 @@ namespace CoApp.Toolkit.Engine {
     using Extensions;
 
     public class Registrar {
+        private static HashSet<long> nonCoAppMSIFiles = new HashSet<long>();
+        private static bool _readCache;
+
         private static readonly ObservableCollection<Package> packages = new ObservableCollection<Package>();
         private static readonly ObservableCollection<string> DiscoveredScanLocations = new ObservableCollection<string>();
         private static bool _hasScannedAtLeastOnce;
@@ -31,6 +34,46 @@ namespace CoApp.Toolkit.Engine {
                 }
             }
         }
+
+        public static void FlushCache() {
+            PackageManagerSettings.systemSettings["nonCoAppPackageMap"] = null;
+            nonCoAppMSIFiles.Clear();
+        }
+
+        public static void SaveCache() {
+            using (var ms = new MemoryStream()) {
+
+                var binaryWriter = new BinaryWriter(ms);
+
+                // order of the following is very important.
+                binaryWriter.Write(nonCoAppMSIFiles.Count);
+                foreach (var val in nonCoAppMSIFiles)
+                    binaryWriter.Write(val);
+
+                PackageManagerSettings.systemSettings["nonCoAppPackageMap"] = ms.GetBuffer();
+            }
+        }
+
+        public static void LoadCache() {
+            if (!_readCache) {
+                var cache = PackageManagerSettings.systemSettings["nonCoAppPackageMap"] as byte[];
+                if (cache == null)
+                    return;
+
+                using (var ms = new MemoryStream(cache)) {
+                    var binaryReader = new BinaryReader(ms);
+                    var count = binaryReader.ReadInt32();
+                    for (var i = 0; i < count; i++) {
+                        var value = binaryReader.ReadInt64();
+                        if (!nonCoAppMSIFiles.Contains(value))
+                            nonCoAppMSIFiles.Add(value);
+                    }
+                }
+                _readCache = true;
+            }
+        }
+
+        public static IEnumerable<Package> Packages { get { return packages;  } }
 
         public static int StateCounter;
         public static void Updated() {
@@ -57,6 +100,10 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public static Package GetPackage(string packagePath) {
+            if( packagePath.Contains("*") ) {
+                throw new PackageNotFoundException(packagePath);
+            }
+
             var localPackagePath = Path.GetFullPath(packagePath);
 
             var localFolder = Path.GetDirectoryName(localPackagePath).ToLower();
@@ -71,17 +118,35 @@ namespace CoApp.Toolkit.Engine {
                             package.LocalPackagePath.Equals(localPackagePath, StringComparison.CurrentCultureIgnoreCase))).
                     FirstOrDefault();
 
-
             if (pkg != null) {
                 return pkg;
             }
 
-            if (!File.Exists(localPackagePath)) {
+            if (!File.Exists(localPackagePath) ) {
+                // could this be another representation of a package?
+                if( !localPackagePath.EndsWith(".msi") ) {
+                    return GetPackage(localPackagePath + ".msi");
+                }
+
                 throw new PackageNotFoundException(localPackagePath);
             }
 
-            var pkgDetails = Package.GetCoAppPackageFileDetails(packagePath);
+            dynamic pkgDetails;
+            var lookup = File.GetCreationTime(localPackagePath).Ticks+localPackagePath.GetHashCode();
+            if( nonCoAppMSIFiles.Contains(lookup)) {
+                throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
+            }
+            
 
+            try {
+                pkgDetails = Package.GetCoAppPackageFileDetails(localPackagePath);
+            } catch (InvalidPackageException ipe) {
+                if( ipe.Reason == InvalidReason.NotCoAppMSI) {
+                    nonCoAppMSIFiles.Add(lookup);
+                }
+                throw;
+            }
+            
             pkg = (packages.Where(package =>
                 package.Architecture == pkgDetails.Architecture &&
                     package.Version == pkgDetails.Version &&
@@ -92,11 +157,11 @@ namespace CoApp.Toolkit.Engine {
                 pkg = new Package(pkgDetails.Name, pkgDetails.Architecture, pkgDetails.Version, pkgDetails.PublicKeyToken,
                     pkgDetails.packageId);
 
-                pkg.Dependencies.Clear();
-                pkg.Dependencies.AddRange((IEnumerable<Package>)pkgDetails.dependencies);
-
                 packages.Add(pkg);
             }
+            pkg.Dependencies.Clear();
+            pkg.Dependencies.AddRange((IEnumerable<Package>)pkgDetails.dependencies);
+
             if (pkg.LocalPackagePath == null) {
                 pkg.LocalPackagePath = localPackagePath;
             }
@@ -105,15 +170,6 @@ namespace CoApp.Toolkit.Engine {
             pkg.PolicyMaximumVersion = pkgDetails.policy_max_version;
 
             return pkg;
-        }
-
-        public static IEnumerable<Package> LocateSupercedentPackages(Package package) {
-            // anything superceedent in the list of known packages?
-            return packages.Where(p => p.Architecture == package.Architecture &&
-                p.PublicKeyToken == package.PublicKeyToken &&
-                    p.Name.Equals(package.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                        p.PolicyMinimumVersion <= package.Version &&
-                            p.PolicyMaximumVersion >= package.Version).OrderByDescending(p => p.Version);
         }
 
         public static void ScanForPackages() {
@@ -141,22 +197,6 @@ namespace CoApp.Toolkit.Engine {
             HasScannedAtLeastOnce = true;
         }
 
-        private static string trimto(string s, int sz) {
-            return s.Length < sz ? s : s.Substring(s.Length - sz);
-        }
-
-        public static void DumpPackages(IEnumerable<Package> pkgs) {
-            string fmt = "|{0,35}|{1,20}|{2,5}|{3,20}|{4,8}|{5,20}|";
-            string line = "--------------------------------------------------------";
-            Console.WriteLine(fmt, "Filename", "Name", "Arch", "Version", "Key", "GUID");
-            Console.WriteLine(fmt, trimto(line, 35), trimto(line, 20), trimto(line, 5), trimto(line, 20), trimto(line, 8), trimto(line, 20));
-
-            foreach (var p in pkgs) {
-                Console.WriteLine(fmt, trimto(p.LocalPackagePath ?? "(unknown)", 35), trimto(p.Name, 20), p.Architecture,
-                    p.Version.UInt64VersiontoString(), trimto(p.PublicKeyToken, 8), trimto(p.ProductCode, 20));
-            }
-            Console.WriteLine(fmt, trimto(line, 35), trimto(line, 20), trimto(line, 5), trimto(line, 20), trimto(line, 8), trimto(line, 20));
-            Console.WriteLine("\r\n");
-        }
+       
     }
 }

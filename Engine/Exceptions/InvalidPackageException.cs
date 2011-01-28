@@ -15,9 +15,11 @@ namespace CoApp.Toolkit.Engine.Exceptions {
 
     public class InvalidPackageException : Exception {
         public string PackagePath;
+        public InvalidReason Reason;
 
         public InvalidPackageException(InvalidReason reason, string packagePath) {
             PackagePath = packagePath;
+            Reason = reason;
         }
     }
 }
