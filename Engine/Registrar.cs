@@ -166,6 +166,10 @@ namespace CoApp.Toolkit.Engine {
                 pkg.LocalPackagePath = localPackagePath;
             }
 
+            pkg.Assembly = new PackageAssemblyInfo(pkgDetails.assembly.Name, pkgDetails.assembly.Arch, 
+                               pkgDetails.assembly.Type, pkgDetails.assembly.Version, 
+                               pkgDetails.assembly.PublicKeyToken );
+
             pkg.PolicyMinimumVersion = pkgDetails.policy_min_version;
             pkg.PolicyMaximumVersion = pkgDetails.policy_max_version;
 

@@ -17,6 +17,9 @@ namespace CoApp.Toolkit.Engine {
     public class Package {
         public readonly string Architecture;
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
+        //TODO: do we want this to be a HashSet instead?
+        //TODO: Do want to make it impossible to change this from another Assembly?
+        public readonly List<string> Roles = new List<string>();
         public readonly string Name;
         public readonly string ProductCode;
         public readonly string PublicKeyToken;
@@ -43,9 +46,13 @@ namespace CoApp.Toolkit.Engine {
             Dependencies.CollectionChanged += (x, y) => Changed();
         }
 
+        public PackageAssemblyInfo Assembly { get; internal set; }
+        
+
         // set once only:
         internal UInt64 PolicyMinimumVersion { get; set; }
         internal UInt64 PolicyMaximumVersion { get; set; }
+        
 
         // Causes notifications:
         public string LocalPackagePath {
@@ -208,15 +215,25 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 dynamic result =
-                    new {
-                        Name = name,
-                        Version = version,
-                        Architecture = arch,
-                        PublicKeyToken = pkt,
-                        packageId = pkgid,
-                        policy_min_version = minPolicy,
-                        policy_max_version = maxPolicy,
-                        dependencies = new List<Package>()
+                    new
+                        {
+                            Name = name,
+                            Version = version,
+                            Architecture = arch,
+                            PublicKeyToken = pkt,
+                            packageId = pkgid,
+                            policy_min_version = minPolicy,
+                            policy_max_version = maxPolicy,
+                            dependencies = new List<Package>(),
+                            roles = new List<string>(),
+                            assembly = new
+                                             {
+                                                 Name = "",
+                                                 Arch = "",
+                                                 Type = "",
+                                                 Version = "",
+                                                 PublicKeyToken =""
+                                         }
                     };
 
                 if (installSession.Database.Tables.Contains("CO_DEPENDENCY")) {
@@ -238,6 +255,66 @@ namespace CoApp.Toolkit.Engine {
                         record = view.Fetch();
                     }
                 }
+
+                if (installSession.Database.Tables.Contains("CO_ROLES"))
+                {
+                    view = installSession.Database.OpenView("SELECT * FROM CO_ROLES");
+                    view.Execute();
+                    record = view.Fetch();
+
+                    if (record == null)
+                        // you need at least ONE role
+                        throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
+
+                    for (; record != null; record = view.Fetch() )
+
+                    {
+                        
+                    }
+
+                        if (installSession.Database.Tables.Contains("MsiAssembly") && installSession.Database.Tables.Contains("MsiAssemblyName"))
+                        {
+                            view = installSession.Database.OpenView(
+                                "SELECT * FROM MsiAssembly");
+                            view.Execute();
+                            //we assume there is only one, which should be the case
+                            record = view.Fetch();
+                            var compId = record.GetString("Component_");
+
+                            view =
+                                installSession.Database.OpenView(
+                                    "Select * FROM MsiAssemblyName WHERE Component_ = {0}".format(compId));
+                            view.Execute();
+
+                            for (record = view.Fetch(); record != null; record = view.Fetch())
+                            {
+                                switch (record.GetString("Name"))
+                                {
+                                    case "name": result.dependencies.Name = record.GetString("Value");
+                                        break;
+                                    case "processorArchitecture": result.dependencies.Arch = record.GetString("Value");
+                                        break;
+                                    case "type": result.dependencies.Type = record.GetString("Value");
+                                        break;
+                                    case "version":
+                                        result.dependencies.Version = record.GetString("Value");
+                                        break;
+                                    case "publicKeyToken":
+                                        result.dependencies.PublicKeyToken = record.GetString("Value");
+                                        break;
+                                }
+
+                            }
+                        }
+                }
+                else
+                {
+                    // you need to have a ROLE TABLE!
+                    throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
+                    
+                }
+
+                
                 return result;
             }
             catch (InstallerException) {
@@ -273,5 +350,23 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+    }
+
+    public class PackageAssemblyInfo
+    {
+        public readonly string Name;
+        public readonly string Arch;
+        public readonly string Type;
+        public readonly string Version;
+        public readonly string PublicKeyToken;
+
+        public PackageAssemblyInfo(string Name, string Arch, string Type, string Version, string PublicKeyToken)
+        {
+            this.Name = Name;
+            this.Arch = Arch;
+            this.Type = Type;
+            this.Version = Version;
+            this.PublicKeyToken = PublicKeyToken;
+        }
     }
 }
