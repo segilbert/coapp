@@ -72,6 +72,7 @@
     <Compile Include="Engine\PackageManagerSettings.cs" />
     <Compile Include="Engine\PackageInstallerMessage.cs" />
     <Compile Include="Engine\Registrar.cs" />
+    <Compile Include="Engine\PackageAssemblyInfo.cs" />
     <Compile Include="Properties\Engine.AssemblyInfo.cs" />
     <Compile Include="Engine\Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

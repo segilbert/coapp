@@ -17,6 +17,11 @@ namespace CoApp.Toolkit.Engine {
     public class Package {
         public readonly string Architecture;
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
+        /// <summary>
+        /// the tuple is: (role name, flavor)
+        /// </summary>
+        public readonly List<Tuple<string, string>> Roles = new List<Tuple<string, string>>();
+        public readonly List<PackageAssemblyInfo> Assemblies = new List<PackageAssemblyInfo>();
         public readonly string Name;
         public readonly string ProductCode;
         public readonly string PublicKeyToken;
@@ -43,9 +48,13 @@ namespace CoApp.Toolkit.Engine {
             Dependencies.CollectionChanged += (x, y) => Changed();
         }
 
+        
+        
+
         // set once only:
         internal UInt64 PolicyMinimumVersion { get; set; }
         internal UInt64 PolicyMaximumVersion { get; set; }
+        
 
         // Causes notifications:
         public string LocalPackagePath {
@@ -166,6 +175,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         internal static dynamic GetCoAppPackageFileDetails(string localPackagePath) {
+            
             Session installSession = null;
             try {
                 installSession = Installer.OpenPackage(localPackagePath, true);
@@ -208,15 +218,20 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 dynamic result =
-                    new {
-                        Name = name,
-                        Version = version,
-                        Architecture = arch,
-                        PublicKeyToken = pkt,
-                        packageId = pkgid,
-                        policy_min_version = minPolicy,
-                        policy_max_version = maxPolicy,
-                        dependencies = new List<Package>()
+                    new
+                        {
+                            Name = name,
+                            Version = version,
+                            Architecture = arch,
+                            PublicKeyToken = pkt,
+                            packageId = pkgid,
+                            policy_min_version = minPolicy,
+                            policy_max_version = maxPolicy,
+                            dependencies = new List<Package>(),
+                            // type and flavor
+                            roles = new List<Tuple<string, string>>(),
+                            assemblies = new Dictionary<string, PackageAssemblyInfo>()
+                                            
                     };
 
                 if (installSession.Database.Tables.Contains("CO_DEPENDENCY")) {
@@ -238,6 +253,97 @@ namespace CoApp.Toolkit.Engine {
                         record = view.Fetch();
                     }
                 }
+
+                if (installSession.Database.Tables.Contains("CO_ROLES"))
+                {
+                    view = installSession.Database.OpenView("SELECT * FROM CO_ROLES");
+                    view.Execute();
+                    record = view.Fetch();
+
+                    if (record == null)
+                        // you need at least ONE role
+                        throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
+
+                    //we need to know how many shared libs we have so we'll count them here
+                    var numOfSharedLibs = 0;
+                    for (; record != null; record = view.Fetch() )
+
+                    {
+                        var type = record.GetString("type");
+                        if (type == "sharedlib")
+                            numOfSharedLibs++;
+                        var role = new Tuple<string, string>(type, record.GetString("flavor"));
+                                      
+                        result.roles.Add(role);
+                    }
+
+                 
+                    
+                    if (numOfSharedLibs > 0)
+                    {
+
+                        if (installSession.Database.Tables.Contains("MsiAssembly") && installSession.Database.Tables.Contains("MsiAssemblyName"))
+                        {
+                          
+
+                            view =
+                                installSession.Database.OpenView(
+                                    "Select * FROM MsiAssemblyName");
+                            view.Execute();
+                            var assms = result.assemblies;
+                            var numberOfNonPolicyAssms = 0;
+                            for (record = view.Fetch(); record != null; record = view.Fetch())
+                            {
+                                var componentId = record.GetString("Component_");
+
+                                if (!assms.ContainsKey(componentId))
+                                    assms[componentId] = new PackageAssemblyInfo();
+                                
+                                switch (record.GetString("Name"))
+                                {
+                                    case "name": assms[componentId].Name = record.GetString("Value");
+                                        break;
+                                    case "processorArchitecture": assms[componentId].Arch = record.GetString("Value");
+                                        break;
+                                    case "type":
+                                        var type = record.GetString("Value");
+                                        if (!type.Contains("policy"))
+                                            numberOfNonPolicyAssms++;
+                                        assms[componentId].Type = type;
+
+                                        break;
+                                    case "version":
+                                        assms[componentId].Version = record.GetString("Value");
+                                        break;
+                                    case "publicKeyToken":
+                                        assms[componentId].PublicKeyToken = record.GetString("Value");
+                                        break;
+                                }
+
+                            }
+
+                            if (numberOfNonPolicyAssms != numOfSharedLibs)
+                            {
+                                
+                                // you need to have one MSI per sharedlib);
+                                throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
+                            }   
+                            
+                        }
+                        else
+                        {
+                            // you have shared libs but no MsiAssembly and/or no MsiAssembly Name. That's what shared libs are.
+                            throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
+                        }
+                    }
+                }
+                else
+                {
+                    // you need to have a ROLE TABLE!
+                    throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
+                    
+                }
+
                 return result;
             }
             catch (InstallerException) {
@@ -274,4 +380,6 @@ namespace CoApp.Toolkit.Engine {
         }
 
     }
+
+
 }
