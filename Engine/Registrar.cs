@@ -4,6 +4,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.Collections;
+
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
@@ -28,10 +30,9 @@ namespace CoApp.Toolkit.Engine {
         internal static bool HasScannedAtLeastOnce {
             get { return _hasScannedAtLeastOnce; }
             set {
-                if (_hasScannedAtLeastOnce != value) {
-                    _hasScannedAtLeastOnce = value;
-                    Updated(); 
-                }
+                if (_hasScannedAtLeastOnce == value) return;
+                _hasScannedAtLeastOnce = value;
+                Updated();
             }
         }
 
@@ -165,6 +166,10 @@ namespace CoApp.Toolkit.Engine {
             if (pkg.LocalPackagePath == null) {
                 pkg.LocalPackagePath = localPackagePath;
             }
+
+            pkg.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>)pkgDetails.assemblies.Values);
+
+            pkg.Roles.AddRange((IEnumerable<Tuple<string,string>>)pkgDetails.roles);
 
             pkg.PolicyMinimumVersion = pkgDetails.policy_min_version;
             pkg.PolicyMaximumVersion = pkgDetails.policy_max_version;
