@@ -26,10 +26,12 @@ using System.Collections.Generic;
     public partial class Package {
         
         /// <remarks/>
-        public Tags Tags;
+        [System.Xml.Serialization.XmlArrayItemAttribute("Tag", IsNullable=false)]
+        public List<Tag> Tags = new List<Tag>();
         
         /// <remarks/>
-        public Dependencies Dependencies;
+        [System.Xml.Serialization.XmlArrayItemAttribute("Dependency", IsNullable=false)]
+        public List<Dependency> Dependencies = new List<Dependency>();
         
         /// <remarks/>
         public Publisher Publisher;
@@ -41,19 +43,24 @@ using System.Collections.Generic;
         public BindingPolicy BindingPolicy;
         
         /// <remarks/>
-        public Urls Urls;
+        [System.Xml.Serialization.XmlArrayItemAttribute("Url", IsNullable=false)]
+        public List<Url> Urls = new List<Url>();
         
         /// <remarks/>
-        public SharedLib SharedLib;
+        [System.Xml.Serialization.XmlElementAttribute("SharedLib")]
+        public List<SharedLib> SharedLib = new List<SharedLib>();
         
         /// <remarks/>
-        public DeveloperLib DeveloperLib;
+        [System.Xml.Serialization.XmlElementAttribute("AppRole")]
+        public List<AppRole> AppRole = new List<AppRole>();
         
         /// <remarks/>
-        public AppRole AppRole;
+        [System.Xml.Serialization.XmlElementAttribute("DeveloperLib")]
+        public List<DeveloperLib> DeveloperLib = new List<DeveloperLib>();
         
         /// <remarks/>
-        public DriverRole DriverRole;
+        [System.Xml.Serialization.XmlElementAttribute("DriverRole")]
+        public List<DriverRole> DriverRole = new List<DriverRole>();
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("comp", IsNullable=false)]
@@ -86,19 +93,6 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string product_guid;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Tags {
-        
-        /// <remarks/>
-        public Tag Tag;
     }
     
     /// <remarks/>
@@ -181,7 +175,8 @@ using System.Collections.Generic;
         public List<object> Registry = new List<object>();
         
         /// <remarks/>
-        public InstallProperties InstallProperties;
+        [System.Xml.Serialization.XmlArrayItemAttribute("Property", IsNullable=false)]
+        public List<Property> InstallProperties = new List<Property>();
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
@@ -793,20 +788,6 @@ using System.Collections.Generic;
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
     [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class InstallProperties {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Property")]
-        public List<Property> Property = new List<Property>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
     public partial class Property {
         
         /// <remarks/>
@@ -824,20 +805,6 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string prop_guid;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Dependencies {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Dependency")]
-        public List<Dependency> Dependency = new List<Dependency>();
     }
     
     /// <remarks/>
@@ -866,8 +833,32 @@ using System.Collections.Generic;
         public Arch Arch;
         
         /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool ArchSpecified;
+        
+        /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string PublicKeyToken;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Location;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Feed;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public PackageType Type;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool TypeSpecified;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string CommandLine;
     }
     
     /// <remarks/>
@@ -884,6 +875,22 @@ using System.Collections.Generic;
         
         /// <remarks/>
         any,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    public enum PackageType {
+        
+        /// <remarks/>
+        coapp,
+        
+        /// <remarks/>
+        nuget,
+        
+        /// <remarks/>
+        msi,
     }
     
     /// <remarks/>
@@ -962,20 +969,6 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string MaximumVersion;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Urls {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Url")]
-        public List<Url> Url = new List<Url>();
     }
     
     /// <remarks/>
@@ -1131,6 +1124,14 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string Platform;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string component_id;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string component_guid;
     }
     
     /// <remarks/>
@@ -1154,6 +1155,56 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string folder_id;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class AppRole : Role {
+        
+        /// <remarks/>
+        public AppFiles AppFiles;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class AppFiles {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("ExeFile")]
+        public List<ExeFile> ExeFile = new List<ExeFile>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
+        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
+        public List<FileSysItem> Items = new List<FileSysItem>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class ExeFile : FileType {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Compiler;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public Arch Arch;
     }
     
     /// <remarks/>
@@ -1268,56 +1319,6 @@ using System.Collections.Generic;
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
     [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class AppRole : Role {
-        
-        /// <remarks/>
-        public AppFiles AppFiles;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class AppFiles {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("ExeFile")]
-        public List<ExeFile> ExeFile = new List<ExeFile>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class ExeFile : FileType {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string Compiler;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public Arch Arch;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
     public partial class DriverRole : Role {
         
         /// <remarks/>
@@ -1368,6 +1369,48 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string component_id;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Tags {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Tag")]
+        public List<Tag> Tag = new List<Tag>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Dependencies {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Dependency")]
+        public List<Dependency> Dependency = new List<Dependency>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class InstallProperties {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Property")]
+        public List<Property> Property = new List<Property>();
     }
     
     /// <remarks/>
@@ -1444,6 +1487,20 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("comp")]
         public List<comp> Items = new List<comp>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Urls {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Url")]
+        public List<Url> Url = new List<Url>();
     }
     
     /// <remarks/>

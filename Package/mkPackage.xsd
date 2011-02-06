@@ -36,12 +36,10 @@
         <xs:element ref="Properties" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="BindingPolicy" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="Urls" minOccurs="0" maxOccurs="1" />
-        <xs:sequence minOccurs="1">
-          <xs:element ref="SharedLib" minOccurs="0"/>
-          <xs:element ref="DeveloperLib" minOccurs="0"/>
-          <xs:element ref="AppRole" minOccurs="0"/>
-          <xs:element ref="DriverRole" minOccurs="0"/>
-        </xs:sequence>
+        <xs:element ref="SharedLib" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="AppRole" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="DeveloperLib" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="DriverRole" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="features" minOccurs="0" maxOccurs="1" />
         
       </xs:sequence> 
@@ -72,7 +70,6 @@
           in which case you should enter MSIL (and set Arch to any).</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-
       <xs:attribute name="proddir_id" type="Id"/>
       <xs:attribute name="package_guid" type="Guid"/>
       <xs:attribute name="product_guid" type="Guid"/>
@@ -85,8 +82,8 @@
       <xs:documentation>Holds all the tags for a given package.</xs:documentation>
     </xs:annotation>
     <xs:complexType>
-      <xs:sequence minOccurs="0">
-        <xs:element ref="Tag" />
+      <xs:sequence>
+        <xs:element ref="Tag" minOccurs="1"  maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -96,16 +93,16 @@
       <xs:documentation>Holds all the dependencies for a given package.</xs:documentation>
     </xs:annotation>
     <xs:complexType>
-      <xs:sequence minOccurs="0" maxOccurs="unbounded">
-        <xs:element ref="Dependency"/>
+      <xs:sequence>
+        <xs:element ref="Dependency" minOccurs="1" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
 
   <xs:element name="InstallProperties">
     <xs:complexType>
-      <xs:sequence minOccurs="1" maxOccurs="unbounded">
-        <xs:element ref="Property"/>
+      <xs:sequence>
+        <xs:element ref="Property"  minOccurs="1" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -137,12 +134,12 @@
     </xs:annotation>
     <xs:complexType>
       <xs:attribute name="package_id" type="Guid" use="optional"/>
-      <xs:attribute name="Name" type="Id" use="required">
+      <xs:attribute name="Name" type="Id" >
         <xs:annotation>
           <xs:documentation>The name of the dependency.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="Version" type="VersionType" use="required">
+      <xs:attribute name="Version" type="VersionType" >
         <xs:annotation>
           <xs:documentation>
             The particular version of the dependency.
@@ -150,18 +147,23 @@
         </xs:annotation>
       </xs:attribute>
 
-      <xs:attribute name="Arch" type="Arch" use="required">
+      <xs:attribute name="Arch" type="Arch" >
         <xs:annotation>
           <xs:documentation>
             The architecture of the dependency.
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="PublicKeyToken" type="PublicKeyToken" use="required">
+      <xs:attribute name="PublicKeyToken" type="PublicKeyToken" >
         <xs:annotation>
           <xs:documentation>The public key token of the publisher that signed the dependency.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
+
+      <xs:attribute name="Location" type="xs:string"/>
+      <xs:attribute name="Feed" type="xs:string" />
+      <xs:attribute name="Type" type="PackageType"/>
+      <xs:attribute name="CommandLine" type="xs:string"/>
     </xs:complexType>
   </xs:element>
 
@@ -387,7 +389,8 @@
       <!-- restrict this to valid archs-->
       <xs:attribute name="Arch" type="Arch" use="required"/>
       <xs:attribute name="Platform" type="xs:string" use="required"/>
-  
+      <xs:attribute name="component_id" type="Id"/>
+      <xs:attribute name="component_guid" type ="Guid"/>
     </xs:complexType>
   </xs:element>
 
@@ -538,8 +541,8 @@
 
   <xs:element name="Urls">
     <xs:complexType>
-      <xs:sequence minOccurs="0" maxOccurs="unbounded">
-        <xs:element ref="Url"/>
+      <xs:sequence>
+        <xs:element ref="Url" minOccurs="1"  maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -645,6 +648,14 @@
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PackageType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="coapp"/>
+      <xs:enumeration value="nuget"/>
+      <xs:enumeration value="msi"/>
     </xs:restriction>
   </xs:simpleType>
  
