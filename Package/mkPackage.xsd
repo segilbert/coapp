@@ -83,7 +83,7 @@
     </xs:annotation>
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="Tag" minOccurs="1"  maxOccurs="unbounded"/>
+        <xs:element ref="Tag" minOccurs="0"  maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -94,7 +94,7 @@
     </xs:annotation>
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="Dependency" minOccurs="1" maxOccurs="unbounded"/>
+        <xs:element ref="Dependency" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -102,7 +102,7 @@
   <xs:element name="InstallProperties">
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="Property"  minOccurs="1" maxOccurs="unbounded"/>
+        <xs:element ref="Property"  minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -371,7 +371,6 @@
           <!-- restrict this to valid archs-->
           <xs:attribute name="Arch" type="Arch" use="required"/>
           <xs:attribute name="Platform" type="xs:string" use="required"/>
-          <xs:attribute name="CreateManifestAndCat" type="xs:boolean" use="optional"/>
         </xs:extension>            
       </xs:complexContent>
     </xs:complexType>
@@ -527,9 +526,9 @@
  
   <xs:element name="features">
     <xs:complexType>
-      <xs:choice maxOccurs="unbounded">
-        <xs:element ref="comp"/>
-      </xs:choice>
+      <xs:sequence>
+        <xs:element ref="comp" minOccurs="0"  maxOccurs="unbounded"/>
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
 
@@ -542,7 +541,7 @@
   <xs:element name="Urls">
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="Url" minOccurs="1"  maxOccurs="unbounded"/>
+        <xs:element ref="Url" minOccurs="0"  maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

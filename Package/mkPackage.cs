@@ -1058,14 +1058,6 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string Platform;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public bool CreateManifestAndCat;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool CreateManifestAndCatSpecified;
     }
     
     /// <remarks/>
@@ -1486,7 +1478,7 @@ using System.Collections.Generic;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("comp")]
-        public List<comp> Items = new List<comp>();
+        public List<comp> comp = new List<comp>();
     }
     
     /// <remarks/>
