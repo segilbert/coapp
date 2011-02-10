@@ -46,6 +46,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -54,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
     <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs" />
     <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs" />
     <Compile Include="Engine\Exceptions\ConfigurationException.cs" />
@@ -62,17 +64,30 @@
     <Compile Include="Engine\Exceptions\PackageMissingException.cs" />
     <Compile Include="Engine\Exceptions\InvalidPackageException.cs" />
     <Compile Include="Engine\Exceptions\PackageNotFoundException.cs" />
+    <Compile Include="Engine\Exceptions\PackageNotInstalledException.cs" />
     <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
     <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
     <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs" />
+    <Compile Include="Engine\Feeds\ArchivePackageFeed.cs" />
+    <Compile Include="Engine\Feeds\AtomPackageFeed.cs" />
+    <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />
+    <Compile Include="Engine\Feeds\PackageFeed.cs" />
     <Compile Include="Engine\NativeMethods.cs" />
     <Compile Include="Engine\Package.cs" />
     <Compile Include="Engine\PackageExtensions.cs" />
+    <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
+    <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
     <Compile Include="Engine\PackageManager.cs" />
     <Compile Include="Engine\PackageManagerSettings.cs" />
     <Compile Include="Engine\PackageInstallerMessage.cs" />
+    <Compile Include="Engine\Recognizer.cs" />
     <Compile Include="Engine\Registrar.cs" />
     <Compile Include="Engine\PackageAssemblyInfo.cs" />
+    <Compile Include="PackageFormatHandlers\CoAppMSI.cs" />
+    <Compile Include="PackageFormatHandlers\LegacyMSI.cs" />
+    <Compile Include="PackageFormatHandlers\MSIBase.cs" />
+    <Compile Include="PackageFormatHandlers\NuGet.cs" />
+    <Compile Include="PackageFormatHandlers\PackageFormatHandler.cs" />
     <Compile Include="Properties\Engine.AssemblyInfo.cs" />
     <Compile Include="Engine\Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -89,8 +104,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Engine\Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

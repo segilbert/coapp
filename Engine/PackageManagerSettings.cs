@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
-//     Copyright (c) 2010 Garrett Serack . All rights reserved.
+//     Copyright (c) 2011 Garrett Serack . All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -18,6 +18,7 @@ namespace CoApp.Toolkit.Engine {
         public static Settings systemSettings = new Settings("CoAppPackageManager", Registry.LocalMachine);
 
         public static SettingsStringIndexer StringSetting = new SettingsStringIndexer(userSettings);
+        public static SettingsStringArrayIndexer StringArraySetting = new SettingsStringArrayIndexer(userSettings);
         public static SettingsBooleanIndexer BoolSetting = new SettingsBooleanIndexer(userSettings);
         public static SettingsIntIndexer IntSetting = new SettingsIntIndexer(userSettings);
         public static SettingsLongIndexer LongSetting = new SettingsLongIndexer(userSettings);
@@ -26,6 +27,7 @@ namespace CoApp.Toolkit.Engine {
             new SettingsEncryptedStringIndexer(userSettings);
 
         public static SettingsStringIndexer SystemStringSetting = new SettingsStringIndexer(systemSettings);
+        public static SettingsStringArrayIndexer SystemStringArraySetting = new SettingsStringArrayIndexer(systemSettings);
         public static SettingsBooleanIndexer SystemBoolSetting = new SettingsBooleanIndexer(systemSettings);
         public static SettingsIntIndexer SystemIntSetting = new SettingsIntIndexer(systemSettings);
         public static SettingsLongIndexer SystemLongSetting = new SettingsLongIndexer(systemSettings);
@@ -89,17 +91,6 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        public static string CoAppPackageCache {
-            get {
-                var result = Path.Combine(CoAppRootDirectory, ".packageCache");
-                if (!Directory.Exists(result)) {
-                    Directory.CreateDirectory(result);
-                    var di = new DirectoryInfo(result);
-                    di.Attributes = FileAttributes.Hidden;
-                }
-                return result;
-            }
-        }
         public static string CoAppInstalledDirectory {
             get {
                 var result = Path.Combine(CoAppRootDirectory, ".installed");
@@ -112,5 +103,40 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        public static string CoAppCacheDirectory {
+            get {
+                var result = Path.Combine(CoAppRootDirectory, ".cache");
+                if (!Directory.Exists(result)) {
+                    Directory.CreateDirectory(result);
+                    var di = new DirectoryInfo(result);
+                    di.Attributes = FileAttributes.Hidden;
+                }
+                return result;
+            }
+        }
+
+        public static string CoAppPackageCache {
+            get {
+                var result = Path.Combine(CoAppCacheDirectory, "packages");
+                if (!Directory.Exists(result)) {
+                    Directory.CreateDirectory(result);
+                    var di = new DirectoryInfo(result);
+                    di.Attributes = FileAttributes.Hidden;
+                }
+                return result;
+            }
+        }
+
+        public static string CoAppFeedCache {
+            get {
+                var result = Path.Combine(CoAppCacheDirectory, "feeds");
+                if (!Directory.Exists(result)) {
+                    Directory.CreateDirectory(result);
+                    var di = new DirectoryInfo(result);
+                    di.Attributes = FileAttributes.Hidden;
+                }
+                return result;
+            }
+        }
     }
 }

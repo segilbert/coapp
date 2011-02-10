@@ -57,6 +57,9 @@ namespace CoApp.Toolkit.Configuration {
                     else if (value is long) {
                         regkey.SetValue(settingName, value, RegistryValueKind.QWord);
                     }
+                    else if (value is string[]) {
+                        regkey.SetValue(settingName, value, RegistryValueKind.MultiString);
+                    }
                     else {
                         regkey.SetValue(settingName, value);
                     }

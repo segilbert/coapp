@@ -88,7 +88,7 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
-        public static Dictionary<string, List<string>> ToTable<T>(this IEnumerable<T> rows, IEnumerable<string> propertyNames) {
+        public static Dictionary<string,List<string>> ToTable<T>(this IEnumerable<T> rows, IEnumerable<string> propertyNames) {
             var result = new Dictionary<string, List<string>>();
             
             foreach( var prop in propertyNames ) {
@@ -133,23 +133,7 @@ namespace CoApp.Toolkit.Extensions {
             for (var rownum = 0; rownum < data[data.Keys.First()].Count; rownum++) {
                 Console.WriteLine(fmt, data.Keys.Select(k => data[k][rownum]).ToArray());
             }
-            Console.WriteLine(breaker);
-
-            /*
-            Packages.Dump(Console.WindowWidth)
-            
-
-            string fmt = "|{0,35}|{1,20}|{2,5}|{3,20}|{4,8}|{5,20}|";
-            string line = "--------------------------------------------------------";
-            Console.WriteLine(fmt, "Filename", "Name", "Arch", "Version", "Key", "GUID");
-            Console.WriteLine(fmt, trimto(line, 35), trimto(line, 20), trimto(line, 5), trimto(line, 20), trimto(line, 8), trimto(line, 20));
-
-            foreach (var p in pkgs) {
-                Console.WriteLine(fmt, trimto(p.LocalPackagePath ?? "(unknown)", 35), trimto(p.Name, 20), p.Architecture,
-                    p.Version.UInt64VersiontoString(), trimto(p.PublicKeyToken, 8), trimto(p.ProductCode, 20));
-            }
-            Console.WriteLine(fmt, trimto(line, 35), trimto(line, 20), trimto(line, 5), trimto(line, 20), trimto(line, 8), trimto(line, 20));
-            Console.WriteLine("\r\n");*/
+            Console.WriteLine(breaker);        
         }
 
     }
