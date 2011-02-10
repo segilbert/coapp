@@ -19,23 +19,73 @@ Options:
                             one is available.
 
     --scan=<location>       Adds the location as a place to find additional
-                            packages.             
+                            packages.  May be a directory, package feed file 
+                            or package feed URL           
 
-    --recursive-scan=<loc>  Adds the location and folders all below as a place 
-                            to find additional packages.             
+    --no-scan[=<location>]  Doesn't scan the given location (or feed) for 
+                            additional packages.        
+							
+    --no-network            Doesn't scan locations over the network.
+	                        (same as --no-scan=*://* )
 
-    --no-scan[=<location>]  Doesn't scan the location for additional 
-                            packages.             
+    --flush-cache           Drops all cached information.
 
-    --flush-cache           Drops cached information.
+	--maximum=<num>         If the total number of packages to install is more
+                            than num the installer will notify the user and 
+                            exit. (Defaults to 10)
 
 Commands:
 ---------    
 
+	Package Commands
+	----------------
+
     install <pkg>           Installs the package files listed on 
                             the command line
+
+    install <feed>          Installs the package files listed in the feed
 
     remove <pkg>            Removes the package files listed on 
                             the command line
 
     list packages           Lists the packages that are installed.
+
+	upgrade <pkg>|all		Upgrades the given package (or all packages if 
+                            specified)
+
+	trim					Trims out dependent packages that are not used
+							by ant
+
+
+	Repository Commands
+	----------------
+
+	list feeds				List the known package repositories.
+
+	add <location>          Adds a given location to the known 
+                            repository list.
+
+	delete <location>	    Removes a given location from the known 
+                            repository list.
+
+
+random thinking:
+
+Installing from a feed:
+	coapp install c:\app-feed.atom 
+	coapp --maximium=50 install http://serack.org/favorite-feed.atom
+
+Installing a single package from a feed:
+	coapp --scan=http://serack.org/favorite-feed.atom install scite
+	
+
+Explicitly ask for a Coapp Package:
+	coapp install pkg:Appone-1.0.0.0-x86 
+	
+	(should be the same as:)
+	coapp install AppOne-1.0.0.0-x86
+
+coapp install nuget:packagename[-version]
+coapp install msi:foo.msi 
+coapp install openwrap:foo-x
+

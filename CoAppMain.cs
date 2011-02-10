@@ -1,12 +1,13 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
-//     Copyright (c) 2010 Garrett Serack. All rights reserved.
+//     Copyright (c) 2011 Garrett Serack. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
 namespace CoApp.CLI {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Resources;
     using System.Threading;
@@ -15,6 +16,10 @@ namespace CoApp.CLI {
     using Toolkit.Engine;
     using Toolkit.Engine.Exceptions;
     using Toolkit.Extensions;
+    using Toolkit.Network;
+    using Toolkit.OData;
+    using Toolkit.Win32;
+    using Package = Toolkit.Engine.Package;
 
     /// <summary>
     ///   Main Program for command line coapp tool
@@ -51,11 +56,12 @@ namespace CoApp.CLI {
         protected override int Main(IEnumerable<string> args) {
             try {
                 _pkgManager = new PackageManager(CancellationTokenSource.Token);
-
+                
+                bool waitforbreak = false;
                 #region commane line parsing
 
                 // default:
-                _pkgManager.AdditionalScanLocations = new[] {Environment.CurrentDirectory};
+                _pkgManager.SessionFeedLocations = new[] { Environment.CurrentDirectory };
 
                 var options = args.Switches();
                 var parameters = args.Parameters();
@@ -64,44 +70,47 @@ namespace CoApp.CLI {
                     var argumentParameters = options[arg];
 
                     switch (arg) {
-                            /* options  */
+                        /* options  */
                         case "pretend":
                             _pkgManager.Pretend = true;
                             break;
 
+                        case "wait-for-break":
+                            waitforbreak = true;
+                            break;
+
+                        case "maximum":
+                            _pkgManager.Maximum = argumentParameters.Last().ToInt32(10);
+                            break;
+
                         case "as-specified":
-                            _pkgManager.PackagesAsSpecified = string.IsNullOrEmpty(argumentParameters.FirstOrDefault()) ? new[] {"*"} : argumentParameters;
+                            _pkgManager.PackagesAsSpecified = string.IsNullOrEmpty(argumentParameters.FirstOrDefault()) ? new[] { "*" } : argumentParameters;
                             break;
 
                         case "upgrade":
-                            _pkgManager.PackagesAreUpgradable =string.IsNullOrEmpty(argumentParameters.FirstOrDefault())  ? new[] {"*"} : argumentParameters;
+                            _pkgManager.PackagesAreUpgradable = string.IsNullOrEmpty(argumentParameters.FirstOrDefault()) ? new[] { "*" } : argumentParameters;
                             break;
 
                         case "no-scan":
-                            _pkgManager.DoNotScanLocations = string.IsNullOrEmpty(argumentParameters.FirstOrDefault())  ? new[] {"*"} : argumentParameters;
+                            _pkgManager.DoNotScanLocations = string.IsNullOrEmpty(argumentParameters.FirstOrDefault()) ? new[] { "*" } : argumentParameters;
+                            break;
+
+                        case "no-network":
+                            _pkgManager.DoNotScanLocations = new[] {"*://*"};
                             break;
 
                         case "scan":
                             if (string.IsNullOrEmpty(argumentParameters.FirstOrDefault())) {
                                 throw new ConsoleException(Resources.OptionRequiresLocation.format("--scan"));
                             }
-
-                            _pkgManager.AdditionalScanLocations = argumentParameters;
-                            break;
-
-                        case "recursive-scan":
-                            if (argumentParameters.Count() == 0) {
-                                throw new ConsoleException(Resources.OptionRequiresLocation.format("--recursive-scan"));
-                            }
-
-                            _pkgManager.AdditionalRecursiveScanLocations = argumentParameters;
+                            _pkgManager.SessionFeedLocations = argumentParameters;
                             break;
 
                         case "flush-cache":
                             _pkgManager.FlushCache();
                             break;
 
-                            /* global switches */
+                        /* global switches */
                         case "load-config":
                             // all ready done, but don't get too picky.
                             break;
@@ -130,6 +139,29 @@ namespace CoApp.CLI {
                 parameters = parameters.Skip(1);
 
                 switch (command) {
+                    case "nothing":
+                        /*
+                        CachingHttpClient chc = new CachingHttpClient(Path.GetFullPath("."));
+
+                        bool done = false;
+                        chc.PreviewFile(new Uri(parameters.First()), result => {
+                            Console.WriteLine("1. Completed: Previewed[{0}] Downloaded[{1}] LocalPath[{2}]", result.PreviewState, result.DownloadState, result.LocalFullPath);
+                            done = true;
+                        });
+
+                       
+                        chc.DownloadFile(new Uri(parameters.First()), new TimeSpan(0,1,0), result => {
+                            Console.WriteLine("2. Completed: Previewed[{0}] Downloaded[{1}] LocalPath[{2}]",result.PreviewState, result.DownloadState,result.LocalFullPath );
+                            waitforbreak = false;
+                        }, progress => {
+                            if( progress <= 100 )
+                                Console.Write("..{0}% ",progress);
+                            else
+                                Console.Write("bytes: [{0}]", progress);
+                        } );
+                        */
+                        break;
+
                     case "install":
                         if (parameters.Count() < 1) {
                             throw new ConsoleException(Resources.InstallRequiresPackageName);
@@ -149,46 +181,101 @@ namespace CoApp.CLI {
                         if (parameters.Count() != 1) {
                             throw new ConsoleException(Resources.MissingParameterForList);
                         }
+                        switch( parameters.FirstOrDefault().ToLower() ) {
+                            case "packages" : 
+                            case "package" :
+                                ListPackages(parameters);
+                                break;
 
-                        List(parameters);
+
+                            case "feed":
+                            case "feeds":
+                            case "repositories":
+                            case "repository":
+                                ListFeeds(parameters);
+                                break;
+                        }
+                        break;
+
+                    case "upgrade":
+                        if (parameters.Count() != 1) {
+                            throw new ConsoleException(Resources.MissingParameterForUpgrade);
+                        }
+
+                        TaskAdd(() => Upgrade(parameters));
+                        break;
+
+                    case "add":
+                        if (parameters.Count() < 1) {
+                            throw new ConsoleException(Resources.AddFeedRequiresLocation);
+                        }
+                        TaskAdd(() => AddFeed(parameters));
+                        break;
+
+                    case "delete":
+                        if (parameters.Count() < 1) {
+                            throw new ConsoleException(Resources.DeleteFeedRequiresLocation);
+                        }
+                        TaskAdd(() => DeleteFeed(parameters));
+                        break;
+
+                    case "trim":
+                        if (parameters.Count() != 0) {
+                            throw new ConsoleException(Resources.TrimErrorMessage);
+                        }
+
+                        TaskAdd(() => Trim(parameters));
                         break;
 
                     default:
                         throw new ConsoleException(Resources.UnknownCommand, command);
                 }
+
+                while (waitforbreak && !CancellationTokenSource.IsCancellationRequested) {
+                    Thread.Sleep(100);
+                }
+
             }
             catch (ConsoleException failure) {
                 CancellationTokenSource.Cancel();
                 Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
             }
+            finally {
+                PackageService.Stop();
+            }
             return 0;
         }
 
-        private void List(IEnumerable<string> parameters) {
+        private void ListPackages(IEnumerable<string> parameters) {
             // dual purpose
-            if (parameters.FirstOrDefault().ToLower() == "packages") {
-                var pkgsInstalled = _pkgManager.GetInstalledPackages((packageInstallerMessage, package, percentage) => {
-                    // status
-                    switch (packageInstallerMessage) {
-                        case PackageInstallerMessage.Scanning:
-                            "Scanning: ".PrintProgressBar(percentage);
-                            break;
-                    }
-                });
-                " ".PrintProgressBar(-1);
-                Console.WriteLine("\r");
-                if (pkgsInstalled.Count() > 0) {
-                    Console.WriteLine("\rPackages currently installed:");
-                    pkgsInstalled.ToTable(new[] {"CosmeticName", "LocalPackagePath", "PublicKeyToken"}).Dump(new[]
-                    {"Name", "Installer", "Public Key Token"});
-                } else {
-                    Console.WriteLine("\rThere are no packages currently installed.");
+            var pkgsInstalled = _pkgManager.GetInstalledPackages((packageInstallerMessage, package, percentage) => {
+                // status
+                switch (packageInstallerMessage) {
+                    case PackageInstallerMessage.Scanning:
+                        "Scanning: ".PrintProgressBar(percentage);
+                        break;
                 }
+            });
+            " ".PrintProgressBar(-1);
+            Console.WriteLine("\r");
+            if (pkgsInstalled.Count() > 0) {
+                Console.WriteLine("\rPackages currently installed:");
+                pkgsInstalled.ToTable(new[] {"CosmeticName", "LocalPackagePath", "PublicKeyToken"}).Dump(new[]
+                {"Name", "Installer", "Public Key Token"});
+            }
+            else {
+                Console.WriteLine("\rThere are no packages currently installed.");
             }
         }
 
+
         private void Remove(IEnumerable<string> parameters) {
             try {
+                if (!AdminPrivilege.IsRunAsAdmin) {
+                    throw new ConsoleException(
+                        "Admin privilege is required to remove packages. \r\nPlease run as an elevated administrator.");
+                }
+
                 int maxPercent = 0;
                 _pkgManager.RemovePackages(parameters, (packageInstallerMessage, package, percentage) => {
                     // status
@@ -206,12 +293,16 @@ namespace CoApp.CLI {
                             break;
                     }
                 });
-            } catch( PackageRemoveFailedException puif ) {
-                Console.WriteLine("Remove of package {0} failed:", puif.FailedPackage.CosmeticName );
+            }
+            catch (PackageRemoveFailedException puif) {
+                Console.WriteLine("Remove of package {0} failed:", puif.FailedPackage.CosmeticName);
                 Console.WriteLine("    File: {0} :", puif.FailedPackage.LocalPackagePath);
             }
             catch (PackageNotFoundException pnf) {
                 Console.WriteLine(Resources.PackageNotFound, pnf.PackagePath);
+            }
+            catch (PackageNotInstalledException pni) {
+                Console.WriteLine(Resources.PackageNotFound, pni.NotInstalledPackage);
             }
             catch (PackageIsNotInstalledException pini) {
                 Console.WriteLine("The package {0} is not currently installed", pini.Package.CosmeticName);
@@ -226,6 +317,11 @@ namespace CoApp.CLI {
 
         private void Install(IEnumerable<string> parameters) {
             try {
+                if (!AdminPrivilege.IsRunAsAdmin) {
+                    throw new ConsoleException(
+                        "Admin privilege is required to install packages. \r\nPlease run as an elevated administrator.");
+                }
+
                 int maxPercent = 0;
                 _pkgManager.InstallPackages(parameters, (packageInstallerMessage, package, percentage) => {
                     // status
@@ -253,7 +349,7 @@ namespace CoApp.CLI {
                 Console.WriteLine(Resources.InvalidPackage, ip.PackagePath);
             }
             catch (PackageInstallFailedException pif) {
-                Console.WriteLine(Resources.PackageFailedInstall,pif.FailedPackage);
+                Console.WriteLine(Resources.PackageFailedInstall, pif.FailedPackage);
             }
             catch (PackageNotSatisfiedException pns) {
                 Console.WriteLine(Resources.PackageDependenciesCantInstall,
@@ -265,7 +361,7 @@ namespace CoApp.CLI {
                     depth++;
                     if (!p.CanSatisfy) {
                         var count = p.Dependencies.Count();
-                        Console.WriteLine(@"{0}{1} [{2}]", "".PadLeft(3*depth), p.CosmeticName,
+                        Console.WriteLine(@"{0}{1} [{2}]", "".PadLeft(3 * depth), p.CosmeticName,
                             count > 0
                             ? Resources.MissingPkgText.format(count, count > 1 ? "dependencies" : "dependency")
                                 : p.CouldNotDownload
@@ -296,12 +392,82 @@ namespace CoApp.CLI {
                     phphu.UnsatisfiedPackage.CosmeticName);
             }
             catch (MultiplePackagesMatchException mpm) {
-                Console.WriteLine(Resources.PackageHasMultipleMatches, mpm.PackageMask );
+                Console.WriteLine(Resources.PackageHasMultipleMatches, mpm.PackageMask);
                 foreach (var pkg in mpm.PackageMatches) {
                     Console.WriteLine(@"   {0}", pkg.CosmeticName);
                 }
             }
-            
+
         }
+
+        private void Upgrade(IEnumerable<string> parameters) {
+            try {
+            }
+            catch {
+
+            }
+        }
+
+        private void Trim(IEnumerable<string> parameters) {
+            try {
+            }
+            catch {
+
+            }
+        }
+
+        private void ListFeeds(IEnumerable<string> parameters) {
+            try {
+                var feeds = _pkgManager.SystemFeedLocations;
+                if (feeds.Count() > 0) {
+                    Console.WriteLine("Current System Package Repositories");
+                    Console.WriteLine("-----------------------------------");
+
+                    foreach (var feed in feeds) {
+                        Console.Write("   {0}", feed);
+                    }
+                }
+                else {
+                    Console.WriteLine("There are no package repositories currently configured.");
+                }
+            }
+            catch (Exception) {
+                throw new ConsoleException(
+                       "LOL WHAT?.");
+            }
+        }
+
+        private void AddFeed(IEnumerable<string> parameters) {
+            try {
+                if (!AdminPrivilege.IsRunAsAdmin) {
+                    throw new ConsoleException(
+                        "Admin privilege is required to modify the system feeds. \r\nPlease run as an elevated administrator.");
+                }
+                _pkgManager.AddSystemFeeds(parameters);
+                ListFeeds(parameters);
+            }
+            catch(Exception) {
+                throw new ConsoleException(
+                       "LOL WHAT?.");
+            }
+        }
+
+        private void DeleteFeed(IEnumerable<string> parameters) {
+            try {
+                if (!AdminPrivilege.IsRunAsAdmin) {
+                    throw new ConsoleException(
+                        "Admin privilege is required to modify the system feeds. \r\nPlease run as an elevated administrator.");
+                }
+                _pkgManager.DeleteSystemFeeds(parameters);
+                ListFeeds(parameters);
+            }
+            catch (Exception) {
+                throw new ConsoleException(
+                       "LOL WHAT?.");
+            }
+        }
+
+
     }
+
 }

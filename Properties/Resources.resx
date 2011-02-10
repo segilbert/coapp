@@ -136,8 +136,20 @@
   <data name="MissingParameterForList" xml:space="preserve">
     <value>Command 'list' requires a parameter: either 'packages' or 'repo'.</value>
   </data>
+  <data name="MissingParameterForUpgrade" xml:space="preserve">
+    <value>Command 'upgrade' requires a parameter: either a package name or 'ALL'.</value>
+  </data>
   <data name="RemoveRequiresPackageName" xml:space="preserve">
     <value>Command 'remove' requires at least one package.</value>
+  </data>
+  <data name="TrimErrorMessage" xml:space="preserve">
+    <value>Command 'trim' may not specify any parameters.</value>
+  </data>
+  <data name="AddFeedRequiresLocation" xml:space="preserve">
+    <value>Command 'add' requires a feed location to add.</value>
+  </data>
+  <data name="DeleteFeedRequiresLocation" xml:space="preserve">
+    <value>Command 'delete' requires a feed to remove.</value>
   </data>
   <data name="InstallRequiresPackageName" xml:space="preserve">
     <value>Command 'install' requires at least one package.</value>
