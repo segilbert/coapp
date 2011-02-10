@@ -160,5 +160,20 @@ namespace CoApp.Toolkit.Extensions {
         public static XmlNodeList DocumentNodes(this XmlDocument doc) {
             return doc.ChildNodes[1].ChildNodes;
         }
+
+        public static bool IsXmlFile(this string filename) {
+            if( File.Exists(filename)) {
+                using( var s = File.OpenText(filename)) {
+                    try {
+                        var xr = XmlReader.Create(s);
+                        xr.Read();
+                        xr.Read();
+                        return true;
+                    } catch {
+                    }
+                }
+            }
+            return false;
+        }
     }
 }

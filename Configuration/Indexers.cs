@@ -8,6 +8,9 @@ using System;
 using CoApp.Toolkit.Extensions;
 
 namespace CoApp.Toolkit.Configuration {
+    using System.Collections.Generic;
+    using System.Linq;
+
     public class SettingsIndexer {
         protected Settings quickSettings;
     }
@@ -19,6 +22,30 @@ namespace CoApp.Toolkit.Configuration {
         public string this[string settingName] {
             get { return quickSettings[settingName] as string ?? string.Empty; }
             set { quickSettings[settingName] = (value ?? string.Empty); }
+        }
+    }
+
+    public class SettingsStringArrayIndexer : SettingsIndexer {
+        public SettingsStringArrayIndexer(Settings settings) {
+            quickSettings = settings;
+        }
+        public IEnumerable<string> this[string settingName] {
+            get {
+                object data = quickSettings[settingName];
+                if( data == null ) {
+                    return Enumerable.Empty<string>();
+                }
+                if( data is string ) {
+                    return new[] {data as string};
+                }
+                if( data is string[] ) {
+                    return data as string[];
+                }
+                return Enumerable.Empty<string>();;
+            }
+            set {
+                quickSettings[settingName] = value.ToArray();
+            }
         }
     }
 
@@ -36,7 +63,6 @@ namespace CoApp.Toolkit.Configuration {
             }
         }
     }
-
 
     public class SettingsBooleanIndexer : SettingsIndexer {
         public SettingsBooleanIndexer(Settings settings) {

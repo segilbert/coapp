@@ -18,12 +18,14 @@ namespace CoApp.Toolkit.Configuration {
 
 
         public static SettingsStringIndexer StringSetting = new SettingsStringIndexer(userSettings);
+        public static SettingsStringArrayIndexer StringArraySetting = new SettingsStringArrayIndexer(userSettings);
         public static SettingsBooleanIndexer BoolSetting = new SettingsBooleanIndexer(userSettings);
         public static SettingsIntIndexer IntSetting = new SettingsIntIndexer(userSettings);
         public static SettingsLongIndexer LongSetting = new SettingsLongIndexer(userSettings);
         public static SettingsEncryptedStringIndexer EncryptedStringSetting = new SettingsEncryptedStringIndexer(userSettings);
 
         public static SettingsStringIndexer SystemStringSetting = new SettingsStringIndexer(systemSettings);
+        public static SettingsStringArrayIndexer SystemStringArraySetting = new SettingsStringArrayIndexer(systemSettings);
         public static SettingsBooleanIndexer SystemBoolSetting = new SettingsBooleanIndexer(systemSettings);
         public static SettingsIntIndexer SystemIntSetting = new SettingsIntIndexer(systemSettings);
         public static SettingsLongIndexer SystemLongSetting = new SettingsLongIndexer(systemSettings);

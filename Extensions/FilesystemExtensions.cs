@@ -214,5 +214,15 @@ namespace CoApp.Toolkit.Extensions {
         {
             return fi.Name.Remove(fi.Name.Length - fi.Extension.Length);
         }
+
+        public static bool DirectoryExistsAndIsAccessible(this string path) {
+            try {
+                return Directory.Exists(path);
+            }
+            catch  {
+                
+            }
+            return false;
+        }
     }
 }

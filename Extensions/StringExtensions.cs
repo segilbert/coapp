@@ -15,6 +15,7 @@
 
 namespace CoApp.Toolkit.Extensions {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Security.Cryptography;
     using System.Text;
@@ -97,7 +98,12 @@ namespace CoApp.Toolkit.Extensions {
             return guid;
         }
 
+        private static Dictionary<string, Regex> wildcards = new Dictionary<string, Regex>();
+
         public static bool IsWildcardMatch(this string text, string wildcardMask) {
+            if (wildcards.ContainsKey(wildcardMask))
+                return wildcards[wildcardMask].IsMatch(text);
+            
             var mask = new Regex(
                 '^' +
                 wildcardMask
@@ -107,6 +113,9 @@ namespace CoApp.Toolkit.Extensions {
                     .Replace("?", ".")
                 + '$',
                 RegexOptions.IgnoreCase);
+            
+            wildcards.Add(wildcardMask,mask);
+
             return mask.IsMatch(text);
         }
 

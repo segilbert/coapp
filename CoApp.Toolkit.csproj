@@ -59,13 +59,16 @@
     <Compile Include="Extensions\DebugExtensions.cs" />
     <Compile Include="Extensions\FilesystemExtensions.cs" />
     <Compile Include="Extensions\LinqExtensions.cs" />
+    <Compile Include="Extensions\SortedObservableCollection.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Extensions\WebExtensions.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
+    <Compile Include="Network\CachingNetworkClient.cs" />
     <Compile Include="Network\Ftp.cs" />
-	<Compile Include="Package\mkPackage.cs">
+    <Compile Include="Network\CachingHttpClient.cs" />
+    <Compile Include="Package\mkPackage.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>mkPackage.xsd</DependentUpon>
@@ -120,6 +123,7 @@
       <DependentUpon>Tracing.xsd</DependentUpon>
     </Compile>
     <Compile Include="Trace\Variable.cs" />
+    <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\ClipboardNotifier.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -155,8 +159,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
