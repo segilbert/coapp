@@ -118,13 +118,55 @@ using System.Collections.Generic;
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(FileType))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    public partial class FileSysItem {
+    public partial class AppFiles {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("ExeFile")]
+        public List<ExeFile> ExeFile = new List<ExeFile>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
+        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
+        public List<FileSysItem> Items = new List<FileSysItem>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class ExeFile : FileType {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Compiler;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public Arch Arch;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    public enum Arch {
+        
+        /// <remarks/>
+        x86,
+        
+        /// <remarks/>
+        x64,
+        
+        /// <remarks/>
+        any,
     }
     
     /// <remarks/>
@@ -154,6 +196,285 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string component_id;
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(FileType))]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    public partial class FileSysItem {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class File : FileType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Folder : FileSysItem {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
+        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
+        public List<FileSysItem> Items = new List<FileSysItem>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Name;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string folder_id;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    public partial class DriverFiles {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Driver")]
+        public List<Driver> Driver = new List<Driver>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
+        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
+        public List<FileSysItem> Items = new List<FileSysItem>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Driver : FileType {
+        
+        /// <remarks/>
+        public File File;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    public partial class Includes {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("StaticLibs")]
+        public List<StaticLibs> StaticLibs = new List<StaticLibs>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("ImportLibs")]
+        public List<ImportLibs> ImportLibs = new List<ImportLibs>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Headers")]
+        public List<Headers> Headers = new List<Headers>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
+        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
+        public List<FileSysItem> Items = new List<FileSysItem>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class StaticLibs {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("LibFile")]
+        public List<LibFile> LibFile = new List<LibFile>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class LibFile : FileType {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Compiler;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public Arch Arch;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class ImportLibs {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("LibFile")]
+        public List<LibFile> LibFile = new List<LibFile>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Headers {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
+        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
+        public List<FileSysItem> Items = new List<FileSysItem>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string dir_id;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    public partial class SharedLibFiles {
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("Assembly")]
+        public List<Assembly> Assembly = new List<Assembly>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("PolicyAssembly")]
+        public List<PolicyAssembly> PolicyAssembly = new List<PolicyAssembly>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
+        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
+        public List<FileSysItem> Items = new List<FileSysItem>();
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Assembly : FileType {
+        
+        /// <remarks/>
+        public Manifest Manifest;
+        
+        /// <remarks/>
+        public CatFile CatFile;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("File")]
+        public List<File> Items = new List<File>();
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string type;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public Arch Arch;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Platform;
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class Manifest : FileType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class CatFile : FileType {
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
+    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
+    public partial class PolicyAssembly {
+        
+        /// <remarks/>
+        public Manifest Manifest;
+        
+        /// <remarks/>
+        public CatFile CatFile;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string type;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public Arch Arch;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Platform;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string Src;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string component_id;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string component_guid;
     }
     
     /// <remarks/>
@@ -865,22 +1186,6 @@ using System.Collections.Generic;
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
     [System.SerializableAttribute()]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    public enum Arch {
-        
-        /// <remarks/>
-        x86,
-        
-        /// <remarks/>
-        x64,
-        
-        /// <remarks/>
-        any,
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd")]
     public enum PackageType {
         
         /// <remarks/>
@@ -1003,150 +1308,7 @@ using System.Collections.Generic;
     public partial class SharedLib : Role {
         
         /// <remarks/>
-        public Files Files;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Files {
-        
-        /// <remarks/>
-        public Assembly Assembly;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("PolicyAssembly")]
-        public List<PolicyAssembly> PolicyAssembly = new List<PolicyAssembly>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Assembly : FileType {
-        
-        /// <remarks/>
-        public Manifest Manifest;
-        
-        /// <remarks/>
-        public CatFile CatFile;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File")]
-        public List<File> Items = new List<File>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string type;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public Arch Arch;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string Platform;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Manifest : FileType {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class CatFile : FileType {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class File : FileType {
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class PolicyAssembly {
-        
-        /// <remarks/>
-        public Manifest Manifest;
-        
-        /// <remarks/>
-        public CatFile CatFile;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string type;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public Arch Arch;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string Platform;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string component_id;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string component_guid;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Folder : FileSysItem {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string Name;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string folder_id;
+        public SharedLibFiles Files;
     }
     
     /// <remarks/>
@@ -1159,44 +1321,7 @@ using System.Collections.Generic;
     public partial class AppRole : Role {
         
         /// <remarks/>
-        public AppFiles AppFiles;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class AppFiles {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("ExeFile")]
-        public List<ExeFile> ExeFile = new List<ExeFile>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class ExeFile : FileType {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string Compiler;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public Arch Arch;
+        public AppFiles Files;
     }
     
     /// <remarks/>
@@ -1209,99 +1334,7 @@ using System.Collections.Generic;
     public partial class DeveloperLib : Role {
         
         /// <remarks/>
-        public Includes Includes;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Includes {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("StaticLibs")]
-        public List<StaticLibs> StaticLibs = new List<StaticLibs>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("ImportLibs")]
-        public List<ImportLibs> ImportLibs = new List<ImportLibs>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Headers")]
-        public List<Headers> Headers = new List<Headers>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class StaticLibs {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("LibFile")]
-        public List<LibFile> LibFile = new List<LibFile>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class LibFile : FileType {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string Compiler;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public Arch Arch;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class ImportLibs {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("LibFile")]
-        public List<LibFile> LibFile = new List<LibFile>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Headers {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string dir_id;
+        public Includes Files;
     }
     
     /// <remarks/>
@@ -1314,39 +1347,7 @@ using System.Collections.Generic;
     public partial class DriverRole : Role {
         
         /// <remarks/>
-        public DriverFiles DriverFiles;
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class DriverFiles {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("Driver")]
-        public List<Driver> Driver = new List<Driver>();
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class Driver : FileType {
-        
-        /// <remarks/>
-        public File File;
+        public DriverFiles Files;
     }
     
     /// <remarks/>
@@ -1459,21 +1460,6 @@ using System.Collections.Generic;
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
     [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
-    public partial class CodeFiles {
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("File", typeof(File))]
-        [System.Xml.Serialization.XmlElementAttribute("Folder", typeof(Folder))]
-        public List<FileSysItem> Items = new List<FileSysItem>();
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://coapp.org/ns/mkPackage.xsd")]
-    [System.Xml.Serialization.XmlRootAttribute(Namespace="http://coapp.org/ns/mkPackage.xsd", IsNullable=false)]
     public partial class features {
         
         /// <remarks/>
@@ -1507,6 +1493,6 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("File", typeof(File), IsNullable=false)]
         [System.Xml.Serialization.XmlArrayItemAttribute("Folder", typeof(Folder), IsNullable=false)]
-        public List<FileSysItem> CodeFiles = new List<FileSysItem>();
+        public List<FileSysItem> Files = new List<FileSysItem>();
     }
 }

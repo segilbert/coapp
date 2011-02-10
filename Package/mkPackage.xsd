@@ -379,8 +379,8 @@
   <xs:element name="PolicyAssembly">
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="Manifest" minOccurs="1" maxOccurs="1"/>
-        <xs:element ref="CatFile" minOccurs="1" maxOccurs="1"/>
+        <xs:element ref="Manifest" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="CatFile" minOccurs="0" maxOccurs="1"/>
         
       </xs:sequence>
       <!-- restrict this to valid types-->
@@ -388,6 +388,7 @@
       <!-- restrict this to valid archs-->
       <xs:attribute name="Arch" type="Arch" use="required"/>
       <xs:attribute name="Platform" type="xs:string" use="required"/>
+      <xs:attribute name="Src" type="xs:string"/>
       <xs:attribute name="component_id" type="Id"/>
       <xs:attribute name="component_guid" type ="Guid"/>
     </xs:complexType>
@@ -422,22 +423,20 @@
     </xs:complexType>
   </xs:element>
   
-  <xs:element name="Files">
-    <xs:complexType >
-      <xs:sequence>
-        <xs:element ref="Assembly" minOccurs="1" maxOccurs="1"/>
-        <xs:element ref="PolicyAssembly" minOccurs="0" maxOccurs="unbounded" />
-        <xs:choice minOccurs="0" maxOccurs="unbounded">
-          <xs:element ref="File"/>
-          <xs:element ref="Folder"/>
-        </xs:choice>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
 
+
+  <xs:complexType name="SharedLibFiles">
+    <xs:sequence>
+      <xs:element ref="Assembly" minOccurs="1" maxOccurs="unbounded"/>
+      <xs:element ref="PolicyAssembly" minOccurs="0" maxOccurs="unbounded" />
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="File"/>
+        <xs:element ref="Folder"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
  
-  <xs:element name="Includes">
-    <xs:complexType>
+    <xs:complexType name="Includes">
       <xs:sequence>
         <xs:element ref="StaticLibs" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="ImportLibs" minOccurs="0" maxOccurs="unbounded"/>
@@ -450,7 +449,6 @@
       </xs:sequence>
       
     </xs:complexType>
-  </xs:element>
 
   <xs:element name="Registry">
     <xs:complexType>
@@ -491,17 +489,17 @@
     </xs:complexType>
   </xs:element>
 
-  <xs:element name="CodeFiles">
-    <xs:complexType>
+
+    <xs:complexType name="CodeFiles">
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="File"/>
         <xs:element ref="Folder"/>
       </xs:choice>
     </xs:complexType>
-  </xs:element>
 
-  <xs:element name="DriverFiles">
-    <xs:complexType>
+
+  
+    <xs:complexType name="DriverFiles">
       <xs:sequence>
         <xs:element ref="Driver" minOccurs="1" maxOccurs="unbounded"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
@@ -510,10 +508,10 @@
         </xs:choice>
       </xs:sequence>
     </xs:complexType>
-  </xs:element>
+  
 
-  <xs:element name="AppFiles">
-    <xs:complexType>
+  
+    <xs:complexType name="AppFiles">
       <xs:sequence>
         <xs:element ref="ExeFile" minOccurs="1" maxOccurs="unbounded"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
@@ -522,7 +520,7 @@
         </xs:choice>
       </xs:sequence>
     </xs:complexType>
-  </xs:element>
+  
  
   <xs:element name="features">
     <xs:complexType>
@@ -561,7 +559,7 @@
       <xs:complexContent>
         <xs:extension base="Role">
           <xs:sequence>
-            <xs:element ref="Files"/>
+            <xs:element name="Files" type="SharedLibFiles"/>
           </xs:sequence>
         </xs:extension>
       </xs:complexContent>
@@ -573,7 +571,7 @@
       <xs:complexContent>
         <xs:extension base="Role">
           <xs:sequence>
-            <xs:element ref="Includes"/>
+            <xs:element name="Files" type="Includes"/>
           </xs:sequence>
         </xs:extension>
       </xs:complexContent>
@@ -586,7 +584,7 @@
       <xs:complexContent>
         <xs:extension base="Role">
           <xs:sequence>
-            <xs:element ref="CodeFiles"/>
+            <xs:element name="Files" type="CodeFiles"/>
           </xs:sequence>
         </xs:extension>
       </xs:complexContent>
@@ -598,7 +596,7 @@
       <xs:complexContent>
         <xs:extension base="Role">
           <xs:sequence>
-            <xs:element ref="DriverFiles"/>
+            <xs:element name="Files" type="DriverFiles"/>
           </xs:sequence>
         </xs:extension>
       </xs:complexContent>
@@ -610,7 +608,7 @@
       <xs:complexContent>
         <xs:extension base="Role">
           <xs:sequence>
-            <xs:element ref="AppFiles"/>
+            <xs:element name="Files" type="AppFiles"/>
           </xs:sequence>
         </xs:extension>
       </xs:complexContent>
