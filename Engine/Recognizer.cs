@@ -8,86 +8,22 @@ namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Net;
     using Extensions;
     using Feeds.Atom;
     using Network;
     using PackageFormatHandlers;
-
-    [Flags]
-    internal enum ItemType {
-        Unknown = 0x00000000,
-
-        // Resource type 
-        File = 0x00000001,
-        Folder = 0x00000002,
-        URL = 0x00000004,
-        Reference = 0x00000008,
-
-        // Packages
-        PackageFile = 0x10000000,
-        MSI = 0x00000010 & PackageFile,
-
-        CoAppMSI = 0x00000020 & MSI,
-        LegacyMSI = 0x00000040 & MSI,
-
-        LegacyEXE = 0x00000080 & PackageFile,
-        NuGetPackage = 0x00000100 & PackageFile,
-        OpenWrapPackage = 0x00000200 & PackageFile,
-
-        // Package collections
-        // .ZIP, .CAB, etc... (file)
-        Feed = 0x20000000,
-        Archive = 0x00010000 & Feed,
-        // can be a file or a URL
-        AtomFeed = 0x00020000 & Feed, 
-
-        // Directory           = 0x00040000,       // folder on disk
-
-        CoAppODataService = 0x00100000 & Feed, // must be URL
-        NuGetODataService = 0x00200000 & Feed, // must be URL
-    }
+    using Tasks;
 
     internal class Recognizer {
-        internal class RecognitionInfo {
-            // internal ItemType itemType = ItemType.Unknown;
-            internal string fullPath;
-            internal Uri fullUrl;
-            internal bool IsWildcard;
-            internal bool IsUnknown {
-                get { return !(IsPackageFeed | IsPackageFile); }
-            }
+        private static readonly TransferManager _transferManager =
+            TransferManager.GetTransferManager(PackageManagerSettings.CoAppCacheDirectory);
 
-            internal bool IsInvalid {get; set; }
+        private static readonly Dictionary<string, RecognitionInfo> _cache = new Dictionary<string, RecognitionInfo>();
 
-            internal bool IsPackageFile { get; set; }
-            internal bool IsPackageFeed { get; set; }
-
-            internal bool IsURL { get; set; }
-            internal bool IsFile { get; set; }
-            internal bool IsFolder { get; set; }
-            internal bool IsReference { get; set; }
-
-            internal bool IsMSI { get { return IsCoAppMSI | IsLegacyMSI; } }
-            internal bool IsCoAppMSI { get; set; }
-            internal bool IsLegacyMSI { get; set; }
-            internal bool IsLegacyEXE { get; set; }
-
-            internal bool IsNugetPackage { get; set; }
-            internal bool IsOpenwrapPackage { get; set; }
-            
-            internal bool IsArchive { get; set; }
-            internal bool IsAtom { get; set; }
-
-            internal bool IsCoAppODataService { get; set; }
-            internal bool IsNugetODataService { get; set; }
-
-        }
-
-        private static Dictionary<string, RecognitionInfo> cache = new Dictionary<string, RecognitionInfo>();
-
-        internal static RecognitionInfo Recognize(string item, string baseDirectory = null, string baseUrl = null) {
-            if (cache.ContainsKey(item)) {
-                return cache[item];
+        internal static RecognitionInfo Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal=false ) {
+            if (_cache.ContainsKey(item)) {
+                return _cache[item];
             }
 
             var result = new RecognitionInfo();
@@ -113,7 +49,7 @@ namespace CoApp.Toolkit.Engine {
             if (item.StartsWith("openwrap:", StringComparison.CurrentCultureIgnoreCase)) {
                 // this is a msi package reference
                 result.IsReference = true;
-                result.IsOpenwrapPackage= true;
+                result.IsOpenwrapPackage = true;
             }
 
             // Is this an URL of some kind?
@@ -122,26 +58,53 @@ namespace CoApp.Toolkit.Engine {
                     if (item.IndexOf("://") > -1) {
                         // some sort of URL
                         result.IsURL = true;
-                        result.fullUrl = new Uri(item);
+                        result.FullUrl = new Uri(item);
                     }
                     else if (!string.IsNullOrEmpty(baseUrl)) {
                         // it's a relative URL?
                         result.IsURL = true;
-                        result.fullUrl = new Uri(new Uri(baseUrl), item);
+                        result.FullUrl = new Uri(new Uri(baseUrl), item);
                     }
+
                     // for now, we've got a full URL and it looks like it point somewhere.
                     // until we attempt to retrieve the URL we really can't bank on knowing what it is.
-                    Registrar.HttpClient.PreviewFile(result.fullUrl, (cachedFileInfo) => {
-                        if (cachedFileInfo.PreviewState == CachingNetworkClient.ActionState.Failed)
+                    result.RemoteFile.Preview().ContinueWithParent(antecedent => {
+                        if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
                             result.IsInvalid = true;
-                        else {
-                            if( cachedFileInfo.HasLocalFile ) {
-                                var localInfo = Recognize(cachedFileInfo.LocalFullPath);
-                                // TODO: GS01
+                            result.Recognized.Value = true;
+                            return;
+                        }
 
+                        if( result.RemoteFile.IsRedirect ) {
+                            result.RemoteFile.Folder = _transferManager[result.RemoteFile.ActualRemoteLocation].Folder;
+                        }
+
+                        result.FullPath = result.RemoteFile.LocalFullPath;
+
+                        if (ensureLocal) {
+                            if( !result.IsLocal) {
+                                result.RemoteFile.Get().Wait(); // block on this, since we're already async
+                            }
+
+                            if( !result.IsLocal ) {
+                                result.IsInvalid = true;
+                                result.Recognized.Value = true;
+                                return;  
                             }
                         }
+
+                        if (result.IsLocal) {
+                            var localFileInfo = Recognize(result.FullPath);
+                            // at this point, we should actually know the real file results.
+                            result.CopyDetailsFrom(localFileInfo);
+                            result.Recognized.Value = true;
+                            return;
+                        }
+                        
+                        // not local. all we can do is guess?
+                        // TODO: Implement remote guess?
                     });
+
                 }
                 catch {
                 }
@@ -153,17 +116,17 @@ namespace CoApp.Toolkit.Engine {
                     if (Directory.Exists(item)) {
                         // a valid directory
                         result.IsFolder = true;
-                        result.fullPath = Path.GetFullPath(item).ToLower();
+                        result.FullPath = Path.GetFullPath(item).ToLower();
                     }
                     else if (!string.IsNullOrEmpty(baseDirectory)) {
                         var path = Path.Combine(baseDirectory, item).ToLower();
                         if (Directory.Exists(path)) {
                             result.IsFolder = true;
-                            result.fullPath = path;
+                            result.FullPath = path;
                         }
                     }
 
-                    if( result.IsFolder ) {
+                    if (result.IsFolder) {
                         result.IsPackageFeed = true;
                     }
                 }
@@ -177,13 +140,13 @@ namespace CoApp.Toolkit.Engine {
                     if (File.Exists(item)) {
                         // some type of file
                         result.IsFile = true;
-                        result.fullPath = Path.GetFullPath(item).ToLower();
+                        result.FullPath = Path.GetFullPath(item).ToLower();
                     }
                     else if (!string.IsNullOrEmpty(baseDirectory)) {
                         var path = Path.Combine(baseDirectory, item);
                         if (File.Exists(path)) {
                             result.IsFile = true;
-                            result.fullPath = Path.GetFullPath(path).ToLower();
+                            result.FullPath = Path.GetFullPath(path).ToLower();
                         }
 
                         if (item.IndexOf('?') > -1 || item.IndexOf('*') > -1) {
@@ -196,11 +159,11 @@ namespace CoApp.Toolkit.Engine {
                         // so, this is a file. 
                         // let's do a little bit of diggin'
 
-                        var ext = Path.GetExtension(result.fullPath);
+                        var ext = Path.GetExtension(result.FullPath);
 
                         switch (ext) {
                             case ".msi":
-                                result.IsCoAppMSI = CoAppMSI.IsCoAppPackageFile(result.fullPath);
+                                result.IsCoAppMSI = CoAppMSI.IsCoAppPackageFile(result.FullPath);
                                 result.IsLegacyMSI = !result.IsCoAppMSI;
                                 result.IsPackageFile = true;
                                 break;
@@ -224,9 +187,9 @@ namespace CoApp.Toolkit.Engine {
                                 break;
 
                             default:
-                                if (result.fullPath.IsXmlFile()) {
+                                if (result.FullPath.IsXmlFile()) {
                                     try {
-                                        var feed = AtomFeed.Load(result.fullPath);
+                                        var feed = AtomFeed.Load(result.FullPath);
                                         if (feed != null) {
                                             result.IsPackageFeed = true;
                                             result.IsAtom = true;
@@ -242,9 +205,95 @@ namespace CoApp.Toolkit.Engine {
                 catch {
                 }
             }
+            if (!result.IsUnknown)
+                result.Recognized.Value = true;
 
-            cache.Add(item, result);
+            _cache.Add(item, result);
             return result;
         }
+
+        #region Nested type: RecognitionInfo
+
+        internal class RecognitionInfo {
+            internal bool IsWildcard { get; set; }
+            internal string FullPath { get; set; }
+            private Uri _fullUrl;
+            internal Uri FullUrl {
+                get { return _fullUrl; }
+                set {
+                    if( value != null ) {
+                        RemoteFile = _transferManager[value];
+                    }
+                    _fullUrl = value;
+                }
+            }
+
+            internal RemoteFile RemoteFile { get; set; }
+
+            internal bool IsUnknown {
+                get { return !(IsPackageFeed | IsPackageFile); }
+            }
+
+            internal bool IsInvalid { get; set; }
+
+            internal bool IsPackageFile { get; set; }
+            internal bool IsPackageFeed { get; set; }
+
+            internal bool IsURL { get; set; }
+            internal bool IsFile { get; set; }
+            internal bool IsFolder { get; set; }
+            internal bool IsReference { get; set; }
+
+            internal bool IsMSI {
+                get { return IsCoAppMSI | IsLegacyMSI; }
+            }
+
+            internal bool IsCoAppMSI { get; set; }
+            internal bool IsLegacyMSI { get; set; }
+            internal bool IsLegacyEXE { get; set; }
+
+            internal bool IsNugetPackage { get; set; }
+            internal bool IsOpenwrapPackage { get; set; }
+
+            internal bool IsArchive { get; set; }
+            internal bool IsAtom { get; set; }
+
+            internal bool IsCoAppODataService { get; set; }
+            internal bool IsNugetODataService { get; set; }
+
+            internal void CopyDetailsFrom(RecognitionInfo fileInfo) {
+                FullPath = fileInfo.FullPath;
+                IsInvalid = fileInfo.IsInvalid;
+                IsPackageFile = fileInfo.IsPackageFile;
+                IsPackageFeed = fileInfo.IsPackageFeed;
+                IsCoAppMSI = fileInfo.IsCoAppMSI;
+                IsLegacyMSI = fileInfo.IsLegacyMSI;
+                IsLegacyEXE = fileInfo.IsLegacyEXE;
+                IsNugetPackage = fileInfo.IsNugetPackage;
+                IsOpenwrapPackage = fileInfo.IsOpenwrapPackage;
+                IsArchive = fileInfo.IsArchive;
+                IsAtom = fileInfo.IsAtom;
+            }
+
+            internal bool IsLocal {
+                get {
+                    if (RemoteFile != null) {
+                        return RemoteFile.IsLocal;
+                    }
+
+                    if(!string.IsNullOrEmpty(FullPath)) {
+                        if( File.Exists(FullPath))
+                            return true;
+                    }
+
+                    return false;
+                }
+            }
+
+            public TriggeredProperty<bool> Recognized = new TriggeredProperty<bool>(false, value => value);
+            
+        }
+
+        #endregion
     }
 }

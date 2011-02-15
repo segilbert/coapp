@@ -224,5 +224,27 @@ namespace CoApp.Toolkit.Extensions {
             }
             return false;
         }
+
+        public static void WriteAllBytesToFile(this MemoryStream ms, string path) {
+            if (string.IsNullOrEmpty(path)) {
+                throw new ArgumentNullException("path", "Invalid Path");
+            }
+
+            using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read)) {
+                stream.Write(ms.GetBuffer(), 0, (int)ms.Length);
+            }
+        }
+
+        public static void ReadAllBytesFromFile(this MemoryStream ms, string path) {
+            if (string.IsNullOrEmpty(path)) {
+                throw new ArgumentNullException("path", "Invalid Path");
+            }
+
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                ms.SetLength(stream.Length);
+                stream.Read(ms.GetBuffer(), 0, (int)stream.Length);
+            }
+        }
+
     }
 }

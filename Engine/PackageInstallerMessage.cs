@@ -13,9 +13,18 @@ namespace CoApp.Toolkit.Engine {
         FailedDependentPackageInstall,
         FoundUnconnfirmedUpgradePackage,
         IdentifyingDependents,
+
+        DownloadingUrl,
+        DownloadUrlProgress,
+
+        DownloadingPackage,
+        DownloadPackageProgress,
+
         Installing,
         InstallProgress,
+
         Scanning,
+
         Removing,
         RemoveProgress
     };

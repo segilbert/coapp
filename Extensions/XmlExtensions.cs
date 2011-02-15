@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Extensions {
     using System.Runtime.Serialization.Json;
     using System.Text;
     using System.Xml;
+    using System.Xml.Linq;
 
     public static class XmlExtensions {
         private static readonly Dictionary<string, XmlDocument> DocCache = new Dictionary<string, XmlDocument>();
@@ -175,5 +176,17 @@ namespace CoApp.Toolkit.Extensions {
             }
             return false;
         }
+
+        public static void PrettySaveXml(this IEnumerable<string> xmlDocumentText, string outputPath) {
+            var tempDocument = XDocument.Load(new StringReader(string.Join("\r\n", xmlDocumentText)));
+            tempDocument.Save(outputPath, SaveOptions.None);
+        }
+
+        public static void PrettySaveXml(this MemoryStream xmlDocumentStream, string outputPath) {
+            xmlDocumentStream.Seek(0, SeekOrigin.Begin);
+            var tempDocument = XDocument.Load(xmlDocumentStream);
+            tempDocument.Save(outputPath, SaveOptions.None);
+        }
+
     }
 }
