@@ -7,24 +7,24 @@
 namespace CoApp.CLI {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
     using System.Resources;
     using System.Threading;
+    using System.Threading.Tasks;
     using Properties;
     using Toolkit.Console;
     using Toolkit.Engine;
     using Toolkit.Engine.Exceptions;
     using Toolkit.Extensions;
     using Toolkit.Network;
-    using Toolkit.OData;
     using Toolkit.Win32;
-    using Package = Toolkit.Engine.Package;
 
     /// <summary>
     ///   Main Program for command line coapp tool
     /// </summary>
     public class CoAppMain : AsyncConsoleProgram {
+        protected PackageManager _pkgManager;
+
         protected override ResourceManager Res {
             get { return Resources.ResourceManager; }
         }
@@ -42,8 +42,6 @@ namespace CoApp.CLI {
             return new CoAppMain().Startup(args);
         }
 
-        protected PackageManager _pkgManager;
-
         /// <summary>
         ///   The (non-static) startup method
         /// </summary>
@@ -56,12 +54,13 @@ namespace CoApp.CLI {
         protected override int Main(IEnumerable<string> args) {
             try {
                 _pkgManager = new PackageManager(CancellationTokenSource.Token);
-                
+
                 bool waitforbreak = false;
+
                 #region commane line parsing
 
                 // default:
-                _pkgManager.SessionFeedLocations = new[] { Environment.CurrentDirectory };
+                _pkgManager.SessionFeedLocations = new[] {Environment.CurrentDirectory};
 
                 var options = args.Switches();
                 var parameters = args.Parameters();
@@ -70,7 +69,7 @@ namespace CoApp.CLI {
                     var argumentParameters = options[arg];
 
                     switch (arg) {
-                        /* options  */
+                            /* options  */
                         case "pretend":
                             _pkgManager.Pretend = true;
                             break;
@@ -80,19 +79,25 @@ namespace CoApp.CLI {
                             break;
 
                         case "maximum":
-                            _pkgManager.Maximum = argumentParameters.Last().ToInt32(10);
+                            _pkgManager.MaximumPackagesToProcess = argumentParameters.Last().ToInt32(10);
                             break;
 
                         case "as-specified":
-                            _pkgManager.PackagesAsSpecified = string.IsNullOrEmpty(argumentParameters.FirstOrDefault()) ? new[] { "*" } : argumentParameters;
+                            _pkgManager.PackagesAsSpecified = string.IsNullOrEmpty(argumentParameters.FirstOrDefault())
+                                ? new[] {"*"}
+                                : argumentParameters;
                             break;
 
                         case "upgrade":
-                            _pkgManager.PackagesAreUpgradable = string.IsNullOrEmpty(argumentParameters.FirstOrDefault()) ? new[] { "*" } : argumentParameters;
+                            _pkgManager.PackagesAreUpgradable = string.IsNullOrEmpty(argumentParameters.FirstOrDefault())
+                                ? new[] {"*"}
+                                : argumentParameters;
                             break;
 
                         case "no-scan":
-                            _pkgManager.DoNotScanLocations = string.IsNullOrEmpty(argumentParameters.FirstOrDefault()) ? new[] { "*" } : argumentParameters;
+                            _pkgManager.DoNotScanLocations = string.IsNullOrEmpty(argumentParameters.FirstOrDefault())
+                                ? new[] {"*"}
+                                : argumentParameters;
                             break;
 
                         case "no-network":
@@ -110,7 +115,7 @@ namespace CoApp.CLI {
                             _pkgManager.FlushCache();
                             break;
 
-                        /* global switches */
+                            /* global switches */
                         case "load-config":
                             // all ready done, but don't get too picky.
                             break;
@@ -140,26 +145,80 @@ namespace CoApp.CLI {
 
                 switch (command) {
                     case "nothing":
-                        /*
-                        CachingHttpClient chc = new CachingHttpClient(Path.GetFullPath("."));
+                        var remoteFileUri = new Uri(parameters.First());
 
-                        bool done = false;
-                        chc.PreviewFile(new Uri(parameters.First()), result => {
-                            Console.WriteLine("1. Completed: Previewed[{0}] Downloaded[{1}] LocalPath[{2}]", result.PreviewState, result.DownloadState, result.LocalFullPath);
-                            done = true;
+                        // create the remote file reference 
+                        var remoteFile = new RemoteFile(remoteFileUri, CancellationTokenSource.Token);
+
+                        // Tell it to download it 
+                        var getTask = remoteFile.Get();
+
+                        // monitor the progress.
+                        remoteFile.DownloadProgress.Notification += progress => {
+                            // this executes when the download progress value changes. 
+                            Console.Write(progress <= 100 ? "..{0}% " : "bytes: [{0}]", progress);
+                        };
+
+                        // when it's done, do this:
+                        getTask.ContinueWith(t => {
+                            // this executes when the Get() operation completes.
+                            Console.WriteLine("File {0} has finished downloading", remoteFile.LocalFullPath);
                         });
 
-                       
-                        chc.DownloadFile(new Uri(parameters.First()), new TimeSpan(0,1,0), result => {
-                            Console.WriteLine("2. Completed: Previewed[{0}] Downloaded[{1}] LocalPath[{2}]",result.PreviewState, result.DownloadState,result.LocalFullPath );
-                            waitforbreak = false;
-                        }, progress => {
-                            if( progress <= 100 )
-                                Console.Write("..{0}% ",progress);
-                            else
-                                Console.Write("bytes: [{0}]", progress);
-                        } );
+                        /*
+                        getTask.ProgressChanged = (value) => {
+                            Console.Write(value <= 100 ? "..{0}% " : "bytes: [{0}]", value);
+                        };
+
+                        long p = f.Progress;
+                        
+                        while( !getTask.IsCompleted ) {
+                          /*
+                            OnValueChanged(f.Progress, (value) => {
+                                Console.Write(value <= 100 ? "..{0}% " : "bytes: [{0}]", value);
+                            });
+                            
+
+
+                            
+
+                            if( p != f.Progress) {
+                                p = f.Progress;
+                                Console.Write(p  <= 100 ? "..{0}% " : "bytes: [{0}]", p);
+                            }
+                            Thread.Sleep(100);
+                        }
                         */
+
+                        getTask.Wait();
+
+                        /*
+                        var chc = new CachingHttpClient(Path.GetFullPath("."));
+
+                        var t = chc.PreviewFile(new Uri(parameters.First())).ContinueWith(result => {
+                            Console.WriteLine("1. Preview: Status Code[{0}] State[{1}] LocalPath[{2}]", result.Result.StatusCode,
+                                result.Result.State, result.Result.LocalFullPath);
+                            
+                        }, TaskContinuationOptions.AttachedToParent);
+
+                        chc.DownloadFile(new Uri(parameters.First()), progress => {
+                            if (progress <= 100) {
+                                Console.Write("..{0}% ", progress);
+                            }
+                            else {
+                                Console.Write("bytes: [{0}]", progress);
+                            }
+                        }).ContinueWith(
+                            result => {
+                                Console.WriteLine("2. Download: Status Code[{0}] State[{1}] LocalPath[{2}]", result.Result.StatusCode,
+                                    result.Result.State, result.Result.LocalFullPath);
+                                waitforbreak = false;
+                            }, TaskContinuationOptions.AttachedToParent);
+
+                        Thread.Sleep(2000);
+                         * )
+                        */
+                        ;
                         break;
 
                     case "install":
@@ -167,7 +226,7 @@ namespace CoApp.CLI {
                             throw new ConsoleException(Resources.InstallRequiresPackageName);
                         }
 
-                        TaskAdd(() => Install(parameters));
+                        Install(parameters);
                         break;
 
                     case "remove":
@@ -181,12 +240,11 @@ namespace CoApp.CLI {
                         if (parameters.Count() != 1) {
                             throw new ConsoleException(Resources.MissingParameterForList);
                         }
-                        switch( parameters.FirstOrDefault().ToLower() ) {
-                            case "packages" : 
-                            case "package" :
+                        switch (parameters.FirstOrDefault().ToLower()) {
+                            case "packages":
+                            case "package":
                                 ListPackages(parameters);
                                 break;
-
 
                             case "feed":
                             case "feeds":
@@ -234,20 +292,15 @@ namespace CoApp.CLI {
                 while (waitforbreak && !CancellationTokenSource.IsCancellationRequested) {
                     Thread.Sleep(100);
                 }
-
             }
             catch (ConsoleException failure) {
                 CancellationTokenSource.Cancel();
                 Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
             }
-            finally {
-                PackageService.Stop();
-            }
             return 0;
         }
 
         private void ListPackages(IEnumerable<string> parameters) {
-            // dual purpose
             var pkgsInstalled = _pkgManager.GetInstalledPackages((packageInstallerMessage, package, percentage) => {
                 // status
                 switch (packageInstallerMessage) {
@@ -268,7 +321,6 @@ namespace CoApp.CLI {
             }
         }
 
-
         private void Remove(IEnumerable<string> parameters) {
             try {
                 if (!AdminPrivilege.IsRunAsAdmin) {
@@ -276,9 +328,10 @@ namespace CoApp.CLI {
                         "Admin privilege is required to remove packages. \r\nPlease run as an elevated administrator.");
                 }
 
-                int maxPercent = 0;
-                _pkgManager.RemovePackages(parameters, (packageInstallerMessage, package, percentage) => {
+                var maxPercent = 0L;
+                _pkgManager.RemovePackages(parameters, (packageInstallerMessage, payload, progress) => {
                     // status
+                    var package = payload as Package;
                     switch (packageInstallerMessage) {
                         case PackageInstallerMessage.Removing:
                             Console.Write("\r\nRemoving: {0}", package.CosmeticName);
@@ -286,9 +339,9 @@ namespace CoApp.CLI {
                             break;
 
                         case PackageInstallerMessage.RemoveProgress:
-                            if (percentage > maxPercent) {
-                                "Removing: {0}".format(package.CosmeticName).PrintProgressBar(percentage);
-                                maxPercent = percentage;
+                            if (progress > maxPercent) {
+                                "Removing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                                maxPercent = progress;
                             }
                             break;
                     }
@@ -316,95 +369,147 @@ namespace CoApp.CLI {
         }
 
         private void Install(IEnumerable<string> parameters) {
-            try {
-                if (!AdminPrivilege.IsRunAsAdmin) {
-                    throw new ConsoleException(
-                        "Admin privilege is required to install packages. \r\nPlease run as an elevated administrator.");
+            if (!AdminPrivilege.IsRunAsAdmin) {
+                throw new ConsoleException(
+                    "Admin privilege is required to install packages. \r\nPlease run as an elevated administrator.");
+            }
+
+            var maxPercent = 0L;
+            var t = _pkgManager.InstallPackages(parameters, (packageInstallerMessage, payload, progress) => {
+                // status
+                var package = payload as Package;
+                switch (packageInstallerMessage) {
+                    case PackageInstallerMessage.Installing:
+                        Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
+                        maxPercent = 0;
+                        break;
+
+                    case PackageInstallerMessage.InstallProgress:
+                        if (progress > maxPercent) {
+                            "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                            maxPercent = progress;
+                        }
+                        break;
+
+                    case PackageInstallerMessage.DownloadingUrl:
+                        maxPercent = 0L;
+                        break;
+
+                    case PackageInstallerMessage.DownloadUrlProgress:
+                        if (progress > maxPercent) {
+                            "Downloading: {0}".format(payload.ToString()).PrintProgressBar(progress);
+                            maxPercent = progress;
+                            // TODO: this probably looks like hell when downloading multiple packages concurrently.
+                        }
+                        break;
+
+                    case PackageInstallerMessage.DownloadingPackage:
+                        maxPercent = 0L;
+                        break;
+
+                    case PackageInstallerMessage.DownloadPackageProgress:
+                        if (progress > maxPercent) {
+                            "Downloading: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                            maxPercent = progress;
+                            // TODO: this probably looks like hell when downloading multiple packages concurrently.
+                        }
+                        break;
                 }
+            });
 
-                int maxPercent = 0;
-                _pkgManager.InstallPackages(parameters, (packageInstallerMessage, package, percentage) => {
-                    // status
-                    switch (packageInstallerMessage) {
-                        case PackageInstallerMessage.Installing:
-                            Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
-                            maxPercent = 0;
-                            break;
-
-                        case PackageInstallerMessage.InstallProgress:
-                            if (percentage > maxPercent) {
-                                "Installing: {0}".format(package.CosmeticName).PrintProgressBar(percentage);
-                                maxPercent = percentage;
-                            }
-                            break;
-                    }
-                });
-
+            try {
+                t.Wait(); // waiting for the task to finish.
                 // success means that this doesn't throw an exception.
+                
             }
-            catch (PackageNotFoundException pnf) {
-                Console.WriteLine(Resources.PackageNotFound, pnf.PackagePath);
-            }
-            catch (InvalidPackageException ip) {
-                Console.WriteLine(Resources.InvalidPackage, ip.PackagePath);
-            }
-            catch (PackageInstallFailedException pif) {
-                Console.WriteLine(Resources.PackageFailedInstall, pif.FailedPackage);
-            }
-            catch (PackageNotSatisfiedException pns) {
-                Console.WriteLine(Resources.PackageDependenciesCantInstall,
-                    pns.packageNotSatified.CosmeticName);
+            catch (AggregateException ae) {
+                Console.WriteLine();
+                Func<Exception,bool> handleException = null;
 
-                var depth = 0;
-                Action<Package> printDepMap = null;
-                printDepMap = (p => {
-                    depth++;
-                    if (!p.CanSatisfy) {
-                        var count = p.Dependencies.Count();
-                        Console.WriteLine(@"{0}{1} [{2}]", "".PadLeft(3 * depth), p.CosmeticName,
-                            count > 0
-                            ? Resources.MissingPkgText.format(count, count > 1 ? "dependencies" : "dependency")
-                                : p.CouldNotDownload
-                                    ? Resources.CouldNotDownload : p.PackageFailedInstall ? Resources.FailedToInstall : !p.HasLocalFile ? "No local package file" : "Unknown");
-                        foreach (var dp in p.Dependencies.Where(each => !each.CanSatisfy)) {
-                            printDepMap(dp);
+                handleException = exception => {
+                    if (exception is AggregateException) {
+                        (exception as AggregateException).Handle(handleException);
+                        return true;
+                    }
+
+                    try {
+                        Console.WriteLine(exception.StackTrace);
+                        throw exception;
+                    }
+                    catch (PackageNotFoundException pnf) {
+                        Console.WriteLine(Resources.PackageNotFound, pnf.PackagePath);
+                    }
+                    catch (InvalidPackageException ip) {
+                        Console.WriteLine(Resources.InvalidPackage, ip.PackagePath);
+                    }
+                    catch (PackageInstallFailedException pif) {
+                        Console.WriteLine(Resources.PackageFailedInstall, pif.FailedPackage);
+                    }
+                    catch (PackageNotSatisfiedException pns) {
+                        Console.WriteLine(Resources.PackageDependenciesCantInstall,
+                            pns.packageNotSatified.CosmeticName);
+
+                        var depth = 0;
+                        Action<Package> printDepMap = null;
+                        printDepMap = (p => {
+                            depth++;
+                            if (!p.CanSatisfy) {
+                                var count = p.Dependencies.Count();
+                                Console.WriteLine(@"{0}{1} [{2}]", "".PadLeft(3 * depth), p.CosmeticName,
+                                    count > 0
+                                        ? Resources.MissingPkgText.format(count, count > 1 ? "dependencies" : "dependency")
+                                        : p.CouldNotDownload
+                                            ? Resources.CouldNotDownload
+                                            : p.PackageFailedInstall
+                                                ? Resources.FailedToInstall
+                                                : !p.HasLocalFile ? "No local package file" : "Unknown");
+                                foreach (var dp in p.Dependencies.Where(each => !each.CanSatisfy)) {
+                                    printDepMap(dp);
+                                }
+                            }
+                            depth--;
+                        });
+                        printDepMap(pns.packageNotSatified);
+                    }
+                    catch (PackageHasPotentialUpgradesException phphu) {
+                        // the user hasn't specifically asked us to supercede, yet we know of 
+                        // potential supercedents. Let's force the user to make a decision.
+                        Console.WriteLine(Resources.PackageHasPossibleNewerVersion, phphu.UnsatisfiedPackage);
+                        Console.WriteLine(Resources.TheFollowingPackageSupercede);
+                        Console.WriteLine(@"   [Latest] {0}", phphu.SatifactionOptions.First().CosmeticName);
+
+                        foreach (var pkg in phphu.SatifactionOptions.Skip(1)) {
+                            Console.WriteLine(@"            {0}", pkg.CosmeticName);
+                        }
+
+                        Console.WriteLine();
+                        Console.WriteLine(Resources.AutoAcceptHint,
+                            phphu.UnsatisfiedPackage.CosmeticName);
+                        Console.WriteLine(Resources.AsSpecifiedHint,
+                            phphu.UnsatisfiedPackage.CosmeticName);
+                    }
+                    catch (MultiplePackagesMatchException mpm) {
+                        Console.WriteLine(Resources.PackageHasMultipleMatches, mpm.PackageMask);
+                        foreach (var pkg in mpm.PackageMatches) {
+                            Console.WriteLine(@"   {0}", pkg.CosmeticName);
                         }
                     }
-                    depth--;
-                });
-                printDepMap(pns.packageNotSatified);
-            }
-            catch (PackageHasPotentialUpgradesException phphu) {
-                // the user hasn't specifically asked us to supercede, yet we know of 
-                // potential supercedents. Let's force the user to make a decision.
-                Console.WriteLine(Resources.PackageHasPossibleNewerVersion, phphu.UnsatisfiedPackage);
-                Console.WriteLine(Resources.TheFollowingPackageSupercede);
-                Console.WriteLine(@"   [Latest] {0}", phphu.SatifactionOptions.First().CosmeticName);
+                    catch (Exception ex) {
+                        Console.WriteLine(ex.StackTrace);
+                        Console.WriteLine(ex.Message);
+                        throw new ConsoleException("Something unexpected.\r\n{0}",ex.Message);
+                    }
 
-                foreach (var pkg in phphu.SatifactionOptions.Skip(1)) {
-                    Console.WriteLine(@"            {0}", pkg.CosmeticName);
-                }
-
-                Console.WriteLine();
-                Console.WriteLine(Resources.AutoAcceptHint,
-                    phphu.UnsatisfiedPackage.CosmeticName);
-                Console.WriteLine(Resources.AsSpecifiedHint,
-                    phphu.UnsatisfiedPackage.CosmeticName);
+                    return true;
+                };
+                ae.Handle(handleException);
             }
-            catch (MultiplePackagesMatchException mpm) {
-                Console.WriteLine(Resources.PackageHasMultipleMatches, mpm.PackageMask);
-                foreach (var pkg in mpm.PackageMatches) {
-                    Console.WriteLine(@"   {0}", pkg.CosmeticName);
-                }
-            }
-
         }
 
         private void Upgrade(IEnumerable<string> parameters) {
             try {
             }
             catch {
-
             }
         }
 
@@ -412,7 +517,6 @@ namespace CoApp.CLI {
             try {
             }
             catch {
-
             }
         }
 
@@ -433,7 +537,7 @@ namespace CoApp.CLI {
             }
             catch (Exception) {
                 throw new ConsoleException(
-                       "LOL WHAT?.");
+                    "LOL WHAT?.");
             }
         }
 
@@ -446,9 +550,9 @@ namespace CoApp.CLI {
                 _pkgManager.AddSystemFeeds(parameters);
                 ListFeeds(parameters);
             }
-            catch(Exception) {
+            catch (Exception) {
                 throw new ConsoleException(
-                       "LOL WHAT?.");
+                    "LOL WHAT?.");
             }
         }
 
@@ -463,11 +567,8 @@ namespace CoApp.CLI {
             }
             catch (Exception) {
                 throw new ConsoleException(
-                       "LOL WHAT?.");
+                    "LOL WHAT?.");
             }
         }
-
-
     }
-
 }

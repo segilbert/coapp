@@ -24,21 +24,21 @@ Options:
 
     --no-scan[=<location>]  Doesn't scan the given location (or feed) for 
                             additional packages.        
-							
+
     --no-network            Doesn't scan locations over the network.
-	                        (same as --no-scan=*://* )
+                            (same as --no-scan=*://* )
 
     --flush-cache           Drops all cached information.
 
-	--maximum=<num>         If the total number of packages to install is more
+    --maximum=<num>         If the total number of packages to install is more
                             than num the installer will notify the user and 
                             exit. (Defaults to 10)
 
 Commands:
 ---------    
 
-	Package Commands
-	----------------
+    Package Commands
+    ----------------
 
     install <pkg>           Installs the package files listed on 
                             the command line
@@ -50,40 +50,47 @@ Commands:
 
     list packages           Lists the packages that are installed.
 
-	upgrade <pkg>|all		Upgrades the given package (or all packages if 
+    upgrade <pkg>|all       Upgrades the given package (or all packages if 
                             specified)
 
-	trim					Trims out dependent packages that are not used
-							by ant
+    trim                    Trims out dependent packages that are not used
+                            by ant
 
 
-	Repository Commands
-	----------------
+    Repository Commands
+    ----------------
 
-	list feeds				List the known package repositories.
+    list feeds              List the known package repositories.
 
-	add <location>          Adds a given location to the known 
+    add <location>          Adds a given location to the known 
                             repository list.
 
-	delete <location>	    Removes a given location from the known 
+    delete <location>       Removes a given location from the known 
                             repository list.
+
+
+    Feed Utility Commands
+    ----------------
+    generate-feed <outputfile>
+
+
 
 
 random thinking:
 
 Installing from a feed:
-	coapp install c:\app-feed.atom 
-	coapp --maximium=50 install http://serack.org/favorite-feed.atom
+    coapp install c:\app-feed.atom 
+    coapp --maximium=50 install http://serack.org/favorite-feed.atom
 
 Installing a single package from a feed:
-	coapp --scan=http://serack.org/favorite-feed.atom install scite
-	
+    coapp --scan=http://serack.org/favorite-feed.atom install scite
+    
 
 Explicitly ask for a Coapp Package:
-	coapp install pkg:Appone-1.0.0.0-x86 
-	
-	(should be the same as:)
-	coapp install AppOne-1.0.0.0-x86
+    coapp install pkg:Appone-1.0.0.0-x86 
+    
+    (should be the same as:)
+    coapp install AppOne-1.0.0.0-x86
 
 coapp install nuget:packagename[-version]
 coapp install msi:foo.msi 
