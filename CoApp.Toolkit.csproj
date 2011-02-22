@@ -66,14 +66,11 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
-    <Compile Include="Network\CachingNetworkClient.cs" />
     <Compile Include="Network\Ftp.cs" />
     <Compile Include="Network\RemoteFile.cs" />
     <Compile Include="Network\TransferManager.cs" />
-	<Compile Include="Network\CachingHttpClient.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\IFileType.cs" />
-
     <Compile Include="Package\mkPackage.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
