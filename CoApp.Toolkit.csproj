@@ -68,11 +68,14 @@
     <Compile Include="Network\CachingNetworkClient.cs" />
     <Compile Include="Network\Ftp.cs" />
     <Compile Include="Network\CachingHttpClient.cs" />
+    <Compile Include="Package\Huid.cs" />
+    <Compile Include="Package\IFileType.cs" />
     <Compile Include="Package\mkPackage.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>mkPackage.xsd</DependentUpon>
     </Compile>
+    <Compile Include="Package\mkPackagePartials.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

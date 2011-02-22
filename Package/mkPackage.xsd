@@ -29,11 +29,12 @@
     </xs:annotation>
     <xs:complexType>
 
-      <xs:sequence minOccurs="1">
+      <xs:sequence minOccurs="1" maxOccurs="1">
         <xs:element ref="Tags" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="Dependencies" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="Publisher" minOccurs="0" maxOccurs="1"/>
-        <xs:element ref="Properties" minOccurs="0" maxOccurs="1"/>
+        <xs:element name="Contributors" type="Contributors" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="Properties" minOccurs="1" maxOccurs="1"/>
         <xs:element ref="BindingPolicy" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="Urls" minOccurs="0" maxOccurs="1" />
         <xs:element ref="SharedLib" minOccurs="0" maxOccurs="unbounded"/>
@@ -160,8 +161,7 @@
         </xs:annotation>
       </xs:attribute>
 
-      <xs:attribute name="Location" type="xs:string"/>
-      <xs:attribute name="Feed" type="xs:string" />
+
       <xs:attribute name="Type" type="PackageType"/>
       <xs:attribute name="CommandLine" type="xs:string"/>
     </xs:complexType>
@@ -181,7 +181,10 @@
           certificate used for signing this package.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="Location" type="xs:anyURI" use="optional"/>
+      <xs:attribute name="Email" type="xs:string" use="optional"/>
       <xs:attribute name="directory_id" type="xs:string"/>
+      <xs:attribute name="location_id" type="Guid" use="optional"/>
     </xs:complexType>
   </xs:element>
 
@@ -216,7 +219,12 @@
           It's package version would be 6000.x.x.x but it's AuthorVersion would be 'Vista'</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="icon_id" type="xs:string"/>
+      <xs:attribute name="SummaryDescription" type="SummaryDescription" use="required"/>
+
+      <xs:attribute name="Location" type="xs:anyURI" use="optional"/>
+      <xs:attribute name="location_id" type="Guid" use="optional"/>
+      <xs:attribute name="Feed" type="xs:anyURI" use="optional" />
+      <xs:attribute name="feed_id" type="Guid" use="optional"/>
     </xs:complexType>
   </xs:element>
 
@@ -379,7 +387,7 @@
   <xs:element name="PolicyAssembly">
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="Manifest" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="Manifest" minOccurs="1" maxOccurs="1"/>
         <xs:element ref="CatFile" minOccurs="0" maxOccurs="1"/>
         
       </xs:sequence>
@@ -388,12 +396,33 @@
       <!-- restrict this to valid archs-->
       <xs:attribute name="Arch" type="Arch" use="required"/>
       <xs:attribute name="Platform" type="xs:string" use="required"/>
-      <xs:attribute name="Src" type="xs:string"/>
+      <xs:attribute name="Src" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            These are only used when this is a policy for .NET packages.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="ext" type="xs:string"/>
       <xs:attribute name="component_id" type="Id"/>
       <xs:attribute name="component_guid" type ="Guid"/>
     </xs:complexType>
   </xs:element>
 
+  <xs:complexType name="Contributors">
+    <xs:sequence>
+      <xs:element name="Contributor" type="Contributor" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="Contributor">
+    <xs:attribute name="id" type="Guid" use="optional" />
+    <xs:attribute name="Name" type="xs:string" use="required"/>
+    <xs:attribute name="Url" type="xs:string" use="optional"/>
+    <xs:attribute name="Email" type="xs:string" use="optional"/>
+    <xs:attribute name="url_id" type="Guid" use="optional"/>
+  </xs:complexType>
 
   <xs:element name="Driver">
     <xs:complexType>
@@ -428,7 +457,9 @@
   <xs:complexType name="SharedLibFiles">
     <xs:sequence>
       <xs:element ref="Assembly" minOccurs="1" maxOccurs="unbounded"/>
-      <xs:element ref="PolicyAssembly" minOccurs="0" maxOccurs="unbounded" />
+    
+      <xs:element ref="PolicyAssembly" minOccurs="0" maxOccurs="unbounded"/>
+      
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="File"/>
         <xs:element ref="Folder"/>
@@ -1360,5 +1391,10 @@
       </xs:simpleContent>
     </xs:complexType>
   </xs:element>
-  
+
+  <xs:simpleType name="SummaryDescription">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="140"/>
+    </xs:restriction>
+  </xs:simpleType>
 </xs:schema>
