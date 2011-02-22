@@ -170,11 +170,11 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             ScanInstalledMSIs((pim, pkg, num) => { }, new CancellationToken());
         }
 
-        public static void ScanInstalledMSIs(Action<PackageInstallerMessage, Package, int> status) {
+        public static void ScanInstalledMSIs(Action<PackageInstallerMessage, object, long> status) {
             ScanInstalledMSIs(status, new CancellationToken());
         }
 
-        public static void ScanInstalledMSIs(Action<PackageInstallerMessage, Package, int> status, CancellationToken cancellationToken ) {
+        public static void ScanInstalledMSIs(Action<PackageInstallerMessage, object, long> status, CancellationToken cancellationToken ) {
             var products = ProductInstallation.AllProducts;
             var n = 0;
             var total = products.Count();

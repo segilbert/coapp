@@ -61,15 +61,19 @@
     <Compile Include="Extensions\LinqExtensions.cs" />
     <Compile Include="Extensions\SortedObservableCollection.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Extensions\WebExtensions.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
     <Compile Include="Network\CachingNetworkClient.cs" />
     <Compile Include="Network\Ftp.cs" />
-    <Compile Include="Network\CachingHttpClient.cs" />
+    <Compile Include="Network\RemoteFile.cs" />
+    <Compile Include="Network\TransferManager.cs" />
+	<Compile Include="Network\CachingHttpClient.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\IFileType.cs" />
+
     <Compile Include="Package\mkPackage.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -108,6 +112,7 @@
     </Compile>
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tasks\TriggeredProperty.cs" />
     <Compile Include="Text\HttpUtility.cs" />
     <Compile Include="Text\Sgml\SgmlParser.cs">
       <SubType>Code</SubType>

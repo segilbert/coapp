@@ -57,12 +57,16 @@ namespace CoApp.Toolkit.Extensions {
             get { return FileType.Char != GetFileType(GetStdHandle(StdHandle.Stderr)); }
         }
 
-        public static void PrintProgressBar(this string message, int percentage) {
+        public static void PrintProgressBar(this string message, long progress) {
             if (!OutputRedirected) {
-                if (percentage > -1) {
-                    var sz = Console.BufferWidth - (message.Length + 5);
-                    var done = (percentage*sz)/100;
-                    Console.Write("\r{0} [{1}] ", message, "".PadRight(done, '=').PadRight(sz,' '));
+                if (progress > -1) {
+                    if( progress <= 100) {
+                        var sz = Console.BufferWidth - (message.Length + 5);
+                        var done = (int)((progress * sz) / 100);
+                        Console.Write("\r{0} [{1}] ", message, "".PadRight(done, '=').PadRight(sz, ' '));
+                    } else {
+                        Console.Write("\r{0} [{1} ]", message, progress);
+                    }
                 }
                 else {
                     Console.Write("\r".PadRight( Console.BufferWidth - 1, ' '));

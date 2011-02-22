@@ -16,6 +16,12 @@ namespace CoApp.Toolkit.Engine {
     using PackageFormatHandlers;
 
     public class Package {
+        public class Party {
+            public string Name { get; set; }
+            public string Url { get; set; }
+            public string Email { get; set; }
+        }
+
         public readonly string Architecture;
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
         /// <summary>
@@ -27,6 +33,7 @@ namespace CoApp.Toolkit.Engine {
         public readonly string ProductCode;
         public readonly string PublicKeyToken;
         public readonly UInt64 Version;
+
         internal bool DoNotSupercede; // TODO: it's possible these could be contradictory
         internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
         internal bool UserSpecified;
@@ -39,6 +46,22 @@ namespace CoApp.Toolkit.Engine {
         private Uri _remoteLocation;
         private Package _supercedent;
 
+        // Other Package Metadata 
+        public string SummaryDescription { get; set; }
+        public DateTime PublishDate { get; set; }
+
+        public Party Publisher { get; set; }
+        public IEnumerable<Party> Contributors { get; set; }
+
+        public string CopyrightStatement { get; set; }
+        public string FeedLocation { get; set; }
+        public string PackageLocation { get; set; }
+        public string SourcePackageLocation { get; set; }
+
+        public IEnumerable<string> Tags { get; set; }
+        public string FullDescription { get; set; }
+        public string Base64IconData { get; set; }
+
         internal IPackageFormatHandler packageHandler;
 
         internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) {
@@ -49,6 +72,13 @@ namespace CoApp.Toolkit.Engine {
             ProductCode = productCode;
             Changed();
             Dependencies.CollectionChanged += (x, y) => Changed();
+
+            Publisher = new Party() {
+                Name = "publisher name",
+                Url = "http://foo",
+                Email = "foo@goo.com"
+
+            };
         }
 
         // set once only:
