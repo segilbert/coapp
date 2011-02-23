@@ -10,11 +10,13 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.ObjectModel;
     using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Exceptions;
     using Extensions;
     using Feeds;
     using PackageFormatHandlers;
+    using Tasks;
 
     internal class Registrar {
         private static readonly HashSet<long> _nonCoAppMSIFiles = new HashSet<long>();
@@ -174,8 +176,14 @@ namespace CoApp.Toolkit.Engine {
             get { return _packages; }
         }
 
+        private static void AddPackage( Package package) {
+            lock( _packages ) {
+                _packages.Add(package);
+            }
+        }
+
         internal static IEnumerable<Package> InstalledPackages {
-            get { return _packages.Where(package => package.IsInstalled); }
+            get { lock (_packages) return _packages.Where(package => package.IsInstalled).ToList(); }
         }
 
         static Registrar() {
@@ -220,15 +228,19 @@ namespace CoApp.Toolkit.Engine {
         }
 
         internal static Package GetPackage(string packageName, string architecture, UInt64 version, string publicKeyToken, string packageId) {
-            var pkg = (_packages.Where(package =>
-                package.Architecture == architecture &&
-                    package.Version == version &&
-                        package.PublicKeyToken == publicKeyToken &&
-                            package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+            Package pkg;
+
+            lock (_packages) {
+                pkg = (_packages.Where(package =>
+                    package.Architecture == architecture &&
+                        package.Version == version &&
+                            package.PublicKeyToken == publicKeyToken &&
+                                package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+            }
 
             if (pkg == null) {
                 pkg = new Package(packageName, architecture, version, publicKeyToken, packageId);
-                _packages.Add(pkg);
+                AddPackage(pkg);
             }
 
             return pkg;
@@ -256,12 +268,13 @@ namespace CoApp.Toolkit.Engine {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
             }
 
-            var pkg =
-                (_packages.Where(
+            Package pkg;
+            lock (_packages) {
+                pkg = (_packages.Where(
                     package =>
                         package.HasLocalFile && package.HasAlternatePath(localPackagePath))).
                     FirstOrDefault();
-
+            }
             if (pkg != null) {
                 return pkg;
             }
@@ -272,18 +285,18 @@ namespace CoApp.Toolkit.Engine {
 
             try {
                 var pkgDetails = CoAppMSI.GetCoAppPackageFileDetails(localPackagePath);
-
-                pkg = (_packages.Where(package =>
-                    package.Architecture == pkgDetails.Architecture &&
-                        package.Version == pkgDetails.Version &&
-                            package.PublicKeyToken == pkgDetails.PublicKeyToken &&
-                                package.Name.Equals(pkgDetails.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
-
+                lock (_packages) {
+                    pkg = (_packages.Where(package =>
+                        package.Architecture == pkgDetails.Architecture &&
+                            package.Version == pkgDetails.Version &&
+                                package.PublicKeyToken == pkgDetails.PublicKeyToken &&
+                                    package.Name.Equals(pkgDetails.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+                }
                 if (pkg == null) {
                     pkg = new Package(pkgDetails.Name, pkgDetails.Architecture, pkgDetails.Version, pkgDetails.PublicKeyToken,
                         pkgDetails.packageId);
 
-                    _packages.Add(pkg);
+                    AddPackage(pkg);
                 }
                 if (pkg.Dependencies.Count == 0) {
                     pkg.Dependencies.AddRange((IEnumerable<Package>) pkgDetails.dependencies);
@@ -320,10 +333,7 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <param name = "packageNames"></param>
         /// <returns></returns>
-        public static IEnumerable<Package> GetPackagesByName(IEnumerable<string> packageNames,
-                                                             Action<PackageInstallerMessage, object, long> status = null) {
-            status = status ?? ((pim, pkg, num) => { });
-
+        public static IEnumerable<Package> GetPackagesByName(IEnumerable<string> packageNames) {
             var packageFiles = new List<Package>();
             var unknownPackages = new List<string>();
 
@@ -333,18 +343,19 @@ namespace CoApp.Toolkit.Engine {
                     var info = Recognizer.Recognize(currentItem, ensureLocal: true);
 
                     if (info.RemoteFile != null) {
-                        status(PackageInstallerMessage.DownloadingUrl, Path.GetFileName(info.RemoteFile.LocalFullPath), 0);
+                        PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.DownloadingUrl, Path.GetFileName(info.RemoteFile.LocalFullPath), 0);
 
                         info.RemoteFile.DownloadProgress.Notification +=
-                            (progress) => status(PackageInstallerMessage.DownloadUrlProgress, Path.GetFileName(info.RemoteFile.LocalFullPath),
+                            (progress) => PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.DownloadUrlProgress, Path.GetFileName(info.RemoteFile.LocalFullPath),
                                 progress);
                     }
 
                     info.Recognized.Notification += v => {
                         if (info.IsPackageFeed) {
                             // we have been given a package feed, and asked to return all the packages from it
-                            var feed = PackageFeed.GetPackageFeedFromLocation(currentItem);
-                            packageFiles.AddRange(feed.FindPackages("*"));
+                            PackageFeed.GetPackageFeedFromLocation(currentItem).ContinueWith(antecedent => {
+                                packageFiles.AddRange(antecedent.Result.FindPackages("*"));
+                            }).Wait();
                         }
                         else if (info.IsPackageFile) {
                             packageFiles.Add(GetPackage(info.FullPath));
@@ -359,11 +370,15 @@ namespace CoApp.Toolkit.Engine {
                 }
             }
 
+
             if (unknownPackages.Count > 0) {
                 ScanForPackages(unknownPackages);
 
                 foreach (var item in unknownPackages) {
-                    var possibleMatches = Packages.Match(item + (item.Contains("*") || item.Contains("-") ? "*" : "-*")).HighestPackages();
+                    IEnumerable<Package> possibleMatches;
+                    lock (_packages) {
+                        possibleMatches = _packages.Match(item + (item.Contains("*") || item.Contains("-") ? "*" : "-*")).HighestPackages();
+                    }
 
                     if (possibleMatches.Count() == 0) {
                         throw new PackageNotFoundException(item);
@@ -397,8 +412,10 @@ namespace CoApp.Toolkit.Engine {
                         // this lets you ask to uninstall a whole feed (and the only way to get multiple matches 
                         // from a single parameter.)
 
-                        var feed = PackageFeed.GetPackageFeedFromLocation(item);
-                        packageFiles.AddRange(feed.FindPackages("*").Where(each => each.IsInstalled));
+                        PackageFeed.GetPackageFeedFromLocation(item).ContinueWith(antecedent => {
+                            var feed = antecedent.Result;
+                            packageFiles.AddRange(feed.FindPackages("*").Where(each => each.IsInstalled));
+                        }).Wait();
                     }
                     else if (info.IsPackageFile) {
                         var pkg = GetPackage(item);

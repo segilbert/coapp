@@ -7,39 +7,56 @@
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Exceptions;
     using Extensions;
+    using Feeds;
     using Feeds.Atom;
     using Network;
     using PackageFormatHandlers;
+    using Tasks;
+
+
+    public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
+        public Action<PackageInstallerMessage, object, long> InstallerMessage;  
+    }
+
+    /*
+    public class PackageManagerMessages:MessageHandlers {
+        private static readonly PackageManagerMessages _none = new PackageManagerMessages();
+        internal static PackageManagerMessages Invoke { get { return CoAppTask.CurrentCoTask.GetMessageHandler(typeof(PackageManagerMessages)) as PackageManagerMessages ?? _none;  } }
+
+        public static implicit operator PackageManagerMessages(Task task) {
+            return ((CoAppTask) task);
+        }
+
+        public static implicit operator PackageManagerMessages(CoAppTask task) {
+            return (PackageManagerMessages)
+                    (task.GetMessageHandler(typeof (PackageManagerMessages)) ?? (task.MessageHandlers = new PackageManagerMessages()));
+        }
+
+        public Action<PackageInstallerMessage, object, int> InstallerMessage;
+        public Action<long> DownloadProgress;
+    }
+    */
 
     public class PackageManager {
         private readonly List<Package> _acquirePackageQueue = new List<Package>();
         private readonly List<Package> _installQueue = new List<Package>();
-        private CancellationToken _cancellationToken;
 
         public CancellationToken CancellationToken {
-            get { return _cancellationToken; }
-            set {
-                _cancellationToken = value;
-                Console.WriteLine("Cache Directory: {0}",PackageManagerSettings.CoAppCacheDirectory);
-
-                TransferManager.GetTransferManager(PackageManagerSettings.CoAppCacheDirectory).CancellationToken = value;
-            }
+            get { return CoTask.CurrentCancellationToken; }
         }
+
         public IEnumerable<string> PackagesAreUpgradable = Enumerable.Empty<string>();
         public IEnumerable<string> PackagesAsSpecified = Enumerable.Empty<string>();
 
         public PackageManager() {
             MaximumPackagesToProcess = 10;
             Registrar.LoadCache();
-        }
-
-        public PackageManager(CancellationToken token) : this() {
-            CancellationToken = token;
         }
 
         public bool Pretend { get; set; }
@@ -71,18 +88,16 @@ namespace CoApp.Toolkit.Engine {
             Registrar.DeleteSystemFeedLocations(feedLocations);
         }
 
-        public Task InstallPackages(IEnumerable<string> packages, Action<PackageInstallerMessage, object, long> status = null) {
-            return Task.Factory.StartNew(() => InstallPackagesImpl(packages, status),CancellationToken, TaskCreationOptions.AttachedToParent, TaskScheduler.Default );
+        public CoTask InstallPackages(IEnumerable<string> packages, MessageHandlers messageHandlers) {
+            return CoTask.Factory.StartNew(() => InstallPackagesImpl(packages), CancellationToken, messageHandlers);
         }
 
-        private void InstallPackagesImpl(IEnumerable<string> packages, Action<PackageInstallerMessage, object, long> status = null) {
-            status = status ?? ((pim, pkg, num) => { });
-
+        private void InstallPackagesImpl(IEnumerable<string> packages) {
             if (CancellationToken.IsCancellationRequested) {
                 return;
             }
 
-            var packageFiles = Registrar.GetPackagesByName(packages,status);
+            var packageFiles = Registrar.GetPackagesByName(packages);
 
             foreach (var p in packageFiles) {
                 p.UserSpecified = true;
@@ -95,9 +110,19 @@ namespace CoApp.Toolkit.Engine {
             foreach (var p in from p in packageFiles from pas in PackagesAreUpgradable where p.CosmeticName.IsWildcardMatch(pas) select p) {
                 p.UpgradeAsNeeded = true;
             }
+            // must wait for child tasks to complete any scanning work
+            // TODO: fix HACK: using task.wait() instead of continuewith() 
+            // HACK HACK HACK HACK HACK HACK HACK 
+            foreach (var t in CoTask.CurrentTask.ChildTasks.ToList()) {
+                if (!t.IsCompleted) {
+                    t.Wait();
+                    Thread.Sleep(100); // this should give any continuations time to finish
+                }
+            }
+            // HACK HACK HACK HACK HACK HACK HACK 
 
             int state;
-            GetInstalledPackages(status);
+            GetInstalledPackages();
 
             do {
                 if (CancellationToken.IsCancellationRequested) {
@@ -109,13 +134,35 @@ namespace CoApp.Toolkit.Engine {
                 _installQueue.Clear();
 
                 // identify any outstanding dependencies
-                status(PackageInstallerMessage.NoticeCanSatisfyPackage, null, 0);
+                PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.NoticeCanSatisfyPackage, null, 0);
+
+                // must wait for child tasks to complete any scanning work
+                // TODO: fix HACK: using task.wait() instead of continuewith() 
+                // HACK HACK HACK HACK HACK HACK HACK 
+                foreach (var t in CoTask.CurrentTask.ChildTasks.ToList()) {
+                    if (!t.IsCompleted) {
+                        t.Wait();
+                        Thread.Sleep(100); // this should give any continuations time to finish
+                    }
+                }
+                // HACK HACK HACK HACK HACK HACK HACK 
+
+
+
+                /*
+                CoTask.Factory.ContinueWhenAll((Task[])CoTask.CurrentTask.ChildTasks.ToArray(), (antecedents) => {
+                    Console.WriteLine("Proceeding...");
+
+                });
+                 */
+
+                
 
                 Registrar.ScanForPackages(packageFiles);
 
                 foreach (var eachPackageFile in packageFiles) {
                     try {
-                        if (CanSatisfyPackage(eachPackageFile, status)) {
+                        if (CanSatisfyPackage(eachPackageFile)) {
                             continue;
                         }
                     }
@@ -146,7 +193,7 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 if (_acquirePackageQueue.Count > 0) {
-                    status(PackageInstallerMessage.NoticeAcquiringPackages, null, 0);
+                    PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.NoticeAcquiringPackages, null, 0);
                     // ensure packages are local
 
                     // download what we don't have.
@@ -170,14 +217,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                 }
 
-                var af = new AtomFeed();
-                af.AddPackages(Registrar.Packages);
-                af.Save("test.atom.xml");
-
-                var loaded = AtomFeed.Load("test.atom.xml");
-
-
-                status(PackageInstallerMessage.NoticeInstallingPackages, null, 0);
+                PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.NoticeInstallingPackages, null, 0);
                 if (_installQueue.Count > 0) {
                     foreach (var pkg in _installQueue) {
                         try {
@@ -186,14 +226,14 @@ namespace CoApp.Toolkit.Engine {
                             }
 
                             if (!pkg.IsInstalled) {
-                                status(PackageInstallerMessage.Installing, pkg, 0);
+                                PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.Installing, pkg, 0);
 
                                 if (!Pretend) {
                                     pkg.Install((percentage) => {
-                                        status(PackageInstallerMessage.InstallProgress, pkg, percentage);
+                                        PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.InstallProgress, pkg, percentage);
                                     });
 
-                                    status(PackageInstallerMessage.InstallProgress, pkg, 100);
+                                    PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.InstallProgress, pkg, 100);
                                 }
                                 pkg.IsInstalled = true;
                             }
@@ -203,9 +243,9 @@ namespace CoApp.Toolkit.Engine {
                             if (!pkg.AllowedToSupercede) {
                                 throw; // user specified packge as critical.
                             }
-                            status(PackageInstallerMessage.FailedDependentPackageInstall, pkg, 0);
+                            PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.FailedDependentPackageInstall, pkg, 0);
                             pkg.PackageFailedInstall = true;
-                            GetInstalledPackages(status);
+                            GetInstalledPackages();
                             break; // let it try to find another package.
                         }
                     }
@@ -220,8 +260,8 @@ namespace CoApp.Toolkit.Engine {
             } while (Registrar.StateCounter != state);
         }
 
-        private bool CanSatisfyPackage(Package packageToSatisfy, Action<PackageInstallerMessage, object, long> status) {
-            status(PackageInstallerMessage.NoticeCanSatisfyPackage, packageToSatisfy, 0);
+        private bool CanSatisfyPackage(Package packageToSatisfy) {
+            PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.NoticeCanSatisfyPackage, packageToSatisfy, 0);
             packageToSatisfy.CanSatisfy = false;
 
             if (packageToSatisfy.IsInstalled) {
@@ -243,7 +283,7 @@ namespace CoApp.Toolkit.Engine {
                 if (supercedents.Count() > 0) {
                     if (packageToSatisfy.AllowedToSupercede) {
                         foreach (var supercedent in supercedents) {
-                            if (CanSatisfyPackage(supercedent, status)) {
+                            if (CanSatisfyPackage(supercedent)) {
                                 packageToSatisfy.Supercedent = supercedent;
                                 break;
                             }
@@ -266,7 +306,7 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var dependentPackage in packageToSatisfy.Dependencies) {
-                if (!CanSatisfyPackage(dependentPackage, status)) {
+                if (!CanSatisfyPackage(dependentPackage)) {
                     return false;
                 }
             }
@@ -281,46 +321,67 @@ namespace CoApp.Toolkit.Engine {
             return packageToSatisfy.CanSatisfy = true;
         }
 
-        public void RemovePackages(IEnumerable<string> packages, Action<PackageInstallerMessage, object, long> status) {
+        public CoTask RemovePackages(IEnumerable<string> packages, MessageHandlers messageHandlers = null) {
             // scan 
-            GetInstalledPackages(status);
 
-            // this is going to be too aggressive I think...
-            var packageFiles = Registrar.GetInstalledPackagesByName(packages);
+            return CoTask.Factory.StartNew(() => {
 
-            if (CancellationToken.IsCancellationRequested) {
-                return;
-            }
+                GetInstalledPackages().Wait();
 
-            foreach (var p in packageFiles) {
+                // this is going to be too aggressive I think...
+                var packageFiles = Registrar.GetInstalledPackagesByName(packages);
+
                 if (CancellationToken.IsCancellationRequested) {
                     return;
                 }
 
-                if (!p.IsInstalled) {
-                    throw new PackageIsNotInstalledException(p);
-                }
-            }
+                foreach (var p in packageFiles) {
+                    if (CancellationToken.IsCancellationRequested) {
+                        return;
+                    }
 
-            foreach (var p in packageFiles) {
-                if (CancellationToken.IsCancellationRequested) {
-                    return;
+                    if (!p.IsInstalled) {
+                        throw new PackageIsNotInstalledException(p);
+                    }
                 }
 
-                status(PackageInstallerMessage.Removing, p, 0);
-                if (!Pretend) {
-                    p.Remove((percentage) => {
-                        status(PackageInstallerMessage.RemoveProgress, p, percentage);
-                    });
+                foreach (var p in packageFiles) {
+                    if (CancellationToken.IsCancellationRequested) {
+                        return;
+                    }
+
+                    PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.Removing, p, 0);
+                    if (!Pretend) {
+                        p.Remove((percentage) => {
+                            PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.RemoveProgress, p, percentage);
+                        });
+                    }
+                    PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.RemoveProgress, p, 100);
                 }
-                status(PackageInstallerMessage.RemoveProgress, p, 100);
-            }
+            },messageHandlers);
         }
 
-        public IEnumerable<Package> GetInstalledPackages(Action<PackageInstallerMessage, object, long> status) {
-            MSIBase.ScanInstalledMSIs(status,CancellationToken);
-            Registrar.SaveCache();
-            return Registrar.InstalledPackages;
+        public Tasks.CoTask<IEnumerable<Package>> GetInstalledPackages(MessageHandlers messageHandlers = null) {
+            return CoTask.Factory.StartNew<IEnumerable<Package>>(() => { 
+                MSIBase.ScanInstalledMSIs();
+                Registrar.SaveCache();
+                return Registrar.InstalledPackages;
+            },messageHandlers);
+        }
+
+        public void GenerateAtomFeed(string outputFilename, string packageSource, bool recursive,  string rootUrl, string packageUrl, string actualUrl = null, string title = null) {
+            outputFilename = Path.GetFullPath(outputFilename);
+            PackageFeed.GetPackageFeedFromLocation(packageSource,recursive).ContinueWith(antecedent => {
+                var packageFeed = antecedent.Result;
+
+                AtomFeed generatedFeed = new AtomFeed(outputFilename, rootUrl, packageUrl, actualUrl, title);
+
+                foreach (var pkg in packageFeed.FindPackages("*")) {
+                    generatedFeed.AddPackage(pkg, packageFeed.Location.RelativePathTo(pkg.LocalPackagePath));
+                }
+                generatedFeed.Save(outputFilename);
+
+            }).Wait();
         }
     }
 }

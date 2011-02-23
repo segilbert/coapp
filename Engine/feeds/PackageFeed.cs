@@ -2,12 +2,16 @@
 // <copyright company="CoApp Project">
 //     Copyright (c) 2011 Garrett Serack . All rights reserved.
 // </copyright>
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------l
 
 namespace CoApp.Toolkit.Engine.Feeds {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
+
+    //using System.Threading.Tasks;
 
     internal class PackageFeed : IComparable {
         internal static Dictionary<string, PackageFeed> AllFeeds = new Dictionary<string, PackageFeed>();
@@ -46,40 +50,55 @@ namespace CoApp.Toolkit.Engine.Feeds {
 
         #endregion
 
-        internal static PackageFeed GetPackageFeedFromLocation(string location) {
-            PackageFeed result = null;
+        internal static Tasks.CoTask<PackageFeed> GetPackageFeedFromLocation(string location, bool recursive = false) {
+            // var tcs = new TaskCompletionSource<PackageFeed>(TaskCreationOptions.AttachedToParent);
+            
+            return Tasks.CoTask<PackageFeed>.Factory.StartNew(() => {
+                PackageFeed result = null;
 
-            var info = Recognizer.Recognize(location);
+                var info = Recognizer.Recognize(location);
+                string locationKey = null;
 
-            if (info.IsPackageFeed) {
-                if (info.IsFolder) {
-                    if (AllFeeds.ContainsKey(info.FullPath)) {
-                        return AllFeeds[info.FullPath];
+                if (info.IsPackageFeed) {
+                    if (info.IsFolder) {
+                        locationKey = Path.Combine(info.FullPath, info.Wildcard ?? "*");
+                        if (AllFeeds.ContainsKey(locationKey)) {
+                            return AllFeeds[locationKey];
+                        }
+
+                        result = new DirectoryPackageFeed(info.FullPath, info.Wildcard, recursive);
                     }
+                    else if (info.IsFile) {
+                        if (AllFeeds.ContainsKey(info.FullPath)) {
+                            return AllFeeds[info.FullPath];
+                        }
 
-                    result = new DirectoryPackageFeed(info.FullPath);
+                        if (info.IsAtom) {
+                            result = new AtomPackageFeed(info.FullPath);
+                        }
+                        if (info.IsArchive) {
+                            result = new ArchivePackageFeed(info.FullPath);
+                        }
+                    }
+                        // TODO: URL based feeds
+                    else if (info.IsURL) {
+                        if (AllFeeds.ContainsKey(info.FullUrl.AbsoluteUri)) {
+                            return AllFeeds[info.FullUrl.AbsoluteUri];
+                        }
+
+                        if (info.IsAtom) {
+                            result = new AtomPackageFeed(info.FullUrl);
+                        }
+                    }
                 }
-                else if (info.IsFile) {
-                    if (AllFeeds.ContainsKey(info.FullPath)) {
-                        return AllFeeds[info.FullPath];
-                    }
 
-                    if (info.IsAtom) {
-                        result = new AtomPackageFeed(info.FullPath);
-                    }
-                    if (info.IsArchive) {
-                        result = new ArchivePackageFeed(info.FullPath);
-                    }
+                if (result != null) {
+                    result.RecognitionInfo = info;
+                    AllFeeds.Add(locationKey ?? result.Location, result);
                 }
-                // TODO: URL based feeds
-            }
 
-            if (result != null) {
-                result.RecognitionInfo = info;
-                AllFeeds.Add(result.Location, result);
-            }
-
-            return result;
+                return result;
+            });
         }
 
         internal virtual IEnumerable<Package> FindPackages(string packageFilter) {
@@ -94,11 +113,11 @@ namespace CoApp.Toolkit.Engine.Feeds {
         internal virtual IEnumerable<Package> FindPackages(Package packageFilter) {
             // this is a tad lazy. Really should do a better job in the subclass.
             return from package in FindPackages(packageFilter.Name + "*")
-                   where
-                       package.Name == packageFilter.Name &&
-                           package.Architecture == packageFilter.Architecture &&
-                               package.PublicKeyToken == packageFilter.PublicKeyToken
-                   select package;
+                where
+                    package.Name == packageFilter.Name &&
+                        package.Architecture == packageFilter.Architecture &&
+                            package.PublicKeyToken == packageFilter.PublicKeyToken
+                select package;
         }
 
         internal virtual bool DownloadPackage(Package package) {

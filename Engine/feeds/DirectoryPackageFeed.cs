@@ -13,13 +13,18 @@ namespace CoApp.Toolkit.Engine.Feeds {
 
     internal class DirectoryPackageFeed : PackageFeed {
         private readonly List<Package> _packageList = new List<Package>();
+        private readonly string _patternMatch;
+        private readonly bool _recursive;
 
-        internal DirectoryPackageFeed(string location) : base(location) {
+
+        internal DirectoryPackageFeed(string location, string patternMatch, bool recursive = false) : base(location) {
+            _patternMatch = patternMatch ?? "*";
+            _recursive = recursive;
         }
 
         protected void Scan() {
             if (!Scanned) {
-                var files = Location.DirectoryEnumerateFilesSmarter("*", SearchOption.TopDirectoryOnly, Registrar.DoNotScanLocations);
+                var files = Location.DirectoryEnumerateFilesSmarter(_patternMatch, _recursive ? SearchOption.AllDirectories: SearchOption.TopDirectoryOnly, Registrar.DoNotScanLocations);
                 files = from file in files
                     where Recognizer.Recognize(file).IsPackageFile
                     select file;

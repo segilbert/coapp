@@ -77,7 +77,6 @@ namespace CoApp.Toolkit.Engine {
                 Name = "publisher name",
                 Url = "http://foo",
                 Email = "foo@goo.com"
-
             };
         }
 
