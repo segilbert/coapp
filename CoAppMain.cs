@@ -6,6 +6,7 @@
 
 namespace CoApp.CLI {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Resources;
@@ -13,16 +14,26 @@ namespace CoApp.CLI {
     using System.Threading.Tasks;
     using Properties;
     using Toolkit.Console;
+    
     using Toolkit.Engine;
     using Toolkit.Engine.Exceptions;
     using Toolkit.Extensions;
     using Toolkit.Network;
+    using Toolkit.Tasks;
     using Toolkit.Win32;
 
     /// <summary>
     ///   Main Program for command line coapp tool
     /// </summary>
     public class CoAppMain : AsyncConsoleProgram {
+        private string feedOutputFile = null;
+        private string feedRootUrl = null;
+        private string feedActualUrl = null;
+        private string feedPackageSource = null;
+        private bool feedRecursive = false;
+        private string feedPackageUrl = null;
+        private string feedTitle = null;
+        
         protected PackageManager _pkgManager;
 
         protected override ResourceManager Res {
@@ -53,9 +64,11 @@ namespace CoApp.CLI {
         /// </returns>
         protected override int Main(IEnumerable<string> args) {
             try {
-                _pkgManager = new PackageManager(CancellationTokenSource.Token);
+                _pkgManager = new PackageManager();
 
                 bool waitforbreak = false;
+                
+
 
                 #region commane line parsing
 
@@ -124,6 +137,28 @@ namespace CoApp.CLI {
                             this.Assembly().SetLogo(string.Empty);
                             break;
 
+                        case "feed-output-file":
+                            feedOutputFile = argumentParameters.LastOrDefault();
+                            break;
+                        case "feed-root-url":
+                            feedRootUrl = argumentParameters.LastOrDefault();
+                            break;
+                        case "feed-actual-url":
+                            feedActualUrl = argumentParameters.LastOrDefault();
+                            break;
+                        case "feed-package-source":
+                            feedPackageSource = argumentParameters.LastOrDefault();
+                            break;
+                        case "feed-recursive":
+                            feedRecursive = true;
+                            break;
+                        case "feed-package-url":
+                            feedPackageUrl = argumentParameters.LastOrDefault();
+                            break;
+                        case "feed-title":
+                            feedTitle = argumentParameters.LastOrDefault();
+                            break;
+
                         case "help":
                             return Help();
 
@@ -144,11 +179,16 @@ namespace CoApp.CLI {
                 parameters = parameters.Skip(1);
 
                 switch (command) {
-                    case "nothing":
+                    case "download":
                         var remoteFileUri = new Uri(parameters.First());
 
                         // create the remote file reference 
                         var remoteFile = new RemoteFile(remoteFileUri, CancellationTokenSource.Token);
+
+                        var previewTask = remoteFile.Preview();
+
+                        previewTask.Wait();
+
 
                         // Tell it to download it 
                         var getTask = remoteFile.Get();
@@ -163,62 +203,15 @@ namespace CoApp.CLI {
                         getTask.ContinueWith(t => {
                             // this executes when the Get() operation completes.
                             Console.WriteLine("File {0} has finished downloading", remoteFile.LocalFullPath);
-                        });
-
-                        /*
-                        getTask.ProgressChanged = (value) => {
-                            Console.Write(value <= 100 ? "..{0}% " : "bytes: [{0}]", value);
-                        };
-
-                        long p = f.Progress;
-                        
-                        while( !getTask.IsCompleted ) {
-                          /*
-                            OnValueChanged(f.Progress, (value) => {
-                                Console.Write(value <= 100 ? "..{0}% " : "bytes: [{0}]", value);
-                            });
-                            
-
-
-                            
-
-                            if( p != f.Progress) {
-                                p = f.Progress;
-                                Console.Write(p  <= 100 ? "..{0}% " : "bytes: [{0}]", p);
-                            }
-                            Thread.Sleep(100);
-                        }
-                        */
-
-                        getTask.Wait();
-
-                        /*
-                        var chc = new CachingHttpClient(Path.GetFullPath("."));
-
-                        var t = chc.PreviewFile(new Uri(parameters.First())).ContinueWith(result => {
-                            Console.WriteLine("1. Preview: Status Code[{0}] State[{1}] LocalPath[{2}]", result.Result.StatusCode,
-                                result.Result.State, result.Result.LocalFullPath);
-                            
                         }, TaskContinuationOptions.AttachedToParent);
 
-                        chc.DownloadFile(new Uri(parameters.First()), progress => {
-                            if (progress <= 100) {
-                                Console.Write("..{0}% ", progress);
-                            }
-                            else {
-                                Console.Write("bytes: [{0}]", progress);
-                            }
-                        }).ContinueWith(
-                            result => {
-                                Console.WriteLine("2. Download: Status Code[{0}] State[{1}] LocalPath[{2}]", result.Result.StatusCode,
-                                    result.Result.State, result.Result.LocalFullPath);
-                                waitforbreak = false;
-                            }, TaskContinuationOptions.AttachedToParent);
+                        getTask.Wait();
+                        break;
 
-                        Thread.Sleep(2000);
-                         * )
-                        */
-                        ;
+                    case "verify-package":
+                        var r = Toolkit.Crypto.Verifier.HasValidSignature(parameters.First());
+                        Console.WriteLine("Has Valid Signature: {0}",r);
+                        Console.WriteLine("Name: {0}", Toolkit.Crypto.Verifier.GetPublisherInformation(parameters.First())["PublisherName"]);
                         break;
 
                     case "install":
@@ -233,7 +226,7 @@ namespace CoApp.CLI {
                         if (parameters.Count() < 1) {
                             throw new ConsoleException(Resources.RemoveRequiresPackageName);
                         }
-                        TaskAdd(() => Remove(parameters));
+                        CoTask.Factory.StartNew(() => Remove(parameters));
                         break;
 
                     case "list":
@@ -260,21 +253,21 @@ namespace CoApp.CLI {
                             throw new ConsoleException(Resources.MissingParameterForUpgrade);
                         }
 
-                        TaskAdd(() => Upgrade(parameters));
+                        CoTask.Factory.StartNew(() => Upgrade(parameters));
                         break;
 
                     case "add":
                         if (parameters.Count() < 1) {
                             throw new ConsoleException(Resources.AddFeedRequiresLocation);
                         }
-                        TaskAdd(() => AddFeed(parameters));
+                        CoTask.Factory.StartNew(() => AddFeed(parameters));
                         break;
 
                     case "delete":
                         if (parameters.Count() < 1) {
                             throw new ConsoleException(Resources.DeleteFeedRequiresLocation);
                         }
-                        TaskAdd(() => DeleteFeed(parameters));
+                        CoTask.Factory.StartNew(() => DeleteFeed(parameters));
                         break;
 
                     case "trim":
@@ -282,7 +275,11 @@ namespace CoApp.CLI {
                             throw new ConsoleException(Resources.TrimErrorMessage);
                         }
 
-                        TaskAdd(() => Trim(parameters));
+                        CoTask.Factory.StartNew(() => Trim(parameters));
+                        break;
+
+                    case "generate-feed":
+                        CoTask.Factory.StartNew(() => GenerateFeed(parameters));
                         break;
 
                     default:
@@ -301,23 +298,35 @@ namespace CoApp.CLI {
         }
 
         private void ListPackages(IEnumerable<string> parameters) {
-            var pkgsInstalled = _pkgManager.GetInstalledPackages((packageInstallerMessage, package, percentage) => {
-                // status
-                switch (packageInstallerMessage) {
-                    case PackageInstallerMessage.Scanning:
-                        "Scanning: ".PrintProgressBar(percentage);
-                        break;
+            Task<IEnumerable<Package>> x = _pkgManager.GetInstalledPackages(new PackageManagerMessages {
+                InstallerMessage = (packageInstallerMessage, package, percentage) => {
+                    // status
+                    switch (packageInstallerMessage) {
+                        case PackageInstallerMessage.Scanning:
+                            "Scanning: ".PrintProgressBar(percentage);
+                            break;
+                    }
                 }
             });
-            " ".PrintProgressBar(-1);
-            Console.WriteLine("\r");
-            if (pkgsInstalled.Count() > 0) {
-                Console.WriteLine("\rPackages currently installed:");
-                pkgsInstalled.ToTable(new[] {"CosmeticName", "LocalPackagePath", "PublicKeyToken"}).Dump(new[]
-                {"Name", "Installer", "Public Key Token"});
-            }
-            else {
-                Console.WriteLine("\rThere are no packages currently installed.");
+
+            var z = x.ContinueWith((antecedent) => {
+
+                var pkgsInstalled = antecedent.Result;
+                " ".PrintProgressBar(-1);
+                Console.WriteLine("\r");
+
+                if (pkgsInstalled.Count() > 0) {
+                    Console.WriteLine("\rPackages currently installed:");
+                    pkgsInstalled.ToTable(new[] {"CosmeticName", "LocalPackagePath", "PublicKeyToken"}).Dump(new[]
+                    {"Name", "Installer", "Public Key Token"});
+                }
+                else {
+                    Console.WriteLine("\rThere are no packages currently installed.");
+                }
+            });
+
+            while( !z.IsCompleted ) {
+                Thread.Sleep(100);
             }
         }
 
@@ -329,21 +338,23 @@ namespace CoApp.CLI {
                 }
 
                 var maxPercent = 0L;
-                _pkgManager.RemovePackages(parameters, (packageInstallerMessage, payload, progress) => {
-                    // status
-                    var package = payload as Package;
-                    switch (packageInstallerMessage) {
-                        case PackageInstallerMessage.Removing:
-                            Console.Write("\r\nRemoving: {0}", package.CosmeticName);
-                            maxPercent = 0;
-                            break;
+                _pkgManager.RemovePackages(parameters, new PackageManagerMessages {
+                    InstallerMessage = (packageInstallerMessage, payload, progress) => {
+                        // status
+                        var package = payload as Package;
+                        switch (packageInstallerMessage) {
+                            case PackageInstallerMessage.Removing:
+                                Console.Write("\r\nRemoving: {0}", package.CosmeticName);
+                                maxPercent = 0;
+                                break;
 
-                        case PackageInstallerMessage.RemoveProgress:
-                            if (progress > maxPercent) {
-                                "Removing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
-                                maxPercent = progress;
-                            }
-                            break;
+                            case PackageInstallerMessage.RemoveProgress:
+                                if (progress > maxPercent) {
+                                    "Removing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                                    maxPercent = progress;
+                                }
+                                break;
+                        }
                     }
                 });
             }
@@ -367,7 +378,7 @@ namespace CoApp.CLI {
                 }
             }
         }
-
+       
         private void Install(IEnumerable<string> parameters) {
             if (!AdminPrivilege.IsRunAsAdmin) {
                 throw new ConsoleException(
@@ -375,48 +386,50 @@ namespace CoApp.CLI {
             }
 
             var maxPercent = 0L;
-            var t = _pkgManager.InstallPackages(parameters, (packageInstallerMessage, payload, progress) => {
-                // status
-                var package = payload as Package;
-                switch (packageInstallerMessage) {
-                    case PackageInstallerMessage.Installing:
-                        Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
-                        maxPercent = 0;
-                        break;
+            var t = _pkgManager.InstallPackages(parameters, new PackageManagerMessages {
+                InstallerMessage = (packageInstallerMessage, payload, progress) => {
+                    // status
+                    var package = payload as Package;
+                    switch (packageInstallerMessage) {
+                        case PackageInstallerMessage.Installing:
+                            Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
+                            maxPercent = 0;
+                            break;
 
-                    case PackageInstallerMessage.InstallProgress:
-                        if (progress > maxPercent) {
-                            "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
-                            maxPercent = progress;
-                        }
-                        break;
+                        case PackageInstallerMessage.InstallProgress:
+                            if (progress > maxPercent) {
+                                "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                                maxPercent = progress;
+                            }
+                            break;
 
-                    case PackageInstallerMessage.DownloadingUrl:
-                        maxPercent = 0L;
-                        break;
+                        case PackageInstallerMessage.DownloadingUrl:
+                            maxPercent = 0L;
+                            break;
 
-                    case PackageInstallerMessage.DownloadUrlProgress:
-                        if (progress > maxPercent) {
-                            "Downloading: {0}".format(payload.ToString()).PrintProgressBar(progress);
-                            maxPercent = progress;
-                            // TODO: this probably looks like hell when downloading multiple packages concurrently.
-                        }
-                        break;
+                        case PackageInstallerMessage.DownloadUrlProgress:
+                            if (progress > maxPercent) {
+                                "Downloading: {0}".format(payload.ToString()).PrintProgressBar(progress);
+                                maxPercent = progress;
+                                // TODO: this probably looks like hell when downloading multiple packages concurrently.
+                            }
+                            break;
 
-                    case PackageInstallerMessage.DownloadingPackage:
-                        maxPercent = 0L;
-                        break;
+                        case PackageInstallerMessage.DownloadingPackage:
+                            maxPercent = 0L;
+                            break;
 
-                    case PackageInstallerMessage.DownloadPackageProgress:
-                        if (progress > maxPercent) {
-                            "Downloading: {0}".format(package.CosmeticName).PrintProgressBar(progress);
-                            maxPercent = progress;
-                            // TODO: this probably looks like hell when downloading multiple packages concurrently.
-                        }
-                        break;
+                        case PackageInstallerMessage.DownloadPackageProgress:
+                            if (progress > maxPercent) {
+                                "Downloading: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                                maxPercent = progress;
+                                // TODO: this probably looks like hell when downloading multiple packages concurrently.
+                            }
+                            break;
+                    }
                 }
             });
-
+            
             try {
                 t.Wait(); // waiting for the task to finish.
                 // success means that this doesn't throw an exception.
@@ -517,6 +530,19 @@ namespace CoApp.CLI {
             try {
             }
             catch {
+            }
+        }
+
+        private void GenerateFeed(IEnumerable<string> parameters) {
+            try {
+                Console.WriteLine("...");
+                _pkgManager.GenerateAtomFeed(feedOutputFile, feedPackageSource, feedRecursive, feedRootUrl, feedPackageUrl, feedActualUrl,
+                    feedTitle);
+                Console.WriteLine("...");
+            }
+            catch(Exception e) { 
+                Console.WriteLine("stacktrace: {0}", e.StackTrace);
+                throw new ConsoleException("Failed to create Atom feed: {0}",e.Message);
             }
         }
 

@@ -71,12 +71,47 @@ Commands:
 
     Feed Utility Commands
     ----------------
-    generate-feed <outputfile>
+    generate-feed			Creates a package feed (requires feed-* options)
+	
+	Feed Generation Options (prepend with --feed- , or use a .properties file)
 
+	output-file=<f>         The file to output the feed into.
+	root-url=<url>          An absolute URL as the root for the package feed
+	actual-url=<url>        The actual URL that the feed will be (optional)
+	package-source=<dir>    the local directory to scan for packages
+	recursive				Specify if you want the package scan to recurse 
+	                        thru folders.
+
+    package-url=<url>       Url for package source. May be relative to 
+	                        root-url, or absoulte.
+	title=<feed-title>      Package Feed Title for the atom feed.
 
 
 
 random thinking:
+
+Creating a feed:
+
+	coapp --load-config=feed.properties generate-feed
+
+	feed.properties:
+
+	[feed]
+	output-file=c:\inetpub\wwwroot\package-feed.xml
+	root-url=http://coapp.org
+
+	# default for actual-url is derrived from root-url & output-file
+	# actual-url=http://coapp.org/package-feed.xml         
+
+	package-source=c:\inetpub\wwwroot\packages 
+	recursive
+	package-url=/packages/
+	
+	# or to specifiy the absolute prefix for packages, add the scheme:
+	# package-url=http://coapp.org/packages/
+
+	title=CoApp Base Packages 
+
 
 Installing from a feed:
     coapp install c:\app-feed.atom 
