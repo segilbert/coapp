@@ -11,12 +11,10 @@ namespace CoApp.Toolkit.Network {
     using Console = System.Console;
 
     public class HttpServer {
-        private string _host;
-        private int _port;
-        private HttpListener _listener = new HttpListener();
-        private Dictionary<string, string> _virtualDirs = new Dictionary<string, string>();
-
-        
+        private readonly string _host;
+        private readonly int _port;
+        private readonly HttpListener _listener = new HttpListener();
+        private readonly Dictionary<string, string> _virtualDirs = new Dictionary<string, string>();
 
         public HttpServer(string host = "*", int port = 80 ) {
             _host = host.ToLower();
@@ -34,41 +32,16 @@ namespace CoApp.Toolkit.Network {
             _virtualDirs.Add(prefix, localPath);
 
             var listenerPrefix = string.Format("http://{0}:{1}{2}", _host, _port, prefix);
-
-            Console.WriteLine("Adding Prefix: {0}",listenerPrefix);
-
             _listener.Prefixes.Add(listenerPrefix);
         }
 
         public string GetLocalPath(Uri requestUri) {
            var lp = requestUri.LocalPath.ToLower();
-
-            var xxx = (from k in _virtualDirs.Keys orderby k.Length descending select k).ToList();
-
-            foreach (var vdPrefix in from k in _virtualDirs.Keys orderby k.Length descending select k) {
-                var index = lp.IndexOf(vdPrefix);
-                if (index == 0) {
-                    var localPath = lp.Substring(vdPrefix.Length);
-                    return Path.Combine(_virtualDirs[vdPrefix], localPath);
-                }
-            }
-
             return (from vdPrefix in (from k in _virtualDirs.Keys orderby k.Length descending select k)
                     let index = lp.IndexOf(vdPrefix)
                     where index == 0
                     let localPath = lp.Substring(vdPrefix.Length)
                     select Path.Combine(_virtualDirs[vdPrefix], localPath)).FirstOrDefault();
-
-            /*
-                    foreach( var vdPrefix in from k in _virtualDirs.Keys orderby k.Length descending select k) {
-                    var index = vdPrefix.IndexOf(lp);
-                    if( index == 0 ) {
-                        var localPath = lp.Substring(0, vdPrefix.Length + 1);
-                        return Path.Combine(_virtualDirs[vdPrefix], localPath);
-                    }
-                }
-                return null;
-                */
         }
 
         public string GetDirectoryListing(string directory) {

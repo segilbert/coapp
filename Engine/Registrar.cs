@@ -388,7 +388,9 @@ namespace CoApp.Toolkit.Engine {
                         packageFiles.Add(possibleMatches.First());
                     }
                     else {
-                        throw new MultiplePackagesMatchException(item, possibleMatches);
+                        // for package matching, we only support 1 match for a given unknown.
+                        PackageManagerMessages.Invoke.MultiplePackagesMatch(item, possibleMatches);
+                        throw new OperationCompletedBeforeResultException();
                     }
                 }
             }
@@ -450,7 +452,8 @@ namespace CoApp.Toolkit.Engine {
                     }
                     else {
                         // for package matching, we only support 1 match for a given unknown.
-                        throw new MultiplePackagesMatchException(item, possibleMatches);
+                        PackageManagerMessages.Invoke.MultiplePackagesMatch(item, possibleMatches);
+                        throw new OperationCompletedBeforeResultException();
                     }
                 }
             }

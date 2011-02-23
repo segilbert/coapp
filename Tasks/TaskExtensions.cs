@@ -9,6 +9,7 @@ namespace CoApp.Toolkit.Tasks {
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Console;
 
     public static class TaskExtensions {
 
@@ -158,5 +159,13 @@ namespace CoApp.Toolkit.Tasks {
             recursiveBody(null);
         }
 
+        public static void Ignore( this AggregateException aggregateException, Type type) {
+            foreach (var exception in aggregateException.Flatten().InnerExceptions) {
+                if (exception.GetType() == type)
+                    continue;
+
+                throw new ConsoleException("Exception Caught: {0}\r\n    {1}", exception.Message, exception.StackTrace);
+            }
+        }
     }
 }

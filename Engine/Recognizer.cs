@@ -9,7 +9,6 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
-    using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
     using Feeds.Atom;
@@ -90,13 +89,7 @@ namespace CoApp.Toolkit.Engine {
 
                             if (ensureLocal) {
                                 if (!result.IsLocal) {
-                                    var t = result.RemoteFile.Get();
-
-
-                                    while( !t.IsCompleted ) {
-                                        Thread.Sleep(100);
-                                        // .Wait(); // block on this, since we're already async
-                                    }
+                                    result.RemoteFile.Get().Wait();
                                 }
 
                                 if (!result.IsLocal) {
