@@ -67,8 +67,6 @@ namespace CoApp.CLI {
                 _pkgManager = new PackageManager();
 
                 bool waitforbreak = false;
-                
-
 
                 #region commane line parsing
 
@@ -226,7 +224,7 @@ namespace CoApp.CLI {
                         if (parameters.Count() < 1) {
                             throw new ConsoleException(Resources.RemoveRequiresPackageName);
                         }
-                        CoTask.Factory.StartNew(() => Remove(parameters));
+                        Remove(parameters);
                         break;
 
                     case "list":
@@ -297,15 +295,11 @@ namespace CoApp.CLI {
             return 0;
         }
 
+
         private void ListPackages(IEnumerable<string> parameters) {
             Task<IEnumerable<Package>> x = _pkgManager.GetInstalledPackages(new PackageManagerMessages {
-                InstallerMessage = (packageInstallerMessage, package, percentage) => {
-                    // status
-                    switch (packageInstallerMessage) {
-                        case PackageInstallerMessage.Scanning:
-                            "Scanning: ".PrintProgressBar(percentage);
-                            break;
-                    }
+                PackageScanning = (progress) => {
+                    "Scanning: ".PrintProgressBar(progress);
                 }
             });
 
@@ -325,60 +319,58 @@ namespace CoApp.CLI {
                 }
             });
 
-            while( !z.IsCompleted ) {
-                Thread.Sleep(100);
-            }
+            z.Wait();
         }
 
         private void Remove(IEnumerable<string> parameters) {
-            try {
-                if (!AdminPrivilege.IsRunAsAdmin) {
-                    throw new ConsoleException(
-                        "Admin privilege is required to remove packages. \r\nPlease run as an elevated administrator.");
-                }
+            if (!AdminPrivilege.IsRunAsAdmin) {
+                throw new ConsoleException(
+                    "Admin privilege is required to remove packages. \r\nPlease run as an elevated administrator.");
+            }
 
-                var maxPercent = 0L;
-                _pkgManager.RemovePackages(parameters, new PackageManagerMessages {
-                    InstallerMessage = (packageInstallerMessage, payload, progress) => {
-                        // status
-                        var package = payload as Package;
-                        switch (packageInstallerMessage) {
-                            case PackageInstallerMessage.Removing:
-                                Console.Write("\r\nRemoving: {0}", package.CosmeticName);
-                                maxPercent = 0;
-                                break;
+            var maxPercent = 0L;
+            var task = _pkgManager.RemovePackages(parameters, new PackageManagerMessages {
+                RemovingPackage = (package) => {
+                    Console.Write("\r\nRemoving: {0}", package.CosmeticName);
+                    maxPercent = 0;
+                },
 
-                            case PackageInstallerMessage.RemoveProgress:
-                                if (progress > maxPercent) {
-                                    "Removing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
-                                    maxPercent = progress;
-                                }
-                                break;
-                        }
+                RemovingProgress = (package, progress) => {
+                    if (progress > maxPercent) {
+                        "Removing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                        maxPercent = progress;
                     }
-                });
+                },
+
+                MultiplePackagesMatch = (packageMask, packages) => {
+                    Console.WriteLine(Resources.PackageHasMultipleMatches, packageMask);
+                    foreach (var pkg in packages) {
+                        Console.WriteLine(@"   {0}", pkg.CosmeticName);
+                    }
+                },
+
+                PackageRemoveFailed = (package) => {
+                    Console.WriteLine("Remove of package {0} failed:", package.CosmeticName);
+                    Console.WriteLine("    File: {0} :", package.LocalPackagePath);
+                },
+
+                PackageNotFound = (packageMask) => {
+                    Console.WriteLine(Resources.PackageNotFound, packageMask);
+                },
+
+                PackageIsNotInstalled = (package) => {
+                    Console.WriteLine("The package {0} is not currently installed", package.CosmeticName);
+                },
+            });
+
+            try {
+                task.Wait();
             }
-            catch (PackageRemoveFailedException puif) {
-                Console.WriteLine("Remove of package {0} failed:", puif.FailedPackage.CosmeticName);
-                Console.WriteLine("    File: {0} :", puif.FailedPackage.LocalPackagePath);
-            }
-            catch (PackageNotFoundException pnf) {
-                Console.WriteLine(Resources.PackageNotFound, pnf.PackagePath);
-            }
-            catch (PackageNotInstalledException pni) {
-                Console.WriteLine(Resources.PackageNotFound, pni.NotInstalledPackage);
-            }
-            catch (PackageIsNotInstalledException pini) {
-                Console.WriteLine("The package {0} is not currently installed", pini.Package.CosmeticName);
-            }
-            catch (MultiplePackagesMatchException mpm) {
-                Console.WriteLine(Resources.PackageHasMultipleMatches, mpm.PackageMask);
-                foreach (var pkg in mpm.PackageMatches) {
-                    Console.WriteLine(@"   {0}", pkg.CosmeticName);
-                }
+            catch (AggregateException ae) {
+                ae.Ignore(typeof (OperationCompletedBeforeResultException));
             }
         }
-       
+
         private void Install(IEnumerable<string> parameters) {
             if (!AdminPrivilege.IsRunAsAdmin) {
                 throw new ConsoleException(
@@ -387,21 +379,25 @@ namespace CoApp.CLI {
 
             var maxPercent = 0L;
             var t = _pkgManager.InstallPackages(parameters, new PackageManagerMessages {
+                InstallingPackage = (package) => {
+                    Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
+                    maxPercent = 0;
+                },
+
+                InstallProgress =  (package,progress) => {
+                    if (progress > maxPercent) {
+                        "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                        maxPercent = progress;
+                    }    
+                },
+
+                
+                
+                
                 InstallerMessage = (packageInstallerMessage, payload, progress) => {
                     // status
                     var package = payload as Package;
                     switch (packageInstallerMessage) {
-                        case PackageInstallerMessage.Installing:
-                            Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
-                            maxPercent = 0;
-                            break;
-
-                        case PackageInstallerMessage.InstallProgress:
-                            if (progress > maxPercent) {
-                                "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
-                                maxPercent = progress;
-                            }
-                            break;
 
                         case PackageInstallerMessage.DownloadingUrl:
                             maxPercent = 0L;
