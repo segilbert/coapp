@@ -183,7 +183,7 @@
       </xs:attribute>
       <xs:attribute name="Location" type="xs:anyURI" use="optional"/>
       <xs:attribute name="Email" type="xs:string" use="optional"/>
-      <xs:attribute name="directory_id" type="xs:string"/>
+      <xs:attribute name="directory_id" type="xs:string" use="optional"/>
       <xs:attribute name="location_id" type="Guid" use="optional"/>
     </xs:complexType>
   </xs:element>
@@ -377,8 +377,9 @@
           <!-- restrict this to valid types-->
           <xs:attribute name="type" type="xs:string"/>
           <!-- restrict this to valid archs-->
+          <!--
           <xs:attribute name="Arch" type="Arch" use="required"/>
-          <xs:attribute name="Platform" type="xs:string" use="required"/>
+          <xs:attribute name="Platform" type="xs:string" use="required"/>-->
         </xs:extension>            
       </xs:complexContent>
     </xs:complexType>
@@ -394,8 +395,8 @@
       <!-- restrict this to valid types-->
       <xs:attribute name="type" type="xs:string"/>
       <!-- restrict this to valid archs-->
-      <xs:attribute name="Arch" type="Arch" use="required"/>
-      <xs:attribute name="Platform" type="xs:string" use="required"/>
+      <!--<xs:attribute name="Arch" type="Arch" use="required"/>
+      <xs:attribute name="Platform" type="xs:string" use="required"/>-->
       <xs:attribute name="Src" type="xs:string">
         <xs:annotation>
           <xs:documentation>
