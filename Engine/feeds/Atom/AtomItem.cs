@@ -8,6 +8,7 @@
 namespace CoApp.Toolkit.Engine.Feeds.Atom {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.ServiceModel.Syndication;
     using System.Xml.Serialization;
@@ -77,9 +78,12 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             public string PublicKeyToken;
             public UInt64 BindingPolicyMinVersion;
             public UInt64 BindingPolicyMaxVersion;
-            public string[] Dependencies;
-            public string[] Locations;
             public string Icon;
+            public string RelativeLocation;
+            public string Filename;
+
+            public string[] Locations;
+            public string[] Dependencies;
         }
 
         public AtomItem() {
@@ -92,7 +96,7 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             return packageElement != null;
         }
 
-        public void Populate(Package package) {
+        public void Populate(Package package, string relativeLocation, string packageUrlPrefix) {
             _package = package;
 
             Id = package.ProductCode;
@@ -137,23 +141,19 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             packageElement.BindingPolicyMinVersion = package.PolicyMinimumVersion;
             packageElement.PublicKeyToken = package.PublicKeyToken;
             packageElement.Dependencies = package.Dependencies.Select(p => p.ProductCode).ToArray();
+            packageElement.RelativeLocation = relativeLocation;
+            packageElement.Filename = Path.GetFileName(package.LocalPackagePath);
 
             var link = CreateLink();
-            link.Uri = new Uri("http://localhost:8080/package/package-on-this-server.msi");
+
+            link.Uri = new Uri(new Uri(packageUrlPrefix), packageElement.Filename);
             Links.Add(link);
 
             link = CreateLink();
             link.RelationshipType = "enclosure";
             link.MediaType = "application/package";
-            link.Uri = new Uri("http://localhost:8080/package/package-on-this-server-too.msi");
-            link.Title = "Mr Package (here)";
-            Links.Add(link);
-
-            link = CreateLink();
-            link.RelationshipType = "enclosure";
-            link.MediaType = "application/package";
-            link.Uri = new Uri("http://original:8080/package/package-on-another-server.msi");
-            link.Title = "Original Source";
+            link.Uri = new Uri(new Uri(packageUrlPrefix), packageElement.Filename);
+            link.Title = package.Name;
             Links.Add(link);
 
             ElementExtensions.Add(packageElement, _xmlSerializer);

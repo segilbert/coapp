@@ -6,26 +6,11 @@
 
 namespace CoApp.Toolkit.Engine {
     public enum PackageInstallerMessage {
-        NoticeCanSatisfyPackage,
-        NoticeAcquiringPackages,
-        NoticeInstallingPackages,
-
-        FailedDependentPackageInstall,
-        FoundUnconnfirmedUpgradePackage,
-        IdentifyingDependents,
-
         DownloadingUrl,
         DownloadUrlProgress,
 
         DownloadingPackage,
         DownloadPackageProgress,
 
-        Installing,
-        InstallProgress,
-
-        Scanning,
-
-        Removing,
-        RemoveProgress
     };
 }

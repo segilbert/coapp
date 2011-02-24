@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
     <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs" />
+    <Compile Include="Engine\Exceptions\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs" />
     <Compile Include="Engine\Exceptions\ConfigurationException.cs" />
     <Compile Include="Engine\Exceptions\PackageInstallFailedException.cs" />

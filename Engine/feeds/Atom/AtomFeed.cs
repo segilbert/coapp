@@ -15,21 +15,45 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
 
     public class AtomFeed : SyndicationFeed {
         private readonly List<AtomItem> _items = new List<AtomItem>();
+        private readonly string _outputFilename;
+        private readonly string _packageUrlPrefix;
+        private readonly string _actualUrl;
+        private readonly string _rootUrl;
 
         public AtomFeed() {
-            Title = new TextSyndicationContent( "CoApp Package Feed" );
             LastUpdatedTime = DateTime.Now;
         }
+        /* 
+         output-file=<f>        
+         root-url=<url>         
+         package-source=<dir>   
+         package-url=<url>     
+         
+         actual-url=<url>       
+         recursive				
+         title=<title>
+         */
 
-        public void Populate() {
-            var link = CreateLink();
-            link.RelationshipType = "self";
-            link.MediaType = "application/atom+xml";
-            link.Title = "Feed Location";
-            link.Uri = new Uri("http://localhost:8080/atom.xml");
-            Links.Add(link);
+        public AtomFeed(string outputFilename, string rootUrl, string packageUrl, string actualUrl = null, string title = null): this() {
+            Title = new TextSyndicationContent(title ?? "CoApp Package Feed");
+            
+            _rootUrl = rootUrl.EndsWith("/") ? rootUrl : rootUrl + "/";
+            _actualUrl = actualUrl ?? _rootUrl + Path.GetFileName(outputFilename);
+
+            if( !packageUrl.Contains("://")) {
+                packageUrl = _rootUrl + (packageUrl.StartsWith("/") ? packageUrl.Substring(1) : packageUrl);
+            }
+            _packageUrlPrefix = (packageUrl.EndsWith("/") ? packageUrl : packageUrl+"/");
+
+            var selfLink = CreateLink();
+            selfLink.RelationshipType = "self";
+            selfLink.MediaType = "application/atom+xml";
+            selfLink.Title = "Feed Location";
+            selfLink.Uri = new Uri(_actualUrl);
+            Links.Add(selfLink);
 
             Generator = "CoAppEngine";
+            _outputFilename = outputFilename;
         }
 
         public static AtomFeed Load(string localPath) {
@@ -50,6 +74,10 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             return null;
         }
 
+        public void Save() {
+            Save(_outputFilename);
+        }
+
         public void Save(string localPath ) {
             using (var ms = new MemoryStream()) {
                 var writer = XmlWriter.Create(ms);
@@ -67,9 +95,9 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
                 AddPackage(p);
         }
 
-        public void AddPackage(Package package) {
+        public void AddPackage(Package package, string relativePath = null) {
             var item = CreateItem() as AtomItem;
-            item.Populate(package);
+            item.Populate(package, relativePath, _packageUrlPrefix);
 
             // TODO: set lastupdatedtime to the last package timestamp?
             _items.Add(item);

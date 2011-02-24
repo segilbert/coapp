@@ -77,7 +77,6 @@ namespace CoApp.Toolkit.Engine {
                 Name = "publisher name",
                 Url = "http://foo",
                 Email = "foo@goo.com"
-
             };
         }
 
@@ -218,7 +217,8 @@ namespace CoApp.Toolkit.Engine {
                 _isInstalled = false;
             }
             catch {
-                throw new PackageRemoveFailedException(this);
+                PackageManagerMessages.Invoke.PackageRemoveFailed(this);
+                throw new OperationCompletedBeforeResultException();
             }
         }
     }

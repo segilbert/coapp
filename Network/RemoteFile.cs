@@ -9,6 +9,8 @@ namespace CoApp.Toolkit.Network {
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
+    using System.Net.Configuration;
+    using System.Reflection;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
@@ -24,11 +26,6 @@ namespace CoApp.Toolkit.Network {
         private static readonly Regex _encodedValueRegex = new Regex("%..");
 
         public static IEnumerable<string> ServerSideExtensions = new[] {"asp", "aspx", "php", "jsp", "cfm"};
-        private string _folder;
-        public string Folder { get { return _folder; } set { _folder = value;
-        if (LocalFullPath != null)
-            LocalFullPath = Path.Combine(value, Path.GetFileName(LocalFullPath));
-        } }
 
         public TriggeredProperty<long> DownloadProgress;
 
@@ -37,7 +34,18 @@ namespace CoApp.Toolkit.Network {
         private long _contentLength;
         private Task _currentTask;
         private TaskType _currentTaskType;
+        private string _folder;
         private DateTime _lastModified;
+
+        public string Folder {
+            get { return _folder; }
+            set {
+                _folder = value;
+                if (LocalFullPath != null) {
+                    LocalFullPath = Path.Combine(value, Path.GetFileName(LocalFullPath));
+                }
+            }
+        }
 
         public Uri RemoteLocation { get; internal set; }
 
@@ -95,6 +103,29 @@ namespace CoApp.Toolkit.Network {
             get { return ContentLength != CurrentLength; }
         }
 
+        static RemoteFile() {
+            //Get the assembly that contains the internal class 
+            Assembly aNetAssembly = Assembly.GetAssembly(typeof (SettingsSection));
+            if (aNetAssembly != null) {
+                //Use the assembly in order to get the internal type for the internal class 
+                Type aSettingsType = aNetAssembly.GetType("System.Net.Configuration.SettingsSectionInternal");
+                if (aSettingsType != null) {
+                    //Use the internal static property to get an instance of the internal settings class. 
+                    //If the static instance isn't created allready the property will create it for us. 
+                    object anInstance = aSettingsType.InvokeMember("Section",
+                        BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.NonPublic, null, null, new object[] {});
+                    if (anInstance != null) {
+                        //Locate the private bool field that tells the framework is unsafe header parsing should be allowed or not 
+                        FieldInfo aUseUnsafeHeaderParsing = aSettingsType.GetField("useUnsafeHeaderParsing",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (aUseUnsafeHeaderParsing != null) {
+                            aUseUnsafeHeaderParsing.SetValue(anInstance, true);
+                        }
+                    }
+                }
+            }
+        }
+
         private RemoteFile() {
             _folder = Environment.CurrentDirectory;
             _lastModified = DateTime.MinValue;
@@ -121,6 +152,29 @@ namespace CoApp.Toolkit.Network {
 
         public RemoteFile(Uri remoteLocation, string localFolder, CancellationToken cancellationToken) : this(remoteLocation, localFolder) {
             CancellationToken = cancellationToken;
+        }
+
+        private static void SetUnsafeHeaderParsing() {
+            //Get the assembly that contains the internal class 
+            Assembly aNetAssembly = Assembly.GetAssembly(typeof (SettingsSection));
+            if (aNetAssembly != null) {
+                //Use the assembly in order to get the internal type for the internal class 
+                Type aSettingsType = aNetAssembly.GetType("System.Net.Configuration.SettingsSectionInternal");
+                if (aSettingsType != null) {
+                    //Use the internal static property to get an instance of the internal settings class. 
+                    //If the static instance isn't created allready the property will create it for us. 
+                    object anInstance = aSettingsType.InvokeMember("Section",
+                        BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.NonPublic, null, null, new object[] {});
+                    if (anInstance != null) {
+                        //Locate the private bool field that tells the framework is unsafe header parsing should be allowed or not 
+                        FieldInfo aUseUnsafeHeaderParsing = aSettingsType.GetField("useUnsafeHeaderParsing",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (aUseUnsafeHeaderParsing != null) {
+                            aUseUnsafeHeaderParsing.SetValue(anInstance, true);
+                        }
+                    }
+                }
+            }
         }
 
         private void Cancel() {
@@ -162,7 +216,7 @@ namespace CoApp.Toolkit.Network {
                 }
 
                 if (_currentTaskType != TaskType.None) {
-                    return _currentTask.ContinueWithParent(antecedent => publicOperation().Wait());
+                    return _currentTask.ContinueWith(antecedent => publicOperation().Wait(), TaskContinuationOptions.AttachedToParent);
                 }
                 _currentTaskType = type;
                 return _currentTask = privateOperation();
@@ -193,8 +247,8 @@ namespace CoApp.Toolkit.Network {
                 return CancelledTask();
             }
 
-            return
-                Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(
+            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this,
+                TaskCreationOptions.AttachedToParent).ContinueWith(
                     asyncResult => {
                         try {
                             if (IsCancelled) {
@@ -273,7 +327,7 @@ namespace CoApp.Toolkit.Network {
                 case SchemeFtp:
                     return GetImplFtp(resumeExistingDownload);
             }
-            throw new ProtocolViolationException();
+            throw new Exception("FTP/HTTP/HTTPS only");
         }
 
         private Task GetImplHttp(bool resumeExistingDownload = true) {
@@ -285,10 +339,12 @@ namespace CoApp.Toolkit.Network {
                 return CancelledTask();
             }
 
-            return
-                Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(
+            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this,
+                TaskCreationOptions.AttachedToParent).ContinueWith(
                     asyncResult => {
                         try {
+                            var v = webRequest;
+
                             if (IsCancelled) {
                                 Cancel();
                             }
@@ -317,6 +373,7 @@ namespace CoApp.Toolkit.Network {
                                         Cancel();
                                     }
 
+                                    // var tcs = Task.Factory.CreateTaskCompletionSource<HttpWebResponse>();
                                     var tcs = new TaskCompletionSource<HttpWebResponse>(TaskCreationOptions.AttachedToParent);
                                     tcs.Iterate(AsyncReadImpl(tcs, httpWebResponse));
                                     return;
@@ -328,8 +385,7 @@ namespace CoApp.Toolkit.Network {
                                 }
                             }
                             // this is not good. 
-                            // throw new Exception("Status Code other than OK");
-                            Complete();
+                            throw new Exception("Status Code other than OK");
                         }
                         catch (WebException e) {
                             try {
@@ -340,6 +396,20 @@ namespace CoApp.Toolkit.Network {
                                 LastStatus = HttpStatusCode.NotFound;
                             }
                             Complete();
+                        }
+                        catch (AggregateException ae) {
+                            foreach (var e in ae.InnerExceptions) {
+                                Console.WriteLine("BAD ERROR: {0}\r\n{1}", e.Message, e.StackTrace);
+                                LastStatus = HttpStatusCode.NotFound;
+                            }
+                            Complete();
+                            return;
+                        }
+                        catch (Exception e) {
+                            Console.WriteLine("BAD ERROR: {0}\r\n{1}", e.Message, e.StackTrace);
+                            LastStatus = HttpStatusCode.NotFound;
+                            Complete();
+                            return;
                         }
                         Console.WriteLine("Really? It gets here?");
                         Complete();
@@ -451,7 +521,7 @@ namespace CoApp.Toolkit.Network {
 
             if (string.IsNullOrEmpty(fname)) {
                 fname = _uriRegex.Replace(ActualRemoteLocation.AbsoluteUri, "");
-                fname = _encodedValueRegex.Replace(fname, "#").Replace('/', '-') + "$DEFAULT";
+                fname = _encodedValueRegex.Replace(fname, "#").Replace('/', '-').Replace(':', '-') + "$DEFAULT";
             }
             GenerateLocalFilename(fname);
         }

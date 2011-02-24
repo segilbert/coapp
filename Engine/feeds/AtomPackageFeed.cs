@@ -5,12 +5,24 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Engine.Feeds {
+    using System;
     using System.Linq;
 
     internal class AtomPackageFeed : PackageFeed {
         internal AtomPackageFeed(string location)
             : base(location) {
             
+        }
+
+        internal AtomPackageFeed(Uri location)
+            : base(location.AbsoluteUri) {
+
+        }
+
+
+        protected void Scan() {
+            if (!Scanned) {
+            }
         }
 
         internal override bool DownloadPackage(Package package) {

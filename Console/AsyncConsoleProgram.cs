@@ -12,6 +12,7 @@ namespace CoApp.Toolkit.Console {
     using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
+    using Tasks;
 
     public abstract class AsyncConsoleProgram {
         protected abstract ResourceManager Res { get; }
@@ -19,16 +20,8 @@ namespace CoApp.Toolkit.Console {
         protected abstract int Main(IEnumerable<string> args);
         protected CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 
-        /// <summary>
-        /// Adds the new action to the parent task
-        /// </summary>
-        /// <param name="action"></param>
-        protected void TaskAdd(Action action) {
-            Task.Factory.StartNew(action, TaskCreationOptions.AttachedToParent);
-        }
-
         protected virtual int Startup(IEnumerable<string> args) {
-            var task = Task.Factory.StartNew(() => { Main(args); }, CancellationTokenSource.Token);
+            var task = CoTask.Factory.StartNew(() => { Main(args); }, CancellationTokenSource.Token);
             try {
                 Console.CancelKeyPress += (x, y) => {
                     if (!CancellationTokenSource.IsCancellationRequested) {

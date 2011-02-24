@@ -9,6 +9,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
+    using System.Threading.Tasks;
     using Extensions;
     using Feeds.Atom;
     using Network;
@@ -21,10 +22,12 @@ namespace CoApp.Toolkit.Engine {
 
         private static readonly Dictionary<string, RecognitionInfo> _cache = new Dictionary<string, RecognitionInfo>();
 
-        internal static RecognitionInfo Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal=false ) {
+        internal static RecognitionInfo Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal = false) {
             if (_cache.ContainsKey(item)) {
                 return _cache[item];
             }
+
+            baseDirectory = baseDirectory ?? Environment.CurrentDirectory;
 
             var result = new RecognitionInfo();
 
@@ -52,6 +55,8 @@ namespace CoApp.Toolkit.Engine {
                 result.IsOpenwrapPackage = true;
             }
 
+            
+
             // Is this an URL of some kind?
             if (result.IsUnknown) {
                 try {
@@ -68,45 +73,70 @@ namespace CoApp.Toolkit.Engine {
 
                     // for now, we've got a full URL and it looks like it point somewhere.
                     // until we attempt to retrieve the URL we really can't bank on knowing what it is.
-                    result.RemoteFile.Preview().ContinueWithParent(antecedent => {
-                        if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
-                            result.IsInvalid = true;
-                            result.Recognized.Value = true;
-                            return;
-                        }
-
-                        if( result.RemoteFile.IsRedirect ) {
-                            result.RemoteFile.Folder = _transferManager[result.RemoteFile.ActualRemoteLocation].Folder;
-                        }
-
-                        result.FullPath = result.RemoteFile.LocalFullPath;
-
-                        if (ensureLocal) {
-                            if( !result.IsLocal) {
-                                result.RemoteFile.Get().Wait(); // block on this, since we're already async
-                            }
-
-                            if( !result.IsLocal ) {
+                    if (result.IsURL) {
+                        result.RemoteFile.Preview().ContinueWith(antecedent => {
+                            if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
                                 result.IsInvalid = true;
                                 result.Recognized.Value = true;
-                                return;  
+                                return;
                             }
-                        }
 
-                        if (result.IsLocal) {
-                            var localFileInfo = Recognize(result.FullPath);
-                            // at this point, we should actually know the real file results.
-                            result.CopyDetailsFrom(localFileInfo);
-                            result.Recognized.Value = true;
-                            return;
-                        }
-                        
-                        // not local. all we can do is guess?
-                        // TODO: Implement remote guess?
-                    });
+                            if (result.RemoteFile.IsRedirect) {
+                                result.RemoteFile.Folder = _transferManager[result.RemoteFile.ActualRemoteLocation].Folder;
+                            }
 
+                            result.FullPath = result.RemoteFile.LocalFullPath;
+
+                            if (ensureLocal) {
+                                if (!result.IsLocal) {
+                                    result.RemoteFile.Get().Wait();
+                                }
+
+                                if (!result.IsLocal) {
+                                    result.IsInvalid = true;
+                                    result.Recognized.Value = true;
+                                    return;
+                                }
+                            }
+
+                            if (result.IsLocal) {
+                                var localFileInfo = Recognize(result.FullPath);
+                                // at this point, we should actually know the real file results.
+                                result.CopyDetailsFrom(localFileInfo);
+                                result.Recognized.Value = true;
+                                return;
+                            }
+
+                            // not local. all we can do is guess?
+                            // TODO: Implement remote guess?
+                        }, TaskContinuationOptions.AttachedToParent);
+                    }
                 }
-                catch {
+                catch
+                {
+                }
+            }
+
+            if (result.IsUnknown) {
+                if (item.IndexOf('?') > -1 || item.IndexOf('*') > -1) {
+                    // this has a wildcard. Past that, we don't know what it is yet.
+                    // assuming this is a local path expression:
+                    //     c:\foo\*.msi
+                    //     App*.msi          (matching in the current dir)
+                    //     packages\*
+                    var folder = baseDirectory;
+                    var lastSlash = item.LastIndexOf("\\");
+                    if (lastSlash > -1) {
+                        folder = Path.GetFullPath(item.Substring(0, lastSlash));
+                    }
+
+                    if (folder.IndexOf('?') == -1 && folder.IndexOf('*') == -1) {
+                        if (Directory.Exists(folder)) {
+                            result.IsFolder = true;
+                            result.FullPath = Path.GetFullPath(folder).ToLower();
+                            result.Wildcard = item.Substring(lastSlash + 1);
+                        }
+                    }
                 }
             }
 
@@ -149,10 +179,6 @@ namespace CoApp.Toolkit.Engine {
                             result.FullPath = Path.GetFullPath(path).ToLower();
                         }
 
-                        if (item.IndexOf('?') > -1 || item.IndexOf('*') > -1) {
-                            // this has a wildcard. Past that, we don't know what it is yet.
-                            result.IsWildcard = true;
-                        }
                     }
 
                     if (result.IsFile) {
@@ -205,8 +231,9 @@ namespace CoApp.Toolkit.Engine {
                 catch {
                 }
             }
-            if (!result.IsUnknown)
+            if (!result.IsUnknown) {
                 result.Recognized.Value = true;
+            }
 
             _cache.Add(item, result);
             return result;
@@ -215,13 +242,16 @@ namespace CoApp.Toolkit.Engine {
         #region Nested type: RecognitionInfo
 
         internal class RecognitionInfo {
-            internal bool IsWildcard { get; set; }
-            internal string FullPath { get; set; }
+            public TriggeredProperty<bool> Recognized = new TriggeredProperty<bool>(false, value => value);
             private Uri _fullUrl;
+            internal bool IsWildcard { get { return Wildcard != null; } }
+            internal string Wildcard { get; set; }
+            internal string FullPath { get; set; }
+
             internal Uri FullUrl {
                 get { return _fullUrl; }
                 set {
-                    if( value != null ) {
+                    if (value != null) {
                         RemoteFile = _transferManager[value];
                     }
                     _fullUrl = value;
@@ -261,6 +291,22 @@ namespace CoApp.Toolkit.Engine {
             internal bool IsCoAppODataService { get; set; }
             internal bool IsNugetODataService { get; set; }
 
+            internal bool IsLocal {
+                get {
+                    if (RemoteFile != null) {
+                        return RemoteFile.IsLocal;
+                    }
+
+                    if (!string.IsNullOrEmpty(FullPath)) {
+                        if (File.Exists(FullPath)) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            }
+
             internal void CopyDetailsFrom(RecognitionInfo fileInfo) {
                 FullPath = fileInfo.FullPath;
                 IsInvalid = fileInfo.IsInvalid;
@@ -274,24 +320,6 @@ namespace CoApp.Toolkit.Engine {
                 IsArchive = fileInfo.IsArchive;
                 IsAtom = fileInfo.IsAtom;
             }
-
-            internal bool IsLocal {
-                get {
-                    if (RemoteFile != null) {
-                        return RemoteFile.IsLocal;
-                    }
-
-                    if(!string.IsNullOrEmpty(FullPath)) {
-                        if( File.Exists(FullPath))
-                            return true;
-                    }
-
-                    return false;
-                }
-            }
-
-            public TriggeredProperty<bool> Recognized = new TriggeredProperty<bool>(false, value => value);
-            
         }
 
         #endregion

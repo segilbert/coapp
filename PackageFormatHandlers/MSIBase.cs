@@ -16,6 +16,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using Engine.Exceptions;
     using Extensions;
     using Microsoft.Deployment.WindowsInstaller;
+    using Tasks;
     using View = Microsoft.Deployment.WindowsInstaller.View;
 
     internal static class DataSetExtensions {
@@ -167,24 +168,16 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         }
 
         public static void ScanInstalledMSIs() {
-            ScanInstalledMSIs((pim, pkg, num) => { }, new CancellationToken());
-        }
-
-        public static void ScanInstalledMSIs(Action<PackageInstallerMessage, object, long> status) {
-            ScanInstalledMSIs(status, new CancellationToken());
-        }
-
-        public static void ScanInstalledMSIs(Action<PackageInstallerMessage, object, long> status, CancellationToken cancellationToken ) {
             var products = ProductInstallation.AllProducts;
             var n = 0;
             var total = products.Count();
             foreach (var product in products) {
                 try {
-                    if (cancellationToken.IsCancellationRequested) {
+                    if (CoTask.CurrentCancellationToken.IsCancellationRequested) {
                         return;
                     }
                     int percent = ((n++) * 100) / total;
-                    status(PackageInstallerMessage.Scanning, null, percent);
+                    PackageManagerMessages.Invoke.PackageScanning(percent);
                     Registrar.GetPackage(product.LocalPackage); // let the registrar figure out if this is a package we care about.
                 }
                 catch {

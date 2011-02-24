@@ -108,5 +108,11 @@ namespace CoApp.Toolkit.Extensions {
             foreach (var i in collection)
                 destination.Add(i);
         }
+
+        public static TValue GetOrDefault<TKey,TValue>(this Dictionary<TKey,TValue> dictionary, TKey key) {
+            TValue value;
+            dictionary.TryGetValue(key, out value);
+            return value;
+        }
     }
 }

@@ -12,19 +12,22 @@ namespace CoApp.Toolkit.Engine {
     using Exceptions;
     using Extensions;
     using Feeds;
+    using Tasks;
 
     public static class PackageExtensions {
 
         internal static void AddFeedLocation(this ObservableCollection<PackageFeed> feedCollection, string feedLocation) {
-            var pf = PackageFeed.GetPackageFeedFromLocation(feedLocation);
-            if (pf != null) {
-                if (
-                   (from feed in feedCollection
-                    where feed.Location.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase)
-                    select feed).Count() == 0) {
-                        feedCollection.Add(pf);
+            PackageFeed.GetPackageFeedFromLocation(feedLocation).ContinueWith(antecedent => {
+                if (antecedent.Result != null) {
+                    if (
+                       (from feed in feedCollection
+                        where feed.Location.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase)
+                        select feed).Count() == 0) {
+                        feedCollection.Add(antecedent.Result);
+                    }
                 }
-            }
+            }); 
+           
         }
 
         internal static IEnumerable<string> GetFeedLocations(this ObservableCollection<PackageFeed> feedCollection) {
