@@ -179,15 +179,10 @@ namespace CoApp.CLI {
                 switch (command) {
                     case "download":
                         var remoteFileUri = new Uri(parameters.First());
-
                         // create the remote file reference 
                         var remoteFile = new RemoteFile(remoteFileUri, CancellationTokenSource.Token);
-
                         var previewTask = remoteFile.Preview();
-
                         previewTask.Wait();
-
-
                         // Tell it to download it 
                         var getTask = remoteFile.Get();
 
@@ -297,15 +292,14 @@ namespace CoApp.CLI {
 
 
         private void ListPackages(IEnumerable<string> parameters) {
-            Task<IEnumerable<Package>> x = _pkgManager.GetInstalledPackages(new PackageManagerMessages {
+            _pkgManager.GetInstalledPackages(new PackageManagerMessages {
                 PackageScanning = (progress) => {
                     "Scanning: ".PrintProgressBar(progress);
                 }
-            });
-
-            var z = x.ContinueWith((antecedent) => {
+            }).ContinueWith((antecedent) => {
 
                 var pkgsInstalled = antecedent.Result;
+
                 " ".PrintProgressBar(-1);
                 Console.WriteLine("\r");
 
@@ -318,8 +312,6 @@ namespace CoApp.CLI {
                     Console.WriteLine("\rThere are no packages currently installed.");
                 }
             });
-
-            z.Wait();
         }
 
         private void Remove(IEnumerable<string> parameters) {
@@ -367,7 +359,9 @@ namespace CoApp.CLI {
                 task.Wait();
             }
             catch (AggregateException ae) {
-                ae.Ignore(typeof (OperationCompletedBeforeResultException));
+                ae.Ignore(typeof (OperationCompletedBeforeResultException), () => {
+                    Console.WriteLine("operation not complete!");
+                } );
             }
         }
 
@@ -378,54 +372,105 @@ namespace CoApp.CLI {
             }
 
             var maxPercent = 0L;
-            var t = _pkgManager.InstallPackages(parameters, new PackageManagerMessages {
+
+            var installPackagesTask = _pkgManager.InstallPackages(parameters, new PackageManagerMessages {
                 InstallingPackage = (package) => {
                     Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
                     maxPercent = 0;
                 },
 
-                InstallProgress =  (package,progress) => {
+                InstallProgress = (package, progress) => {
                     if (progress > maxPercent) {
                         "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
                         maxPercent = progress;
-                    }    
+                    }
                 },
 
-                
-                
-                
-                InstallerMessage = (packageInstallerMessage, payload, progress) => {
-                    // status
-                    var package = payload as Package;
-                    switch (packageInstallerMessage) {
+                FailedDependentPackageInstall = (package) => {
+                    // dependent package failed installation.
+                    Console.WriteLine(Resources.PackageFailedInstall, package.CosmeticName);
+                },
 
-                        case PackageInstallerMessage.DownloadingUrl:
-                            maxPercent = 0L;
-                            break;
+                PackageNotFound = (packageMask) => {
+                    Console.WriteLine(Resources.PackageNotFound, packageMask);
+                },
 
-                        case PackageInstallerMessage.DownloadUrlProgress:
-                            if (progress > maxPercent) {
-                                "Downloading: {0}".format(payload.ToString()).PrintProgressBar(progress);
-                                maxPercent = progress;
-                                // TODO: this probably looks like hell when downloading multiple packages concurrently.
-                            }
-                            break;
+                PackageHasPotentialUpgrades = (package, supercedents) => {
+                    // the user hasn't specifically asked us to supercede, yet we know of 
+                    // potential supercedents. Let's force the user to make a decision.
+                    Console.WriteLine(Resources.PackageHasPossibleNewerVersion, package);
+                    Console.WriteLine(Resources.TheFollowingPackageSupercede);
+                    Console.WriteLine(@"   [Latest] {0}", supercedents.First().CosmeticName);
 
-                        case PackageInstallerMessage.DownloadingPackage:
-                            maxPercent = 0L;
-                            break;
-
-                        case PackageInstallerMessage.DownloadPackageProgress:
-                            if (progress > maxPercent) {
-                                "Downloading: {0}".format(package.CosmeticName).PrintProgressBar(progress);
-                                maxPercent = progress;
-                                // TODO: this probably looks like hell when downloading multiple packages concurrently.
-                            }
-                            break;
+                    foreach (var pkg in supercedents.Skip(1)) {
+                        Console.WriteLine(@"            {0}", pkg.CosmeticName);
                     }
-                }
+
+                    Console.WriteLine();
+                    Console.WriteLine(Resources.AutoAcceptHint,
+                        package.CosmeticName);
+                    Console.WriteLine(Resources.AsSpecifiedHint,
+                        package.CosmeticName);
+                },
+
+                PackageNotSatisfied = (package) => {
+                    Console.WriteLine(Resources.PackageDependenciesCantInstall,
+                           package.CosmeticName);
+
+                    var depth = 0;
+                    Action<Package> printDepMap = null;
+                    printDepMap = (p => {
+                        depth++;
+                        if (!p.CanSatisfy) {
+                            var count = p.Dependencies.Count();
+                            Console.WriteLine(@"{0}{1} [{2}]", "".PadLeft(3 * depth), p.CosmeticName,
+                                count > 0
+                                    ? Resources.MissingPkgText.format(count, count > 1 ? "dependencies" : "dependency")
+                                    : p.CouldNotDownload
+                                        ? Resources.CouldNotDownload
+                                        : p.PackageFailedInstall
+                                            ? Resources.FailedToInstall
+                                            : !p.HasLocalFile ? "No local package file" : "Unknown");
+                            foreach (var dp in p.Dependencies.Where(each => !each.CanSatisfy)) {
+                                printDepMap(dp);
+                            }
+                        }
+                        depth--;
+                    });
+                    printDepMap(package);
+                },
+
+                MultiplePackagesMatch = (packageMask, packages) => {
+                    Console.WriteLine(Resources.PackageHasMultipleMatches, packageMask);
+                        foreach (var pkg in packages) {
+                            Console.WriteLine(@"   {0}", pkg.CosmeticName);
+                        }
+                },
+
+                DownloadingFile = (remoteFile) => {
+                    maxPercent = 0L;
+                },
+                DownloadingFileProgress = (remoteFile, progress) => {
+                    if (progress > maxPercent) {
+                        "Downloading: {0}".format(remoteFile.ActualRemoteLocation.AbsoluteUri).PrintProgressBar(progress);
+                        maxPercent = progress;
+                        // TODO: this probably looks like hell when downloading multiple packages concurrently.
+                    }
+                } 
+                
             });
-            
+
+            try {
+                installPackagesTask.Wait();
+            }
+            catch (AggregateException ae) {
+                ae.Ignore(typeof(OperationCompletedBeforeResultException), () => {
+                    Console.WriteLine("operation not complete!");
+                });
+
+            }
+
+            /*
             try {
                 t.Wait(); // waiting for the task to finish.
                 // success means that this doesn't throw an exception.
@@ -513,6 +558,8 @@ namespace CoApp.CLI {
                 };
                 ae.Handle(handleException);
             }
+             * 
+             */
         }
 
         private void Upgrade(IEnumerable<string> parameters) {
