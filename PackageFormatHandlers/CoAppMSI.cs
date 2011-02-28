@@ -117,7 +117,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                                     break;
                                 case "type":
                                     var type = record.Field<string>("Value");
-                                    if (!type.Contains("policy"))
+                                   if (!type.Contains("policy"))
                                         numberOfNonPolicyAssms++;
                                     assms[componentId].Type = type;
 
@@ -131,8 +131,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                             }
                         }
 
-                        if (numberOfNonPolicyAssms != numOfSharedLibs) {
-                            // you need to have one MSI per sharedlib);
+                        if (numberOfNonPolicyAssms < numOfSharedLibs) {
+                            // you need to have at least one assembly per sharedlib);
                             throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
                         }
                     }
