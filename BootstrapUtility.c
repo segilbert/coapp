@@ -79,7 +79,7 @@ wchar_t* GetPathFromRegistry() {
 
 	status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\CoApp",&key);
 	if( status != ERROR_SUCCESS ) {
-		status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Wow6432Node",&key);
+		status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Wow6432Node\\CoApp",&key);
 		if( status != ERROR_SUCCESS )
 			goto release_value;
 
@@ -250,6 +250,41 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 		WinHttpCloseHandle(connection);
 	if (session) 
 		WinHttpCloseHandle(session);
+}
+
+BOOL IsDotNet4Installed() {
+	LSTATUS status;
+	HKEY key;
+	int index=0;
+	wchar_t* name = (wchar_t*)malloc(BUFSIZE);
+	DWORD value = 0;
+	DWORD nameSize = BUFSIZE;
+	DWORD valueSize = BUFSIZE;
+	DWORD dataType = REG_DWORD;
+
+	status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",&key);
+	if( status != ERROR_SUCCESS ) {
+		status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Wow6432Node\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",&key);
+		if( status != ERROR_SUCCESS )
+			goto release;
+	}
+
+	do {
+		status = RegEnumValue(key, index, name, &nameSize, NULL, &dataType,(LPBYTE)value, &valueSize);
+		if( status != ERROR_SUCCESS )
+			goto release;
+		
+		if( lstrcmpi(L"Install", name) == 0 )
+			goto release;
+
+		index++;
+	}while( status != ERROR_SUCCESS );
+
+release:
+		free(name);
+		name = NULL;
+		
+	return value;
 }
 
 wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly ) {

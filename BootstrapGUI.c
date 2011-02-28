@@ -26,6 +26,8 @@
 HWND StatusDialog = 0;
 BOOL Ready = FALSE;
 
+int overall_percentage =0;
+
 void SetStatusMessage(  const wchar_t* format, ... ) {
 	va_list args;
 	wchar_t* text = (wchar_t*)malloc(BUFSIZE);
@@ -63,7 +65,12 @@ void SetLargeMessageText(const wchar_t* ps_text) {
 }
 
 void SetProgressValue( int percentage ) {
-	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)percentage,0 );
+	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)(overall_percentage+ (percentage/5)),0 );
+}
+
+void SetOverallProgressValue( int percentage ) {
+	overall_percentage = percentage;
+	SetProgressValue( 0 );
 }
 
 INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lParam) {

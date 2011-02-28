@@ -25,6 +25,13 @@
 #include "BootstrapUtility.h"
 
 
+#define PRG_BEGIN 10
+#define PRG_DOTNET 20
+#define PRG_ENGINE 40
+#define PRG_INSTALLER 60
+#define PRG_DTF 80
+#define PRG_COMPLETE 100
+
 HANDLE ApplicationInstance;
 HANDLE WorkerThread = NULL;
 unsigned WorkerThreadId = 0;
@@ -124,27 +131,83 @@ int _stdcall BasicUIHandler(LPVOID pvContext, UINT iMessageType, LPCWSTR szMessa
     return IDOK;
 }
 
-void doInstallCoApp() {
-    wchar_t* coappInstallerMSIFile = TempFileName(L"coapp-install", L"msi");
+void doInstallDotNet4() {
+    STARTUPINFO StartupInfo;
+    PROCESS_INFORMATION ProcInfo;
+
+	wchar_t* dotNet4Installer;
+	wchar_t* commandLine =  (wchar_t*)malloc(1024);
+
+	SetOverallProgressValue( PRG_DOTNET );
+
+	if( !IsDotNet4Installed() ) {
+		dotNet4Installer = TempFileName(L"dotNetFx40_Full_x86_x64", L"exe");
+		
+		SetProgressValue( 25 );
+		if( NULL != dotNet4Installer ) {
+			SetStatusMessage(L"Downloading .NET 4.0 Installer");
+			DownloadFile( L"http://download.microsoft.com/download/9/5/A/95A9616B-7A37-4AF6-BC36-D6EA96C8DAAE/dotNetFx40_Full_x86_x64.exe", dotNet4Installer );
+			SetProgressValue( 50 );
+
+			if(!IsEmbeddedSignatureValid(dotNet4Installer )) {
+				MessageBox(NULL, L"Sorry, I couldn’t verify the .NET 4.0 package wasn’t tampered with and therefore cannot continue.\r\n\r\nPlease report this to the CoApp project.", L"A problem has occurred.", MB_ICONERROR );
+				ExitProcess(2);
+			}
+        
+			SetStatusMessage(L"Installing .NET 4.0");
+			Sleep(500);
+
+			SetOverallProgressValue(30);
+
+			wsprintf( commandLine, L"/q /passive /norestart");
+			ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
+			StartupInfo.cb = sizeof( STARTUPINFO );
+
+			CreateProcess( dotNet4Installer, commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
+
+			free(dotNet4Installer);
+			free(commandLine);
+		}
+    }	
+}
+
+void GetAndInstallMSI(wchar_t* installerURL, wchar_t* localName, wchar_t* prettyName) {
+    wchar_t* coappInstallerMSIFile = TempFileName(localName, L"msi");
+	wchar_t* errorMessage;
+
     SetProgressValue( 25 );
     if( NULL != coappInstallerMSIFile ) {
-        SetStatusMessage(L"Downloading Installer Engine");
-        DownloadFile( L"http://coapp.org/coapp-engine.msi", coappInstallerMSIFile );
+        SetStatusMessage(L"Downloading %s", prettyName);
+
+        DownloadFile( installerURL, coappInstallerMSIFile );
         SetProgressValue( 50 );
 
 		if(!IsEmbeddedSignatureValid(coappInstallerMSIFile )) {
-			MessageBox(NULL, L"Sorry, I couldn’t verify the CoApp-Engine package wasn’t tampered with and therefore cannot continue.\r\n\r\nPlease report this to the CoApp project.", L"A problem has occurred.", MB_ICONERROR );
+			errorMessage = (wchar_t*)malloc(4096);
+			wsprintf( errorMessage, L"Sorry, I couldn’t verify the %s package wasn’t tampered with and therefore cannot continue.\r\n\r\nPlease report this to the CoApp project.", prettyName );
+			MessageBox(NULL, errorMessage, L"A problem has occurred.", MB_ICONERROR );
+			free(errorMessage);
 			ExitProcess(2);
 		}
         
-        SetStatusMessage(L"Installing Engine");
+        SetStatusMessage(L"Installing %s",prettyName);
+
         Sleep(500);
         MsiSetInternalUI( INSTALLUILEVEL_NONE , 0); 
         MsiSetExternalUI( BasicUIHandler, INSTALLLOGMODE_PROGRESS, L"COAPP");
-        MsiInstallProduct( coappInstallerMSIFile, NULL);
+        MsiInstallProduct( coappInstallerMSIFile, L"COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
 
         free(coappInstallerMSIFile);
     }	
+}
+
+void doInstallCoApp() {
+	SetOverallProgressValue( PRG_ENGINE );
+	GetAndInstallMSI( L"http://coapp.org/CoAppEngine.msi", L"CoAppEngine" , L"CoApp Engine");
+	SetOverallProgressValue( PRG_INSTALLER );
+	GetAndInstallMSI( L"http://coapp.org/CoAppInstaller.msi", L"CoAppInstaller" , L"CoApp Installer");
+	SetOverallProgressValue( PRG_DTF );
+	GetAndInstallMSI( L"http://coapp.org/DeploymentToolsFoundation.msi", L"DeploymentToolsFoundation" , L"WiX Installer");
 }
 
 int Launch() {
@@ -169,10 +232,12 @@ unsigned __stdcall InstallCoApp( void* pArguments ){
 
     SetStatusMessage(L"");
     SetLargeMessageText(L"Installing CoApp...");
-    SetProgressValue( 10 );
+    SetOverallProgressValue( PRG_BEGIN );
 
     if( IsShuttingDown )
         goto fin;
+
+	doInstallDotNet4();
 
     doInstallCoApp();
 
@@ -180,7 +245,7 @@ unsigned __stdcall InstallCoApp( void* pArguments ){
         goto fin;
 
     if( IsCoAppInstalled() ) {
-        SetProgressValue( 100 );
+		SetOverallProgressValue( PRG_COMPLETE );
         Launch();
     }
 
