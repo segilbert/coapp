@@ -159,11 +159,13 @@ namespace CoApp.Toolkit.Tasks {
             recursiveBody(null);
         }
 
-        public static void Ignore( this AggregateException aggregateException, Type type) {
+        public static void Ignore( this AggregateException aggregateException, Type type, Action saySomething = null) {
             foreach (var exception in aggregateException.Flatten().InnerExceptions) {
-                if (exception.GetType() == type)
+                if (exception.GetType() == type) {
+                    if (saySomething != null)
+                        saySomething();
                     continue;
-
+                }
                 throw new ConsoleException("Exception Caught: {0}\r\n    {1}", exception.Message, exception.StackTrace);
             }
         }

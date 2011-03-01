@@ -14,12 +14,14 @@ namespace CoApp.Toolkit.Extensions {
         protected bool skipEvent = false;
 
         protected override void InsertItem(int index, T item) {
-            base.InsertItem(index, item);
-            skipEvent = true;
-            var sorted = this.OrderBy(x => x).ToList();
-            for (var i = 0; i < sorted.Count(); i++)
-                Move(IndexOf(sorted[i]), i);
-            skipEvent = false;
+            lock (this) {
+                base.InsertItem(index, item);
+                skipEvent = true;
+                var sorted = this.OrderBy(x => x).ToList();
+                for (var i = 0; i < sorted.Count(); i++)
+                    Move(IndexOf(sorted[i]), i);
+                skipEvent = false;
+            }
         }
 
         protected override void OnCollectionChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs e) {

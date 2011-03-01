@@ -15,6 +15,7 @@ namespace CoApp.Toolkit.Engine {
     using Exceptions;
     using Extensions;
     using Feeds;
+    using Network;
     using PackageFormatHandlers;
     using Tasks;
 
@@ -29,8 +30,7 @@ namespace CoApp.Toolkit.Engine {
 
         internal static int StateCounter;
 
-        internal static List<string> DoNotScanLocations = new List<string>
-        {"c:\\windows\\*", PackageManagerSettings.CoAppPackageCache + "\\*"};
+        internal static List<string> DoNotScanLocations = new List<string> {"c:\\windows\\*", PackageManagerSettings.CoAppPackageCache + "\\*"};
 
         #region FeedLocationAccessors
 
@@ -343,27 +343,31 @@ namespace CoApp.Toolkit.Engine {
                     var info = Recognizer.Recognize(currentItem, ensureLocal: true);
 
                     if (info.RemoteFile != null) {
-                        PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.DownloadingUrl, Path.GetFileName(info.RemoteFile.LocalFullPath), 0);
+                        PackageManagerMessages.Invoke.DownloadingFile(info.RemoteFile);
 
-                        info.RemoteFile.DownloadProgress.Notification +=
-                            (progress) => PackageManagerMessages.Invoke.InstallerMessage(PackageInstallerMessage.DownloadUrlProgress, Path.GetFileName(info.RemoteFile.LocalFullPath),
-                                progress);
+                        info.RemoteFile.DownloadProgress.Notification += (progress) => PackageManagerMessages.Invoke.DownloadingFileProgress(info.RemoteFile,progress);
+
+                        info.Recognized.Notification += v => {
+                            if (info.IsPackageFeed) {
+                                // we have been given a package feed, and asked to return all the packages from it
+                                PackageFeed.GetPackageFeedFromLocation(currentItem).ContinueWith(antecedent => {
+                                    packageFiles.AddRange(antecedent.Result.FindPackages("*"));
+                                }).Wait();
+                            }
+                            else if (info.IsPackageFile) {
+                                packageFiles.Add(GetPackage(info.FullPath));
+                            }
+                            else {
+                                unknownPackages.Add(currentItem);
+                            }
+                        };
                     }
-
-                    info.Recognized.Notification += v => {
-                        if (info.IsPackageFeed) {
-                            // we have been given a package feed, and asked to return all the packages from it
-                            PackageFeed.GetPackageFeedFromLocation(currentItem).ContinueWith(antecedent => {
-                                packageFiles.AddRange(antecedent.Result.FindPackages("*"));
-                            }).Wait();
-                        }
-                        else if (info.IsPackageFile) {
-                            packageFiles.Add(GetPackage(info.FullPath));
-                        }
-                        else {
-                            unknownPackages.Add(currentItem);
-                        }
-                    };
+                    else if (info.IsPackageFile) {
+                        packageFiles.Add(GetPackage(info.FullPath));
+                    }
+                    else {
+                        unknownPackages.Add(currentItem);
+                    }
                 }
                 catch (PackageNotFoundException) {
                     unknownPackages.Add(item);
@@ -444,7 +448,8 @@ namespace CoApp.Toolkit.Engine {
                     var possibleMatches = InstalledPackages.Match(item + (item.Contains("*") || item.Contains("-") ? "*" : "-*"));
 
                     if (possibleMatches.Count() == 0) {
-                        throw new PackageNotFoundException(item);
+                        PackageManagerMessages.Invoke.PackageNotFound(item);
+                        throw new OperationCompletedBeforeResultException();
                     }
 
                     if (possibleMatches.Count() == 1) {

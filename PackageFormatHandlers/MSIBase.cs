@@ -11,6 +11,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using System.Data.Common;
     using System.Linq;
     using System.Threading;
+    using System.Threading.Tasks;
     using System.Windows.Forms;
     using Engine;
     using Engine.Exceptions;
@@ -168,17 +169,21 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         }
 
         public static void ScanInstalledMSIs() {
-            var products = ProductInstallation.AllProducts;
+            var products = ProductInstallation.AllProducts.ToList();
             var n = 0;
             var total = products.Count();
+
             foreach (var product in products) {
+                var p = product;
+
                 try {
+
                     if (CoTask.CurrentCancellationToken.IsCancellationRequested) {
                         return;
                     }
-                    int percent = ((n++) * 100) / total;
+                    int percent = ((n++)*100)/total;
                     PackageManagerMessages.Invoke.PackageScanning(percent);
-                    Registrar.GetPackage(product.LocalPackage); // let the registrar figure out if this is a package we care about.
+                    Registrar.GetPackage(p.LocalPackage); // let the registrar figure out if this is a package we care about.
                 }
                 catch {
                 }
