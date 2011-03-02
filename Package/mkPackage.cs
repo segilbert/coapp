@@ -411,6 +411,10 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string type;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public Arch Arch;
     }
     
     /// <remarks/>
@@ -451,6 +455,10 @@ using System.Collections.Generic;
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string type;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public Arch Arch;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]

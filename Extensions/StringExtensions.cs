@@ -20,6 +20,7 @@ namespace CoApp.Toolkit.Extensions {
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
@@ -188,6 +189,16 @@ namespace CoApp.Toolkit.Extensions {
 
             }
             return sb.ToString().ToUpper();
+        }
+
+        public static string CreatePublicKeyToken(this string publicKey)
+        {
+            SHA1Managed m = new SHA1Managed();
+            var hashBytes = m.ComputeHash(SoapHexBinary.Parse(publicKey).Value);
+            var last8BytesReversed = hashBytes.Reverse().Take(8);
+
+            return new SoapHexBinary(last8BytesReversed.ToArray()).ToString();
+           
         }
 
         /// <summary>

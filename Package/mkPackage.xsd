@@ -377,8 +377,9 @@
           <!-- restrict this to valid types-->
           <xs:attribute name="type" type="xs:string"/>
           <!-- restrict this to valid archs-->
-          <!--
+          
           <xs:attribute name="Arch" type="Arch" use="required"/>
+          <!--
           <xs:attribute name="Platform" type="xs:string" use="required"/>-->
         </xs:extension>            
       </xs:complexContent>
@@ -395,8 +396,8 @@
       <!-- restrict this to valid types-->
       <xs:attribute name="type" type="xs:string"/>
       <!-- restrict this to valid archs-->
-      <!--<xs:attribute name="Arch" type="Arch" use="required"/>
-      <xs:attribute name="Platform" type="xs:string" use="required"/>-->
+      <xs:attribute name="Arch" type="Arch" use="required"/>
+      <!--<xs:attribute name="Platform" type="xs:string" use="required"/>-->
       <xs:attribute name="Src" type="xs:string">
         <xs:annotation>
           <xs:documentation>
