@@ -72,7 +72,6 @@
     <Compile Include="DynamicXml\DynamicAttributes.cs" />
     <Compile Include="DynamicXml\DynamicNode.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
-    <Compile Include="Extensions\ByteArrayExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\CommandLineExtensions.cs" />
     <Compile Include="Extensions\ConsoleExtensions.cs" />

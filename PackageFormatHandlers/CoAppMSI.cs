@@ -130,11 +130,11 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                                     break;
                             }
                         }
-
+                        /*
                         if (numberOfNonPolicyAssms < numOfSharedLibs) {
                             // you need to have at least one assembly per sharedlib);
                             throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
-                        }
+                        }*/
                     }
                     else {
                         // you have shared libs but no MsiAssembly and/or no MsiAssembly Name. That's what shared libs are.
