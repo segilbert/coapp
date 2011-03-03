@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Utility
     using System;
     using System.Diagnostics;
     using System.Text;
+    using Extensions;
 
     public class ProcessUtility
     {
@@ -108,7 +109,7 @@ namespace CoApp.Toolkit.Utility
             sErr = new StringBuilder();
             sOut = new StringBuilder();
 
-            currentProcess = new Process { StartInfo = { FileName = Executable, Arguments = string.Format(arguments, args), WorkingDirectory = Environment.CurrentDirectory, RedirectStandardError = true, RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false } };
+            currentProcess = new Process { StartInfo = { FileName = Executable, Arguments = string.Format(arguments, args), WorkingDirectory = Environment.CurrentDirectory, RedirectStandardError = true, RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false, WindowStyle = ConsoleExtensions.IsConsole ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden } };
 
             currentProcess.ErrorDataReceived += CurrentProcess_ErrorDataReceived;
             currentProcess.OutputDataReceived += CurrentProcess_OutputDataReceived;

@@ -235,7 +235,9 @@ namespace CoApp.Toolkit.Engine {
                 result.Recognized.Value = true;
             }
 
-            _cache.Add(item, result);
+            lock (_cache) {
+                _cache.Add(item, result);
+            }
             return result;
         }
 

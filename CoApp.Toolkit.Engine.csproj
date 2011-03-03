@@ -30,6 +30,20 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Test|AnyCPU'">
+    <OutputPath>..\output\any\test\bin\</OutputPath>
+    <DefineConstants>TRACE;SIGN_ASSEMBLY</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisLogFile>..\output\any\release\bin\CoApp.Toolkit.Engine.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Deployment.WindowsInstaller, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ce35f76fcda82bad, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -80,7 +94,6 @@
     <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
     <Compile Include="Engine\PackageManager.cs" />
     <Compile Include="Engine\PackageManagerSettings.cs" />
-    <Compile Include="Engine\PackageInstallerMessage.cs" />
     <Compile Include="Engine\Recognizer.cs" />
     <Compile Include="Engine\Registrar.cs" />
     <Compile Include="Engine\PackageAssemblyInfo.cs" />

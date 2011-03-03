@@ -57,6 +57,10 @@ namespace CoApp.Toolkit.Extensions {
             get { return FileType.Char != GetFileType(GetStdHandle(StdHandle.Stderr)); }
         }
 
+        public static bool IsConsole {
+            get { try { return Console.BufferWidth != 0; } catch { } return false; }
+        }
+
         public static void PrintProgressBar(this string message, long progress) {
             if (!OutputRedirected) {
                 if (progress > -1) {

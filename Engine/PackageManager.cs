@@ -21,7 +21,6 @@ namespace CoApp.Toolkit.Engine {
 
 
     public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
-        public Action<PackageInstallerMessage, object, long> InstallerMessage;
         public Action<string, IEnumerable<Package>> MultiplePackagesMatch;
         public Action<Package> PackageRemoveFailed;
         public Action<string> PackageNotFound;
@@ -35,6 +34,11 @@ namespace CoApp.Toolkit.Engine {
 
         public Action<int> PackageScanning;
         public Action<Package> FailedDependentPackageInstall;
+        public Action<RemoteFile> DownloadingFile;
+        public Action<RemoteFile, long> DownloadingFileProgress;
+        public Action<Package> PackageNotSatisfied;
+        public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
+
     }
 
 
@@ -161,7 +165,8 @@ namespace CoApp.Toolkit.Engine {
                     }
                     // so, no scanning has been done since it wasn't likely to find anything new
                     // and we can't satisfy this package. Bummer.
-                    throw new PackageNotSatisfiedException(eachPackageFile);
+                    // throw new PackageNotSatisfiedException(eachPackageFile);
+                    PackageManagerMessages.Invoke.PackageNotSatisfied(eachPackageFile);
                 }
 
                 if (CancellationToken.IsCancellationRequested) {
@@ -221,6 +226,7 @@ namespace CoApp.Toolkit.Engine {
                             if (!pkg.AllowedToSupercede) {
                                 throw; // user specified packge as critical.
                             }
+
                             PackageManagerMessages.Invoke.FailedDependentPackageInstall(pkg);
                             pkg.PackageFailedInstall = true;
                             GetInstalledPackages();
@@ -273,7 +279,9 @@ namespace CoApp.Toolkit.Engine {
                     else {
                         // the user hasn't specifically asked us to supercede, yet we know of 
                         // potential supercedents. Let's force the user to make a decision.
-                        throw new PackageHasPotentialUpgradesException(packageToSatisfy, supercedents);
+                        // throw new PackageHasPotentialUpgradesException(packageToSatisfy, supercedents);
+                        PackageManagerMessages.Invoke.PackageHasPotentialUpgrades(packageToSatisfy, supercedents);
+                        throw new OperationCompletedBeforeResultException();
                     }
                 }
             }
@@ -338,7 +346,7 @@ namespace CoApp.Toolkit.Engine {
             },messageHandlers);
         }
 
-        public Tasks.CoTask<IEnumerable<Package>> GetInstalledPackages(MessageHandlers messageHandlers = null) {
+        public CoTask<IEnumerable<Package>> GetInstalledPackages(MessageHandlers messageHandlers = null) {
             return CoTask.Factory.StartNew<IEnumerable<Package>>(() => { 
                 MSIBase.ScanInstalledMSIs();
                 Registrar.SaveCache();

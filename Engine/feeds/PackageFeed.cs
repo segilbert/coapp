@@ -9,9 +9,6 @@ namespace CoApp.Toolkit.Engine.Feeds {
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Threading.Tasks;
-
-    //using System.Threading.Tasks;
 
     internal class PackageFeed : IComparable {
         internal static Dictionary<string, PackageFeed> AllFeeds = new Dictionary<string, PackageFeed>();
@@ -94,7 +91,9 @@ namespace CoApp.Toolkit.Engine.Feeds {
 
                 if (result != null) {
                     result.RecognitionInfo = info;
-                    AllFeeds.Add(locationKey ?? result.Location, result);
+                    lock (AllFeeds) {
+                        AllFeeds.Add(locationKey ?? result.Location, result);
+                    }
                 }
 
                 return result;
