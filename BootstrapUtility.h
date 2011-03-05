@@ -15,7 +15,7 @@ wchar_t* DuplicateString( const wchar_t* text );
 wchar_t* GetModuleFolder( HMODULE module );
 wchar_t* GetModuleFullPath( HMODULE module );
 wchar_t* TempFileName(wchar_t* name,wchar_t* extension);
-void DownloadFile(wchar_t* URL, wchar_t* destinationFilename);
+int DownloadFile(wchar_t* URL, wchar_t* destinationFilename);
 wchar_t* GetPathFromRegistry();
 BOOL IsDotNet4Installed();
 wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly );

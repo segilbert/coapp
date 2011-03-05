@@ -27,9 +27,9 @@
 
 #define PRG_BEGIN 10
 #define PRG_DOTNET 20
-#define PRG_ENGINE 40
-#define PRG_INSTALLER 60
-#define PRG_DTF 80
+#define PRG_DTF 40
+#define PRG_ENGINE 60
+#define PRG_INSTALLER 80
 #define PRG_COMPLETE 100
 
 HANDLE ApplicationInstance;
@@ -138,9 +138,8 @@ void doInstallDotNet4() {
 	wchar_t* dotNet4Installer;
 	wchar_t* commandLine =  (wchar_t*)malloc(1024);
 
-	SetOverallProgressValue( PRG_DOTNET );
-
 	if( !IsDotNet4Installed() ) {
+		SetOverallProgressValue( PRG_DOTNET );
 		dotNet4Installer = TempFileName(L"dotNetFx40_Full_x86_x64", L"exe");
 		
 		SetProgressValue( 25 );
@@ -174,12 +173,20 @@ void doInstallDotNet4() {
 void GetAndInstallMSI(wchar_t* installerURL, wchar_t* localName, wchar_t* prettyName) {
     wchar_t* coappInstallerMSIFile = TempFileName(localName, L"msi");
 	wchar_t* errorMessage;
+	int filesize=0;
 
     SetProgressValue( 25 );
     if( NULL != coappInstallerMSIFile ) {
         SetStatusMessage(L"Downloading %s", prettyName);
 
-        DownloadFile( installerURL, coappInstallerMSIFile );
+        filesize = DownloadFile( installerURL, coappInstallerMSIFile );
+		if(filesize == 0 ) {
+			errorMessage = (wchar_t*)malloc(4096);
+			wsprintf( errorMessage, L"Sorry, I couldn’t download the %s package, and therefore cannot continue.\r\n\r\nPlease report this to the CoApp project.", prettyName );
+			MessageBox(NULL, errorMessage, L"A problem has occurred.", MB_ICONERROR );
+			free(errorMessage);
+			ExitProcess(2);
+		}
         SetProgressValue( 50 );
 
 		if(!IsEmbeddedSignatureValid(coappInstallerMSIFile )) {
@@ -202,12 +209,12 @@ void GetAndInstallMSI(wchar_t* installerURL, wchar_t* localName, wchar_t* pretty
 }
 
 void doInstallCoApp() {
+	SetOverallProgressValue( PRG_DTF );
+	GetAndInstallMSI( L"http://coapp.org/DeploymentToolsFoundation.msi", L"DeploymentToolsFoundation" , L"Windows Installer Libraries");
 	SetOverallProgressValue( PRG_ENGINE );
 	GetAndInstallMSI( L"http://coapp.org/CoAppEngine.msi", L"CoAppEngine" , L"CoApp Engine");
 	SetOverallProgressValue( PRG_INSTALLER );
 	GetAndInstallMSI( L"http://coapp.org/CoAppInstaller.msi", L"CoAppInstaller" , L"CoApp Installer");
-	SetOverallProgressValue( PRG_DTF );
-	GetAndInstallMSI( L"http://coapp.org/DeploymentToolsFoundation.msi", L"DeploymentToolsFoundation" , L"WiX Installer");
 }
 
 int Launch() {

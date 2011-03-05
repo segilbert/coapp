@@ -88,14 +88,14 @@ wchar_t* GetPathFromRegistry() {
 	do {
 
 		status = RegEnumValue(key, index, name, &nameSize, NULL, &dataType,(LPBYTE)value, &valueSize);
-		if( status != ERROR_SUCCESS )
+		if( !(status == ERROR_SUCCESS || status == ERROR_MORE_DATA) )
 			goto release_value;
 		
 		if( lstrcmpi(L"CoAppInstaller", name) == 0 )
 			goto release_name;
 
 		index++;
-	}while( status != ERROR_SUCCESS );
+	}while( status == ERROR_SUCCESS || status == ERROR_MORE_DATA  );
 
 
 release_value:  // called when the keys don't exist.
@@ -136,7 +136,7 @@ wchar_t* GetModuleFullPath( HMODULE module ) {
 /// <summary> 
 ///		Downloads a file from a URL 
 /// </summary>
-void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
+int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 
 	URL_COMPONENTS urlComponents;
 
@@ -150,9 +150,10 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	DWORD bytesDownloaded = 0;
 	DWORD bytesAvailable = 0;
 	DWORD bytesWritten = 0;
+	DWORD dwStatusCode = 0;
 	DWORD contentLength;
-	DWORD tmp = sizeof(DWORD);
-	HANDLE localFile;
+	DWORD tmp = 0;
+	HANDLE localFile = NULL;
 
 	ZeroMemory(&urlComponents, sizeof(urlComponents));
 	urlComponents.dwStructSize = sizeof(urlComponents);
@@ -193,15 +194,21 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	if(!(WinHttpReceiveResponse( request, NULL)))
 		FINISH( L"Unable to receive response for download" );
 
-	
+	tmp = sizeof(DWORD);
+	WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE| WINHTTP_QUERY_FLAG_NUMBER, NULL, &dwStatusCode, &tmp, NULL );
+	if( dwStatusCode != HTTP_STATUS_OK ) {
+		tmp = 0;
+		FINISH( (L"Remote file not found[%s]",URL ));
+	}
+
+	tmp = sizeof(DWORD);
+	WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &contentLength, &tmp , NULL);
+	tmp=0;
+
 	if( INVALID_HANDLE_VALUE == (localFile = CreateFile(destinationFilename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,  FILE_ATTRIBUTE_NORMAL,NULL)))
 		FINISH( (L"Unable to create output file [%s]",destinationFilename ));
 
 	SetStatusMessage(L"Downloading");
-
-	WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &contentLength, &tmp , NULL);
-	tmp=0;
-
 	// Keep checking for data until there is nothing left.
 	do  {
 		// Check for available data.
@@ -250,6 +257,8 @@ void DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 		WinHttpCloseHandle(connection);
 	if (session) 
 		WinHttpCloseHandle(session);
+
+	return tmp; // bytes downloaded.
 }
 
 BOOL IsDotNet4Installed() {
@@ -258,8 +267,9 @@ BOOL IsDotNet4Installed() {
 	int index=0;
 	wchar_t* name = (wchar_t*)malloc(BUFSIZE);
 	DWORD value = 0;
+	DWORD result = 0;
 	DWORD nameSize = BUFSIZE;
-	DWORD valueSize = BUFSIZE;
+	DWORD valueSize = sizeof(value);
 	DWORD dataType = REG_DWORD;
 
 	status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",&key);
@@ -270,21 +280,24 @@ BOOL IsDotNet4Installed() {
 	}
 
 	do {
-		status = RegEnumValue(key, index, name, &nameSize, NULL, &dataType,(LPBYTE)value, &valueSize);
-		if( status != ERROR_SUCCESS )
+		nameSize = BUFSIZE;
+		valueSize = sizeof(value);
+		status = RegEnumValue(key, index, name, &nameSize, NULL, &dataType,(LPBYTE)&value, &valueSize);
+		if( !(status == ERROR_SUCCESS || status == ERROR_MORE_DATA) )
 			goto release;
 		
-		if( lstrcmpi(L"Install", name) == 0 )
+		if( lstrcmpi(L"Install", name) == 0 ) {
+			result = value;
 			goto release;
-
+		}
 		index++;
-	}while( status != ERROR_SUCCESS );
+	}while( status == ERROR_SUCCESS || status == ERROR_MORE_DATA );
 
 release:
 		free(name);
 		name = NULL;
 		
-	return value;
+	return result;
 }
 
 wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly ) {

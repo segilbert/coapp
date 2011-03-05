@@ -170,6 +170,10 @@
     <Manifest>
       <AdditionalManifestFiles>CoAppBootstrap.manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>coapp-simplesigner --sign-only "$(TargetPath)"
+copy "$(TargetPath)" "$(SolutionDir)..\coapp-mkpackage\Resources\coapp-bootstrap.exe"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
