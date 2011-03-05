@@ -55,6 +55,8 @@ namespace CoApp.Toolkit.Engine {
 
         public string CopyrightStatement { get; set; }
         public string FeedLocation { get; set; }
+        public string AuthorVersion { get; set; }
+
         public string PackageLocation { get; set; }
         public string SourcePackageLocation { get; set; }
 
@@ -74,9 +76,9 @@ namespace CoApp.Toolkit.Engine {
             Dependencies.CollectionChanged += (x, y) => Changed();
 
             Publisher = new Party() {
-                Name = "publisher name",
-                Url = "http://foo",
-                Email = "foo@goo.com"
+                Name = string.Empty,
+                Url = string.Empty,
+                Email = string.Empty
             };
         }
 

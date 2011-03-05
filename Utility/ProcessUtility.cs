@@ -19,6 +19,8 @@ namespace CoApp.Toolkit.Utility
     using System;
     using System.Diagnostics;
     using System.Text;
+    using System.Threading;
+    using Console;
     using Extensions;
 
     public class ProcessUtility
@@ -28,6 +30,8 @@ namespace CoApp.Toolkit.Utility
 
         private StringBuilder sErr = new StringBuilder();
         private StringBuilder sOut = new StringBuilder();
+
+        public int ExitCode { get { return (currentProcess != null && currentProcess.HasExited) ? currentProcess.ExitCode : 0; }}
 
         private void CurrentProcess_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
@@ -92,6 +96,17 @@ namespace CoApp.Toolkit.Utility
                 currentProcess.WaitForExit();
         }
 
+        public void WaitForExit(int milliseconds) {
+            if (IsRunning)
+                currentProcess.WaitForExit(milliseconds);
+        }
+
+        public void AttachToConsoleForProcess() {
+            if( !ConsoleExtensions.IsConsole ) {
+                ConsoleApi.AttachConsole(currentProcess.Id);
+            }
+        }
+
         public void ExecAsync(string[] args) {
             var commandLine = new StringBuilder();
             foreach(var arg in args) {
@@ -110,7 +125,25 @@ namespace CoApp.Toolkit.Utility
             sOut = new StringBuilder();
 
             currentProcess = new Process { StartInfo = { FileName = Executable, Arguments = string.Format(arguments, args), WorkingDirectory = Environment.CurrentDirectory, RedirectStandardError = true, RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false, WindowStyle = ConsoleExtensions.IsConsole ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden } };
+            
+            currentProcess.ErrorDataReceived += CurrentProcess_ErrorDataReceived;
+            currentProcess.OutputDataReceived += CurrentProcess_OutputDataReceived;
+            currentProcess.Exited += CurrentProcess_Exited;
 
+            currentProcess.Start();
+            currentProcess.BeginErrorReadLine();
+            currentProcess.BeginOutputReadLine();
+        }
+
+        public void ExecAsyncNoStdInRedirect(string arguments, params string[] args) {
+            if (IsRunning)
+                throw new InvalidAsynchronousStateException("Process is currently running.");
+
+            Failed = false;
+            sErr = new StringBuilder();
+            sOut = new StringBuilder();
+
+            currentProcess = new Process { StartInfo = { FileName = Executable, Arguments = string.Format(arguments, args), WorkingDirectory = Environment.CurrentDirectory, RedirectStandardError = true, RedirectStandardOutput = true, UseShellExecute = false, WindowStyle = ConsoleExtensions.IsConsole ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden } };
             currentProcess.ErrorDataReceived += CurrentProcess_ErrorDataReceived;
             currentProcess.OutputDataReceived += CurrentProcess_OutputDataReceived;
             currentProcess.Exited += CurrentProcess_Exited;

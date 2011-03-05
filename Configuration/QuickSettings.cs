@@ -10,8 +10,8 @@ namespace CoApp.Toolkit.Configuration {
     using Microsoft.Win32;
 
     public class QuickSettings : Settings {
-        private static Settings userSettings = new Settings(Assembly.GetEntryAssembly().GetName().ToString());
-        private static Settings systemSettings = new Settings(Assembly.GetEntryAssembly().GetName().ToString(), Registry.LocalMachine);
+        private static Settings userSettings = new Settings(Assembly.GetEntryAssembly().GetName().ToString().Substring(0,Assembly.GetEntryAssembly().GetName().ToString().IndexOf(",")));
+        private static Settings systemSettings = new Settings(Assembly.GetEntryAssembly().GetName().ToString().Substring(0, Assembly.GetEntryAssembly().GetName().ToString().IndexOf(",")), Registry.LocalMachine);
 
         public QuickSettings(string name) : base(name) {
         }

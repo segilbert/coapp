@@ -13,6 +13,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Forms;
+    using DynamicXml;
     using Engine;
     using Engine.Exceptions;
     using Extensions;
@@ -45,8 +46,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             Installer.SetExternalUI(ExternalUI, InstallLogModes.Verbose);
         }
 
-        public static MessageResult ExternalUI(InstallMessage messageType, string message, MessageBoxButtons buttons, MessageBoxIcon icon,
-                                        MessageBoxDefaultButton defaultButton) {
+        public static MessageResult ExternalUI(InstallMessage messageType, string message, MessageButtons buttons, MessageIcon icon,
+                                        MessageDefaultButton defaultButton) {
             return MessageResult.OK;
         }
 
@@ -190,6 +191,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             }
         }
 
+        public static DynamicDataSet GetDynamicMSIData(string localPackagePath) {
+            return new DynamicDataSet(GetMSIData(localPackagePath));
+        }
+
         public static DataSet GetMSIData(string localPackagePath) {
             localPackagePath = localPackagePath.ToLower();
 
@@ -307,7 +312,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             /// <exception cref = "T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref = "P:System.Data.IDataRecord.FieldCount" />. </exception>
             /// <filterpriority>2</filterpriority>
             public Type GetFieldType(int i) {
-                switch (_tableInfo.Columns[i].DBType) {
+                switch ((DbType)_tableInfo.Columns[i].DBType) {
                     case DbType.String:
                         return typeof (string);
                     case DbType.Int32:
@@ -331,7 +336,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             /// <exception cref = "T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref = "P:System.Data.IDataRecord.FieldCount" />. </exception>
             /// <filterpriority>2</filterpriority>
             public object GetValue(int i) {
-                switch (_tableInfo.Columns[i].DBType) {
+                switch ((DbType)_tableInfo.Columns[i].DBType) {
                     case DbType.String:
                         return GetString(i) ?? String.Empty;
                     case DbType.Int32:
@@ -674,7 +679,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                         new DataColumn(SchemaTableColumn.IsAliased, typeof (bool)),
                         new DataColumn(SchemaTableColumn.IsExpression, typeof (bool)),
                     });
-
+                    var pks = _tableInfo.PrimaryKeys;
                     for (int i = 0; i < _tableInfo.Columns.Count; i++) {
                         DataRow row = _schema.NewRow();
 
@@ -689,7 +694,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                         row[SchemaTableColumn.IsLong] = false;
                         row[SchemaTableColumn.AllowDBNull] = true;
                         row[SchemaTableColumn.IsUnique] = false;
-                        row[SchemaTableColumn.IsKey] = false;
+                        row[SchemaTableColumn.IsKey] = pks.Contains(_tableInfo.Columns[i].Name);
                         row[SchemaTableColumn.BaseSchemaName] = string.Empty;
                         row[SchemaTableColumn.BaseTableName] = string.Empty;
                         row[SchemaTableColumn.BaseColumnName] = string.Empty;

@@ -33,7 +33,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Test|AnyCPU'">
     <OutputPath>..\output\any\test\bin\</OutputPath>
-    <DefineConstants>TRACE;SIGN_ASSEMBLY</DefineConstants>
+    <DefineConstants>TRACE;TEST_SIGN_ASSEMBLY</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -67,10 +67,14 @@
   <ItemGroup>
     <Compile Include="Configuration\Settings.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
+    <Compile Include="Console\ConsoleApi.cs" />
     <Compile Include="Console\ConsoleException.cs" />
     <Compile Include="Crypto\Verifier.cs" />
     <Compile Include="DynamicXml\DynamicAttributes.cs" />
+    <Compile Include="DynamicXml\DynamicDataRow.cs" />
+    <Compile Include="DynamicXml\DynamicDataSet.cs" />
     <Compile Include="DynamicXml\DynamicNode.cs" />
+    <Compile Include="DynamicXml\DynamicDataTable.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\CommandLineExtensions.cs" />
@@ -132,6 +136,7 @@
     </Compile>
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="$(SolutionDir)\..\coapp-solution\Source\AssemblyStrongName.cs" />
     <Compile Include="Tasks\ITask.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
     <Compile Include="Tasks\CoTask.cs" />
@@ -197,6 +202,13 @@
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-build-numbers.js" cscript /nologo "$(SolutionDir)scripts\inc-build-numbers.js"</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

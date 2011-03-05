@@ -298,6 +298,7 @@ namespace CoApp.Toolkit.Engine {
 
                     AddPackage(pkg);
                 }
+
                 if (pkg.Dependencies.Count == 0) {
                     pkg.Dependencies.AddRange((IEnumerable<Package>) pkgDetails.dependencies);
                 }
@@ -314,6 +315,19 @@ namespace CoApp.Toolkit.Engine {
 
                 pkg.PolicyMinimumVersion = pkgDetails.policy_min_version;
                 pkg.PolicyMaximumVersion = pkgDetails.policy_max_version;
+                
+                // pkgDetails.displayName
+                pkg.FullDescription = pkgDetails.description;
+                pkg.PublishDate = DateTime.Parse(pkgDetails.publishDate);
+                pkg.AuthorVersion = pkgDetails.authorVersion;
+                pkg.PackageLocation = pkgDetails.originalLocation;
+                pkg.FeedLocation = pkgDetails.feedLocation;
+                pkg.Base64IconData = pkgDetails.icon;
+                pkg.SummaryDescription = pkgDetails.summary;
+                pkg.Publisher.Name = pkgDetails.publisherName;
+                pkg.Publisher.Url = pkgDetails.publisherUrl;
+                pkg.Publisher.Email = pkgDetails.publisherEmail;
+
                 pkg.packageHandler = new CoAppMSI();
 
                 return pkg;

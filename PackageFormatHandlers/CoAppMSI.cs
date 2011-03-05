@@ -9,6 +9,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using System.Linq;
     using System.Collections.Generic;
     using System.Data;
+    using DynamicXml;
     using Engine;
     using Engine.Exceptions;
     using Extensions;
@@ -19,35 +20,45 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return packageData.Tables.Contains("CO_PACKAGE");
         }
 
+        private static string GetURL(dynamic CO_URLS, string id ) {
+            if (CO_URLS == null || string.IsNullOrEmpty(id))
+                return null;
+            var rec = CO_URLS[id];
+            return rec == null ? null : rec.url;
+        }
+
         internal static dynamic GetCoAppPackageFileDetails(string localPackagePath) {
-            var packageData = GetMSIData(localPackagePath);
-            if (!packageData.Tables.Contains("CO_PACKAGE")) {
+            dynamic packageData = GetDynamicMSIData(localPackagePath);
+
+            if (packageData.CO_PACKAGE == null) {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
             }
+            
+            string name = packageData["ProductName"];
 
-            var name = packageData.GetProperty("ProductName");
-
-            var newrecord =
-                (from rec in packageData.GetTable("CO_PACKAGE") where rec.Field<string>("Name") == name select rec).FirstOrDefault();
+            var newrecord = (from rec in packageData.CO_PACKAGE as IEnumerable<dynamic> where rec.Name == name select rec).FirstOrDefault();
 
             if (newrecord == null) {
                 throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
             }
 
-            var pkgid = newrecord.Field<string>("package_id");
-            var arch = newrecord.Field<string>("arch");
-            var version = newrecord.Field<string>("version").VersionStringToUInt64();
-            var pkt = newrecord.Field<string>("public_key_token");
+            string pkgid = newrecord.package_id;
+            string arch = newrecord.arch;
+            UInt64 version = ((string)newrecord.version).VersionStringToUInt64();
+            string pkt = newrecord.public_key_token;
 
             UInt64 minPolicy = 0;
             UInt64 maxPolicy = 0;
+            
+            if (packageData.CO_BINDING_POLICY != null) {
+                var policy = packageData.CO_BINDING_POLICY[0];
 
-            if (packageData.Tables.Contains("CO_BINDING_POLICY")) {
-                var policy = packageData.GetTable("CO_BINDING_POLICY").FirstOrDefault();
-
-                minPolicy = policy.Field<string>("minimum_version").VersionStringToUInt64();
-                maxPolicy = policy.Field<string>("maximum_version").VersionStringToUInt64();
+                minPolicy = ((string)policy.minimum_version).VersionStringToUInt64();
+                maxPolicy = ((string)policy.maximum_version).VersionStringToUInt64();
             }
+
+            var properties = packageData.CO_PACKAGE_PROPERTIES[pkgid];
+            var publisher = packageData.CO_PUBLISHER[pkt];
 
             dynamic result =
                 new {
@@ -61,72 +72,85 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     dependencies = new List<Package>(),
                     // type and flavor
                     roles = new List<Tuple<string, string>>(),
-                    assemblies = new Dictionary<string, PackageAssemblyInfo>()
+                    assemblies = new Dictionary<string, PackageAssemblyInfo>(),
 
+                    // new cosmetic metadata fields
+                    displayName = properties.display_name,
+                    description = properties.description,
+                    publishDate = properties.publish_date,
+                    authorVersion = properties.author_version,
+                    originalLocation = GetURL(packageData.CO_URLS, properties.original_location ),
+                    feedLocation = GetURL(packageData.CO_URLS, properties.feed_location),
+                    icon = properties.icon,
+                    summary = properties.short_description,
+                    publisherName = publisher.name,
+                    publisherUrl = GetURL(packageData.CO_URLS,publisher.location ),
+                    publisherEmail = publisher.email,
                 };
 
-            if (packageData.Tables.Contains("CO_DEPENDENCY")) {
-                var dependencyPackageIds = from depPkg in packageData.GetTable("CO_DEPENDENCY") select depPkg.Field<string>("dependency_id");
+            if (packageData.CO_DEPENDENCY != null) {
+                var dependencyPackageIds = from depPkg in (packageData.CO_DEPENDENCY as IEnumerable<dynamic>) select depPkg.dependency_id;
+
                 foreach (var pak in
                     dependencyPackageIds.Select(
                         eachPackageId =>
-                            (from pkg in packageData.GetTable("CO_PACKAGE")
-                             where eachPackageId == pkg.Field<string>("package_id")
+                            (from pkg in (packageData.CO_PACKAGE as IEnumerable<dynamic>)
+                             where eachPackageId == pkg.package_id
                              select pkg).FirstOrDefault())) {
-                    pkgid = pak.Field<string>("package_id");
-                    name = pak.Field<string>("name");
-                    arch = pak.Field<string>("arch");
-                    version = pak.Field<string>("version").VersionStringToUInt64();
-                    pkt = pak.Field<string>("public_key_token");
+
+                    pkgid = pak.package_id;
+                    name = pak.name;
+                    arch = pak.arch;
+                    version = ((string)pak.version).VersionStringToUInt64();
+                    pkt = pak.public_key_token;
                     result.dependencies.Add(Registrar.GetPackage(name, arch, version, pkt, pkgid));
                 }
             }
 
-            if (packageData.Tables.Contains("CO_ROLES")) {
+            if (packageData.CO_ROLES != null) {
                 var numOfSharedLibs = 0;
 
-                foreach (var record in packageData.GetTable("CO_ROLES")) {
-                    var type = record.Field<string>("type");
+                foreach (var record in packageData.CO_ROLES as IEnumerable<dynamic>) {
+                    var type = record.type;
                     if (type == "sharedlib")
                         numOfSharedLibs++;
-                    var role = new Tuple<string, string>(type, record.Field<string>("flavor"));
+                    var role = new Tuple<string, string>(type, record.flavor);
 
                     result.roles.Add(role);
                 }
 
                 if (numOfSharedLibs > 0) {
 
-                    if (packageData.Tables.Contains("MsiAssembly") &&
-                        packageData.Tables.Contains("MsiAssemblyName")) {
+                    if (packageData.MsiAssembly != null && packageData.MsiAssemblyName  != null) {
 
                         var assms = result.assemblies;
                         var numberOfNonPolicyAssms = 0;
-                        foreach (var record in packageData.GetTable("MsiAssemblyName")) {
+                        foreach (var record in packageData.MsiAssemblyName as IEnumerable<dynamic>) {
 
-                            var componentId = record.Field<string>("Component_");
+                            var componentId = record.Component_;
 
                             if (!assms.ContainsKey(componentId))
                                 assms[componentId] = new PackageAssemblyInfo();
 
-                            switch (record.Field<string>("Name")) {
+                            switch ((string)record.Name) {
                                 case "name":
-                                    assms[componentId].Name = record.Field<string>("Value");
+                                    assms[componentId].Name = record.Value;
                                     break;
                                 case "processorArchitecture":
-                                    assms[componentId].Arch = record.Field<string>("Value");
+                                    assms[componentId].Arch = record.Value;
                                     break;
                                 case "type":
-                                    var type = record.Field<string>("Value");
+                                    var type = record.Value;
                                    if (!type.Contains("policy"))
                                         numberOfNonPolicyAssms++;
                                     assms[componentId].Type = type;
 
                                     break;
                                 case "version":
-                                    assms[componentId].Version = record.Field<string>("Value");
+                                    assms[componentId].Version = record.Value;
                                     break;
                                 case "publicKeyToken":
-                                    assms[componentId].PublicKeyToken = record.Field<string>("Value");
+                                    assms[componentId].PublicKeyToken = record.Value;
                                     break;
                             }
                         }

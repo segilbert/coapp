@@ -15,18 +15,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("CoApp.Toolkit")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("CoApp Project")]
 [assembly: AssemblyProduct("CoApp.Toolkit")]
-[assembly: AssemblyCopyright("Copyright © Garrett Serack, CoApp Contributors 2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en")]
-#if SIGN_ASSEMBLY
-// disable warning about using /keyfile instead of AssemblyKeyFile
-#pragma warning disable 1699
-[assembly: AssemblyKeyFileAttribute(@"..\coapp-signing\coapp-release.snk")]
-#pragma warning restore 1699
-#endif
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
@@ -37,18 +29,3 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
 [assembly: Guid("5648abc3-656a-401d-88d5-c3a639955632")]
-
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-
-[assembly: AssemblyVersion("1.0.0.*")]
-// by removing the following it defaults to the generated number above.
-// [assembly: AssemblyFileVersion("1.0.0.0")]

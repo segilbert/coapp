@@ -205,6 +205,17 @@ namespace CoApp.Toolkit.Extensions {
             return result;
         }
 
+        public static IEnumerable<string> FindFilesSmarter( this string pathMask ) {
+            var path = Path.GetFullPath(pathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$")).Replace("$$STAR$$","*").Replace( "$$QUERY$$", "?");
+            var mask = path.Substring(path.LastIndexOf("\\") + 1);
+            path = path.Substring(0, path.LastIndexOf("\\"));
+            return path.DirectoryEnumerateFilesSmarter(mask, SearchOption.TopDirectoryOnly);
+        }
+
+        public static IEnumerable<string> FindFilesSmarter( this IEnumerable<string> pathMasks) {
+            return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarter()));
+        }
+
         /// <summary>
         /// Gets the name of a file minus it's extension, ie: if the file name is "test.exe", returns "test".
         /// </summary>

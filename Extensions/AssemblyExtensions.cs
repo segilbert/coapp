@@ -22,7 +22,6 @@ namespace CoApp.Toolkit.Extensions {
     public static class AssemblyExtensions {
         private static string logo;
 
-
         // warning: case sensitive. 
         public static string ExtractFileResourceToTemp(this Assembly assembly, string name) {
             var tempPath = Path.Combine(Path.GetTempPath(), name);
@@ -95,7 +94,8 @@ namespace CoApp.Toolkit.Extensions {
         public static string Version(this Assembly assembly) {
             try {
                 var vi = FileVersionInfo.GetVersionInfo(assembly.Location);
-                return "{0}.{1}.{2}".format(vi.FileMajorPart, vi.FileMinorPart, vi.FileBuildPart);
+
+                return "{0}.{1}.{2}.{3}".format(vi.FileMajorPart, vi.FileMinorPart, vi.FileBuildPart, vi.FilePrivatePart);
             }
             catch {
             }
@@ -113,11 +113,13 @@ namespace CoApp.Toolkit.Extensions {
 
         public static string Logo(this Assembly assembly) {
             if(logo == null) {
+                var assemblycomments = assembly.Comments();
+                assemblycomments = string.IsNullOrEmpty(assemblycomments) ? string.Empty : "\r\n" + assemblycomments;
+
                 logo =
                     @"{0} {1} Version {2} for {3}
-{4}. All rights reserved
-{5}
--------------------------------------------------------------------------------".format(assembly.Company(), assembly.Title(), assembly.Version(), IntPtr.Size == 8? "x64":"x86", assembly.Copyright().Replace("©", "(c)"), assembly.Comments());
+{4}. All rights reserved{5}
+-------------------------------------------------------------------------------".format(assembly.Company(), assembly.Title(), assembly.Version(), IntPtr.Size == 8? "x64":"x86", assembly.Copyright().Replace("©", "(c)"), assemblycomments);
             }
             return logo;
         }

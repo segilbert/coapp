@@ -32,7 +32,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Test|AnyCPU'">
     <OutputPath>..\output\any\test\bin\</OutputPath>
-    <DefineConstants>TRACE;SIGN_ASSEMBLY</DefineConstants>
+    <DefineConstants>TRACE;TEST_SIGN_ASSEMBLY</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,15 +45,15 @@
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Deployment.WindowsInstaller, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ce35f76fcda82bad, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.Deployment.WindowsInstaller, Version=3.5.2519.13, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\coapp-solution\ext\WiX\Microsoft.Deployment.WindowsInstaller.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Deployment.WindowsInstaller.Linq, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ce35f76fcda82bad, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.Deployment.WindowsInstaller.Linq, Version=3.5.2519.13, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\coapp-solution\ext\WiX\Microsoft.Deployment.WindowsInstaller.Linq.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Deployment.WindowsInstaller.Package, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ce35f76fcda82bad, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.Deployment.WindowsInstaller.Package, Version=3.5.2519.13, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\coapp-solution\ext\WiX\Microsoft.Deployment.WindowsInstaller.Package.dll</HintPath>
     </Reference>
@@ -103,6 +103,7 @@
     <Compile Include="PackageFormatHandlers\NuGet.cs" />
     <Compile Include="PackageFormatHandlers\PackageFormatHandler.cs" />
     <Compile Include="Properties\Engine.AssemblyInfo.cs" />
+    <Compile Include="$(SolutionDir)\..\coapp-solution\Source\AssemblyStrongName.cs" />
     <Compile Include="Engine\Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
