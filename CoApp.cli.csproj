@@ -115,10 +115,6 @@
       <Project>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</Project>
       <Name>CoApp.Toolkit.Engine</Name>
     </ProjectReference>
-    <ProjectReference Include="..\coapp-toolkit\CoApp.Toolkit.OData.csproj">
-      <Project>{11F73E3B-EAAB-9999-85E7-9EBA252C10C2}</Project>
-      <Name>CoApp.Toolkit.OData</Name>
-    </ProjectReference>
     <ProjectReference Include="..\coapp-toolkit\CoApp.Toolkit.Unsafe.csproj">
       <Project>{59D1DBB3-5848-4026-9523-BBC7618B7B77}</Project>
       <Name>CoApp.Toolkit.Unsafe</Name>

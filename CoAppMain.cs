@@ -6,17 +6,15 @@
 
 namespace CoApp.CLI {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Resources;
     using System.Threading;
-    using System.Threading.Tasks;
     using Properties;
     using Toolkit.Console;
-    
+    using Toolkit.Crypto;
     using Toolkit.Engine;
-    using Toolkit.Engine.Exceptions;
     using Toolkit.Extensions;
     using Toolkit.Network;
     using Toolkit.Tasks;
@@ -26,15 +24,15 @@ namespace CoApp.CLI {
     ///   Main Program for command line coapp tool
     /// </summary>
     public class CoAppMain : AsyncConsoleProgram {
-        private string feedOutputFile = null;
-        private string feedRootUrl = null;
-        private string feedActualUrl = null;
-        private string feedPackageSource = null;
-        private bool feedRecursive = false;
-        private string feedPackageUrl = null;
-        private string feedTitle = null;
-        
-        protected PackageManager _pkgManager;
+        private string _feedOutputFile;
+        private string _feedRootUrl;
+        private string _feedActualUrl;
+        private string _feedPackageSource;
+        private bool _feedRecursive;
+        private string _feedPackageUrl;
+        private string _feedTitle;
+
+        private PackageManager _pkgManager;
 
         protected override ResourceManager Res {
             get { return Resources.ResourceManager; }
@@ -136,25 +134,25 @@ namespace CoApp.CLI {
                             break;
 
                         case "feed-output-file":
-                            feedOutputFile = argumentParameters.LastOrDefault();
+                            _feedOutputFile = argumentParameters.LastOrDefault();
                             break;
                         case "feed-root-url":
-                            feedRootUrl = argumentParameters.LastOrDefault();
+                            _feedRootUrl = argumentParameters.LastOrDefault();
                             break;
                         case "feed-actual-url":
-                            feedActualUrl = argumentParameters.LastOrDefault();
+                            _feedActualUrl = argumentParameters.LastOrDefault();
                             break;
                         case "feed-package-source":
-                            feedPackageSource = argumentParameters.LastOrDefault();
+                            _feedPackageSource = argumentParameters.LastOrDefault();
                             break;
                         case "feed-recursive":
-                            feedRecursive = true;
+                            _feedRecursive = true;
                             break;
                         case "feed-package-url":
-                            feedPackageUrl = argumentParameters.LastOrDefault();
+                            _feedPackageUrl = argumentParameters.LastOrDefault();
                             break;
                         case "feed-title":
-                            feedTitle = argumentParameters.LastOrDefault();
+                            _feedTitle = argumentParameters.LastOrDefault();
                             break;
 
                         case "help":
@@ -173,110 +171,122 @@ namespace CoApp.CLI {
 
                 #endregion
 
+                // GS01: I'm putting this in here so that feed resoltion happens before we actually get around to doing something. 
+                // Look into the necessity later.
+                Tasklet.WaitforCurrentChildTasks();
+
                 var command = parameters.FirstOrDefault().ToLower();
                 parameters = parameters.Skip(1);
 
-                switch (command) {
-                    case "download":
-                        var remoteFileUri = new Uri(parameters.First());
-                        // create the remote file reference 
-                        var remoteFile = new RemoteFile(remoteFileUri, CancellationTokenSource.Token);
-                        var previewTask = remoteFile.Preview();
-                        previewTask.Wait();
-                        // Tell it to download it 
-                        var getTask = remoteFile.Get();
+                if (File.Exists(command)) {
+                    // assume install if the only thing given is a filename.
+                    Install(command.SingleItemAsEnumerable());
+                }
+                else {
+                    switch (command) {
+                        case "download":
+                            var remoteFileUri = new Uri(parameters.First());
+                            // create the remote file reference 
+                            var remoteFile = new RemoteFile(remoteFileUri, CancellationTokenSource.Token);
+                            var previewTask = remoteFile.Preview();
+                            previewTask.Wait();
+                            // Tell it to download it 
+                            var getTask = remoteFile.Get();
 
-                        // monitor the progress.
-                        remoteFile.DownloadProgress.Notification += progress => {
-                            // this executes when the download progress value changes. 
-                            Console.Write(progress <= 100 ? "..{0}% " : "bytes: [{0}]", progress);
-                        };
+                            // monitor the progress.
+                            remoteFile.DownloadProgress.Notification += progress => {
+                                // this executes when the download progress value changes. 
+                                Console.Write(progress <= 100 ? "..{0}% " : "bytes: [{0}]", progress);
+                            };
 
-                        // when it's done, do this:
-                        getTask.ContinueWith(t => {
-                            // this executes when the Get() operation completes.
-                            Console.WriteLine("File {0} has finished downloading", remoteFile.LocalFullPath);
-                        }, TaskContinuationOptions.AttachedToParent);
+                            // when it's done, do this:
+                            getTask.ContinueWithParent(t => {
+                                // this executes when the Get() operation completes.
+                                Console.WriteLine("File {0} has finished downloading", remoteFile.LocalFullPath);
+                            });
+                            break;
 
-                        getTask.Wait();
-                        break;
+                        case "verify-package":
+                            var r = Verifier.HasValidSignature(parameters.First());
+                            Console.WriteLine("Has Valid Signature: {0}", r);
+                            Console.WriteLine("Name: {0}", Verifier.GetPublisherInformation(parameters.First())["PublisherName"]);
+                            break;
 
-                    case "verify-package":
-                        var r = Toolkit.Crypto.Verifier.HasValidSignature(parameters.First());
-                        Console.WriteLine("Has Valid Signature: {0}",r);
-                        Console.WriteLine("Name: {0}", Toolkit.Crypto.Verifier.GetPublisherInformation(parameters.First())["PublisherName"]);
-                        break;
+                        case "install":
+                            if (parameters.Count() < 1) {
+                                throw new ConsoleException(Resources.InstallRequiresPackageName);
+                            }
 
-                    case "install":
-                        if (parameters.Count() < 1) {
-                            throw new ConsoleException(Resources.InstallRequiresPackageName);
-                        }
+                            Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
 
-                        Install(parameters);
-                        break;
+                            Install(parameters);
+                            break;
 
-                    case "remove":
-                        if (parameters.Count() < 1) {
-                            throw new ConsoleException(Resources.RemoveRequiresPackageName);
-                        }
-                        Remove(parameters);
-                        break;
+                        case "remove":
+                            if (parameters.Count() < 1) {
+                                throw new ConsoleException(Resources.RemoveRequiresPackageName);
+                            }
+                            Remove(parameters);
+                            break;
 
-                    case "list":
-                        if (parameters.Count() != 1) {
-                            throw new ConsoleException(Resources.MissingParameterForList);
-                        }
-                        switch (parameters.FirstOrDefault().ToLower()) {
-                            case "packages":
-                            case "package":
-                                ListPackages(parameters);
-                                break;
+                        case "list":
+                            if (parameters.Count() != 1) {
+                                throw new ConsoleException(Resources.MissingParameterForList);
+                            }
+                            switch (parameters.FirstOrDefault().ToLower()) {
+                                case "packages":
+                                case "package":
+                                    ListPackages(parameters);
+                                    break;
 
-                            case "feed":
-                            case "feeds":
-                            case "repositories":
-                            case "repository":
-                                ListFeeds(parameters);
-                                break;
-                        }
-                        break;
+                                case "feed":
+                                case "feeds":
+                                case "repo":
+                                case "repos":
+                                case "repositories":
+                                case "repository":
+                                    ListFeeds(parameters);
+                                    break;
+                            }
+                            break;
 
-                    case "upgrade":
-                        if (parameters.Count() != 1) {
-                            throw new ConsoleException(Resources.MissingParameterForUpgrade);
-                        }
+                        case "upgrade":
+                            if (parameters.Count() != 1) {
+                                throw new ConsoleException(Resources.MissingParameterForUpgrade);
+                            }
 
-                        CoTask.Factory.StartNew(() => Upgrade(parameters));
-                        break;
+                            Upgrade(parameters);
+                            break;
 
-                    case "add":
-                        if (parameters.Count() < 1) {
-                            throw new ConsoleException(Resources.AddFeedRequiresLocation);
-                        }
-                        CoTask.Factory.StartNew(() => AddFeed(parameters));
-                        break;
+                        case "add":
+                            if (parameters.Count() < 1) {
+                                throw new ConsoleException(Resources.AddFeedRequiresLocation);
+                            }
+                            CoTask.Factory.StartNew(() => AddFeed(parameters));
+                            break;
 
-                    case "delete":
-                        if (parameters.Count() < 1) {
-                            throw new ConsoleException(Resources.DeleteFeedRequiresLocation);
-                        }
-                        CoTask.Factory.StartNew(() => DeleteFeed(parameters));
-                        break;
+                        case "delete":
+                            if (parameters.Count() < 1) {
+                                throw new ConsoleException(Resources.DeleteFeedRequiresLocation);
+                            }
+                            CoTask.Factory.StartNew(() => DeleteFeed(parameters));
+                            break;
 
-                    case "trim":
-                        if (parameters.Count() != 0) {
-                            throw new ConsoleException(Resources.TrimErrorMessage);
-                        }
+                        case "trim":
+                            if (parameters.Count() != 0) {
+                                throw new ConsoleException(Resources.TrimErrorMessage);
+                            }
 
-                        CoTask.Factory.StartNew(() => Trim(parameters));
-                        break;
+                            CoTask.Factory.StartNew(() => Trim(parameters));
+                            break;
 
-                    case "generate-feed":
-                        CoTask.Factory.StartNew(() => GenerateFeed(parameters));
-                        break;
+                        case "generate-feed":
+                            CoTask.Factory.StartNew(() => GenerateFeed(parameters));
+                            break;
 
-                    default:
-                        throw new ConsoleException(Resources.UnknownCommand, command);
+                        default:
+                            throw new ConsoleException(Resources.UnknownCommand, command);
+                    }
                 }
 
                 while (waitforbreak && !CancellationTokenSource.IsCancellationRequested) {
@@ -290,14 +300,27 @@ namespace CoApp.CLI {
             return 0;
         }
 
+        private void DumpPackages(IEnumerable<Package> packages) {
+            if (packages.Count() > 0) {
+                (from pkg in packages
+                    select new {
+                        pkg.Name,
+                        Version = pkg.Version.UInt64VersiontoString(),
+                        Arch = pkg.Architecture,
+                        Publisher = pkg.Publisher.Name,
+                        Local_Path = pkg.LocalPackagePath.Value ?? "<not local>",
+                        Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
+                    }).ToTable().ConsoleOut();
+            }
+            else {
+                Console.WriteLine("\rNo packages.");
+            }
+        }
 
         private void ListPackages(IEnumerable<string> parameters) {
-            _pkgManager.GetInstalledPackages(new PackageManagerMessages {
-                PackageScanning = (progress) => {
-                    "Scanning: ".PrintProgressBar(progress);
-                }
-            }).ContinueWith((antecedent) => {
-
+            var tsk = _pkgManager.GetInstalledPackages(new PackageManagerMessages {
+                PackageScanning = (progress) => { "Scanning: ".PrintProgressBar(progress); }
+            }).ContinueWithParent((antecedent) => {
                 var pkgsInstalled = antecedent.Result;
 
                 " ".PrintProgressBar(-1);
@@ -305,13 +328,14 @@ namespace CoApp.CLI {
 
                 if (pkgsInstalled.Count() > 0) {
                     Console.WriteLine("\rPackages currently installed:");
-                    pkgsInstalled.ToTable(new[] {"CosmeticName", "LocalPackagePath", "PublicKeyToken"}).Dump(new[]
-                    {"Name", "Installer", "Public Key Token"});
+                    DumpPackages(pkgsInstalled);
                 }
                 else {
                     Console.WriteLine("\rThere are no packages currently installed.");
                 }
             });
+
+            tsk.Wait();
         }
 
         private void Remove(IEnumerable<string> parameters) {
@@ -326,42 +350,32 @@ namespace CoApp.CLI {
                     Console.Write("\r\nRemoving: {0}", package.CosmeticName);
                     maxPercent = 0;
                 },
-
                 RemovingProgress = (package, progress) => {
                     if (progress > maxPercent) {
                         "Removing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
                         maxPercent = progress;
                     }
                 },
-
                 MultiplePackagesMatch = (packageMask, packages) => {
                     Console.WriteLine(Resources.PackageHasMultipleMatches, packageMask);
                     foreach (var pkg in packages) {
                         Console.WriteLine(@"   {0}", pkg.CosmeticName);
                     }
                 },
-
                 PackageRemoveFailed = (package) => {
                     Console.WriteLine("Remove of package {0} failed:", package.CosmeticName);
                     Console.WriteLine("    File: {0} :", package.LocalPackagePath);
                 },
-
-                PackageNotFound = (packageMask) => {
-                    Console.WriteLine(Resources.PackageNotFound, packageMask);
-                },
-
-                PackageIsNotInstalled = (package) => {
-                    Console.WriteLine("The package {0} is not currently installed", package.CosmeticName);
-                },
+                PackageNotFound = (packageMask) => { Console.WriteLine(Resources.PackageNotFound, packageMask); },
+                PackageIsNotInstalled =
+                    (package) => { Console.WriteLine("The package {0} is not currently installed", package.CosmeticName); },
             });
 
             try {
                 task.Wait();
             }
             catch (AggregateException ae) {
-                ae.Ignore(typeof (OperationCompletedBeforeResultException), () => {
-                    Console.WriteLine("operation not complete!");
-                } );
+                ae.Ignore(typeof (OperationCompletedBeforeResultException), () => { Console.WriteLine("operation not complete!"); });
             }
         }
 
@@ -374,80 +388,23 @@ namespace CoApp.CLI {
             var maxPercent = 0L;
 
             var installPackagesTask = _pkgManager.InstallPackages(parameters, new PackageManagerMessages {
+                FailedDependentPackageInstall = OnFailedDependentPackageInstall,
+                PackageNotFound = OnPackageNotFound,
+                PackageHasPotentialUpgrades = OnPackageHasPotentialUpgrades,
+                PackageNotSatisfied = OnPackageNotSatisfied,
+                MultiplePackagesMatch = OnMultiplePackagesMatch,
                 InstallingPackage = (package) => {
                     Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
                     maxPercent = 0;
                 },
-
                 InstallProgress = (package, progress) => {
                     if (progress > maxPercent) {
                         "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
                         maxPercent = progress;
                     }
                 },
-
-                FailedDependentPackageInstall = (package) => {
-                    // dependent package failed installation.
-                    Console.WriteLine(Resources.PackageFailedInstall, package.CosmeticName);
-                },
-
-                PackageNotFound = (packageMask) => {
-                    Console.WriteLine(Resources.PackageNotFound, packageMask);
-                },
-
-                PackageHasPotentialUpgrades = (package, supercedents) => {
-                    // the user hasn't specifically asked us to supercede, yet we know of 
-                    // potential supercedents. Let's force the user to make a decision.
-                    Console.WriteLine(Resources.PackageHasPossibleNewerVersion, package);
-                    Console.WriteLine(Resources.TheFollowingPackageSupercede);
-                    Console.WriteLine(@"   [Latest] {0}", supercedents.First().CosmeticName);
-
-                    foreach (var pkg in supercedents.Skip(1)) {
-                        Console.WriteLine(@"            {0}", pkg.CosmeticName);
-                    }
-
-                    Console.WriteLine();
-                    Console.WriteLine(Resources.AutoAcceptHint,
-                        package.CosmeticName);
-                    Console.WriteLine(Resources.AsSpecifiedHint,
-                        package.CosmeticName);
-                },
-
-                PackageNotSatisfied = (package) => {
-                    Console.WriteLine(Resources.PackageDependenciesCantInstall,
-                           package.CosmeticName);
-
-                    var depth = 0;
-                    Action<Package> printDepMap = null;
-                    printDepMap = (p => {
-                        depth++;
-                        if (!p.CanSatisfy) {
-                            var count = p.Dependencies.Count();
-                            Console.WriteLine(@"{0}{1} [{2}]", "".PadLeft(3 * depth), p.CosmeticName,
-                                count > 0
-                                    ? Resources.MissingPkgText.format(count, count > 1 ? "dependencies" : "dependency")
-                                    : p.CouldNotDownload
-                                        ? Resources.CouldNotDownload
-                                        : p.PackageFailedInstall
-                                            ? Resources.FailedToInstall
-                                            : !p.HasLocalFile ? "No local package file" : "Unknown");
-                            foreach (var dp in p.Dependencies.Where(each => !each.CanSatisfy)) {
-                                printDepMap(dp);
-                            }
-                        }
-                        depth--;
-                    });
-                    printDepMap(package);
-                },
-
-                MultiplePackagesMatch = (packageMask, packages) => {
-                    Console.WriteLine(Resources.PackageHasMultipleMatches, packageMask);
-                        foreach (var pkg in packages) {
-                            Console.WriteLine(@"   {0}", pkg.CosmeticName);
-                        }
-                },
-
                 DownloadingFile = (remoteFile) => {
+                    Console.WriteLine("Downloading:  {0}", remoteFile.ActualRemoteLocation.AbsoluteUri);
                     maxPercent = 0L;
                 },
                 DownloadingFileProgress = (remoteFile, progress) => {
@@ -456,114 +413,116 @@ namespace CoApp.CLI {
                         maxPercent = progress;
                         // TODO: this probably looks like hell when downloading multiple packages concurrently.
                     }
-                } 
-                
+                }
             });
 
             try {
                 installPackagesTask.Wait();
             }
             catch (AggregateException ae) {
-                ae.Ignore(typeof(OperationCompletedBeforeResultException), () => {
-                    Console.WriteLine("operation not complete!");
-                });
+                ae.Ignore(typeof (OperationCompletedBeforeResultException), () => { Console.WriteLine("(Operation not complete)."); });
+            }
+        }
 
+        private void OnMultiplePackagesMatch(string packageMask, IEnumerable<Package> packages) {
+            Console.WriteLine(Resources.PackageHasMultipleMatches, packageMask);
+            foreach (var pkg in packages) {
+                Console.WriteLine(@"   {0} [{1}]", pkg.CosmeticName,
+                    pkg.HasLocalFile
+                        ? pkg.LocalPackagePath.Value
+                        : pkg.HasRemoteLocation ? pkg.RemoteLocation.Value.AbsoluteUri : "Package Not Found");
+            }
+        }
+
+        private void OnPackageNotSatisfied(Package package) {
+            Console.WriteLine(Resources.PackageDependenciesCantInstall, package.CosmeticName);
+
+            var depth = 0;
+            Action<Package> printDepMap = null;
+            printDepMap = (p => {
+                depth++;
+                if (!p.CanSatisfy) {
+                    var unsatisfiedDependencies = p.Dependencies.Where(each => !each.CanSatisfy);
+                    var count = unsatisfiedDependencies.Count();
+
+                    Console.WriteLine(@"{0}{1} [{2}] [{3}]", "".PadLeft(3*depth), p.CosmeticName,
+                        p.HasLocalFile
+                            ? p.LocalPackagePath.Value
+                            : p.HasRemoteLocation ? p.RemoteLocation.Value.AbsoluteUri : "Package Not Found",
+                        count > 0
+                            ? Resources.MissingPkgText.format(count, count > 1 ? "dependencies" : "dependency")
+                            : p.CouldNotDownload
+                                ? Resources.CouldNotDownload
+                                : p.PackageFailedInstall ? Resources.FailedToInstall : !p.HasLocalFile ? "No local package file" : "Unknown");
+                    foreach (var dp in unsatisfiedDependencies) {
+                        printDepMap(dp);
+                    }
+                }
+                depth--;
+            });
+            printDepMap(package);
+        }
+
+        private void OnPackageHasPotentialUpgrades(Package package, IEnumerable<Package> supercedents) {
+            // the user hasn't specifically asked us to supercede, yet we know of 
+            // potential supercedents. Let's force the user to make a decision.
+            Console.WriteLine(Resources.PackageHasPossibleNewerVersion, package);
+            Console.WriteLine(Resources.TheFollowingPackageSupercede);
+            Console.WriteLine(@"   [Latest] {0}", supercedents.First().CosmeticName);
+
+            foreach (var pkg in supercedents.Skip(1)) {
+                Console.WriteLine(@"            {0} ", pkg.CosmeticName);
             }
 
-            /*
-            try {
-                t.Wait(); // waiting for the task to finish.
-                // success means that this doesn't throw an exception.
-                
-            }
-            catch (AggregateException ae) {
-                Console.WriteLine();
-                Func<Exception,bool> handleException = null;
+            Console.WriteLine();
+            Console.WriteLine(Resources.AutoAcceptHint, package.CosmeticName);
+            Console.WriteLine(Resources.AsSpecifiedHint, package.CosmeticName);
+        }
 
-                handleException = exception => {
-                    if (exception is AggregateException) {
-                        (exception as AggregateException).Handle(handleException);
-                        return true;
-                    }
+        private void OnPackageNotFound(string packageMask) {
+            Console.WriteLine(Resources.PackageNotFound, packageMask);
+        }
 
-                    try {
-                        Console.WriteLine(exception.StackTrace);
-                        throw exception;
-                    }
-                    catch (PackageNotFoundException pnf) {
-                        Console.WriteLine(Resources.PackageNotFound, pnf.PackagePath);
-                    }
-                    catch (InvalidPackageException ip) {
-                        Console.WriteLine(Resources.InvalidPackage, ip.PackagePath);
-                    }
-                    catch (PackageInstallFailedException pif) {
-                        Console.WriteLine(Resources.PackageFailedInstall, pif.FailedPackage);
-                    }
-                    catch (PackageNotSatisfiedException pns) {
-                        Console.WriteLine(Resources.PackageDependenciesCantInstall,
-                            pns.packageNotSatified.CosmeticName);
-
-                        var depth = 0;
-                        Action<Package> printDepMap = null;
-                        printDepMap = (p => {
-                            depth++;
-                            if (!p.CanSatisfy) {
-                                var count = p.Dependencies.Count();
-                                Console.WriteLine(@"{0}{1} [{2}]", "".PadLeft(3 * depth), p.CosmeticName,
-                                    count > 0
-                                        ? Resources.MissingPkgText.format(count, count > 1 ? "dependencies" : "dependency")
-                                        : p.CouldNotDownload
-                                            ? Resources.CouldNotDownload
-                                            : p.PackageFailedInstall
-                                                ? Resources.FailedToInstall
-                                                : !p.HasLocalFile ? "No local package file" : "Unknown");
-                                foreach (var dp in p.Dependencies.Where(each => !each.CanSatisfy)) {
-                                    printDepMap(dp);
-                                }
-                            }
-                            depth--;
-                        });
-                        printDepMap(pns.packageNotSatified);
-                    }
-                    catch (PackageHasPotentialUpgradesException phphu) {
-                        // the user hasn't specifically asked us to supercede, yet we know of 
-                        // potential supercedents. Let's force the user to make a decision.
-                        Console.WriteLine(Resources.PackageHasPossibleNewerVersion, phphu.UnsatisfiedPackage);
-                        Console.WriteLine(Resources.TheFollowingPackageSupercede);
-                        Console.WriteLine(@"   [Latest] {0}", phphu.SatifactionOptions.First().CosmeticName);
-
-                        foreach (var pkg in phphu.SatifactionOptions.Skip(1)) {
-                            Console.WriteLine(@"            {0}", pkg.CosmeticName);
-                        }
-
-                        Console.WriteLine();
-                        Console.WriteLine(Resources.AutoAcceptHint,
-                            phphu.UnsatisfiedPackage.CosmeticName);
-                        Console.WriteLine(Resources.AsSpecifiedHint,
-                            phphu.UnsatisfiedPackage.CosmeticName);
-                    }
-                    catch (MultiplePackagesMatchException mpm) {
-                        Console.WriteLine(Resources.PackageHasMultipleMatches, mpm.PackageMask);
-                        foreach (var pkg in mpm.PackageMatches) {
-                            Console.WriteLine(@"   {0}", pkg.CosmeticName);
-                        }
-                    }
-                    catch (Exception ex) {
-                        Console.WriteLine(ex.StackTrace);
-                        Console.WriteLine(ex.Message);
-                        throw new ConsoleException("Something unexpected.\r\n{0}",ex.Message);
-                    }
-
-                    return true;
-                };
-                ae.Handle(handleException);
-            }
-             * 
-             */
+        private void OnFailedDependentPackageInstall(Package package) {
+            // dependent package failed installation.
+            Console.WriteLine(Resources.PackageFailedInstall, package.CosmeticName);
         }
 
         private void Upgrade(IEnumerable<string> parameters) {
             try {
+                var maxPercent = 0L;
+                _pkgManager.Upgrade(parameters, new PackageManagerMessages {
+                    FailedDependentPackageInstall = OnFailedDependentPackageInstall,
+                    PackageNotFound = OnPackageNotFound,
+                    PackageHasPotentialUpgrades = OnPackageHasPotentialUpgrades,
+                    PackageNotSatisfied = OnPackageNotSatisfied,
+                    MultiplePackagesMatch = OnMultiplePackagesMatch,
+                    InstallingPackage = (package) => {
+                        Console.Write("\r\nInstalling: {0}\r", package.CosmeticName);
+                        maxPercent = 0;
+                    },
+                    InstallProgress = (package, progress) => {
+                        if (progress > maxPercent) {
+                            "Installing: {0}".format(package.CosmeticName).PrintProgressBar(progress);
+                            maxPercent = progress;
+                        }
+                    },
+                    DownloadingFile = (remoteFile) => {
+                        Console.WriteLine("Downloading:  {0}", remoteFile.ActualRemoteLocation.AbsoluteUri);
+                        maxPercent = 0L;
+                    },
+                    DownloadingFileProgress = (remoteFile, progress) => {
+                        if (progress > maxPercent) {
+                            "Downloading: {0}".format(remoteFile.ActualRemoteLocation.AbsoluteUri).PrintProgressBar(progress);
+                            maxPercent = progress;
+                            // TODO: this probably looks like hell when downloading multiple packages concurrently.
+                        }
+                    },
+                    UpgradingPackage = (packageList) => {
+                        Console.WriteLine("Packages that can be upgraded:");
+                        DumpPackages(packageList);
+                    }
+                });
             }
             catch {
             }
@@ -579,13 +538,14 @@ namespace CoApp.CLI {
         private void GenerateFeed(IEnumerable<string> parameters) {
             try {
                 Console.WriteLine("...");
-                _pkgManager.GenerateAtomFeed(feedOutputFile, feedPackageSource, feedRecursive, feedRootUrl, feedPackageUrl, feedActualUrl,
-                    feedTitle);
+                _pkgManager.GenerateAtomFeed(_feedOutputFile, _feedPackageSource, _feedRecursive, _feedRootUrl, _feedPackageUrl,
+                    _feedActualUrl,
+                    _feedTitle);
                 Console.WriteLine("...");
             }
-            catch(Exception e) { 
+            catch (Exception e) {
                 Console.WriteLine("stacktrace: {0}", e.StackTrace);
-                throw new ConsoleException("Failed to create Atom feed: {0}",e.Message);
+                throw new ConsoleException("Failed to create Atom feed: {0}", e.Message);
             }
         }
 
