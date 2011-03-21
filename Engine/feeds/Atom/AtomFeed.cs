@@ -58,19 +58,19 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
 
         public static AtomFeed Load(string localPath) {
             XmlReader reader = null;
+            StringReader sr = null;
 
             if( File.Exists(localPath) ) {
-                reader = XmlReader.Create(File.OpenText(localPath));
+                sr = new StringReader(File.ReadAllText(localPath));
+                reader = XmlReader.Create(sr);
             }
-
+            
             if( reader != null) {
-                return Load<AtomFeed>(reader);
+                var result = Load<AtomFeed>(reader);
+                sr.Dispose();
+                return result;
             }
-
-            return null;
-        }
-
-        public static AtomFeed Load(Uri uri) {
+            
             return null;
         }
 

@@ -71,7 +71,6 @@
   <ItemGroup>
     <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
     <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs" />
-    <Compile Include="Engine\Exceptions\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs" />
     <Compile Include="Engine\Exceptions\ConfigurationException.cs" />
     <Compile Include="Engine\Exceptions\PackageInstallFailedException.cs" />
@@ -87,6 +86,7 @@
     <Compile Include="Engine\Feeds\AtomPackageFeed.cs" />
     <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />
     <Compile Include="Engine\Feeds\PackageFeed.cs" />
+    <Compile Include="Engine\MultiplexedProperty.cs" />
     <Compile Include="Engine\NativeMethods.cs" />
     <Compile Include="Engine\Package.cs" />
     <Compile Include="Engine\PackageExtensions.cs" />

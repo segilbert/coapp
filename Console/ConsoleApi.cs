@@ -86,7 +86,7 @@
         [DllImport("user32.dll")]
         public static extern IntPtr GetFocus();
 
-        [CLSCompliant(false)]
+        // [CLSCompliant(false)]
         [DllImport("kernel32.dll")]
         public static extern IntPtr CreateConsoleScreenBuffer(DESIRED_ACCESS dwDesiredAccess, FILE_SHARE dwShareMode,
             [MarshalAs(UnmanagedType.LPStruct)] SECURITY_ATTRIBUTES lpSecurityAttributes, Int32 dwFlags, IntPtr lpScreenBufferData);
@@ -328,7 +328,7 @@
 
 
         [Flags]
-        [CLSCompliant(false)]
+        // [CLSCompliant(false)]
         public enum DESIRED_ACCESS : uint {
             GENERIC_READ = 0x80000000,
             GENERIC_WRITE = 0x40000000,

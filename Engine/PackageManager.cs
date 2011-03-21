@@ -9,6 +9,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using Exceptions;
@@ -18,6 +19,7 @@ namespace CoApp.Toolkit.Engine {
     using Network;
     using PackageFormatHandlers;
     using Tasks;
+    using OperationCompletedBeforeResultException = Tasks.OperationCompletedBeforeResultException;
 
 
     public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
@@ -38,17 +40,15 @@ namespace CoApp.Toolkit.Engine {
         public Action<RemoteFile, long> DownloadingFileProgress;
         public Action<Package> PackageNotSatisfied;
         public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
-
+        public Action<IEnumerable<Package>> UpgradingPackage;
     }
 
-
     public class PackageManager {
-        private readonly List<Package> _acquirePackageQueue = new List<Package>();
-        private readonly List<Package> _installQueue = new List<Package>();
+        // private readonly List<Package> _acquirePackageQueue = new List<Package>();
+        // private readonly List<Package> _installQueue = new List<Package>();
+        private static readonly TransferManager _transferManager = TransferManager.GetTransferManager(PackageManagerSettings.CoAppCacheDirectory);
 
-        public CancellationToken CancellationToken {
-            get { return CoTask.CurrentCancellationToken; }
-        }
+        private bool IsCancellationRequested { get { return Tasklet.CurrentCancellationToken.IsCancellationRequested; } }
 
         public IEnumerable<string> PackagesAreUpgradable = Enumerable.Empty<string>();
         public IEnumerable<string> PackagesAsSpecified = Enumerable.Empty<string>();
@@ -79,172 +79,195 @@ namespace CoApp.Toolkit.Engine {
             Registrar.FlushCache();
         }
 
-        public void AddSystemFeeds(IEnumerable<string> feedLocations) {
-            Registrar.AddSystemFeedLocations(feedLocations);
+        public Task AddSystemFeeds(IEnumerable<string> feedLocations, MessageHandlers messageHandlers = null) {
+            return Registrar.AddSystemFeedLocations(feedLocations);
         }
 
-        public void DeleteSystemFeeds(IEnumerable<string> feedLocations) {
-            Registrar.DeleteSystemFeedLocations(feedLocations);
+        public Task DeleteSystemFeeds(IEnumerable<string> feedLocations, MessageHandlers messageHandlers = null) {
+            return Registrar.DeleteSystemFeedLocations(feedLocations);
         }
 
-        public CoTask InstallPackages(IEnumerable<string> packages, MessageHandlers messageHandlers) {
-            return CoTask.Factory.StartNew(() => InstallPackagesImpl(packages), CancellationToken, messageHandlers);
-        }
-
-        private void InstallPackagesImpl(IEnumerable<string> packages) {
-            if (CancellationToken.IsCancellationRequested) {
-                return;
-            }
-
-            var packageFiles = Registrar.GetPackagesByName(packages);
-
-            foreach (var p in packageFiles) {
-                p.UserSpecified = true;
-            }
-
-            foreach (var p in from p in packageFiles from pas in PackagesAsSpecified where p.CosmeticName.IsWildcardMatch(pas) select p) {
-                p.DoNotSupercede = true;
-            }
-
-            foreach (var p in from p in packageFiles from pas in PackagesAreUpgradable where p.CosmeticName.IsWildcardMatch(pas) select p) {
-                p.UpgradeAsNeeded = true;
-            }
-            // must wait for child tasks to complete any scanning work
-            // TODO: fix HACK: using task.wait() instead of continuewith() 
-            // HACK HACK HACK HACK HACK HACK HACK 
-            foreach (var t in CoTask.CurrentTask.ChildTasks.ToList()) {
-                if (!t.IsCompleted) {
-                    t.Wait();
-                    Thread.Sleep(100); // this should give any continuations time to start
+        public Task InstallPackages(IEnumerable<string> packageMasks, MessageHandlers messageHandlers = null) {
+            return Registrar.GetPackagesByName(packageMasks, messageHandlers).ContinueWithParent(antecedent => {
+                foreach (var p in antecedent.Result) {
+                    p.UserSpecified = true;
                 }
-            }
-            // HACK HACK HACK HACK HACK HACK HACK 
+                return antecedent.Result;
+            }).ContinueWithParent(antecedent => { InstallPackages(antecedent.Result); });
+        }
 
-            int state;
-            GetInstalledPackages();
-
-            do {
-                if (CancellationToken.IsCancellationRequested) {
-                    return;
+        public Task InstallPackages(IEnumerable<Package> packages, MessageHandlers messageHandlers = null) {
+            return CoTask.Factory.StartNew(() => {
+                foreach (var p in from p in packages from pas in PackagesAsSpecified where p.CosmeticName.IsWildcardMatch(pas) select p) {
+                    p.DoNotSupercede = true;
                 }
 
-                state = Registrar.StateCounter;
-                _acquirePackageQueue.Clear();
-                _installQueue.Clear();
+                foreach (
+                    var p in from p in packages from pas in PackagesAreUpgradable where p.CosmeticName.IsWildcardMatch(pas) select p) {
+                    p.UpgradeAsNeeded = true;
+                }
 
-                // must wait for child tasks to complete any scanning work
-                // TODO: fix HACK: using task.wait() instead of continuewith() 
-                // HACK HACK HACK HACK HACK HACK HACK 
-                foreach (var t in CoTask.CurrentTask.ChildTasks.ToList()) {
-                    if (!t.IsCompleted) {
-                        t.Wait();
-                        Thread.Sleep(100); // this should give any continuations time to finish
+                int state;
+                GetInstalledPackages();
+                var downloadQueue = new List<Package>();
+                var installQueue = new List<Package>();
+
+                do {
+                    if (IsCancellationRequested) {
+                        return;
                     }
-                }
-                // HACK HACK HACK HACK HACK HACK HACK 
 
-                Registrar.ScanForPackages(packageFiles);
+                    state = Registrar.StateCounter;
+                    downloadQueue.Clear();
+                    installQueue.Clear();
 
-                foreach (var eachPackageFile in packageFiles) {
-                    try {
-                        if (CanSatisfyPackage(eachPackageFile)) {
+                    Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
+
+                    Registrar.ScanForPackages(packages);
+
+                    foreach (var eachPackage in packages) {
+                        try {
+                            if (CanSatisfyPackage(eachPackage, installQueue, downloadQueue)) {
+                                break;
+                            }
+                        }
+                        catch (PackageHasPotentialUpgradesException) {
+                            // if this throws, this is a signal to gtfo. (get-the-function-out) ... 
+                            // ... what did you think gtfo meant?
+                            throw;
+                        }
+
+                        if (Registrar.StateCounter != state) {
+                            // if stuff has changed, perhaps the registrar should scan again, 
+                            // just in case it can find anything new
+                            Registrar.ScanForPackages(packages);
+                            break;
+                        }
+                        // so, no scanning has been done since it wasn't likely to find anything new
+                        // and we can't satisfy this package. Bummer.
+                        // throw new PackageNotSatisfiedException(eachPackageFile);
+                        PackageManagerMessages.Invoke.PackageNotSatisfied(eachPackage);
+                        throw new OperationCompletedBeforeResultException();
+                    }
+
+                    if (IsCancellationRequested) {
+                        return;
+                    }
+
+                    // if we're done here, make sure that any changes to the state are accounted for
+                    if (Registrar.StateCounter != state) {
+                        continue;
+                    }
+
+                    if(!DownloadPackages(downloadQueue))
+                        continue;
+
+                    // if we're done here, make sure that any changes to the state are accounted for
+                    if (Registrar.StateCounter != state) {
+                        continue;
+                    }
+
+                    if( downloadQueue.Count > 0 ) {
+                        // we've got packages that should have been downloaded, but seem to have not been
+                        // BAD. GS01: TODO look into this if it occurs.
+                        throw new Exception("SHOULD NOT HAPPEN: DownloadQueue is not empty");
+                    }
+
+                    if (installQueue.Count > 0) {
+                        foreach (var pkg in installQueue) {
+                            try {
+                                if (IsCancellationRequested) {
+                                    return;
+                                }
+
+                                if (!pkg.IsInstalled) {
+                                    PackageManagerMessages.Invoke.InstallingPackage(pkg);
+
+                                    if (!Pretend) {
+                                        pkg.Install(percentage => {
+                                            PackageManagerMessages.Invoke.InstallProgress(pkg, percentage);
+                                        });
+                                        PackageManagerMessages.Invoke.InstallProgress(pkg, 100);
+                                    }
+                                    pkg.IsInstalled = true;
+                                }
+                            }
+                            catch (PackageInstallFailedException) {
+
+                                if (!pkg.AllowedToSupercede) {
+                                    throw; // user specified packge as critical.
+                                }
+
+                                PackageManagerMessages.Invoke.FailedDependentPackageInstall(pkg);
+                                pkg.PackageFailedInstall = true;
+                                GetInstalledPackages();
+                                break; // let it try to find another package.
+                            }
+                        }
+                        // ...
+
+                        // if we're done here, make sure that any changes to the state are accounted for
+                        if (Registrar.StateCounter != state) {
                             continue;
                         }
                     }
-                    catch (PackageHasPotentialUpgradesException) {
-                        // if this throws, this is a signal to gtfo. (get-the-function-out) ... 
-                        // ... what did you think gtfo meant?
-                        throw;
-                    }
-
-                    if (Registrar.StateCounter != state) {
-                        // if stuff has changed, perhaps the registrar should scan again, 
-                        // just in case it can find anything new
-                        Registrar.ScanForPackages(packageFiles);
-                        break;
-                    }
-                    // so, no scanning has been done since it wasn't likely to find anything new
-                    // and we can't satisfy this package. Bummer.
-                    // throw new PackageNotSatisfiedException(eachPackageFile);
-                    PackageManagerMessages.Invoke.PackageNotSatisfied(eachPackageFile);
-                }
-
-                if (CancellationToken.IsCancellationRequested) {
-                    return;
-                }
-
-                // if we're done here, make sure that any changes to the state are accounted for
-                if (Registrar.StateCounter != state) {
-                    continue;
-                }
-
-                if (_acquirePackageQueue.Count > 0) {
-                    // ensure packages are local
-
-                    // download what we don't have.
-                    // pretendToDownloadTheFiles(); // uh, we don't have any download mechanism right now.
-
-                    // after downloading is finished, check to see if anything changed
-                    if (Registrar.StateCounter != state) {
-                        continue;
-                    }
-
-                    // if we still have packages that we can't get
-                    if (_acquirePackageQueue.Count > 0) {
-                        foreach (var notAvailablePackage in _acquirePackageQueue) {
-                            notAvailablePackage.CouldNotDownload = true;
-                        }
-                    }
-
-                    // if we're done here, make sure that any changes to the state are accounted for
-                    if (Registrar.StateCounter != state) {
-                        continue;
-                    }
-                }
-
-                if (_installQueue.Count > 0) {
-                    foreach (var pkg in _installQueue) {
-                        try {
-                            if (CancellationToken.IsCancellationRequested) {
-                                return;
-                            }
-
-                            if (!pkg.IsInstalled) {
-                                PackageManagerMessages.Invoke.InstallingPackage(pkg);
-
-                                if (!Pretend) {
-                                    pkg.Install((percentage) => {
-                                        PackageManagerMessages.Invoke.InstallProgress(pkg, percentage);
-                                    });
-                                    PackageManagerMessages.Invoke.InstallProgress(pkg, 100);
-                                }
-                                pkg.IsInstalled = true;
-                            }
-                        }
-                        catch (PackageInstallFailedException) {
-                            
-                            if (!pkg.AllowedToSupercede) {
-                                throw; // user specified packge as critical.
-                            }
-
-                            PackageManagerMessages.Invoke.FailedDependentPackageInstall(pkg);
-                            pkg.PackageFailedInstall = true;
-                            GetInstalledPackages();
-                            break; // let it try to find another package.
-                        }
-                    }
-                    // ...
-
-                    // if we're done here, make sure that any changes to the state are accounted for
-                    if (Registrar.StateCounter != state) {
-                        continue;
-                    }
-                }
-                // try to find them
-            } while (Registrar.StateCounter != state);
+                    // try to find them
+                } while (Registrar.StateCounter != state);
+            }, messageHandlers);
         }
 
-        private bool CanSatisfyPackage(Package packageToSatisfy) {
+        private bool DownloadPackages(IEnumerable<Package> packages) {
+            if (packages.Count() > 0) {
+                // ensure packages are local
+
+                // download what we don't have.
+                var transferTasks = new List<Task>();
+                foreach(var package in packages) {
+                    if (IsCancellationRequested)
+                        return false;
+
+                    if( package.HasLocalFile )
+                        continue;
+                        
+                    if( package.RemoteLocation.Value == null ) {
+                        package.CouldNotDownload = true;
+                        continue;
+                    }
+
+                    var thisPkg = package;
+                    // try preferred location
+                    var remoteFile = _transferManager[package.RemoteLocation.Value];
+                    var tsk = remoteFile.Get();
+                    tsk.ContinueWithParent(antecedent => {
+                        if (remoteFile.LastStatus != HttpStatusCode.OK) {
+                            // failed download; check for other possible download locations.
+                            // GS01: TODO IMPLEMENT OTHER LOCATIONS.
+                            thisPkg.CouldNotDownload = true;
+                            return;
+                        }
+                        if( remoteFile.IsLocal ) {
+                            Registrar.GetPackage(remoteFile.LocalFullPath); // this should return the same instance of the package we have (updated with all the info :D)
+                            thisPkg.LocalPackagePath.Value = remoteFile.LocalFullPath;
+                        }
+                        // otherwise, it worked nicely.
+                        if (!thisPkg.HasLocalFile)
+                            throw new Exception("SHOULD NOT HAPPEN: File completed download, but doesn't have a local file [{0}]??".format(remoteFile.ActualRemoteLocation.AbsoluteUri));
+                        
+                    });
+
+                    remoteFile.DownloadProgress.Notification += progress => PackageManagerMessages.Invoke.DownloadingFileProgress(remoteFile, progress);
+                }
+
+                Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
+
+                if (packages.Any(package => package.CouldNotDownload)) {
+                    return false;
+                }                
+            }
+            return true;
+        }
+
+        private bool CanSatisfyPackage(Package packageToSatisfy, List<Package> installQueue, List<Package> downloadQueue) {
             packageToSatisfy.CanSatisfy = false;
 
             if (packageToSatisfy.IsInstalled) {
@@ -266,7 +289,7 @@ namespace CoApp.Toolkit.Engine {
                 if (supercedents.Count() > 0) {
                     if (packageToSatisfy.AllowedToSupercede) {
                         foreach (var supercedent in supercedents) {
-                            if (CanSatisfyPackage(supercedent)) {
+                            if (CanSatisfyPackage(supercedent, installQueue, downloadQueue)) {
                                 packageToSatisfy.Supercedent = supercedent;
                                 break;
                             }
@@ -291,24 +314,27 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var dependentPackage in packageToSatisfy.Dependencies) {
-                if (!CanSatisfyPackage(dependentPackage)) {
+                if (!CanSatisfyPackage(dependentPackage, installQueue, downloadQueue)) {
                     return false;
                 }
             }
 
             if (!packageToSatisfy.HasLocalFile) {
-                _acquirePackageQueue.Add(packageToSatisfy);
+                if (downloadQueue != null) {
+                    downloadQueue.Add(packageToSatisfy);
+                }
             }
             else {
-                _installQueue.Add(packageToSatisfy);
+                if (installQueue != null) {
+                    installQueue.Add(packageToSatisfy);
+                }
             }
 
             return packageToSatisfy.CanSatisfy = true;
         }
 
-        public CoTask RemovePackages(IEnumerable<string> packages, MessageHandlers messageHandlers = null) {
+        public Task RemovePackages(IEnumerable<string> packages, MessageHandlers messageHandlers = null) {
             // scan 
-
             return CoTask.Factory.StartNew(() => {
 
                 GetInstalledPackages().Wait();
@@ -316,12 +342,12 @@ namespace CoApp.Toolkit.Engine {
                 // this is going to be too aggressive I think...
                 var packageFiles = Registrar.GetInstalledPackagesByName(packages);
 
-                if (CancellationToken.IsCancellationRequested) {
+                if (IsCancellationRequested) {
                     return;
                 }
 
                 foreach (var p in packageFiles) {
-                    if (CancellationToken.IsCancellationRequested) {
+                    if (IsCancellationRequested) {
                         return;
                     }
 
@@ -331,7 +357,7 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 foreach (var p in packageFiles) {
-                    if (CancellationToken.IsCancellationRequested) {
+                    if (IsCancellationRequested) {
                         return;
                     }
 
@@ -346,7 +372,38 @@ namespace CoApp.Toolkit.Engine {
             },messageHandlers);
         }
 
-        public CoTask<IEnumerable<Package>> GetInstalledPackages(MessageHandlers messageHandlers = null) {
+        public Task Upgrade(IEnumerable<string> packageList, MessageHandlers messageHandlers = null) {
+            if( packageList == null || packageList.Count() == 0 ) {
+                packageList = new[] {"*"};
+            }
+            return CoTask.Factory.StartNew(() => {
+                GetInstalledPackages().ContinueWithParent((antecedent) => {
+
+                    var installedPackages = antecedent.Result;
+                    var newPackages = new List<Package>();
+
+                    foreach (var pkg in installedPackages) {
+                        foreach (var supercedents in from packageMask in packageList
+                            where packageMask.Equals("all", StringComparison.CurrentCultureIgnoreCase) || pkg.CosmeticName.IsWildcardMatch(packageMask)
+                            select Registrar.Packages.SupercedentPackages(pkg)) {
+                            if (supercedents.Count() > 0) {
+                                foreach (var supercedent in supercedents.Where(supercedent => CanSatisfyPackage(supercedent, null, null))) {
+                                    if (!supercedent.IsInstalled) {
+                                        newPackages.Add(supercedent);
+                                    }
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    PackageManagerMessages.Invoke.UpgradingPackage(newPackages);
+                    InstallPackages(newPackages).Wait();
+                });
+            },messageHandlers);
+        }
+
+        public Task<IEnumerable<Package>> GetInstalledPackages(MessageHandlers messageHandlers = null) {
             return CoTask.Factory.StartNew<IEnumerable<Package>>(() => { 
                 MSIBase.ScanInstalledMSIs();
                 Registrar.SaveCache();
@@ -356,10 +413,10 @@ namespace CoApp.Toolkit.Engine {
 
         public void GenerateAtomFeed(string outputFilename, string packageSource, bool recursive,  string rootUrl, string packageUrl, string actualUrl = null, string title = null) {
             outputFilename = Path.GetFullPath(outputFilename);
-            PackageFeed.GetPackageFeedFromLocation(packageSource,recursive).ContinueWith(antecedent => {
+            PackageFeed.GetPackageFeedFromLocation(packageSource, recursive).ContinueWithParent(antecedent => {
                 var packageFeed = antecedent.Result;
 
-                AtomFeed generatedFeed = new AtomFeed(outputFilename, rootUrl, packageUrl, actualUrl, title);
+                var generatedFeed = new AtomFeed(outputFilename, rootUrl, packageUrl, actualUrl, title);
 
                 foreach (var pkg in packageFeed.FindPackages("*")) {
                     generatedFeed.AddPackage(pkg, packageFeed.Location.RelativePathTo(pkg.LocalPackagePath));

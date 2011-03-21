@@ -14,6 +14,11 @@
 // -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Extensions {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using Tasks;
+
     public static class DebugExtensions {
         public static void Debug(this string buf, params object[] args) {
 #if DEBUG
@@ -27,9 +32,9 @@ namespace CoApp.Toolkit.Extensions {
 
             System.Diagnostics.Debug.WriteLine(" Buffer Length: {0} [0x{0:x4}]".format(buf.Length));
 
-            for(var x = 0; x < buf.Length; x += lnWidth) {
-                for(var y = 0; y < lnWidth; y++) {
-                    if(x + y >= buf.Length) {
+            for (var x = 0; x < buf.Length; x += lnWidth) {
+                for (var y = 0; y < lnWidth; y++) {
+                    if (x + y >= buf.Length) {
                         System.Diagnostics.Debug.Write("   ");
                     }
                     else {
@@ -38,8 +43,8 @@ namespace CoApp.Toolkit.Extensions {
                 }
                 System.Diagnostics.Debug.Write("    ");
 
-                for(var y = 0; y < lnWidth; y++) {
-                    if(x + y >= buf.Length) {
+                for (var y = 0; y < lnWidth; y++) {
+                    if (x + y >= buf.Length) {
                         System.Diagnostics.Debug.Write(" ");
                     }
                     else {
@@ -53,5 +58,40 @@ namespace CoApp.Toolkit.Extensions {
 #endif
         }
 
+        public static void StackDump() {
+#if DEBUG
+            var stackTrace = new StackTrace();
+            var frames = stackTrace.GetFrames();
+            string txt = "";
+            foreach (var f in frames) {
+                if (f != null) {
+                    var method = f.GetMethod();
+                    var fnName = method.Name;
+                    var cls = method.DeclaringType;
+                    if (cls == null) {
+                        cls = stackTrace.GetType();
+                    }
+
+                    var clsName = cls.Name;
+
+                    var filters = new[] {"*Thread*", "*Enumerable*", "*__*", "*trace*", "*updated*", "*Task*"}; //"*`*",
+                    var print = true;
+                    foreach (var flt in filters) {
+                        if (fnName.IsWildcardMatch(flt) || clsName.IsWildcardMatch(flt)) {
+                            print = false;
+                        }
+                    }
+                    if (print) {
+                        txt += string.Format("<=[{1}.{0}]", fnName, clsName);
+                    }
+                }
+            }
+            System.Diagnostics.Debug.WriteLine("{0}", txt);
+#endif
+        }
+    }
+
+    public class DebugMessage : MessageHandlers<DebugMessage> {
+        public Action<string> WriteLine;
     }
 }

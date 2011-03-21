@@ -10,17 +10,18 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.ObjectModel;
     using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Exceptions;
     using Extensions;
     using Feeds;
-    using Network;
     using PackageFormatHandlers;
     using Tasks;
 
     internal class Registrar {
         private static readonly HashSet<long> _nonCoAppMSIFiles = new HashSet<long>();
+        private static Regex _canonicalFilter = new Regex(@"^(\S*)-(\d*\.\d*\.\d*\.\d*)-(\S*)-([\dabcdef]{16})$");
         private static bool _readCache;
 
         private static readonly ObservableCollection<Package> _packages = new ObservableCollection<Package>();
@@ -46,50 +47,56 @@ namespace CoApp.Toolkit.Engine {
             get { return _autoFeedLocations.GetFeedLocations(); }
         }
 
-        public static void AddSystemFeedLocations(IEnumerable<string> feedLocations) {
-            foreach (var location in feedLocations) {
-                AddSystemFeedLocation(location);
-            }
+        public static Task AddSystemFeedLocations(IEnumerable<string> feedLocations) {
+            return CoTask.Factory.StartNew(() => {
+                foreach (var location in feedLocations) {
+                    AddSystemFeedLocation(location);
+                }
+            });
         }
 
-        public static void DeleteSystemFeedLocations(IEnumerable<string> feedLocations) {
-            foreach (var location in feedLocations) {
-                DeleteSystemFeedLocation(location);
-            }
+        public static Task DeleteSystemFeedLocations(IEnumerable<string> feedLocations) {
+            return CoTask.Factory.StartNew(() => {
+                foreach (var location in feedLocations) {
+                    DeleteSystemFeedLocation(location);
+                }
+            });
         }
 
-        public static void AddSystemFeedLocation(string feedLocation) {
-            _systemFeedLocations.AddFeedLocation(feedLocation);
+        public static Task AddSystemFeedLocation(string feedLocation) {
+            return _systemFeedLocations.AddFeedLocation(feedLocation);
         }
 
-        public static void DeleteSystemFeedLocation(string feedLocation) {
-            var info = Recognizer.Recognize(feedLocation);
+        public static Task DeleteSystemFeedLocation(string feedLocation) {
+            return Recognizer.Recognize(feedLocation).ContinueWithParent(antecedent => {
+                var info = antecedent.Result;
 
-            if (info.IsWildcard) {
-                var feedsToDelete =
-                    (from feed in _systemFeedLocations where feed.Location.IsWildcardMatch(feedLocation) select feed).ToList();
-                foreach (var feed in feedsToDelete) {
-                    _systemFeedLocations.Remove(feed);
+                if (info.IsWildcard) {
+                    var feedsToDelete =
+                        (from feed in _systemFeedLocations where feed.Location.IsWildcardMatch(feedLocation) select feed).ToList();
+                    foreach (var feed in feedsToDelete) {
+                        _systemFeedLocations.Remove(feed);
+                    }
                 }
-            }
-            else if (info.IsFolder || info.IsFile) {
-                var feedsToDelete =
-                    (from feed in _systemFeedLocations
-                     where feed.Location.Equals(info.FullPath, StringComparison.CurrentCultureIgnoreCase)
-                     select feed).ToList();
-                foreach (var feed in feedsToDelete) {
-                    _systemFeedLocations.Remove(feed);
+                else if (info.IsFolder || info.IsFile) {
+                    var feedsToDelete =
+                        (from feed in _systemFeedLocations
+                         where feed.Location.Equals(info.FullPath, StringComparison.CurrentCultureIgnoreCase)
+                         select feed).ToList();
+                    foreach (var feed in feedsToDelete) {
+                        _systemFeedLocations.Remove(feed);
+                    }
                 }
-            }
-            else if (info.IsUnknown) {
-                var feedsToDelete =
-                    (from feed in _systemFeedLocations
-                     where feed.Location.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase)
-                     select feed).ToList();
-                foreach (var feed in feedsToDelete) {
-                    _systemFeedLocations.Remove(feed);
+                else if (info.IsUnknown) {
+                    var feedsToDelete =
+                        (from feed in _systemFeedLocations
+                         where feed.Location.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase)
+                         select feed).ToList();
+                    foreach (var feed in feedsToDelete) {
+                        _systemFeedLocations.Remove(feed);
+                    }
                 }
-            }
+            });
         }
 
         public static void AddSessionFeedLocations(IEnumerable<string> feedLocations) {
@@ -117,7 +124,7 @@ namespace CoApp.Toolkit.Engine {
         #region Cache Management
 
         public static void FlushCache() {
-            PackageManagerSettings.systemSettings["nonCoAppPackageMap"] = null;
+            PackageManagerSettings.systemCache["nonCoAppPackageMap"] = null;
             _nonCoAppMSIFiles.Clear();
             try {
                 Parallel.ForEach(Directory.GetDirectories(PackageManagerSettings.CoAppCacheDirectory), dir => Directory.Delete(dir, true));
@@ -141,7 +148,7 @@ namespace CoApp.Toolkit.Engine {
                     binaryWriter.Write(val);
                 }
 
-                PackageManagerSettings.systemSettings["nonCoAppPackageMap"] = ms.GetBuffer();
+                PackageManagerSettings.systemCache["nonCoAppPackageMap"] = ms.GetBuffer();
             }
 
             PackageManagerSettings.SystemStringArraySetting["feedLocations"] = SystemFeedLocations;
@@ -150,7 +157,7 @@ namespace CoApp.Toolkit.Engine {
         public static void LoadCache() {
             if (!_readCache) {
                 _readCache = true;
-                var cache = PackageManagerSettings.systemSettings["nonCoAppPackageMap"] as byte[];
+                var cache = PackageManagerSettings.systemCache["nonCoAppPackageMap"] as byte[];
                 if (cache == null) {
                     return;
                 }
@@ -165,10 +172,18 @@ namespace CoApp.Toolkit.Engine {
                         }
                     }
                 }
-
                 AddSystemFeedLocations(PackageManagerSettings.SystemStringArraySetting["feedLocations"]);
             }
         }
+
+        public static IEnumerable<string> GetCachedStrings(string cachename, params object[] args ) {
+            return PackageManagerSettings.CacheStringArraySetting[cachename.format(args)];
+        }
+
+        public static void SetCachedStrings(IEnumerable<string> values, string cachename, params object[] args) {
+            PackageManagerSettings.CacheStringArraySetting[cachename.format(args)] = values;
+        } 
+
 
         #endregion
 
@@ -197,38 +212,23 @@ namespace CoApp.Toolkit.Engine {
 
         internal static void Updated() {
             StateCounter++;
-#if false
-            StackTrace stackTrace = new StackTrace();
-            var frames = stackTrace.GetFrames();
-            string txt = "";
-            foreach( var f in frames) {
-                if (f != null) {
-                    var method = f.GetMethod();
-                    var fnName = method.Name;
-                    var cls = method.DeclaringType;
-                    if (cls == null)
-                        cls = stackTrace.GetType();
-
-                    var clsName = cls.Name;
-
-                    var filters = new[] { "*Thread*", "*Enumerable*", "*__*", "*trace*", "*updated*", "*Task*" }; //"*`*",
-                    var print = true;
-                    foreach( var flt in filters ) {
-                        if (fnName.IsWildcardMatch(flt) || clsName.IsWildcardMatch(flt))
-                            print = false;
-                    }
-                    if( print )
-                        txt += string.Format("<=[{1}.{0}]", fnName, clsName);
-                }
-                
-            }
-            Debug.WriteLine("Counter[{0}] {1}",StateCounter, txt);
-            Console.WriteLine("  Counter {0}",StateCounter);
-#endif
         }
 
-        internal static Package GetPackage(string packageName, string architecture, UInt64 version, string publicKeyToken, string packageId) {
+        internal static Package GetPackage(string packageName, UInt64 version,string architecture, string publicKeyToken, string packageId) {
             Package pkg;
+
+            // try via just the package id
+            if (!string.IsNullOrEmpty(packageId)) {
+                lock (_packages) {
+                    pkg = _packages.Where(package => package.ProductCode == packageId).FirstOrDefault();
+                }
+
+                if (pkg != null && string.IsNullOrEmpty(pkg.Name)) {
+                    pkg.SetPackageProperties(packageName, architecture, version, publicKeyToken);
+                }
+                if (pkg != null)
+                    return pkg;
+            }
 
             lock (_packages) {
                 pkg = (_packages.Where(package =>
@@ -237,25 +237,55 @@ namespace CoApp.Toolkit.Engine {
                             package.PublicKeyToken == publicKeyToken &&
                                 package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
             }
-
+            
             if (pkg == null) {
                 pkg = new Package(packageName, architecture, version, publicKeyToken, packageId);
                 AddPackage(pkg);
             }
 
+            if( !string.IsNullOrEmpty(packageId) && string.IsNullOrEmpty(pkg.ProductCode) ) {
+                pkg.ProductCode = packageId;
+            }
+
             return pkg;
         }
 
+
         internal static Package GetPackage(string packagePath) {
+            Package pkg;
+            Guid pkgGuid;
+
             if (packagePath.Contains("*")) {
                 throw new PackageNotFoundException(packagePath);
             }
 
+            // supports looking up by productcode/packageID.
+            if( packagePath[0] == '{' && Guid.TryParse(packagePath, out pkgGuid)) {
+                pkg = _packages.Where(package => package.ProductCode == packagePath).FirstOrDefault();
+                if( pkg == null ) {
+                    // where the only thing we know is packageID.
+                    pkg = new Package(packagePath);
+                    AddPackage(pkg);
+                }
+                return pkg;
+            }
+
+            // lookup by canonical name.
+            var match = _canonicalFilter.Match(packagePath);
+            if( match.Success ) {
+                return GetPackage(match.Groups[1].Value, match.Groups[2].Value.VersionStringToUInt64(), match.Groups[3].Value, match.Groups[4].Value,
+                    string.Empty);
+            }
+            
+            // assuming at this point, it should be a filename?
             var localPackagePath = Path.GetFullPath(packagePath);
 
             if (!File.Exists(localPackagePath)) {
                 // could this be another representation of a package?
+                // not sure we ever ever get here anymore.
+                
                 if (!localPackagePath.EndsWith(".msi")) {
+                    Console.WriteLine("Trying package name with .msi appendend. Is this used?");
                     return GetPackage(localPackagePath + ".msi");
                 }
 
@@ -268,11 +298,11 @@ namespace CoApp.Toolkit.Engine {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
             }
 
-            Package pkg;
+            
             lock (_packages) {
                 pkg = (_packages.Where(
                     package =>
-                        package.HasLocalFile && package.HasAlternatePath(localPackagePath))).
+                        package.HasLocalFile && package.LocalPackagePath.ContainsValue(localPackagePath))).
                     FirstOrDefault();
             }
             if (pkg != null) {
@@ -285,13 +315,25 @@ namespace CoApp.Toolkit.Engine {
 
             try {
                 var pkgDetails = CoAppMSI.GetCoAppPackageFileDetails(localPackagePath);
-                lock (_packages) {
-                    pkg = (_packages.Where(package =>
-                        package.Architecture == pkgDetails.Architecture &&
-                            package.Version == pkgDetails.Version &&
-                                package.PublicKeyToken == pkgDetails.PublicKeyToken &&
-                                    package.Name.Equals(pkgDetails.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+
+                // try via just the package id
+                if (!string.IsNullOrEmpty(pkgDetails.packageId)) {
+                    lock (_packages) {
+                        pkg = _packages.Where(package => package.ProductCode == pkgDetails.packageId).FirstOrDefault();
+                    }
                 }
+
+                // try via the cosmetic name fields
+                if (pkg == null) {
+                    lock (_packages) {
+                        pkg = (_packages.Where(package =>
+                            package.Architecture == pkgDetails.Architecture &&
+                                package.Version == pkgDetails.Version &&
+                                    package.PublicKeyToken == pkgDetails.PublicKeyToken &&
+                                        package.Name.Equals(pkgDetails.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+                    }
+                }
+
                 if (pkg == null) {
                     pkg = new Package(pkgDetails.Name, pkgDetails.Architecture, pkgDetails.Version, pkgDetails.PublicKeyToken,
                         pkgDetails.packageId);
@@ -299,16 +341,15 @@ namespace CoApp.Toolkit.Engine {
                     AddPackage(pkg);
                 }
 
+                if (string.IsNullOrEmpty(pkg.ProductCode)) {
+                    pkg.ProductCode = pkgDetails.packageId;
+                }
+
                 if (pkg.Dependencies.Count == 0) {
                     pkg.Dependencies.AddRange((IEnumerable<Package>) pkgDetails.dependencies);
                 }
 
-                if (pkg.LocalPackagePath == null) {
-                    pkg.LocalPackagePath = localPackagePath;
-                }
-                else {
-                    pkg.AddAlternatePath(localPackagePath);
-                }
+                pkg.LocalPackagePath.Value = localPackagePath;
 
                 pkg.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) pkgDetails.assemblies.Values);
                 pkg.Roles.AddRange((IEnumerable<Tuple<string, string>>) pkgDetails.roles);
@@ -320,8 +361,8 @@ namespace CoApp.Toolkit.Engine {
                 pkg.FullDescription = pkgDetails.description;
                 pkg.PublishDate = DateTime.Parse(pkgDetails.publishDate);
                 pkg.AuthorVersion = pkgDetails.authorVersion;
-                pkg.PackageLocation = pkgDetails.originalLocation;
-                pkg.FeedLocation = pkgDetails.feedLocation;
+                pkg.CanonicalPackageLocation = pkgDetails.originalLocation;
+                pkg.CanonicalFeedLocation = pkgDetails.feedLocation;
                 pkg.Base64IconData = pkgDetails.icon;
                 pkg.SummaryDescription = pkgDetails.summary;
                 pkg.Publisher.Name = pkgDetails.publisherName;
@@ -347,26 +388,37 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <param name = "packageNames"></param>
         /// <returns></returns>
-        public static IEnumerable<Package> GetPackagesByName(IEnumerable<string> packageNames) {
-            var packageFiles = new List<Package>();
-            var unknownPackages = new List<string>();
+        public static Task<IEnumerable<Package>> GetPackagesByName(IEnumerable<string> packageNames, MessageHandlers messageHandlers = null) {
+            return CoTask<IEnumerable<Package>>.Factory.StartNew(() => {
+                var packageFiles = new List<Package>();
+                var unknownPackages = new List<string>();
 
-            foreach (var item in packageNames) {
-                try {
+                foreach (var item in packageNames) {
                     var currentItem = item;
-                    var info = Recognizer.Recognize(currentItem, ensureLocal: true);
+                    Recognizer.Recognize(currentItem, ensureLocal: true).ContinueWithParent(antecedent0 => {
+                        try {
+                            var info = antecedent0.Result;
 
-                    if (info.RemoteFile != null) {
-                        PackageManagerMessages.Invoke.DownloadingFile(info.RemoteFile);
+                            if (info.RemoteFile != null) {
+                                PackageManagerMessages.Invoke.DownloadingFile(info.RemoteFile);
 
-                        info.RemoteFile.DownloadProgress.Notification += (progress) => PackageManagerMessages.Invoke.DownloadingFileProgress(info.RemoteFile,progress);
+                                info.RemoteFile.DownloadProgress.Notification +=
+                                    (progress) => PackageManagerMessages.Invoke.DownloadingFileProgress(info.RemoteFile, progress);
 
-                        info.Recognized.Notification += v => {
-                            if (info.IsPackageFeed) {
-                                // we have been given a package feed, and asked to return all the packages from it
-                                PackageFeed.GetPackageFeedFromLocation(currentItem).ContinueWith(antecedent => {
-                                    packageFiles.AddRange(antecedent.Result.FindPackages("*"));
-                                }).Wait();
+                                info.Recognized.Notification += v => {
+                                    if (info.IsPackageFeed) {
+                                        // we have been given a package feed, and asked to return all the packages from it
+                                        PackageFeed.GetPackageFeedFromLocation(currentItem).ContinueWithParent(antecedent => {
+                                            packageFiles.AddRange(antecedent.Result.FindPackages("*"));
+                                        }).Wait();
+                                    }
+                                    else if (info.IsPackageFile) {
+                                        packageFiles.Add(GetPackage(info.FullPath));
+                                    }
+                                    else {
+                                        unknownPackages.Add(currentItem);
+                                    }
+                                };
                             }
                             else if (info.IsPackageFile) {
                                 packageFiles.Add(GetPackage(info.FullPath));
@@ -374,45 +426,41 @@ namespace CoApp.Toolkit.Engine {
                             else {
                                 unknownPackages.Add(currentItem);
                             }
-                        };
-                    }
-                    else if (info.IsPackageFile) {
-                        packageFiles.Add(GetPackage(info.FullPath));
-                    }
-                    else {
-                        unknownPackages.Add(currentItem);
+                        }
+                        catch (PackageNotFoundException) {
+                            unknownPackages.Add(item);
+                        }
+                    });
+                }
+
+                Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
+
+                if (unknownPackages.Count > 0) {
+                    ScanForPackages(unknownPackages);
+
+                    foreach (var item in unknownPackages) {
+                        IEnumerable<Package> possibleMatches;
+                        lock (_packages) {
+                            possibleMatches =
+                                _packages.Match(item + (item.Contains("*") || item.Contains("-") ? "*" : "-*")).HighestPackages();
+                        }
+
+                        if (possibleMatches.Count() == 0) {
+                            throw new PackageNotFoundException(item);
+                        }
+
+                        if (possibleMatches.Count() == 1) {
+                            packageFiles.Add(possibleMatches.First());
+                        }
+                        else {
+                            // for package matching, we only support 1 match for a given unknown.
+                            PackageManagerMessages.Invoke.MultiplePackagesMatch(item, possibleMatches);
+                            throw new OperationCompletedBeforeResultException();
+                        }
                     }
                 }
-                catch (PackageNotFoundException) {
-                    unknownPackages.Add(item);
-                }
-            }
-
-
-            if (unknownPackages.Count > 0) {
-                ScanForPackages(unknownPackages);
-
-                foreach (var item in unknownPackages) {
-                    IEnumerable<Package> possibleMatches;
-                    lock (_packages) {
-                        possibleMatches = _packages.Match(item + (item.Contains("*") || item.Contains("-") ? "*" : "-*")).HighestPackages();
-                    }
-
-                    if (possibleMatches.Count() == 0) {
-                        throw new PackageNotFoundException(item);
-                    }
-
-                    if (possibleMatches.Count() == 1) {
-                        packageFiles.Add(possibleMatches.First());
-                    }
-                    else {
-                        // for package matching, we only support 1 match for a given unknown.
-                        PackageManagerMessages.Invoke.MultiplePackagesMatch(item, possibleMatches);
-                        throw new OperationCompletedBeforeResultException();
-                    }
-                }
-            }
-            return packageFiles;
+                return packageFiles;
+            }, messageHandlers);
         }
 
         /// <summary>
@@ -426,13 +474,13 @@ namespace CoApp.Toolkit.Engine {
 
             foreach (var item in packageNames) {
                 try {
-                    var info = Recognizer.Recognize(item);
+                    var info = Recognizer.Recognize(item).Result; // this should be a local file...
                     if (info.IsPackageFeed) {
                         // we have been given a package feed, and asked to return all the packages from it
                         // this lets you ask to uninstall a whole feed (and the only way to get multiple matches 
                         // from a single parameter.)
 
-                        PackageFeed.GetPackageFeedFromLocation(item).ContinueWith(antecedent => {
+                        PackageFeed.GetPackageFeedFromLocation(item).ContinueWithParent(antecedent => {
                             var feed = antecedent.Result;
                             packageFiles.AddRange(feed.FindPackages("*").Where(each => each.IsInstalled));
                         }).Wait();
@@ -506,6 +554,29 @@ namespace CoApp.Toolkit.Engine {
             feeds = DoNotScanLocations.Aggregate(feeds,
                 (current, loc) => (from feed in current where !feed.Location.IsWildcardMatch(loc) select feed));
             return feeds.Aggregate(Enumerable.Empty<Package>(), (current, feed) => current.Union(feed.FindPackages(packageFilter)));
+        }
+
+        public static void DumpPackages(IEnumerable<Package> packages = null) {
+            if (packages == null)
+                packages = _packages;
+
+            if (packages.Count() > 0) {
+                Console.WriteLine("\rPackages:");
+                (from pkg in packages
+                 orderby pkg.IsInstalled descending, pkg.Name 
+                        select new {
+                            Name = pkg.Name,
+                            Version = pkg.Version.UInt64VersiontoString(),
+                            Arch = pkg.Architecture,
+                            Publisher = pkg.Publisher.Name,
+                            Local_Path = pkg.LocalPackagePath.Value ?? "(not local)",
+                            Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>",
+                            Installed = pkg.IsInstalled
+                     } ) .ToTable(Console.BufferWidth).ConsoleOut();
+            }
+            else {
+                Console.WriteLine("\rNo packages.");
+            }
         }
     }
 }

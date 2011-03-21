@@ -14,6 +14,7 @@ namespace CoApp.Toolkit.Engine {
     using Extensions;
     
     using PackageFormatHandlers;
+    using Tasks;
 
     public class Package {
         public class Party {
@@ -22,28 +23,32 @@ namespace CoApp.Toolkit.Engine {
             public string Email { get; set; }
         }
 
-        public readonly string Architecture;
+        
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
         /// <summary>
         /// the tuple is: (role name, flavor)
         /// </summary>
         public readonly List<Tuple<string, string>> Roles = new List<Tuple<string, string>>();
         public readonly List<PackageAssemblyInfo> Assemblies = new List<PackageAssemblyInfo>();
-        public readonly string Name;
-        public readonly string ProductCode;
-        public readonly string PublicKeyToken;
-        public readonly UInt64 Version;
+        public string ProductCode { get; internal set; }
+
+        public string Architecture { get; private set; }
+        public string Name { get; private set; }
+        public string PublicKeyToken { get; private set; }
+        public UInt64 Version { get; private set; }
 
         internal bool DoNotSupercede; // TODO: it's possible these could be contradictory
         internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
         internal bool UserSpecified;
 
-        private string _cosmeticName;
+        private readonly Lazy<string> _cosmeticName;
+        private readonly Lazy<string> _canonicalName;
+
         private bool _couldNotDownload;
         private bool? _isInstalled;
-        private string _localPackagePath;
+        // private string _localPackagePath;
         private bool _packageFailedInstall;
-        private Uri _remoteLocation;
+        // private Uri _remoteLocation;
         private Package _supercedent;
 
         // Other Package Metadata 
@@ -54,11 +59,25 @@ namespace CoApp.Toolkit.Engine {
         public IEnumerable<Party> Contributors { get; set; }
 
         public string CopyrightStatement { get; set; }
-        public string FeedLocation { get; set; }
         public string AuthorVersion { get; set; }
 
-        public string PackageLocation { get; set; }
-        public string SourcePackageLocation { get; set; }
+        public readonly MultiplexedProperty<string> FeedLocation = new MultiplexedProperty<string>((x, y) => Changed());
+        public readonly MultiplexedProperty<Uri> RemoteLocation = new MultiplexedProperty<Uri>((x, y) => Changed());
+        public readonly MultiplexedProperty<string> LocalPackagePath = new MultiplexedProperty<string>((x, y) => Changed(), false);
+
+        private string _canonicalPackageLocation;
+        public string CanonicalPackageLocation {
+            get { return _canonicalPackageLocation; } 
+            set { _canonicalPackageLocation = value; try { RemoteLocation.Add( new Uri(value));}catch{}}
+        }
+
+        private string _canonicalFeedLocation;
+        public string CanonicalFeedLocation {
+            get { return _canonicalFeedLocation; }
+            set { _canonicalFeedLocation = value; FeedLocation.Add(value); }
+        }
+
+        public string CanonicalSourcePackageLocation { get; set; }
 
         public IEnumerable<string> Tags { get; set; }
         public string FullDescription { get; set; }
@@ -66,60 +85,69 @@ namespace CoApp.Toolkit.Engine {
 
         internal IPackageFormatHandler packageHandler;
 
-        internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) {
-            Name = name;
-            Version = version;
-            Architecture = architecture;
-            PublicKeyToken = publicKeyToken;
-            ProductCode = productCode;
-            Changed();
+        internal Package(string productCode) {
+            Name = string.Empty;
+            Version = 0;
+            Architecture = string.Empty;
+            PublicKeyToken = string.Empty;
             Dependencies.CollectionChanged += (x, y) => Changed();
+
+            ProductCode = productCode;
 
             Publisher = new Party() {
                 Name = string.Empty,
                 Url = string.Empty,
                 Email = string.Empty
             };
+
+            _canonicalName = new Lazy<string>(() => "{0}-{1}-{2}-{3}".format(Name, Version.UInt64VersiontoString(), Architecture, PublicKeyToken).ToLowerInvariant());
+            _cosmeticName = new Lazy<string>(() => "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+        }
+
+        internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) {
+            Name = name;
+            Version = version;
+            Architecture = architecture;
+            PublicKeyToken = publicKeyToken;
+            ProductCode = productCode;
+            Dependencies.CollectionChanged += (x, y) => Changed();
+
+            _canonicalName = new Lazy<string>(() => "{0}-{1}-{2}-{3}".format(Name, Version.UInt64VersiontoString(), Architecture, PublicKeyToken).ToLowerInvariant());
+            _cosmeticName = new Lazy<string>(() => "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+
+            Publisher = new Party() {
+                Name = string.Empty,
+                Url = string.Empty,
+                Email = string.Empty
+            };
+
+            LoadCachedInfo();
+        }
+
+        internal void SetPackageProperties(string name, string architecture, UInt64 version, string publicKeyToken ) {
+            // only to support the construction of a package object where only the product code is known
+            // at instanciation time.
+            Name = name;
+            Version = version;
+            Architecture = architecture;
+            PublicKeyToken = publicKeyToken;
+            LoadCachedInfo(); 
+            Changed();
+        }
+
+        private void LoadCachedInfo() {
+            RemoteLocation.Add(PackageManagerSettings.CacheStringArraySetting[CanonicalName, "RemoteLocation"].Select(item => new Uri(item)));
+            FeedLocation.Add(PackageManagerSettings.CacheStringArraySetting[CanonicalName, "Feed"]);
+        }
+
+        private void SaveCachedInfo() {
+            PackageManagerSettings.CacheStringArraySetting[CanonicalName, "RemoteLocation"] = RemoteLocation.Select(item => item.AbsoluteUri);
+            PackageManagerSettings.CacheStringArraySetting[CanonicalName, "Feed"] = FeedLocation;
         }
 
         // set once only:
         internal UInt64 PolicyMinimumVersion { get; set; }
         internal UInt64 PolicyMaximumVersion { get; set; }
-        
-        // Causes notifications:
-        public string LocalPackagePath {
-            get { return _localPackagePath; }
-            set {
-                AddAlternatePath(value);
-                if (value != _localPackagePath) {
-                    _localPackagePath = value;
-                    Changed();
-                }
-            }
-        }
-
-        public readonly List<string> LocalPackagePaths = new List<string>(); 
-
-        public void AddAlternatePath( string path ) {
-            path = path.ToLower();
-            if( !LocalPackagePaths.Contains(path))
-                LocalPackagePaths.Add(path);
-        }
-
-        public bool HasAlternatePath( string path  ) {
-            path = path.ToLower();
-            return LocalPackagePaths.Contains(path);
-        }
-
-        internal Uri RemoteLocation {
-            get { return _remoteLocation; }
-            set {
-                if (value != _remoteLocation) {
-                    _remoteLocation = value;
-                    Changed();
-                }
-            }
-        }
 
         public Package Supercedent {
             get { return _supercedent; }
@@ -141,9 +169,12 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public string CosmeticName {
-            get {
-                return _cosmeticName ??
-                    (_cosmeticName = "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+            get { return _cosmeticName.Value; }
+        }
+
+        public string CanonicalName {
+            get { 
+                return _canonicalName.Value;
             }
         }
 
@@ -163,11 +194,16 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public bool HasLocalFile {
-            get { return string.IsNullOrEmpty(_localPackagePath) ? false : File.Exists(_localPackagePath) ? true : false; }
+            get {
+                if( string.IsNullOrEmpty(LocalPackagePath) && File.Exists(LocalPackagePath)  )
+                    return true;
+
+                return LocalPackagePath.Any(location => File.Exists(location));
+            }
         }
 
         public bool HasRemoteLocation {
-            get { return RemoteLocation == null ? false : RemoteLocation.IsAbsoluteUri ? true : false; }
+            get { return RemoteLocation.Value != null; }
         }
 
         public bool IsInstalled {
@@ -205,8 +241,9 @@ namespace CoApp.Toolkit.Engine {
 
         public void Install(Action<int> progress = null) {
             try {
-                packageHandler.Install(_localPackagePath, progress);
+                packageHandler.Install(this , progress);
                 _isInstalled = true;
+                SaveCachedInfo();
             }
             catch {
                 throw new PackageInstallFailedException(this);
@@ -215,7 +252,7 @@ namespace CoApp.Toolkit.Engine {
 
         public void Remove(Action<int> progress = null) {
             try {
-                packageHandler.Remove(_localPackagePath, progress);
+                packageHandler.Remove(this, progress);
                 _isInstalled = false;
             }
             catch {

@@ -9,6 +9,10 @@ namespace CoApp.Toolkit.Engine.Feeds {
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Extensions;
+    using Tasks;
 
     internal class PackageFeed : IComparable {
         internal static Dictionary<string, PackageFeed> AllFeeds = new Dictionary<string, PackageFeed>();
@@ -47,18 +51,17 @@ namespace CoApp.Toolkit.Engine.Feeds {
 
         #endregion
 
-        internal static Tasks.CoTask<PackageFeed> GetPackageFeedFromLocation(string location, bool recursive = false) {
-            // var tcs = new TaskCompletionSource<PackageFeed>(TaskCreationOptions.AttachedToParent);
-            
-            return Tasks.CoTask<PackageFeed>.Factory.StartNew(() => {
+        internal static Task<PackageFeed> GetPackageFeedFromLocation(string location, bool recursive = false) {
+            return Recognizer.Recognize(location, ensureLocal: true).ContinueWithParent(antecedent => {
+                var info = antecedent.Result;
                 PackageFeed result = null;
 
-                var info = Recognizer.Recognize(location);
                 string locationKey = null;
 
                 if (info.IsPackageFeed) {
                     if (info.IsFolder) {
                         locationKey = Path.Combine(info.FullPath, info.Wildcard ?? "*");
+
                         if (AllFeeds.ContainsKey(locationKey)) {
                             return AllFeeds[locationKey];
                         }
@@ -92,7 +95,12 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 if (result != null) {
                     result.RecognitionInfo = info;
                     lock (AllFeeds) {
-                        AllFeeds.Add(locationKey ?? result.Location, result);
+                        if (!AllFeeds.ContainsKey(locationKey ?? result.Location)) {
+                            AllFeeds.Add(locationKey ?? result.Location, result);
+                        }
+                        else
+                            result = AllFeeds[locationKey ?? result.Location];
+                        // GS01: TODO: This is a crappy way of avoiding a deadlock when the same feed has been requested twice by two different threads.
                     }
                 }
 

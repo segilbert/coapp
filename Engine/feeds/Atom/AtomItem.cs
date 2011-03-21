@@ -15,8 +15,7 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
 
     public class AtomItem : SyndicationItem {
         private static XmlSerializer _xmlSerializer = new XmlSerializer(typeof(PackageElement));
-        internal Package _package;
-        private PackageElement packageElement = new PackageElement();
+        internal PackageElement packageElement = new PackageElement();
 
         /*
     <entry>
@@ -96,9 +95,8 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             return packageElement != null;
         }
 
-        public void Populate(Package package, string relativeLocation, string packageUrlPrefix) {
-            _package = package;
 
+        public void Populate(Package package, string relativeLocation, string packageUrlPrefix) {
             Id = package.ProductCode;
             Title = new TextSyndicationContent(package.CosmeticName);
             Summary = new TextSyndicationContent(package.SummaryDescription);
@@ -140,7 +138,7 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             packageElement.BindingPolicyMaxVersion = package.PolicyMaximumVersion;
             packageElement.BindingPolicyMinVersion = package.PolicyMinimumVersion;
             packageElement.PublicKeyToken = package.PublicKeyToken;
-            packageElement.Dependencies = package.Dependencies.Select(p => p.ProductCode).ToArray();
+            packageElement.Dependencies = package.Dependencies.Select(p => p.CanonicalName).ToArray();
             packageElement.RelativeLocation = relativeLocation;
             packageElement.Filename = Path.GetFileName(package.LocalPackagePath);
 

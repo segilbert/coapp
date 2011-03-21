@@ -270,12 +270,14 @@ namespace CoApp.Toolkit.Extensions {
         public static string ContentDispositionFilename(this HttpWebResponse httpWebResponse) {
             try {
                 var disposition = httpWebResponse.Headers["Content-Disposition"];
-                var position = disposition.IndexOf("filename=");
-                
-                if (position > -1) {
-                    var result = HttpUtility.UrlDecode(disposition.Substring(position + 1).Trim());
-                    if (!string.IsNullOrEmpty(result))
-                        return result;
+                if (!string.IsNullOrEmpty(disposition)) {
+                    var position = disposition.IndexOf("filename=");
+
+                    if (position > -1) {
+                        var result = HttpUtility.UrlDecode(disposition.Substring(position + 1).Trim());
+                        if (!string.IsNullOrEmpty(result))
+                            return result;
+                    }
                 }
             } catch {}
             return null;

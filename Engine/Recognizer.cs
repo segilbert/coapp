@@ -22,9 +22,9 @@ namespace CoApp.Toolkit.Engine {
 
         private static readonly Dictionary<string, RecognitionInfo> _cache = new Dictionary<string, RecognitionInfo>();
 
-        internal static RecognitionInfo Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal = false) {
+        internal static Task<RecognitionInfo> Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal = false) {
             if (_cache.ContainsKey(item)) {
-                return _cache[item];
+                return CoTaskFactory<RecognitionInfo>.AsTaskResult(_cache[item]);
             }
 
             baseDirectory = baseDirectory ?? Environment.CurrentDirectory;
@@ -55,8 +55,6 @@ namespace CoApp.Toolkit.Engine {
                 result.IsOpenwrapPackage = true;
             }
 
-            
-
             // Is this an URL of some kind?
             if (result.IsUnknown) {
                 try {
@@ -74,7 +72,62 @@ namespace CoApp.Toolkit.Engine {
                     // for now, we've got a full URL and it looks like it point somewhere.
                     // until we attempt to retrieve the URL we really can't bank on knowing what it is.
                     if (result.IsURL) {
-                        result.RemoteFile.Preview().ContinueWith(antecedent => {
+                        return CoTask<RecognitionInfo>.Factory.StartNew(() => {
+                            result.RemoteFile.Preview().Wait();
+
+                            if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
+                                result.IsInvalid = true;
+                                result.Recognized.Value = true;
+                                lock (_cache) {
+                                    _cache.Add(item, result);
+                                }
+                                return result;
+                            }
+
+                            if (result.RemoteFile.IsRedirect) {
+                                result.RemoteFile.Folder = _transferManager[result.RemoteFile.ActualRemoteLocation].Folder;
+                            }
+
+                            result.FullPath = result.RemoteFile.LocalFullPath;
+
+                            if (ensureLocal) {
+                                if (!result.IsLocal) {
+                                    result.RemoteFile.Get().Wait();
+                                }
+
+                                if (!result.IsLocal) {
+                                    result.IsInvalid = true;
+                                    result.Recognized.Value = true;
+                                    lock (_cache) {
+                                        _cache.Add(item, result);
+                                    }
+                                    return result;
+                                }
+                            }
+
+                            if (result.IsLocal) {
+                                var localFileInfo = Recognize(result.FullPath).Result;
+                                // at this point, we should actually know the real file results.
+                                result.CopyDetailsFrom(localFileInfo);
+                                result.Recognized.Value = true;
+                                lock (_cache) {
+                                    _cache.Add(item, result);
+                                }
+                                return result;
+                            }
+
+                            // if it isn't local, and we've not been told to bring it local, 
+                            // we could guess?
+                            // we could just tell im, we dunno...
+                            // GS01: TODO : We're claiming ignorance right now.
+
+                            lock (_cache) {
+                                _cache.Add(item, result);
+                            }
+                            return result;
+                        }); // GS01: TODO : This is bad mojo--replace with better use of returning the child task 
+                        /*
+                        result.RemoteFile.Preview().ContinueWithParent(antecedent => {
                             if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
                                 result.IsInvalid = true;
                                 result.Recognized.Value = true;
@@ -109,8 +162,10 @@ namespace CoApp.Toolkit.Engine {
 
                             // not local. all we can do is guess?
                             // TODO: Implement remote guess?
-                        }, TaskContinuationOptions.AttachedToParent);
+                        });
+                         * * */
                     }
+                         
                 }
                 catch
                 {
@@ -238,7 +293,7 @@ namespace CoApp.Toolkit.Engine {
             lock (_cache) {
                 _cache.Add(item, result);
             }
-            return result;
+            return CoTaskFactory<RecognitionInfo>.AsTaskResult(result);
         }
 
         #region Nested type: RecognitionInfo

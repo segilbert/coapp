@@ -13,132 +13,147 @@ namespace CoApp.Toolkit.Tasks {
 
     public static class TaskExtensions {
 
-        //public static CancellationToken GetCancellationToken( this Task thisTask ) {
-        //    return CoAppTask.Tasks[thisTask.Id].CancellationToken;
-        //}
-
-        //public static Task GetTopParentTask(this Task thisTask) {
-        //    return CoAppTask.Tasks[thisTask.Id].TopParentTask;
-        //}
-
-        //public static Task<TResult> GetTopParentTask<TResult>(this Task thisTask) {
-        //    return CoAppTask.Tasks[thisTask.Id].TopParentTask as Task<TResult>;
-        //}
-
-        //public static Task GetParentTask(this Task thisTask) {
-        //    return CoAppTask.Tasks[thisTask.Id].ParentTask;
-        //}
-
-        //public static Task<TResult> GetParentTask<TResult>(this Task thisTask) {
-        //    return CoAppTask.Tasks[thisTask.Id].ParentTask as Task<TResult>;
-        //}
-        /*
-        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction) {
-            return thisTask.ContinueWith(continuationAction, TaskContinuationOptions.AttachedToParent);
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new [] {messageHandlers}); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, messageHandlers); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) {
+            continuationOptions |= TaskContinuationOptions.AttachedToParent ;
+            var tcs = new TaskCompletionSource<Task>(continuationOptions);
+            ((Tasklet)tcs.Task).CancellationToken = cancellationToken;
+            var actualTask = tcs.Task.ContinueWith(antecedent => continuationAction(antecedent.Result), cancellationToken, continuationOptions, scheduler);
+            ((Tasklet)actualTask).AddMessageHandlers(messageHandlers);
+            ((Tasklet)actualTask).AddMessageHandlers(((Tasklet)thisTask).MessageHandlerList);
+            ((Tasklet)actualTask).CancellationToken = cancellationToken;
+            thisTask.ContinueWith(tcs.SetResult, cancellationToken, continuationOptions, scheduler);
+            return actualTask;
         }
 
-        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction) {
-            return thisTask.ContinueWith<TResult>(continuationFunction, TaskContinuationOptions.AttachedToParent );
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, messageHandlers); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) {
+            continuationOptions |= TaskContinuationOptions.AttachedToParent ;
+            var tcs = new TaskCompletionSource<Task>(continuationOptions);
+            
+            ((Tasklet)tcs.Task).CancellationToken = cancellationToken;
+            var actualTask = tcs.Task.ContinueWith(antecedent => { return continuationFunction(antecedent.Result); } , cancellationToken, continuationOptions, scheduler);
+            ((Tasklet)actualTask).AddMessageHandlers(messageHandlers);
+            ((Tasklet)actualTask).AddMessageHandlers(((Tasklet)thisTask).MessageHandlerList);
+            ((Tasklet)actualTask).CancellationToken = cancellationToken;
+            thisTask.ContinueWith(tcs.SetResult, cancellationToken, continuationOptions, scheduler);
+            return actualTask;
         }
 
-        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken) {
-            return thisTask.ContinueWith(continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, messageHandlers); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationAction, cancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) {
+            continuationOptions |= TaskContinuationOptions.AttachedToParent ;
+            var tcs = new TaskCompletionSource<Task<TResult>>(continuationOptions);
+            
+            ((Tasklet)tcs.Task).CancellationToken = cancellationToken;
+            var actualTask = tcs.Task.ContinueWith(antecedent => { continuationAction(antecedent.Result); }, cancellationToken, continuationOptions, scheduler);
+            ((Tasklet)actualTask).AddMessageHandlers(messageHandlers);
+            ((Tasklet)actualTask).AddMessageHandlers(((Tasklet)thisTask).MessageHandlerList);
+            ((Tasklet)actualTask).CancellationToken = cancellationToken;
+            thisTask.ContinueWith(antecedent => { tcs.SetResult(antecedent); }, cancellationToken, continuationOptions, scheduler);
+            return actualTask;
         }
 
-        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskContinuationOptions continuationOptions) {
-            return thisTask.ContinueWith(continuationAction, Task.CurrentCancellationToken  , continuationOptions | TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, TaskScheduler scheduler) {
-            return thisTask.ContinueWith(continuationAction, Task.CurrentCancellationToken  , TaskContinuationOptions.AttachedToParent,scheduler);
-        }
-
-        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken) {
-            return thisTask.ContinueWith<TResult>(continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskContinuationOptions continuationOptions) {
-            return thisTask.ContinueWith<TResult>(continuationFunction, Task.CurrentCancellationToken  , continuationOptions | TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, TaskScheduler scheduler) {
-            return thisTask.ContinueWith<TResult>(continuationFunction,  Task.CurrentCancellationToken  , TaskContinuationOptions.AttachedToParent,scheduler);
-        }
-
-        public static Task ContinueWithParent(this Task thisTask, Action<Task> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) {
-            return thisTask.ContinueWith(continuationAction,  cancellationToken, continuationOptions | TaskContinuationOptions.AttachedToParent, scheduler);
-        }
-
-        public static Task<TResult> ContinueWithParent<TResult>(this Task thisTask, Func<Task, TResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) {
-            return thisTask.ContinueWith<TResult>(continuationFunction,  cancellationToken, continuationOptions| TaskContinuationOptions.AttachedToParent,scheduler);
-        }
-
-        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction) {
-            return thisTask.ContinueWith(continuationAction, Task.CurrentCancellationToken , TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-
-        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction) {
-            return thisTask.ContinueWith<TNewResult>(continuationFunction, Task.CurrentCancellationToken , TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-
-        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken) {
-            return thisTask.ContinueWith(continuationAction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-
-        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskContinuationOptions continuationOptions) {
-            return thisTask.ContinueWith(continuationAction, Task.CurrentCancellationToken , continuationOptions | TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-
-        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, TaskScheduler scheduler) {
-            return thisTask.ContinueWith(continuationAction, Task.CurrentCancellationToken , TaskContinuationOptions.AttachedToParent,scheduler);
-        }
-
-
-        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken) {
-            return thisTask.ContinueWith<TNewResult>(continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-
-        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskContinuationOptions continuationOptions) {
-            return thisTask.ContinueWith<TNewResult>(continuationFunction, Task.CurrentCancellationToken , continuationOptions | TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
-        }
-
-
-        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskScheduler scheduler) {
-            return thisTask.ContinueWith<TNewResult>(continuationFunction, Task.CurrentCancellationToken , TaskContinuationOptions.AttachedToParent,scheduler);
-        }
-
-
-        public static Task ContinueWithParent<TResult>(this Task<TResult> thisTask, Action<Task<TResult>> continuationAction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) {
-            return thisTask.ContinueWith(continuationAction, cancellationToken, continuationOptions | TaskContinuationOptions.AttachedToParent,scheduler);
-        }
-
-
-        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) {
-            return thisTask.ContinueWith<TNewResult>(continuationFunction, cancellationToken, continuationOptions | TaskContinuationOptions.AttachedToParent,scheduler);
-        }
-
-         * */
-        public static void Iterate<TResult>(this TaskCompletionSource<TResult> tcs, IEnumerable<CoTask> asyncIterator) {
-            var enumerator = asyncIterator.GetEnumerator();
-            Action<CoTask> recursiveBody = null;
-            recursiveBody = completedTask => {
-                if (completedTask != null && completedTask.IsFaulted) {
-                    tcs.TrySetException(completedTask.Exception.InnerExceptions);
-                    enumerator.Dispose();
-                }
-                else if (enumerator.MoveNext()) {
-                    enumerator.Current.ContinueWith(recursiveBody, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.AttachedToParent);
-                }
-                else {
-                    enumerator.Dispose();
-                }
-            };
-            recursiveBody(null);
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, TaskScheduler.Default, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, scheduler, new MessageHandlers[] { }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, TaskScheduler.Default, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, MessageHandlers messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, scheduler, new[] { messageHandlers }); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, Tasklet.CurrentCancellationToken, continuationOptions, scheduler, messageHandlers); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default, messageHandlers); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, TaskContinuationOptions.AttachedToParent, scheduler, messageHandlers); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, IEnumerable<MessageHandlers> messageHandlers) { return ContinueWithParent(thisTask, continuationFunction, cancellationToken, continuationOptions, TaskScheduler.Default, messageHandlers); }
+        public static Task<TNewResult> ContinueWithParent<TResult, TNewResult>(this Task<TResult> thisTask, Func<Task<TResult>, TNewResult> continuationFunction, CancellationToken cancellationToken, TaskContinuationOptions continuationOptions, TaskScheduler scheduler, IEnumerable<MessageHandlers> messageHandlers) {
+            continuationOptions |= TaskContinuationOptions.AttachedToParent ;
+            var tcs = new TaskCompletionSource<Task<TResult>>(continuationOptions);
+            
+            ((Tasklet)tcs.Task).CancellationToken = cancellationToken;
+            var actualTask = tcs.Task.ContinueWith(antecedent => { return continuationFunction(antecedent.Result); }, cancellationToken, continuationOptions, scheduler);
+            ((Tasklet)actualTask).AddMessageHandlers(messageHandlers);
+            ((Tasklet)actualTask).AddMessageHandlers(((Tasklet)thisTask).MessageHandlerList);
+            ((Tasklet)actualTask).CancellationToken = cancellationToken;
+            thisTask.ContinueWith(antecedent => tcs.SetResult(antecedent), cancellationToken, continuationOptions, scheduler);
+            return actualTask;
         }
 
         public static void Iterate<TResult>(this TaskCompletionSource<TResult> tcs, IEnumerable<System.Threading.Tasks.Task> asyncIterator) {
@@ -150,7 +165,7 @@ namespace CoApp.Toolkit.Tasks {
                     enumerator.Dispose();
                 }
                 else if (enumerator.MoveNext()) {
-                    enumerator.Current.ContinueWith(recursiveBody, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.AttachedToParent);
+                    enumerator.Current.ContinueWithParent(recursiveBody, TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.ExecuteSynchronously);
                 }
                 else {
                     enumerator.Dispose();

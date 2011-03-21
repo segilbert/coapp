@@ -9,6 +9,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Linq;
+    using System.Threading.Tasks;
     using Exceptions;
     using Extensions;
     using Feeds;
@@ -16,18 +17,23 @@ namespace CoApp.Toolkit.Engine {
 
     public static class PackageExtensions {
 
-        internal static void AddFeedLocation(this ObservableCollection<PackageFeed> feedCollection, string feedLocation) {
-            PackageFeed.GetPackageFeedFromLocation(feedLocation).ContinueWith(antecedent => {
-                if (antecedent.Result != null) {
-                    if (
-                       (from feed in feedCollection
-                        where feed.Location.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase)
-                        select feed).Count() == 0) {
-                        feedCollection.Add(antecedent.Result);
+        internal static Task AddFeedLocation(this ObservableCollection<PackageFeed> feedCollection, string feedLocation) {
+            
+            if ((from feed in feedCollection
+                 where feed.Location.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase)
+                 select feed).Count() == 0) {
+                return PackageFeed.GetPackageFeedFromLocation(feedLocation).ContinueWithParent(antecedent => {
+                    if (antecedent.Result != null) {
+                        if (
+                            (from feed in feedCollection
+                                where feed.Location.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase)
+                                select feed).Count() == 0) {
+                            feedCollection.Add(antecedent.Result);
+                        }
                     }
-                }
-            }); 
-           
+                });
+            }
+            return CoTaskFactory.CompletedTask;
         }
 
         internal static IEnumerable<string> GetFeedLocations(this ObservableCollection<PackageFeed> feedCollection) {
@@ -50,6 +56,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public static IEnumerable<Package> SupercedentPackages(this IEnumerable<Package> packageSet, Package package) {
+            // DebugMessage.Invoke.WriteLine(string.Format( "Scanning for package [{0}]", package.Name.SingleItemAsEnumerable()));
             // anything superceedent in the list of known packages?
             Registrar.ScanForPackages(package);
 

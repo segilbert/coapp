@@ -36,6 +36,7 @@ namespace CoApp.Toolkit.Network {
         private TaskType _currentTaskType;
         private string _folder;
         private DateTime _lastModified;
+        private FileStream _filestream;
 
         public string Folder {
             get { return _folder; }
@@ -162,7 +163,7 @@ namespace CoApp.Toolkit.Network {
         }
 
         private Task CancelledTask() {
-            return Task.Factory.StartNew(Cancel);
+            return CoTask.Factory.StartNew(Cancel);
         }
 
         internal void Serialize(Stream outputStream) {
@@ -173,6 +174,11 @@ namespace CoApp.Toolkit.Network {
         }
 
         private void Complete() {
+            if( _filestream != null ) {
+                _filestream.Dispose();
+                _filestream = null;
+            }
+
             if (_currentTaskType == TaskType.Get) {
                 DownloadProgress = new TriggeredProperty<long>(0, value => value != DownloadProgress.Value) {TripOnce = false};
             }
@@ -194,7 +200,7 @@ namespace CoApp.Toolkit.Network {
                 }
 
                 if (_currentTaskType != TaskType.None) {
-                    return _currentTask.ContinueWith(antecedent => publicOperation().Wait(), TaskContinuationOptions.AttachedToParent);
+                    return _currentTask.ContinueWithParent(antecedent => publicOperation().Wait());
                 }
                 _currentTaskType = type;
                 return _currentTask = privateOperation();
@@ -225,10 +231,10 @@ namespace CoApp.Toolkit.Network {
                 return CancelledTask();
             }
 
-            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this,
-                TaskCreationOptions.AttachedToParent).ContinueWith(
+            return CoTask.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWithParent(
                     asyncResult => {
                         try {
+
                             if (IsCancelled) {
                                 Cancel();
                             }
@@ -276,6 +282,20 @@ namespace CoApp.Toolkit.Network {
                                 }
                             }
                         }
+                        catch( AggregateException ae ) {
+                            ae = ae.Flatten();
+                            var e = ae.InnerExceptions[0] as WebException;
+
+                            if( e != null ) {
+                                try {
+                                    LastStatus = ((HttpWebResponse)e.Response).StatusCode;
+                                }
+                                catch (Exception) {
+                                    // if the fit hits the shan, just call it not found.
+                                    LastStatus = HttpStatusCode.NotFound;
+                                } 
+                            }
+                        }
                         catch (WebException e) {
                             try {
                                 LastStatus = ((HttpWebResponse) e.Response).StatusCode;
@@ -286,7 +306,7 @@ namespace CoApp.Toolkit.Network {
                             }
                         }
                         Complete();
-                    }, TaskContinuationOptions.AttachedToParent);
+                    });
         }
 
         private Task PreviewImplFtp() {
@@ -317,8 +337,7 @@ namespace CoApp.Toolkit.Network {
                 return CancelledTask();
             }
 
-            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this,
-                TaskCreationOptions.AttachedToParent).ContinueWith(
+            return CoTask.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWithParent(
                     asyncResult => {
                         try {
                             var v = webRequest;
@@ -347,17 +366,25 @@ namespace CoApp.Toolkit.Network {
                                 }
 
                                 try {
+                                    // we should open the file here, so that it's ready when we start the async read cycle.
+                                    if( _filestream != null ) {
+                                        throw new Exception("THIS VERY BAD AND UNEXPECTED.");
+                                    }
+                                    _filestream = File.Open(LocalFullPath, FileMode.Create);
+
                                     if (IsCancelled) {
                                         Cancel();
                                     }
 
-                                    // var tcs = Task.Factory.CreateTaskCompletionSource<HttpWebResponse>();
                                     var tcs = new TaskCompletionSource<HttpWebResponse>(TaskCreationOptions.AttachedToParent);
+                                    ((Tasklet) tcs.Task).CancellationToken = Tasklet.CurrentCancellationToken;
+
                                     tcs.Iterate(AsyncReadImpl(tcs, httpWebResponse));
                                     return;
                                 }
                                 catch {
-                                    // not sure what to do here either.
+                                    // failed to actually create the file, or some other catastrophic failure.
+
                                     Complete();
                                     return;
                                 }
@@ -376,10 +403,19 @@ namespace CoApp.Toolkit.Network {
                             Complete();
                         }
                         catch (AggregateException ae) {
-                            foreach (var e in ae.InnerExceptions) {
-                                Console.WriteLine("BAD ERROR: {0}\r\n{1}", e.Message, e.StackTrace);
-                                LastStatus = HttpStatusCode.NotFound;
+                            ae = ae.Flatten();
+                            var e = ae.InnerExceptions[0] as WebException;
+
+                            if (e != null) {
+                                try {
+                                    LastStatus = ((HttpWebResponse)e.Response).StatusCode;
+                                }
+                                catch (Exception) {
+                                    // if the fit hits the shan, just call it not found.
+                                    LastStatus = HttpStatusCode.NotFound;
+                                } 
                             }
+
                             Complete();
                             return;
                         }
@@ -391,40 +427,40 @@ namespace CoApp.Toolkit.Network {
                         }
                         Console.WriteLine("Really? It gets here?");
                         Complete();
-                    }, TaskContinuationOptions.AttachedToParent);
+                    });
         }
 
         private IEnumerable<Task> AsyncReadImpl(TaskCompletionSource<HttpWebResponse> tcs, HttpWebResponse httpWebResponse) {
             using (var responseStream = httpWebResponse.GetResponseStream()) {
-                using (var fileStream = File.Open(LocalFullPath, FileMode.Create)) {
-                    var total = 0L;
-                    var buffer = new byte[BUFFER_SIZE];
-                    while (true) {
-                        if (IsCancelled) {
-                            Cancel();
-                            tcs.SetResult(null);
-                            break;
-                        }
-
-                        var read = Task<int>.Factory.FromAsync(responseStream.BeginRead, responseStream.EndRead, buffer, 0,
-                            buffer.Length, this, TaskCreationOptions.AttachedToParent);
-
-                        yield return read;
-
-                        var bytesRead = read.Result;
-                        if (bytesRead == 0) {
-                            break;
-                        }
-
-                        total += bytesRead;
-                        DownloadProgress.Value = _contentLength <= 0 ? total : (int) (total*100/_contentLength);
-
-                        // write to output file.
-                        fileStream.Write(buffer, 0, bytesRead);
-                        fileStream.Flush();
+                var total = 0L;
+                var buffer = new byte[BUFFER_SIZE];
+                while (true) {
+                    if (IsCancelled) {
+                        Cancel();
+                        tcs.SetResult(null);
+                        break;
                     }
-                    // end of the file!
+
+                    var read = CoTask<int>.Factory.FromAsync(responseStream.BeginRead, responseStream.EndRead, buffer, 0,
+                        buffer.Length, this);
+
+                    yield return read;
+
+                    var bytesRead = read.Result;
+                    if (bytesRead == 0) {
+                        break;
+                    }
+
+                    total += bytesRead;
+                    DownloadProgress.Value = _contentLength <= 0 ? total : (int) (total*100/_contentLength);
+
+                    // write to output file.
+                    _filestream.Write(buffer, 0, bytesRead);
+                    _filestream.Flush();
                 }
+                // end of the file!
+                _filestream.Close();
+
                 try {
                     if (IsCancelled) {
                         Cancel();

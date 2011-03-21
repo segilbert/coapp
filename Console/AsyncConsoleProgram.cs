@@ -7,6 +7,7 @@
 namespace CoApp.Toolkit.Console {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reflection;
     using System.Resources;
     using System.Threading;
@@ -16,12 +17,17 @@ namespace CoApp.Toolkit.Console {
 
     public abstract class AsyncConsoleProgram {
         protected abstract ResourceManager Res { get; }
+        protected int _counter = 0;
 
         protected abstract int Main(IEnumerable<string> args);
         protected CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 
         protected virtual int Startup(IEnumerable<string> args) {
-            var task = CoTask.Factory.StartNew(() => { Main(args); }, CancellationTokenSource.Token);
+            var task = CoTask.Factory.StartNew(() => { Main(args); }, CancellationTokenSource.Token, new DebugMessage {
+                WriteLine = (text) => {
+                   Console.WriteLine("[DEBUG][{0}] {1}", ++_counter,text);
+               }
+            });
             try {
                 Console.CancelKeyPress += (x, y) => {
                     if (!CancellationTokenSource.IsCancellationRequested) {
@@ -37,6 +43,7 @@ namespace CoApp.Toolkit.Console {
                 task.Wait();
             }
             catch( AggregateException ae ) {
+                ae = ae.Flatten();
                 ae.Handle(HandleExecption);
                 return 1;
             }
@@ -48,10 +55,17 @@ namespace CoApp.Toolkit.Console {
                 Fail(ex.Message);
                 return true;
             }
-            if (ex is AggregateException) {
-                (ex as AggregateException).Handle(HandleExecption);
+            if( ex is OperationCompletedBeforeResultException) {
+                // assumably, this has been actually handled elsewhere.. right?
                 return true;
             }
+
+            if (ex is TaskCanceledException) {
+                // assumably, this has been actually handled elsewhere.. right?
+                return true;
+            }
+
+            Console.WriteLine("Unhandled Exception:  {0}", ex.Message);
             return false;
         }
 
@@ -74,6 +88,8 @@ namespace CoApp.Toolkit.Console {
             using (new ConsoleColors(ConsoleColor.Red, ConsoleColor.Black)) {
                 Console.WriteLine("Error: {0}", text.format(par));
             }
+            Console.WriteLine("Press Enter To Continue.");
+            Console.ReadLine();
 
             return 1;
         }

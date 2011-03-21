@@ -8,6 +8,7 @@ namespace CoApp.Toolkit.Network {
     using System.Net;
     using System.Threading.Tasks;
     using Extensions;
+    using Tasks;
     using Console = System.Console;
 
     public class HttpServer {
@@ -82,7 +83,7 @@ namespace CoApp.Toolkit.Network {
         public void Start() {
             _listener.Start();
 
-            Task.Factory.FromAsync<HttpListenerContext>(_listener.BeginGetContext, _listener.EndGetContext, _listener).ContinueWith(
+            CoTask.Factory.FromAsync<HttpListenerContext>(_listener.BeginGetContext, _listener.EndGetContext, _listener).ContinueWithParent(
                 (antecedent) => {
                     Start(); // start a new listener.
 

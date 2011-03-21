@@ -13,6 +13,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using Engine;
     using Engine.Exceptions;
     using Extensions;
+    using Microsoft.Deployment.WindowsInstaller;
 
     internal class CoAppMSI : MSIBase {
         internal static bool IsCoAppPackageFile(string path) {
@@ -103,7 +104,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     arch = pak.arch;
                     version = ((string)pak.version).VersionStringToUInt64();
                     pkt = pak.public_key_token;
-                    result.dependencies.Add(Registrar.GetPackage(name, arch, version, pkt, pkgid));
+                    result.dependencies.Add(Registrar.GetPackage(name, version, arch, pkt, pkgid));
                 }
             }
 
@@ -172,6 +173,114 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             }
 
             return result;
+        }
+
+        public override void Install(Package package, Action<int> progress = null) {
+            progress = progress ?? ((percent) => { });
+
+            int currentTotalTicks = -1;
+            int currentProgress = 0;
+            int progressDirection = 1;
+
+            Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
+                switch (messageType) {
+                    case InstallMessage.Progress:
+                        if (message.Length >= 2) {
+                            var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).ToArray();
+
+                            switch (msg[1]) {
+                                // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
+                                case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
+                                    currentTotalTicks = msg[3];
+                                    currentProgress = 0;
+                                    if (msg.Length >= 6) {
+                                        progressDirection = msg[5] == 0 ? 1 : -1;
+                                    }
+                                    break;
+                                case 1:
+                                    //Provides information related to progress messages to be sent by the current action.
+                                    break;
+                                case 2: //Increments the progress bar.
+                                    if (currentTotalTicks == -1) {
+                                        break;
+                                    }
+                                    currentProgress += msg[3] * progressDirection;
+                                    break;
+                                case 3:
+                                    //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
+                                    break;
+                            }
+                        }
+
+                        if (currentTotalTicks > 0) {
+                            progress(currentProgress * 100 / currentTotalTicks);
+                        }
+                        break;
+                }
+                // capture installer messages to play back to status listener
+                return MessageResult.OK;
+            }), InstallLogModes.Progress);
+
+            try {
+                Installer.InstallProduct(package.LocalPackagePath,
+                    @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory, package.UserSpecified ? "ADD_TO_ARP=1" : ""));
+            }
+            finally {
+                SetUIHandlersToSilent();
+            }
+        }
+
+        public override void Remove(Package package, Action<int> progress = null) {
+            progress = progress ?? ((percent) => { });
+            int currentTotalTicks = -1;
+            int currentProgress = 0;
+            int progressDirection = 1;
+
+            Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
+                switch (messageType) {
+                    case InstallMessage.Progress:
+                        if (message.Length >= 2) {
+                            var msg =
+                                message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).
+                                    ToArray();
+
+                            switch (msg[1]) {
+                                // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
+                                case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
+                                    currentTotalTicks = msg[3];
+                                    currentProgress = 0;
+                                    if (msg.Length >= 6) {
+                                        progressDirection = msg[5] == 0 ? 1 : -1;
+                                    }
+                                    break;
+                                case 1: //Provides information related to progress messages to be sent by the current action.
+                                    break;
+                                case 2: //Increments the progress bar.
+                                    if (currentTotalTicks == -1) {
+                                        break;
+                                    }
+                                    currentProgress += msg[3] * progressDirection;
+                                    break;
+                                case 3:
+                                    //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
+                                    break;
+                            }
+                            if (currentTotalTicks > 0) {
+                                progress(currentProgress * 100 / currentTotalTicks);
+                            }
+                        }
+                        break;
+                }
+                // capture installer messages to play back to status listener
+                return MessageResult.OK;
+            }), InstallLogModes.Progress);
+
+            try {
+                Installer.InstallProduct(package.LocalPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+            }
+            finally {
+                SetUIHandlersToSilent();
+            }
         }
     }
 }

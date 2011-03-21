@@ -26,12 +26,14 @@ namespace CoApp.Toolkit.Engine.Feeds {
             if (!Scanned) {
                 var files = Location.DirectoryEnumerateFilesSmarter(_patternMatch, _recursive ? SearchOption.AllDirectories: SearchOption.TopDirectoryOnly, Registrar.DoNotScanLocations);
                 files = from file in files
-                    where Recognizer.Recognize(file).IsPackageFile
+                    where Recognizer.Recognize(file).Result.IsPackageFile // Since we know this to be local, it'm ok with blocking on the result.
                     select file;
 
                 foreach (var p in files) {
                     try {
                         var pkg = Registrar.GetPackage(p);
+                        pkg.FeedLocation.Add(Location);
+                        
                         if( !_packageList.Contains(pkg))
                             _packageList.Add(pkg);
                     }

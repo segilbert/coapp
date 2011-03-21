@@ -65,13 +65,13 @@
 
         public static T Invoke {
             get {
-                var cct = CoTask.CurrentTask;
-                return cct == null ? _none : cct.GetMessageHandler(typeof(T)) as T;
+                var cct = Tasklet.CurrentTasklet;
+                return cct == null ? _none : (cct.GetMessageHandler(typeof(T)) as T) ?? _none;
             }
         }
 
-        public static implicit operator MessageHandlers<T>(CoTask coTask) {
-            return (coTask.GetMessageHandler(typeof(T)) ?? (((ITask)coTask).AddMessageHandler(new T()))) as MessageHandlers<T>;
+        public static implicit operator MessageHandlers<T>(Tasklet coTask) {
+            return (coTask.GetMessageHandler(typeof(T)) ?? (coTask.AddMessageHandler(new T()))) as MessageHandlers<T>;
         }
 
         public static implicit operator T(MessageHandlers<T> handlers) {

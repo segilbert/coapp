@@ -6,6 +6,7 @@
 
 namespace CoApp.Toolkit.Extensions {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
 
     public static class LinqExtensions {
@@ -43,8 +44,52 @@ namespace CoApp.Toolkit.Extensions {
             }
             return maxObj;
         }
-        public static IEnumerable<T> AsArray<T>(this T source) {
+        public static IEnumerable<T> SingleItemAsEnumerable<T>(this T source) {
             return new[] {source};
+        }
+
+        private class IndexedEnumerator : IEnumerator<int> {
+            private int _max;
+
+            internal IndexedEnumerator(int i) {
+                _max = i;
+                Current = -1;
+            }
+
+            public void Dispose() {
+            }
+
+            public bool MoveNext() {
+                return ++Current < _max;
+            }
+
+            public void Reset() {
+                Current = -1;
+            }
+
+            public int Current { get; private set; }
+
+            object IEnumerator.Current {
+                get { return Current; }
+            }
+        }
+
+        private class ListIndex : IEnumerable<int> {
+            private int _max;
+            internal ListIndex(int i) {
+                _max = i;
+            }
+            public IEnumerator<int> GetEnumerator() {
+                return new IndexedEnumerator(_max);
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() {
+                return GetEnumerator();
+            }
+        }
+
+        public static IEnumerable<int> ByIndex<T>(this IList<T> lst) {
+            return new ListIndex(lst.Count);
         }
     }
 }

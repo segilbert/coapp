@@ -16,6 +16,7 @@ namespace CoApp.Toolkit.Engine {
     public class PackageManagerSettings {
         public static Settings userSettings = new Settings("CoAppPackageManager");
         public static Settings systemSettings = new Settings("CoAppPackageManager", Registry.LocalMachine);
+        public static Settings systemCache = new Settings(".cache", Registry.LocalMachine);
 
         public static SettingsStringIndexer StringSetting = new SettingsStringIndexer(userSettings);
         public static SettingsStringArrayIndexer StringArraySetting = new SettingsStringArrayIndexer(userSettings);
@@ -34,6 +35,14 @@ namespace CoApp.Toolkit.Engine {
 
         public static SettingsEncryptedStringIndexer SystemEncryptedStringSetting =
             new SettingsEncryptedStringIndexer(systemSettings);
+
+
+        public static SettingsStringIndexer CacheStringSetting = new SettingsStringIndexer(systemCache);
+        public static SettingsStringArrayIndexer CacheStringArraySetting = new SettingsStringArrayIndexer(systemCache);
+        public static SettingsBooleanIndexer CacheBoolSetting = new SettingsBooleanIndexer(systemCache);
+        public static SettingsIntIndexer CacheIntSetting = new SettingsIntIndexer(systemCache);
+        public static SettingsLongIndexer CacheLongSetting = new SettingsLongIndexer(systemCache);
+
 
 
         private static string DEFAULT_COAPP_ROOT {

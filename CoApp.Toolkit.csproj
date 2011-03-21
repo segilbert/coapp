@@ -48,7 +48,8 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Mono.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+    <Reference Include="Mono.Security, Version=2.0.0.2, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\coapp-solution\ext\lib\Mono.Security.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -137,11 +138,12 @@
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\..\coapp-solution\Source\AssemblyStrongName.cs" />
-    <Compile Include="Tasks\ITask.cs" />
-    <Compile Include="Tasks\MessageHandlers.cs" />
     <Compile Include="Tasks\CoTask.cs" />
+    <Compile Include="Tasks\MessageHandlers.cs" />
+    <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Tasks\TaskExtensions.cs" />
     <Compile Include="Tasks\CoTaskFactory.cs" />
+    <Compile Include="Tasks\Tasklet.cs" />
     <Compile Include="Tasks\TriggeredProperty.cs" />
     <Compile Include="Text\HttpUtility.cs" />
     <Compile Include="Text\Sgml\SgmlParser.cs">

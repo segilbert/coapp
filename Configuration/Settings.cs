@@ -21,6 +21,59 @@ namespace CoApp.Toolkit.Configuration {
             this.hive = hive;
         }
 
+        public object this[string keyName, string settingName] {
+            get {
+                RegistryKey regkey = null;
+                try {
+                    regkey = hive.OpenSubKey(@"Software\CoApp\" + applicationName + @"\" + keyName);
+
+                    if (null == regkey) {
+                        return null;
+                    }
+
+                    return regkey.GetValue(settingName, null);
+                }
+                catch {
+                }
+                finally {
+                    if (null != regkey) {
+                        regkey.Close();
+                    }
+                }
+                return null;
+            }
+            set {
+                RegistryKey regkey = null;
+                try {
+                    regkey = hive.CreateSubKey(@"Software\CoApp\" + applicationName + @"\" + keyName);
+
+                    if (null == regkey) {
+                        return;
+                    }
+
+                    if (value == null) {
+                        regkey.DeleteValue(settingName);
+                    }
+                    else if (value is long) {
+                        regkey.SetValue(settingName, value, RegistryValueKind.QWord);
+                    }
+                    else if (value is string[]) {
+                        regkey.SetValue(settingName, value, RegistryValueKind.MultiString);
+                    }
+                    else {
+                        regkey.SetValue(settingName, value);
+                    }
+                }
+                catch {
+                }
+                finally {
+                    if (null != regkey) {
+                        regkey.Close();
+                    }
+                }
+            }
+        }
+
         public object this[string settingName] {
             get {
                 RegistryKey regkey = null;

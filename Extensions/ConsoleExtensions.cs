@@ -78,36 +78,33 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
-        private static string SafeGetProperty(this PropertyInfo propertyInfo, Object obj, string @default = "") {
+        private static string SafeGet(this Object obj, PropertyInfo propertyInfo, string @default = "") {
             try {
-                return propertyInfo.GetValue(obj, null).ToString();
+                var v = propertyInfo.GetValue(obj, null);
+                return v != null ? v.ToString() : @default;
             }
             catch {
                 return @default;
             }
         }
 
-        private static string SafeGetField(this FieldInfo fieldInfo, Object obj, string @default = "") {
+
+        private static string SafeGet(this Object obj, FieldInfo fieldInfo, string @default = "") {
             try {
-                return fieldInfo.GetValue(obj).ToString();
+                var v = fieldInfo.GetValue(obj);
+                return v != null ? v.ToString() : @default;
             }
             catch {
                 return @default;
             }
         }
 
-        public static Dictionary<string,List<string>> ToTable<T>(this IEnumerable<T> rows, IEnumerable<string> propertyNames) {
-            var result = new Dictionary<string, List<string>>();
-            
-            foreach( var prop in propertyNames ) {
-                var column = new List<string>();
-                result.Add(prop,column);
-                var propertyInfo = typeof(T).GetProperty(prop);
-                var fieldInfo = typeof(T).GetField(prop);
-
-                column.AddRange(rows.Select(row => propertyInfo.SafeGetProperty(row,null) ?? fieldInfo.SafeGetField(row) ));
+        private static string Justify( this string str, int width, int justification) {
+            var result = str.PadLeft(justification == 2 ? 0 : justification == 3 ? (width - str.Length)/2 : width);
+            if( result.Length > width ) {
+                int sz = (result.Length - (width + 3))/2;
+                result = result.Substring(0, sz) + " ... " + result.Substring(result.Length - sz);
             }
-
             return result;
         }
 
@@ -115,34 +112,66 @@ namespace CoApp.Toolkit.Extensions {
             return s.Length < sz ? s : s.Substring(s.Length - sz);
         }
 
-        public static void Dump(this Dictionary<string, List<string>> data, IEnumerable<string> columnTitles, int maxWidth = 0) {
+        private static string[] JustifyAll( this IList<string> elements, IList<int> widths,IList<int> justifications ) {
+            var count = elements.Count;
+            var result = new string[count];
+            for (var i = 0; i < count; i++) {
+                result[i] = elements[i].PadRight(justifications[i] == 2 ? 0 : justifications[i] == 3 ? ((widths[i] - elements[i].Length) / 2) + elements[i].Length : widths[i]);
+                
+                if (result[i].Length > widths[i]) {
+                    if (widths[i] < 15) {
+                        result[i] = result[i].Substring(0,(widths[i]-3))+"...";
+                    }
+                    else {
+                        int keep = widths[i]/2;
+                        result[i] = result[i].Substring(0, keep - 1) + "..." + result[i].Substring(result[i].Length - (keep - 2+(widths[i] & 1)));
+                    }
+                }
 
-            if (data[data.Keys.First()].Count == 0)
-                return;
-
-            var columnWidths = data.Keys.Select(key => (from f in data[key] select f.Length).Max()).ToList();
-
-            var formatString = new StringBuilder( "|");
-            var n = 0;
-            foreach( var c in columnWidths) {
-                formatString.Append("{");
-                formatString.Append(n++);
-                formatString.Append(",-");
-                formatString.Append(c);
-                formatString.Append("}|");
             }
-            var fmt = formatString.ToString();
-
-            var breaker =  "-".PadLeft(columnWidths.Sum() + columnWidths.Count+1, '-');
-            
-            Console.WriteLine(breaker);
-            Console.WriteLine(fmt, columnTitles.ToArray());
-            Console.WriteLine(breaker);
-            for (var rownum = 0; rownum < data[data.Keys.First()].Count; rownum++) {
-                Console.WriteLine(fmt, data.Keys.Select(k => data[k][rownum]).ToArray());
-            }
-            Console.WriteLine(breaker);        
+            return result;
         }
 
+        public static IEnumerable<string> ToTable(this IEnumerable<object> data, int maxWidth = 500) {
+            var fields = data.First().GetType().GetProperties();
+            var columnTitles = (from field in fields select field.Name.Replace("_", " ").Trim()).ToArray();
+            var rows = data.Select(row => (from field in fields select row.SafeGet(field)).ToArray()).ToArray();
+            var columnJustifications = (from field in fields select (field.Name.StartsWith("_") ? 1 : 0) + (field.Name.EndsWith("_") ? 2 : 0)).ToArray();
+            var columnWidths = fields.ByIndex().Select(index => Math.Max((from row in rows select row[index].Length).Max(), columnTitles[index].Length)).ToArray();
+            var tSize = columnWidths.Sum() + columnWidths.Length;
+            maxWidth -= 5;
+            /*
+            var minColSize = 10;
+            
+            if( tSize > maxWidth ) {
+                var overage = tSize - maxWidth-6; 
+                var bigColumns = columnWidths.Where(width => width > minColSize).Sum();
+                var ratio = 100*overage/bigColumns;
+                for (int i = 0; i < columnWidths.Length;i++  ) {
+                    if( columnWidths[i] > minColSize ) {
+                        columnWidths[i]= ((columnWidths[i] * ratio) /  100)-1;
+                    }
+                }
+                tSize = columnWidths.Sum() + columnWidths.Length;
+            }
+            */
+            var fmt = "|" + string.Join("", columnWidths.ByIndex().Select(n => "{{{0},{1}}}|".format(n, columnWidths[n])));
+            
+            var breaker = "-".PadLeft(tSize + 1, '-');
+
+            var result = new List<string>();
+            result.Add(breaker);
+            result.Add(fmt.format(JustifyAll(columnTitles, columnWidths, columnJustifications)));
+            result.Add(breaker);
+            result.AddRange(rows.Select(row => fmt.format(JustifyAll(row, columnWidths, columnJustifications))));
+            result.Add(breaker);
+
+            return result;
+        }
+
+        public static void ConsoleOut(this IEnumerable<string> strings ) {
+            foreach( var s in strings)
+                Console.WriteLine(s);
+        }
     }
 }
