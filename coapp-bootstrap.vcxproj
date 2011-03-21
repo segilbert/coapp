@@ -116,6 +116,9 @@
     <Manifest>
       <AdditionalManifestFiles>CoAppBootstrap.manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>mt -manifest $(ProjectDir)BootstrapInstaller.manifest.xml -outputresource:$(TargetPath);1100</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -171,7 +174,8 @@
       <AdditionalManifestFiles>CoAppBootstrap.manifest.xml</AdditionalManifestFiles>
     </Manifest>
     <PostBuildEvent>
-      <Command>coapp-simplesigner --sign-only "$(TargetPath)"
+      <Command>mt -manifest $(ProjectDir)BootstrapInstaller.manifest.xml -outputresource:$(TargetPath);1100
+coapp-simplesigner --sign-only "$(TargetPath)"
 copy "$(TargetPath)" "$(SolutionDir)..\coapp-mkpackage\Resources\coapp-bootstrap.exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -302,7 +302,7 @@ release:
 
 wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly ) {
 	wchar_t* result = NULL;
-
+	DWORD error;
 	ACTCTX_SECTION_KEYED_DATA ReturnedData;
 	ACTCTX ActivationContext;
 	ULONG_PTR WinSxSCookie = 0;
@@ -322,9 +322,10 @@ wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManif
 
 	ActivationContextHandle = CreateActCtx(&ActivationContext);
 	
-	if( ActivationContextHandle == INVALID_HANDLE_VALUE )
+	if( ActivationContextHandle == INVALID_HANDLE_VALUE ){
+		error = GetLastError();
 		goto fin;
-
+	}
 	fSuccess = ActivateActCtx(ActivationContextHandle, &WinSxSCookie);
 	if( !fSuccess  )
 		goto release;

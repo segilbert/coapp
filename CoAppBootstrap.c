@@ -25,9 +25,10 @@
 #include "BootstrapUtility.h"
 
 
-#define PRG_BEGIN 10
-#define PRG_DOTNET 20
-#define PRG_DTF 40
+#define PRG_BEGIN 0
+#define PRG_DOTNET 1
+#define PRG_DTF 21
+#define PRG_MONO 40
 #define PRG_ENGINE 60
 #define PRG_INSTALLER 80
 #define PRG_COMPLETE 100
@@ -65,7 +66,7 @@ int IsCoAppInstalled( ) {
         free(CoAppInstallerPath);
 
     // if not, there damn well better be one in the WinSxS assembly
-    CoAppInstallerPath = GetWinSxSResourcePathViaManifest((HMODULE)ApplicationInstance, INSTALLER_MANFIEST_ID, L"coapp-installer.exe");
+    CoAppInstallerPath = GetWinSxSResourcePathViaManifest((HMODULE)ApplicationInstance, INSTALLER_MANFIEST_ID, L"coapp.installer.exe");
     return (NULL != CoAppInstallerPath);
 }
 int maxTicks;
@@ -96,6 +97,9 @@ int _stdcall BasicUIHandler(LPVOID pvContext, UINT iMessageType, LPCWSTR szMessa
             while(*pChar) { // real men do real pointer 'rithmatic
                 index = *pChar++ - L'1';
         
+				if( index > 3 || index < 0 )
+					break;
+
                 while(*pChar < L'0' || *pChar > L'9' )
                     pChar++; // skip up to next number
 
@@ -202,8 +206,7 @@ void GetAndInstallMSI(wchar_t* installerURL, wchar_t* localName, wchar_t* pretty
         Sleep(500);
         MsiSetInternalUI( INSTALLUILEVEL_NONE , 0); 
         MsiSetExternalUI( BasicUIHandler, INSTALLLOGMODE_PROGRESS, L"COAPP");
-        MsiInstallProduct( coappInstallerMSIFile, L"COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
-
+        MsiInstallProduct( coappInstallerMSIFile, L"TARGETDIR=\"C:\\apps\\.installed\" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
         free(coappInstallerMSIFile);
     }	
 }
@@ -211,10 +214,14 @@ void GetAndInstallMSI(wchar_t* installerURL, wchar_t* localName, wchar_t* pretty
 void doInstallCoApp() {
 	SetOverallProgressValue( PRG_DTF );
 	GetAndInstallMSI( L"http://coapp.org/DeploymentToolsFoundation.msi", L"DeploymentToolsFoundation" , L"Windows Installer Libraries");
+	SetOverallProgressValue( PRG_MONO );
+	GetAndInstallMSI( L"http://coapp.org/Mono.Security.msi", L"Mono Security" , L"Mono Digital Signature Library");
 	SetOverallProgressValue( PRG_ENGINE );
-	GetAndInstallMSI( L"http://coapp.org/CoAppEngine.msi", L"CoAppEngine" , L"CoApp Engine");
+	GetAndInstallMSI( L"http://coapp.org/CoApp.Toolkit.msi", L"CoAppToolkit" , L"CoApp Toolkit");
 	SetOverallProgressValue( PRG_INSTALLER );
-	GetAndInstallMSI( L"http://coapp.org/CoAppInstaller.msi", L"CoAppInstaller" , L"CoApp Installer");
+	GetAndInstallMSI( L"http://coapp.org/CoApp.Installer.msi", L"CoAppInstaller" , L"CoApp Installer Engine");
+
+
 }
 
 int Launch() {

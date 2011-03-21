@@ -3,7 +3,11 @@
   <dependency>
     <dependentAssembly>
       <!-- CoApp uses this manifest to find the actual installer EXE-->
-      <assemblyIdentity type="win32" name="coapp-engine" version="1.0.0.0" processorArchitecture="*" publicKeyToken="0da32de74420310f" language="*" />
+      <!-- as well, it uses it to validate that it's actually installed. -->
+      <assemblyIdentity type="win32" name="coapp.installer" version="1.0.2.338" publicKeyToken="820d50196d4e8857" processorArchitecture="*" language="*" />
     </dependentAssembly>
   </dependency>
 </assembly>
+
+
+
