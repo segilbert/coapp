@@ -72,6 +72,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coapp-bootstrap", "..\coapp
 		{B2C3433E-931E-4D52-848E-A178B16E954C} = {B2C3433E-931E-4D52-848E-A178B16E954C}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "coapp-autopackage", "..\coapp-autopackage\coapp-autopackage.csproj", "{D1102D1E-7ACE-4A81-96B8-36DA12310001}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -204,6 +206,12 @@ Global
 		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Release|Any CPU.ActiveCfg = Release|Win32
 		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Release|Any CPU.Build.0 = Release|Win32
 		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Test|Any CPU.ActiveCfg = Release|Win32
+		{D1102D1E-7ACE-4A81-96B8-36DA12310001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1102D1E-7ACE-4A81-96B8-36DA12310001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1102D1E-7ACE-4A81-96B8-36DA12310001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1102D1E-7ACE-4A81-96B8-36DA12310001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1102D1E-7ACE-4A81-96B8-36DA12310001}.Test|Any CPU.ActiveCfg = Test|Any CPU
+		{D1102D1E-7ACE-4A81-96B8-36DA12310001}.Test|Any CPU.Build.0 = Test|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
