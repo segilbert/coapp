@@ -20,3 +20,4 @@ wchar_t* GetPathFromRegistry();
 BOOL IsDotNet4Installed();
 wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly );
 BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile);
+BOOL IsRunAsAdmin();

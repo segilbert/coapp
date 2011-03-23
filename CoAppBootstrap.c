@@ -9,6 +9,8 @@
 
 #include <SDKDDKVer.h>
 #include <windows.h>
+#include <Shellapi.h>
+
 #include <Msi.h>
 #include <MsiQuery.h>
 #include <winhttp.h>
@@ -220,8 +222,6 @@ void doInstallCoApp() {
 	GetAndInstallMSI( L"http://coapp.org/CoApp.Toolkit.msi", L"CoAppToolkit" , L"CoApp Toolkit");
 	SetOverallProgressValue( PRG_INSTALLER );
 	GetAndInstallMSI( L"http://coapp.org/CoApp.Installer.msi", L"CoAppInstaller" , L"CoApp Installer Engine");
-
-
 }
 
 int Launch() {
@@ -272,10 +272,40 @@ fin:
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR pszCmdLine, int nCmdShow) {
-    
+    SHELLEXECUTEINFO sei;
+	DWORD dwError;
+	wchar_t szPath[MAX_PATH];
     INITCOMMONCONTROLSEX iccs;
+
     CommandLine = pszCmdLine;
     ApplicationInstance = hInstance;
+
+	 // Elevate the process if it is not run as administrator.
+	if (!IsRunAsAdmin()){
+		if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath))) {
+			// Launch itself as administrator.
+			sei.lpVerb = L"runas";
+			sei.lpFile = szPath;
+			sei.lpParameters = pszCmdLine;
+			sei.hwnd = NULL;
+			sei.nShow = SW_NORMAL;
+
+			if (!ShellExecuteEx(&sei)) {
+				dwError = GetLastError();
+				if (dwError == ERROR_CANCELLED) {
+					// The user refused the elevation.
+					// Do nothing ...
+					MessageBox(NULL, L"This package requires Administrator access to install.\r\n.", L"A problem has occurred.", MB_ICONERROR );
+					ExitProcess(4);
+				}
+			}
+			else {
+				// we are done here!
+				return 0;
+			}
+		}
+	}
+
 
     // load comctl32 v6, in particular the progress bar class
     iccs.dwSize = sizeof(INITCOMMONCONTROLSEX); // Naughty! :)
