@@ -76,6 +76,9 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         public PEInfo(string filename) {
+            if( !File.Exists(filename)) 
+                throw new FileNotFoundException("Unable to find file",filename);
+
             reader = new BinaryReader(File.OpenRead(filename));
 
             // Skip DOS Header and seek to PE signature
@@ -193,18 +196,19 @@ namespace CoApp.Toolkit.Win32 {
 
             // Read COR20 Header
             reader.BaseStream.Position = RvaToVa(runtimeHeader.Rva);
-            corHeader = new IMAGE_COR20_HEADER();
-            corHeader.Size = reader.ReadUInt32();
-            corHeader.MajorRuntimeVersion = reader.ReadUInt16();
-            corHeader.MinorRuntimeVersion = reader.ReadUInt16();
-            corHeader.MetaData = ReadDataDirectory();
-            corHeader.Flags = reader.ReadUInt32();
-            corHeader.EntryPointToken = reader.ReadUInt32();
-            corHeader.Resources = ReadDataDirectory();
-            corHeader.StrongNameSignature = ReadDataDirectory();
-            corHeader.CodeManagerTable = ReadDataDirectory();
-            corHeader.VTableFixups = ReadDataDirectory();
-            corHeader.ExportAddressTableJumps = ReadDataDirectory();
+            corHeader = new IMAGE_COR20_HEADER {
+                Size = reader.ReadUInt32(),
+                MajorRuntimeVersion = reader.ReadUInt16(),
+                MinorRuntimeVersion = reader.ReadUInt16(),
+                MetaData = ReadDataDirectory(),
+                Flags = reader.ReadUInt32(),
+                EntryPointToken = reader.ReadUInt32(),
+                Resources = ReadDataDirectory(),
+                StrongNameSignature = ReadDataDirectory(),
+                CodeManagerTable = ReadDataDirectory(),
+                VTableFixups = ReadDataDirectory(),
+                ExportAddressTableJumps = ReadDataDirectory()
+            };
 
             reader.Close();
         }

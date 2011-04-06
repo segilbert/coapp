@@ -76,6 +76,8 @@
     <Compile Include="DynamicXml\DynamicDataSet.cs" />
     <Compile Include="DynamicXml\DynamicNode.cs" />
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
+    <Compile Include="Exceptions\ConflictingFileOrFolderException.cs" />
+    <Compile Include="Exceptions\PathIsNotSymlinkException.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\CommandLineExtensions.cs" />
@@ -164,14 +166,48 @@
     </Compile>
     <Compile Include="Trace\Variable.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
+    <Compile Include="Win32\Advapi32.cs" />
     <Compile Include="Win32\ClipboardNotifier.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Win32\ISymlink.cs" />
+    <Compile Include="Win32\Kernel32.cs" />
+    <Compile Include="Win32\KeyModifiers.cs" />
+    <Compile Include="Win32\LegacySymlink.cs" />
+    <Compile Include="Win32\ModernSymlink.cs" />
+    <Compile Include="Win32\MoveFileFlags.cs" />
+    <Compile Include="Win32\NativeFileAccess.cs" />
+    <Compile Include="Win32\NativeFileAttributesAndFlags.cs" />
+    <Compile Include="Win32\NativeWindowWithEvent.cs" />
+    <Compile Include="Win32\HardLink.cs" />
+    <Compile Include="Win32\JunctionPoint.cs" />
+    <Compile Include="Win32\AlternateDataStreamInfo.cs" />
+    <Compile Include="Win32\FileStreamAttributes.cs" />
+    <Compile Include="Win32\FileStreamType.cs" />
+    <Compile Include="Win32\FileSystem.cs" />
+    <Compile Include="Win32\SystemInfo.cs" />
+    <Compile Include="Win32\WindowsVersionInfo.cs" />
+    <Compile Include="Win32\ReparsePoint.cs" />
+    <Compile Include="Win32\SafeHGlobalHandle.cs" />
+    <Compile Include="Win32\SafeNativeMethods.cs" />
+    <Compile Include="Win32\StreamName.cs" />
     <Compile Include="Win32\PEInfo.cs" />
-    <Compile Include="Win32\NativeCode.cs" />
+    <Compile Include="Win32\Win32StreamId.cs" />
+    <Compile Include="Win32\Symlink.cs" />
+    <Compile Include="Win32\SafeTokenHandle.cs" />
+    <Compile Include="Win32\SecurityImpersonationLevel.cs" />
+    <Compile Include="Win32\SidAndAttributes.cs" />
     <Compile Include="Win32\SystemHotkey.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Win32\TokenElevation.cs" />
+    <Compile Include="Win32\TokenElevationType.cs" />
+    <Compile Include="Win32\TokenInformationClass.cs" />
+    <Compile Include="Win32\TokenMandatoryLabel.cs" />
+    <Compile Include="Win32\User32.cs" />
+    <Compile Include="Win32\WellKnownSidType.cs" />
+    <Compile Include="Win32\Win32Msgs.cs" />
+    <Compile Include="Win32\Winmm.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Installer\" />

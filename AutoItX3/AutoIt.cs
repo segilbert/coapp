@@ -16,7 +16,7 @@ namespace CoApp.Toolkit.AutoItX3 {
         /// <summary>
         /// Determines if the current platform is 64 bit.
         /// </summary>
-        private static readonly bool X64 = IntPtr.Size == 8;
+        private static readonly bool X64 = Win32.WindowsVersionInfo.IsCurrentProcess64Bit;
 
         #region | Constants |
         /// <summary>

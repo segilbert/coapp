@@ -89,6 +89,7 @@
     <Compile Include="Engine\MultiplexedProperty.cs" />
     <Compile Include="Engine\NativeMethods.cs" />
     <Compile Include="Engine\Package.cs" />
+    <Compile Include="Engine\PackageCompositionEngine.cs" />
     <Compile Include="Engine\PackageExtensions.cs" />
     <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
     <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
