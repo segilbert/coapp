@@ -99,6 +99,7 @@
     <Compile Include="Network\HttpServer.cs" />
     <Compile Include="Network\RemoteFile.cs" />
     <Compile Include="Network\TransferManager.cs" />
+    <Compile Include="Ntdll.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\IFileType.cs" />
     <Compile Include="Package\mkPackage.cs">

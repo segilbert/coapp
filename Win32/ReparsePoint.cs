@@ -133,6 +133,7 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         private static SafeFileHandle OpenFile(string reparsePoint, NativeFileAccess accessMode) {
+           
             var reparsePointHandle = Kernel32.CreateFile(reparsePoint, accessMode,
                 FileShare.Read | FileShare.Write | FileShare.Delete ,
                 IntPtr.Zero, FileMode.Open, NativeFileAttributesAndFlags.BackupSemantics | NativeFileAttributesAndFlags.OpenReparsePoint,
@@ -289,8 +290,13 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
-        /* // work in progress... just trying my own brand of symbolic link creation
+         // work in progress... just trying my own brand of symbolic link creation
         public static ReparsePoint CreateSymlink(string path, string targetDirectory) {
+
+            IntPtr seakretState = IntPtr.Zero;
+            UInt32 seakretPriv = 35;
+            Ntdll.RtlAcquirePrivilege(ref seakretPriv, 1, 0, ref seakretState);
+
             path = Path.GetFullPath(path);
             targetDirectory = Path.GetFullPath(targetDirectory);
 
@@ -339,10 +345,11 @@ namespace CoApp.Toolkit.Win32 {
                 }
                 finally {
                     Marshal.FreeHGlobal(inBuffer);
+                    Ntdll.RtlReleasePrivilege(seakretState);
                 }
             }
         }
-         */
+         
 
         public static ReparsePoint ChangeJunctionTarget(string path, string targetDirectory) {
             path = Path.GetFullPath(path);
