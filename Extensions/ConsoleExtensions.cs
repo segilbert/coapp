@@ -21,6 +21,8 @@ namespace CoApp.Toolkit.Extensions {
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Text;
+    using Microsoft.Win32.SafeHandles;
+    using Win32;
 
     public class ConsoleColors : IDisposable {
         private readonly ConsoleColor fg;
@@ -40,21 +42,24 @@ namespace CoApp.Toolkit.Extensions {
     }
 
     public static class ConsoleExtensions {
-        private enum FileType { Unknown, Disk, Char, Pipe };
-        private enum StdHandle { Stdin = -10, Stdout = -11, Stderr = -12 };
-        [DllImport("kernel32.dll")]
-        private static extern FileType GetFileType(IntPtr hdl);
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetStdHandle(StdHandle std);
+        public static Lazy<SafeFileHandle> StandardOutputHandle = new Lazy<SafeFileHandle>(() => {
+            return Kernel32.GetStdHandle(StandardHandle.OUTPUT);
+        });
+        public static Lazy<SafeFileHandle> StandardInputHandle = new Lazy<SafeFileHandle>(() => {
+            return Kernel32.GetStdHandle(StandardHandle.INPUT);
+        });
+        public static Lazy<SafeFileHandle> StandardErrorHandle = new Lazy<SafeFileHandle>(() => {
+            return Kernel32.GetStdHandle(StandardHandle.ERROR);
+        });
 
         public static bool OutputRedirected {
-            get { return FileType.Char != GetFileType(GetStdHandle(StdHandle.Stdout)); }
+            get {return FileType.Char != Kernel32.GetFileType(StandardOutputHandle.Value); }
         }
         public static bool InputRedirected {
-            get { return FileType.Char != GetFileType(GetStdHandle(StdHandle.Stdin)); }
+            get { return FileType.Char != Kernel32.GetFileType(StandardInputHandle.Value); }
         }
         public static bool ErrorRedirected {
-            get { return FileType.Char != GetFileType(GetStdHandle(StdHandle.Stderr)); }
+            get { return FileType.Char != Kernel32.GetFileType(StandardErrorHandle.Value); }
         }
 
         public static bool IsConsole {

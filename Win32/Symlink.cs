@@ -21,20 +21,19 @@ namespace CoApp.Toolkit.Win32 {
         public static void MakeDirectoryLink(string linkPath, string actualFolderPath) {
             _symlink.Value.MakeDirectoryLink(linkPath, actualFolderPath);
         }
-
+        public static void ChangeLinkTarget(string linkPath, string newActualPath) {
+            _symlink.Value.ChangeLinkTarget(linkPath,newActualPath);
+        }
         public static void DeleteSymlink(string linkPath) {
             _symlink.Value.DeleteSymlink(linkPath);
         }
-
-        public static void CreateShortcut(string shortcutPath, string actualFilePath) {
-        }
-
         public static bool IsSymlink(string linkPath) {
             return _symlink.Value.IsSymlink(linkPath);
         }
-
         public static string GetActualPath(string linkPath) {
             return _symlink.Value.GetActualPath(linkPath);
+        }
+        public static void CreateShortcut(string shortcutPath, string actualFilePath) {
         }
     }
 }

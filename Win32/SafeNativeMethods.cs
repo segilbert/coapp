@@ -214,7 +214,7 @@ namespace CoApp.Toolkit.Win32 {
         public static SafeFileHandle SafeCreateFile(string path, NativeFileAccess access, FileShare share, IntPtr security, FileMode mode,
             NativeFileAttributesAndFlags flags, IntPtr template) {
             SafeFileHandle result = Kernel32.CreateFile(path, access, share, security, mode, flags, template);
-            if (!result.IsInvalid && 1 != Kernel32.GetFileType(result)) {
+            if (!result.IsInvalid && FileType.Disk != Kernel32.GetFileType(result)) {
                 result.Dispose();
                 throw new NotSupportedException(string.Format(Resources.Culture,
                     Resources.Error_NonFile, path));

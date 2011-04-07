@@ -11,20 +11,21 @@ namespace CoApp.Toolkit.Crypto {
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
+    using Win32;
 
-    enum WinTrustDataUIChoice : uint {
+    public enum WinTrustDataUIChoice : uint {
         All = 1,
         None = 2,
         NoBad = 3,
         NoGood = 4
     }
 
-    enum WinTrustDataRevocationChecks : uint {
+    public enum WinTrustDataRevocationChecks : uint {
         None = 0x00000000,
         WholeChain = 0x00000001
     }
 
-    enum WinTrustDataChoice : uint {
+    public enum WinTrustDataChoice : uint {
         File = 1,
         Catalog = 2,
         Blob = 3,
@@ -32,7 +33,7 @@ namespace CoApp.Toolkit.Crypto {
         Certificate = 5
     }
 
-    enum WinTrustDataStateAction : uint {
+    public enum WinTrustDataStateAction : uint {
         Ignore = 0x00000000,
         Verify = 0x00000001,
         Close = 0x00000002,
@@ -41,7 +42,7 @@ namespace CoApp.Toolkit.Crypto {
     }
 
     [FlagsAttribute]
-    enum WinTrustDataProvFlags : uint {
+    public enum WinTrustDataProvFlags : uint {
         UseIe4TrustFlag = 0x00000001,
         NoIe4ChainFlag = 0x00000002,
         NoPolicyUsageFlag = 0x00000004,
@@ -56,12 +57,12 @@ namespace CoApp.Toolkit.Crypto {
         CacheOnlyUrlRetrieval = 0x00001000      // affects CRL retrieval and AIA retrieval
     }
 
-    enum WinTrustDataUIContext : uint {
+    public enum WinTrustDataUIContext : uint {
         Execute = 0,
         Install = 1
     }
 
-    enum WinVerifyTrustResult : uint {
+    public enum WinVerifyTrustResult : uint {
         Success = 0,
         ProviderUnknown = 0x800b0001,           // The trust provider is not recognized on this system
         ActionUnknown = 0x800b0002,             // The trust provider does not support the specified action
@@ -85,7 +86,7 @@ namespace CoApp.Toolkit.Crypto {
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    class WinTrustData {
+    public class WinTrustData {
         UInt32 StructSize = (UInt32)Marshal.SizeOf(typeof(WinTrustData));
         IntPtr PolicyCallbackData = IntPtr.Zero;
         IntPtr SIPClientData = IntPtr.Zero;
@@ -115,24 +116,14 @@ namespace CoApp.Toolkit.Crypto {
     }
 
     public class Verifier {
-        //[DllImport("Wintrust.dll", PreserveSig = true, SetLastError = false)]
-        //internal static extern uint WinVerifyTrust(IntPtr hWnd, IntPtr pgActionId, IntPtr pWinTrustData);
-
         private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         // GUID of the action to perform
         private const string WINTRUST_ACTION_GENERIC_VERIFY_V2 = "{00AAC56B-CD44-11d0-8CC2-00C04FC295EE}";
 
-        [DllImport("wintrust.dll", ExactSpelling = true, SetLastError = false, CharSet = CharSet.Unicode)]
-        static extern WinVerifyTrustResult WinVerifyTrust(
-            [In] IntPtr hwnd,
-            [In] [MarshalAs(UnmanagedType.LPStruct)] Guid pgActionID,
-            [In] WinTrustData pWVTData
-        );
-
         public static bool HasValidSignature(string fileName) {
             WinTrustData wtd = new WinTrustData(fileName);
             Guid guidAction = new Guid(WINTRUST_ACTION_GENERIC_VERIFY_V2);
-            WinVerifyTrustResult result = WinVerifyTrust(INVALID_HANDLE_VALUE, guidAction, wtd);
+            WinVerifyTrustResult result = WinTrust.WinVerifyTrust(INVALID_HANDLE_VALUE, guidAction, wtd);
             bool ret = (result == WinVerifyTrustResult.Success);
             return ret;
         }

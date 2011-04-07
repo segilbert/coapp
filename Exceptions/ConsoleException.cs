@@ -4,9 +4,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Console {
+namespace CoApp.Toolkit.Exceptions {
     using System;
-    using Extensions;
+    using CoApp.Toolkit.Extensions;
 
     public class ConsoleException : Exception {
         public ConsoleException(string reason, params object[] parameters) : base(reason.format(parameters)) {

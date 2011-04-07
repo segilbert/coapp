@@ -22,6 +22,7 @@ namespace CoApp.Toolkit.Utility
     using System.Threading;
     using Console;
     using Extensions;
+    using Win32;
 
     public class ProcessUtility
     {
@@ -103,7 +104,7 @@ namespace CoApp.Toolkit.Utility
 
         public void AttachToConsoleForProcess() {
             if( !ConsoleExtensions.IsConsole ) {
-                ConsoleApi.AttachConsole(currentProcess.Id);
+                Kernel32.AttachConsole(currentProcess.Id);
             }
         }
 

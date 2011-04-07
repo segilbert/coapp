@@ -6,11 +6,10 @@
 
 namespace CoApp.Toolkit.Win32 {
     using System;
-    using System.Runtime.InteropServices;
     using Microsoft.Win32.SafeHandles;
 
     /// <summary>
-    /// Represents a wrapper class for a token handle.
+    ///   Represents a wrapper class for a token handle.
     /// </summary>
     public class SafeTokenHandle : SafeHandleZeroOrMinusOneIsInvalid {
         private SafeTokenHandle()
@@ -22,11 +21,8 @@ namespace CoApp.Toolkit.Win32 {
             base.SetHandle(handle);
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr handle);
-
         protected override bool ReleaseHandle() {
-            return CloseHandle(base.handle);
+            return Kernel32.CloseHandle(base.handle);
         }
     }
 }

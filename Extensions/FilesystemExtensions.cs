@@ -308,5 +308,9 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        public static int Write(this FileStream fileStream, byte[] data) {
+            fileStream.Write(data, 0, data.Length);
+            return data.Length;
+        }
     }
 }

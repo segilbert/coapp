@@ -210,7 +210,10 @@ namespace CoApp.Toolkit.Engine {
                 return _isInstalled ?? (_isInstalled = ((Func<bool>) (() => {
                     try {
                         Changed();
-                        return packageHandler.IsInstalled(ProductCode);
+                        if( packageHandler != null )
+                            return packageHandler.IsInstalled(ProductCode);
+                        
+                        return false;
                     }
                     catch {
                     }

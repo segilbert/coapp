@@ -4,53 +4,62 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-
 namespace CoApp.Toolkit.Win32 {
-    using System;
     using System.IO;
-    using System.Runtime.InteropServices;
-    using System.Text;
     using Exceptions;
     using Extensions;
-    using Microsoft.Win32.SafeHandles;
 
-    internal class ModernSymlink : ISymlink {
+    public class ModernSymlink : ISymlink {
         public void MakeFileLink(string linkPath, string actualFilePath) {
-            linkPath = Path.GetFullPath(linkPath);
-            actualFilePath= Path.GetFullPath(actualFilePath);
+            linkPath = linkPath.GetFullPath();
+            actualFilePath = GetActualPath(actualFilePath.GetFullPath());
 
-            if( !File.Exists(actualFilePath))
+            if (!File.Exists(actualFilePath)) {
                 throw new FileNotFoundException("Cannot link to non-existent file", actualFilePath);
-
-            if( File.Exists(linkPath) || Directory.Exists(linkPath)) {
-                if (IsSymlink(linkPath)) {
-                    deleteSymlink(linkPath);
-                }
-
-                if( !File.Exists(linkPath) || Directory.Exists(linkPath))
-                    throw new ConflictingFileOrFolderException(linkPath);
             }
-
-            Kernel32.CreateSymbolicLink(linkPath, actualFilePath, 0);
-        }
-
-        public void MakeDirectoryLink(string linkPath, string actualFolderPath) {
-            linkPath = Path.GetFullPath(linkPath);
-            actualFolderPath = Path.GetFullPath(actualFolderPath);
-
-            if (!Directory.Exists(actualFolderPath))
-                throw new FileNotFoundException("Cannot link to non-existent directory", actualFolderPath);
 
             if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
                 if (IsSymlink(linkPath)) {
                     deleteSymlink(linkPath);
                 }
 
-                if (!File.Exists(linkPath) || Directory.Exists(linkPath))
+                if (!File.Exists(linkPath) || Directory.Exists(linkPath)) {
                     throw new ConflictingFileOrFolderException(linkPath);
+                }
+            }
+
+            Kernel32.CreateSymbolicLink(linkPath, actualFilePath, 0);
+        }
+
+        public void MakeDirectoryLink(string linkPath, string actualFolderPath) {
+            linkPath = linkPath.GetFullPath();
+            actualFolderPath = GetActualPath(actualFolderPath.GetFullPath());
+
+            if (!Directory.Exists(actualFolderPath)) {
+                throw new FileNotFoundException("Cannot link to non-existent directory", actualFolderPath);
+            }
+
+            if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
+                if (IsSymlink(linkPath)) {
+                    deleteSymlink(linkPath);
+                }
+
+                if (!File.Exists(linkPath) || Directory.Exists(linkPath)) {
+                    throw new ConflictingFileOrFolderException(linkPath);
+                }
             }
 
             Kernel32.CreateSymbolicLink(linkPath, actualFolderPath, 1);
+        }
+
+        public void ChangeLinkTarget(string linkPath, string newActualPath) {
+            linkPath = linkPath.GetFullPath();
+            newActualPath = GetActualPath(newActualPath.GetFullPath());
+            if (!IsSymlink(linkPath)) {
+                throw new PathIsNotSymlinkException(linkPath);
+            }
+
+            ReparsePoint.ChangeReparsePointTarget(linkPath, newActualPath);
         }
 
         public void DeleteSymlink(string linkPath) {
@@ -76,7 +85,7 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         public bool IsSymlink(string linkPath) {
-            if(!ReparsePoint.IsReparsePoint(linkPath)){
+            if (!ReparsePoint.IsReparsePoint(linkPath)) {
                 return false;
             }
 
@@ -85,6 +94,7 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         public string GetActualPath(string linkPath) {
+            linkPath = linkPath.GetFullPath();
             return ReparsePoint.GetActualPath(linkPath);
         }
     }

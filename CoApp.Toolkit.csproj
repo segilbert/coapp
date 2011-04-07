@@ -66,10 +66,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\ExpiringList.cs" />
     <Compile Include="Configuration\Settings.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
-    <Compile Include="Console\ConsoleException.cs" />
+    <Compile Include="Exceptions\ConsoleException.cs" />
     <Compile Include="Crypto\Verifier.cs" />
     <Compile Include="DynamicXml\DynamicAttributes.cs" />
     <Compile Include="DynamicXml\DynamicDataRow.cs" />
@@ -99,7 +100,6 @@
     <Compile Include="Network\HttpServer.cs" />
     <Compile Include="Network\RemoteFile.cs" />
     <Compile Include="Network\TransferManager.cs" />
-    <Compile Include="Ntdll.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\IFileType.cs" />
     <Compile Include="Package\mkPackage.cs">
@@ -120,6 +120,31 @@
     <Compile Include="Scan\Types\ScanReport.cs" />
     <Compile Include="Configuration\Indexers.cs" />
     <Compile Include="Configuration\QuickSettings.cs" />
+    <Compile Include="Shell\ColorTable.cs" />
+    <Compile Include="Shell\ConsoleProperties.cs" />
+    <Compile Include="Shell\Coordinate.cs" />
+    <Compile Include="Shell\ICommiter.cs" />
+    <Compile Include="Shell\IconLocation.cs" />
+    <Compile Include="Shell\Internal\COORD.cs" />
+    <Compile Include="Shell\Internal\DATABLOCK_HEADER.cs" />
+    <Compile Include="Shell\Internal\EXP_DARWIN_LINK.cs" />
+    <Compile Include="Shell\Internal\EXP_SPECIAL_FOLDER .cs" />
+    <Compile Include="Shell\Internal\EXP_SZ_ICON.cs" />
+    <Compile Include="Shell\Internal\EXP_SZ_LINK.cs" />
+    <Compile Include="Shell\Internal\IPersistFile.cs" />
+    <Compile Include="Shell\Internal\IShellLink.cs" />
+    <Compile Include="Shell\Internal\IShellLinkDataList.cs" />
+    <Compile Include="Shell\Internal\NT_CONSOLE_PROPS.cs" />
+    <Compile Include="Shell\Internal\NT_FE_CONSOLE_PROPS.cs" />
+    <Compile Include="Shell\Internal\ShellLinkCoClass.cs" />
+    <Compile Include="Shell\Internal\SLGP_FLAGS.cs" />
+    <Compile Include="Shell\Internal\SLR_FLAGS.cs" />
+    <Compile Include="Shell\Internal\STGM_FLAGS.cs" />
+    <Compile Include="Shell\Internal\WIN32_FIND_DATAW.cs" />
+    <Compile Include="Shell\ResolveFlags.cs" />
+    <Compile Include="Shell\ShellLink.cs" />
+    <Compile Include="Shell\ShellLinkFlags.cs" />
+    <Compile Include="Shell\ShowWindowCommand.cs" />
     <Compile Include="Spec\Dependency.cs" />
     <Compile Include="Spec\File.cs" />
     <Compile Include="Spec\Link.cs" />
@@ -168,25 +193,46 @@
     <Compile Include="Trace\Variable.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\Advapi32.cs" />
+    <Compile Include="Win32\ByHandleFileInformation.cs" />
     <Compile Include="Win32\ClipboardNotifier.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Win32\ConsoleEvents.cs" />
+    <Compile Include="Win32\ConsoleEventTypes.cs" />
+    <Compile Include="Win32\ConsoleFontInfo.cs" />
+    <Compile Include="Win32\ConsoleScreenBufferInfo.cs" />
+    <Compile Include="Win32\ControlCodes.cs" />
+    <Compile Include="Win32\Coord.cs" />
+    <Compile Include="Win32\FocusInputRecord.cs" />
+    <Compile Include="Win32\IoReparseTag.cs" />
     <Compile Include="Win32\ISymlink.cs" />
     <Compile Include="Win32\Kernel32.cs" />
+    <Compile Include="Win32\KeyInputRecord.cs" />
     <Compile Include="Win32\KeyModifiers.cs" />
     <Compile Include="Win32\LegacySymlink.cs" />
+    <Compile Include="Win32\MenuItemInfo.cs" />
+    <Compile Include="Win32\Miim.cs" />
     <Compile Include="Win32\ModernSymlink.cs" />
     <Compile Include="Win32\MoveFileFlags.cs" />
     <Compile Include="Win32\NativeFileAccess.cs" />
     <Compile Include="Win32\NativeFileAttributesAndFlags.cs" />
     <Compile Include="Win32\NativeWindowWithEvent.cs" />
     <Compile Include="Win32\HardLink.cs" />
-    <Compile Include="Win32\JunctionPoint.cs" />
     <Compile Include="Win32\AlternateDataStreamInfo.cs" />
     <Compile Include="Win32\FileStreamAttributes.cs" />
     <Compile Include="Win32\FileStreamType.cs" />
     <Compile Include="Win32\FileSystem.cs" />
+    <Compile Include="Win32\Ntdll.cs" />
+    <Compile Include="Win32\ProcessInformation.cs" />
+    <Compile Include="Win32\Rect.cs" />
+    <Compile Include="Win32\ReparseData.cs" />
+    <Compile Include="Win32\ReparsePointError.cs" />
+    <Compile Include="Win32\SecurityAttributes.cs" />
+    <Compile Include="Win32\SmallRect.cs" />
+    <Compile Include="Win32\StandardHandle.cs" />
+    <Compile Include="Win32\Startupinfo.cs" />
     <Compile Include="Win32\SystemInfo.cs" />
+    <Compile Include="Win32\WindowInfo.cs" />
     <Compile Include="Win32\WindowsVersionInfo.cs" />
     <Compile Include="Win32\ReparsePoint.cs" />
     <Compile Include="Win32\SafeHGlobalHandle.cs" />
@@ -209,6 +255,7 @@
     <Compile Include="Win32\WellKnownSidType.cs" />
     <Compile Include="Win32\Win32Msgs.cs" />
     <Compile Include="Win32\Winmm.cs" />
+    <Compile Include="Win32\WinTrust.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Installer\" />
