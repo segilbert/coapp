@@ -15,6 +15,7 @@ namespace CoApp.CLI {
     using Toolkit.Console;
     using Toolkit.Crypto;
     using Toolkit.Engine;
+    using Toolkit.Exceptions;
     using Toolkit.Extensions;
     using Toolkit.Network;
     using Toolkit.Tasks;
@@ -302,15 +303,15 @@ namespace CoApp.CLI {
 
         private void DumpPackages(IEnumerable<Package> packages) {
             if (packages.Count() > 0) {
-                (from pkg in packages
+                (from pkg in packages orderby pkg.Name
                     select new {
                         pkg.Name,
                         Version = pkg.Version.UInt64VersiontoString(),
                         Arch = pkg.Architecture,
                         Publisher = pkg.Publisher.Name,
-                        Local_Path = pkg.LocalPackagePath.Value ?? "<not local>",
-                        Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
-                    }).ToTable().ConsoleOut();
+                        // Local_Path = pkg.LocalPackagePath.Value ?? "<not local>",
+                        // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
+                    } ).ToTable().ConsoleOut();
             }
             else {
                 Console.WriteLine("\rNo packages.");
@@ -579,10 +580,14 @@ namespace CoApp.CLI {
                 _pkgManager.AddSystemFeeds(parameters);
                 ListFeeds(parameters);
             }
+            catch (ConsoleException) {
+                throw;
+            }
             catch (Exception) {
                 throw new ConsoleException(
                     "LOL WHAT?.");
             }
+            
         }
 
         private void DeleteFeed(IEnumerable<string> parameters) {
@@ -593,6 +598,9 @@ namespace CoApp.CLI {
                 }
                 _pkgManager.DeleteSystemFeeds(parameters);
                 ListFeeds(parameters);
+            }
+            catch (ConsoleException) {
+                throw;
             }
             catch (Exception) {
                 throw new ConsoleException(
