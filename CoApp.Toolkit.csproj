@@ -70,6 +70,7 @@
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
     <Compile Include="Console\ConsoleException.cs" />
+    <Compile Include="Crypto\PfxStoreLoader.cs" />
     <Compile Include="Crypto\Verifier.cs" />
     <Compile Include="DynamicXml\DynamicAttributes.cs" />
     <Compile Include="DynamicXml\DynamicDataRow.cs" />
@@ -86,7 +87,7 @@
     <Compile Include="Extensions\DebugExtensions.cs" />
     <Compile Include="Extensions\FilesystemExtensions.cs" />
     <Compile Include="Extensions\LinqExtensions.cs" />
-    <Compile Include="Extensions\PKCS12Extensions.cs" />
+    <Compile Include="Extensions\X509StoreExtensions.cs" />
     <Compile Include="Extensions\SortedObservableCollection.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Extensions\WebExtensions.cs">

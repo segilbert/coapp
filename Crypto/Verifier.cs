@@ -66,7 +66,8 @@ namespace CoApp.Toolkit.Crypto {
         ProviderUnknown = 0x800b0001,           // The trust provider is not recognized on this system
         ActionUnknown = 0x800b0002,             // The trust provider does not support the specified action
         SubjectFormUnknown = 0x800b0003,        // The trust provider does not support the form specified for the subject
-        SubjectNotTrusted = 0x800b0004          // The subject failed the specified verification action
+        SubjectNotTrusted = 0x800b0004,          // The subject failed the specified verification action
+        UntrustedRootCert = 0x800B0109          //A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

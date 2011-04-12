@@ -210,5 +210,12 @@ namespace CoApp.Toolkit.Extensions {
         {
             return Regex.Replace(input, @"\s|\.|\-", "_");
         }
+
+        public static bool IsValidVersion(this string input)
+        {
+            var regex = new Regex(@"(\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}");
+            return regex.IsMatch(input);
+        }
+
     }
 }
