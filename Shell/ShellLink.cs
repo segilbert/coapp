@@ -17,6 +17,7 @@ namespace CoApp.Toolkit.Shell {
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Text;
+    using Extensions;
     using Internal;
 
     public class ShellLink : IDisposable {
@@ -30,6 +31,28 @@ namespace CoApp.Toolkit.Shell {
         private const int MAX_PATH = 260;
 
         #endregion
+
+        public static ShellLink CreateShortcut(string shortcutPath, string actualFilePath, string description = null, string workingDirectory = null, string arguments = null) {
+            shortcutPath = shortcutPath.GetFullPath();
+            actualFilePath = actualFilePath.GetFullPath();
+            if (!System.IO.Path.HasExtension(shortcutPath))
+                shortcutPath += ".LNK";
+
+            var link = new ShellLink(shortcutPath);
+            link.Path = actualFilePath;
+
+            link.WorkingDirectory = workingDirectory ?? System.IO.Path.GetDirectoryName(actualFilePath);
+
+            if (description != null)
+                link.Description = description;
+
+            if (arguments != null)
+                link.Arguments = arguments;
+
+            link.Save(shortcutPath);
+            return link;
+        }
+
 
         #region Construction and Disposal
 

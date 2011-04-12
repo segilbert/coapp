@@ -6,6 +6,7 @@
 
 namespace CoApp.Toolkit.Win32 {
     using System;
+   
 
     public class Symlink {
         private static Lazy<ISymlink> _symlink = new Lazy<ISymlink>(() => {
@@ -32,8 +33,6 @@ namespace CoApp.Toolkit.Win32 {
         }
         public static string GetActualPath(string linkPath) {
             return _symlink.Value.GetActualPath(linkPath);
-        }
-        public static void CreateShortcut(string shortcutPath, string actualFilePath) {
         }
     }
 }

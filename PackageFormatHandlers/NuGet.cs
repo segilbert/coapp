@@ -17,5 +17,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         public bool IsInstalled(string productCode) {
             throw new System.NotImplementedException();
         }
+
+
+        public System.Collections.Generic.IEnumerable<Engine.CompositionRule> GetCompositionRules(Engine.Package package) {
+            throw new System.NotImplementedException();
+        }
     }
 }

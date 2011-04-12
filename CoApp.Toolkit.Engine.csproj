@@ -69,6 +69,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\CompositionRule.cs" />
     <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
     <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs" />
     <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs" />
@@ -89,7 +90,6 @@
     <Compile Include="Engine\MultiplexedProperty.cs" />
     <Compile Include="Engine\NativeMethods.cs" />
     <Compile Include="Engine\Package.cs" />
-    <Compile Include="Engine\PackageCompositionEngine.cs" />
     <Compile Include="Engine\PackageExtensions.cs" />
     <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
     <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />

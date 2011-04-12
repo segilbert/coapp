@@ -15,6 +15,7 @@ namespace CoApp.Toolkit.Engine {
     
     using PackageFormatHandlers;
     using Tasks;
+    using Win32;
 
     public class Package {
         public class Party {
@@ -312,15 +313,28 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public void DoPackageComposition(Package package) {
-            // dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
+            var rules = packageHandler.GetCompositionRules(this);
 
+            /*
+            if( )
+            Symlink.MakeDirectoryLink(ResolveVariables("{$CANONICALPACKAGEDIR}"), ResolveVariables("{$PACKAGEDIR}"));
+
+            rules = rules.Add(
+                new CompositionRule {
+                    Action = CompositionAction.SymlinkFolder,
+                    Location = "{$CANONICALPACKAGEDIR}",
+                    Target = "{$PACKAGEDIR}"
+                });
+
+
+            */
             // perform install-folder composition tasks.
             // implicit tasks
 
 
-            // folder symlinks (reparse points on XP)
-            // file symlinks (copies for XP?)
-            // shortcuts (.lnk)
+            // folder symlinks 
+            // file symlinks 
+            // shortcuts 
         }
 
         public void UndoPackageComposition(Package package) {

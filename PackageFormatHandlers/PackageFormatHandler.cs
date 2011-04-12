@@ -5,12 +5,14 @@
 //-----------------------------------------------------------------------
 namespace CoApp.Toolkit.PackageFormatHandlers {
     using System;
+    using System.Collections.Generic;
+    using Engine;
 
     internal interface IPackageFormatHandler {
-        // void Install(string packagePath, Action<int> progress = null);
-        void Install(CoApp.Toolkit.Engine.Package package, Action<int> progress = null);
-        // void Remove(string packagePath, Action<int> progress = null);
-        void Remove(CoApp.Toolkit.Engine.Package package, Action<int> progress = null);
+        void Install(Package package, Action<int> progress = null);
+        void Remove(Package package, Action<int> progress = null);
+        IEnumerable<CompositionRule> GetCompositionRules(Package package);
+
         bool IsInstalled(string productCode);
     }
 }

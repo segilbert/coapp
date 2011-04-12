@@ -10,22 +10,18 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using System.Data;
     using System.Data.Common;
     using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Windows.Forms;
     using DynamicXml;
     using Engine;
     using Engine.Exceptions;
     using Extensions;
     using Microsoft.Deployment.WindowsInstaller;
     using Tasks;
-    using View = Microsoft.Deployment.WindowsInstaller.View;
 
     internal static class DataSetExtensions {
         internal static string GetProperty(this DataSet dataSet, string propertyName) {
             return (from property in dataSet.Tables["property"].AsEnumerable()
-                    where property.Field<string>("Property") == propertyName
-                    select property).FirstOrDefault().Field<string>("Value") ?? string.Empty;
+                where property.Field<string>("Property") == propertyName
+                select property).FirstOrDefault().Field<string>("Value") ?? string.Empty;
         }
 
         internal static IEnumerable<DataRow> GetTable(this DataSet dataSet, string tableName) {
@@ -47,8 +43,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         }
 
         public static MessageResult ExternalUI(InstallMessage messageType, string message, MessageButtons buttons, MessageIcon icon,
-                                        MessageDefaultButton defaultButton) {
+            MessageDefaultButton defaultButton) {
             return MessageResult.OK;
+        }
+
+        public virtual IEnumerable<CompositionRule> GetCompositionRules(Package package) {
+            throw new NotImplementedException();
         }
 
         public bool IsInstalled(string productCode) {
@@ -70,7 +70,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 var p = product;
 
                 try {
-
                     if (Tasklet.IsCancellationRequested) {
                         return;
                     }
@@ -112,7 +111,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                             // some tables not play nice.
                         }
                     }
-                    
+
                     //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
                     if (MSIData.ContainsKey(localPackagePath)) {
                         return MSIData[localPackagePath];
@@ -209,7 +208,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             /// <exception cref = "T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref = "P:System.Data.IDataRecord.FieldCount" />. </exception>
             /// <filterpriority>2</filterpriority>
             public Type GetFieldType(int i) {
-                switch ((DbType)_tableInfo.Columns[i].DBType) {
+                switch ((DbType) _tableInfo.Columns[i].DBType) {
                     case DbType.String:
                         return typeof (string);
                     case DbType.Int32:
@@ -233,7 +232,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             /// <exception cref = "T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref = "P:System.Data.IDataRecord.FieldCount" />. </exception>
             /// <filterpriority>2</filterpriority>
             public object GetValue(int i) {
-                switch ((DbType)_tableInfo.Columns[i].DBType) {
+                switch ((DbType) _tableInfo.Columns[i].DBType) {
                     case DbType.String:
                         return GetString(i) ?? String.Empty;
                     case DbType.Int32:
@@ -685,5 +684,5 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             Console.WriteLine("YOU SHOULD NOT SEE THIS!");
             throw new NotImplementedException();
         }
-   }
+    }
 }

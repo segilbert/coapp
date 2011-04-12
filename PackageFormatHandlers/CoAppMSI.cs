@@ -282,5 +282,23 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 SetUIHandlersToSilent();
             }
         }
+
+        public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
+            dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
+
+            if (packageData.CO_INSTALL_PROPERTIES == null) {
+                return Enumerable.Empty<CompositionRule>();
+            }
+
+            return from rec in packageData.CO_INSTALL_PROPERTIES as IEnumerable<dynamic> 
+                        where Enum.GetNames(typeof (CompositionAction)).Contains((string)rec.type, StringComparer.CurrentCultureIgnoreCase)
+                        select new CompositionRule {
+                            Location = rec.link,
+                            Target = rec.target,
+                            Action = Enum.Parse(typeof (CompositionAction), rec.type, true),
+                            Parameters = string.Empty
+                        };
+        }
+
     }
 }
