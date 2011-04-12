@@ -30,8 +30,8 @@ namespace CoApp.Toolkit.Win32 {
              if(handled)
                  return;
 
-             switch( (Msgs)m.Msg ) {
-                 case Msgs.WM_DRAWCLIPBOARD:
+             switch( (Win32Msgs)m.Msg ) {
+                 case Win32Msgs.WM_DRAWCLIPBOARD:
                     handled = true;
  
                     if(Changed != null)
@@ -41,7 +41,7 @@ namespace CoApp.Toolkit.Win32 {
                     
                     break;
 
-                 case Msgs.WM_CHANGECBCHAIN:
+                 case Win32Msgs.WM_CHANGECBCHAIN:
                     if(m.WParam == nextWindow) {
                         nextWindow = m.LParam;
                     }

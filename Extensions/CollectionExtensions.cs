@@ -17,6 +17,7 @@ namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Linq;
     using System.Text;
 
     public static class CollectionExtensions {
@@ -33,6 +34,27 @@ namespace CoApp.Toolkit.Extensions {
             }
 
             return result;
+        }
+
+        /// <summary>
+        ///   Removes duplicate strings from a list.
+        /// </summary>
+        /// <param name = "collection"></param>
+        /// <param name = "stringComparison"></param>
+        /// <returns></returns>
+        public static List<string> Uniq(this IEnumerable<string> collection, StringComparison stringComparison) {
+            return Uniq((collection is List<string>) ? (collection as List<string>) : collection.ToList(), stringComparison);
+        }
+
+        ///<summary>
+        ///  Removes duplicate strings from a list.
+        ///
+        ///  Assumes Case Sensitivity.
+        ///</summary>
+        ///<param name = "collection"></param>
+        ///<returns></returns>
+        public static List<string> Uniq(this IEnumerable<string> collection) {
+            return Uniq((collection is List<string>) ? (collection as List<string>) : collection.ToList());
         }
 
         /// <summary>

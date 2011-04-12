@@ -23,7 +23,6 @@ namespace CoApp.Toolkit.Engine {
             public string Email { get; set; }
         }
 
-        
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
         /// <summary>
         /// the tuple is: (role name, flavor)
@@ -211,7 +210,10 @@ namespace CoApp.Toolkit.Engine {
                 return _isInstalled ?? (_isInstalled = ((Func<bool>) (() => {
                     try {
                         Changed();
-                        return packageHandler.IsInstalled(ProductCode);
+                        if( packageHandler != null )
+                            return packageHandler.IsInstalled(ProductCode);
+                        
+                        return false;
                     }
                     catch {
                     }
@@ -260,5 +262,76 @@ namespace CoApp.Toolkit.Engine {
                 throw new OperationCompletedBeforeResultException();
             }
         }
+
+
+        /// <summary>
+        /// V1 of the Variable Resolver.
+        /// 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        internal string ResolveVariables(string text) {
+            //System Constants:
+            // {$APPS} CoApp Application directory (c:\apps)
+            // {$BIN} CoApp bin directory (in PATH) ({$APPS}\bin)
+            // {$LIB} CoApp lib directory ({$APPS}\lib)
+            // {$INCLUDE} CoApp include directory ({$APPS}\include)
+            // {$INSTALL} CoApp .installed directory ({$APPS}\.installed)
+            
+            // Package Variables:
+            // {$PUBLISHER}         Publisher name (CN of the certificate used to sign the package)
+            // {$PRODUCTNAME}       Name of product being installed
+            // {$VERSION}           Version of package being installed. (##.##.##.##)
+            // {$ARCH}              Platform of package being installed -- one of [x86, x64, any]
+            // {$COSMETICNAME}      Complete name ({$PRODUCTNAME}-{$VERSION}-{$PLATFORM})
+
+            // {$PACKAGEDIR}        Where the product is getting installed into
+            // {$CANONICALPACKAGEDIR} The "publicly visible location" of the "current" version of the package.
+
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            var result = text;
+
+            result = result.Replace(@"{$PACKAGEDIR}", @"{$INSTALL}\{$PUBLISHER}\{$PRODUCTNAME}-{$VERSION}-{$PLATFORM}\");
+            result = result.Replace(@"{$CANONICALPACKAGEDIR}", @"{$APPS}\{$NAME}\");
+
+            result = result.Replace(@"{$INCLUDE}", Path.Combine( PackageManagerSettings.CoAppRootDirectory, "include"));
+            result = result.Replace(@"{$LIB}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "lib"));
+            result = result.Replace(@"{$BIN}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin"));
+            result = result.Replace(@"{$APPS}", PackageManagerSettings.CoAppRootDirectory);
+            result = result.Replace(@"{$INSTALL}", PackageManagerSettings.CoAppInstalledDirectory);
+
+            result = result.Replace(@"{$PUBLISHER}", Publisher.Name);
+            result = result.Replace(@"{$PRODUCTNAME}", Name);
+            result = result.Replace(@"{$VERSION}", Version.UInt64VersiontoString());
+            result = result.Replace(@"{$ARCH}", Architecture);
+            result = result.Replace(@"{$COSMETICNAME}", CosmeticName);
+
+            return result;
+        }
+
+        public void DoPackageComposition(Package package) {
+            // dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
+
+            // perform install-folder composition tasks.
+            // implicit tasks
+
+
+            // folder symlinks (reparse points on XP)
+            // file symlinks (copies for XP?)
+            // shortcuts (.lnk)
+        }
+
+        public void UndoPackageComposition(Package package) {
+            // dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
+
+            // clean up appropriate things.
+            // implicit tasks
+            // folder symlinks (reparse points on XP)
+            // file symlinks (copies for XP?)
+            // shortcuts (.lnk)
+        }
+
     }
 }

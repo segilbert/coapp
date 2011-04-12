@@ -43,7 +43,7 @@ namespace CoApp.Toolkit.Win32
          }
 
          protected void MessageEvent(object sender,ref Message m,ref bool handled) {   
-             if ((m.Msg==(int)Msgs.WM_HOTKEY))
+             if ((m.Msg==(int)Win32Msgs.WM_HOTKEY))
                  if((m.WParam==(IntPtr)code)){
                  handled=true;
                  
@@ -62,7 +62,7 @@ namespace CoApp.Toolkit.Win32
  
          protected bool RegisterHotkey(Keys key) {  
              Keys win32Key = key & ~(Keys.Alt|Keys.Control|Keys.Shift);
-             Modifiers mod = ((key & Keys.Alt) != Keys.None ? Modifiers.MOD_ALT:0) | ((key & Keys.Shift) != Keys.None ? Modifiers.MOD_SHIFT:0) | ((key & Keys.Control) != Keys.None ? Modifiers.MOD_CONTROL:0);
+             KeyModifiers mod = ((key & Keys.Alt) != Keys.None ? KeyModifiers.MOD_ALT:0) | ((key & Keys.Shift) != Keys.None ? KeyModifiers.MOD_SHIFT:0) | ((key & Keys.Control) != Keys.None ? KeyModifiers.MOD_CONTROL:0);
              code = ((int) mod << 16) + (int) win32Key;
              IsRegistered = User32.RegisterHotKey(NativeWindowWithEvent.Instance.Handle, code, (int)mod, (int)win32Key);
 

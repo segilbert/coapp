@@ -12,6 +12,7 @@ namespace CoApp.Toolkit.Console {
     using System.Resources;
     using System.Threading;
     using System.Threading.Tasks;
+    using Exceptions;
     using Extensions;
     using Tasks;
 

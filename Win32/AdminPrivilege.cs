@@ -86,17 +86,17 @@ namespace CoApp.Toolkit.Win32 {
 
                     // Retrieve token elevation type information.
                     if (!Advapi32.GetTokenInformation(hToken,
-                        TOKEN_INFORMATION_CLASS.TokenElevationType, pElevationType,
+                        TokenInformationClass.TokenElevationType, pElevationType,
                         cbSize, out cbSize)) {
                         throw new Win32Exception(Marshal.GetLastWin32Error());
                     }
 
                     // Marshal the TOKEN_ELEVATION_TYPE enum from native to .NET.
-                    TOKEN_ELEVATION_TYPE elevType = (TOKEN_ELEVATION_TYPE)
+                    TokenElevationType elevType = (TokenElevationType)
                         Marshal.ReadInt32(pElevationType);
 
                     // If limited, get the linked elevated token for further check.
-                    if (elevType == TOKEN_ELEVATION_TYPE.TokenElevationTypeLimited) {
+                    if (elevType == TokenElevationType.TokenElevationTypeLimited) {
                         // Allocate a buffer for the linked token.
                         cbSize = IntPtr.Size;
                         pLinkedToken = Marshal.AllocHGlobal(cbSize);
@@ -106,7 +106,7 @@ namespace CoApp.Toolkit.Win32 {
 
                         // Get the linked token.
                         if (!Advapi32.GetTokenInformation(hToken,
-                            TOKEN_INFORMATION_CLASS.TokenLinkedToken, pLinkedToken,
+                            TokenInformationClass.TokenLinkedToken, pLinkedToken,
                             cbSize, out cbSize)) {
                             throw new Win32Exception(Marshal.GetLastWin32Error());
                         }
@@ -123,7 +123,7 @@ namespace CoApp.Toolkit.Win32 {
                 // token for CheckTokenMembership.
                 if (hTokenToCheck == null) {
                     if (!Advapi32.DuplicateToken(hToken,
-                        SECURITY_IMPERSONATION_LEVEL.SecurityIdentification,
+                        SecurityImpersonationLevel.SecurityIdentification,
                         out hTokenToCheck)) {
                         throw new Win32Exception(Marshal.GetLastWin32Error());
                     }
@@ -216,7 +216,7 @@ namespace CoApp.Toolkit.Win32 {
                 }
 
                 // Allocate a buffer for the elevation information.
-                cbTokenElevation = Marshal.SizeOf(typeof(TOKEN_ELEVATION));
+                cbTokenElevation = Marshal.SizeOf(typeof(TokenElevation));
                 pTokenElevation = Marshal.AllocHGlobal(cbTokenElevation);
                 if (pTokenElevation == IntPtr.Zero) {
                     throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -224,7 +224,7 @@ namespace CoApp.Toolkit.Win32 {
 
                 // Retrieve token elevation information.
                 if (!Advapi32.GetTokenInformation(hToken,
-                    TOKEN_INFORMATION_CLASS.TokenElevation, pTokenElevation,
+                    TokenInformationClass.TokenElevation, pTokenElevation,
                     cbTokenElevation, out cbTokenElevation)) {
                     // When the process is run on operating systems prior to Windows 
                     // Vista, GetTokenInformation returns false with the error code 
@@ -234,8 +234,8 @@ namespace CoApp.Toolkit.Win32 {
                 }
 
                 // Marshal the TOKEN_ELEVATION struct from native to .NET object.
-                TOKEN_ELEVATION elevation = (TOKEN_ELEVATION)Marshal.PtrToStructure(
-                    pTokenElevation, typeof(TOKEN_ELEVATION));
+                TokenElevation elevation = (TokenElevation)Marshal.PtrToStructure(
+                    pTokenElevation, typeof(TokenElevation));
 
                 // TOKEN_ELEVATION.TokenIsElevated is a non-zero value if the token 
                 // has elevated privileges; otherwise, a zero value.
@@ -313,7 +313,7 @@ namespace CoApp.Toolkit.Win32 {
                 // because we've given it a null buffer. On exit cbTokenIL will tell 
                 // the size of the group information.
                 if (!Advapi32.GetTokenInformation(hToken,
-                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel, IntPtr.Zero, 0,
+                    TokenInformationClass.TokenIntegrityLevel, IntPtr.Zero, 0,
                     out cbTokenIL)) {
                     int error = Marshal.GetLastWin32Error();
                     if (error != Advapi32.ERROR_INSUFFICIENT_BUFFER) {
@@ -335,14 +335,14 @@ namespace CoApp.Toolkit.Win32 {
                 // if an administrator has added this account to an additional group 
                 // between our first call to GetTokenInformation and this one.
                 if (!Advapi32.GetTokenInformation(hToken,
-                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel, pTokenIL, cbTokenIL,
+                    TokenInformationClass.TokenIntegrityLevel, pTokenIL, cbTokenIL,
                     out cbTokenIL)) {
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 }
 
                 // Marshal the TOKEN_MANDATORY_LABEL struct from native to .NET object.
-                TOKEN_MANDATORY_LABEL tokenIL = (TOKEN_MANDATORY_LABEL)
-                    Marshal.PtrToStructure(pTokenIL, typeof(TOKEN_MANDATORY_LABEL));
+                TokenMandatoryLabel tokenIL = (TokenMandatoryLabel)
+                    Marshal.PtrToStructure(pTokenIL, typeof(TokenMandatoryLabel));
 
                 // Integrity Level SIDs are in the form of S-1-16-0xXXXX. (e.g. 
                 // S-1-16-0x1000 stands for low integrity level SID). There is one 

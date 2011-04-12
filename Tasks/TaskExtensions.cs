@@ -10,6 +10,7 @@ namespace CoApp.Toolkit.Tasks {
     using System.Threading;
     using System.Threading.Tasks;
     using Console;
+    using Exceptions;
 
     public static class TaskExtensions {
 

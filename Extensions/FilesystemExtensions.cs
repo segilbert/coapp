@@ -20,6 +20,7 @@ namespace CoApp.Toolkit.Extensions {
     using System;
     using System.IO;
     using System.Linq;
+    using Win32;
 
     public static class FilesystemExtensions {
         private static int counter;
@@ -257,5 +258,59 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        public static void TryHardToDeleteFile( this string filename ) {
+            if (File.Exists(filename)) {
+                try {
+                    File.Delete(filename);
+                }
+                catch {
+                    // didn't take, eh?
+                }
+            }
+
+            if (File.Exists(filename)) {
+                try {
+                    // move the file to the tmp folder (which can be done even if locked)
+                    // and tell the OS to remove it next reboot.
+                    var tmpFilename = Path.GetTempFileName();
+                    File.Delete(tmpFilename);
+                    File.Move(filename, tmpFilename);
+                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : filename, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                }
+                catch {
+                    // really. Hmmm. 
+                }
+            }
+        }
+
+        public static void TryHardToDeleteDirectory(this string directoryName) {
+            if (Directory.Exists(directoryName)) {
+                try {
+                    Directory.Delete(directoryName);
+                }
+                catch {
+                    // didn't take, eh?
+                }
+            }
+
+            if (File.Exists(directoryName)) {
+                try {
+                    // move the folder to the tmp folder (which can be done even if locked)
+                    // and tell the OS to remove it next reboot.
+                    var tmpFilename = Path.GetTempFileName();
+                    File.Delete(tmpFilename);
+                    Directory.Move(directoryName, tmpFilename);
+                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : directoryName, null,MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                }
+                catch {
+                    // really. Hmmm. 
+                }
+            }
+        }
+
+        public static int Write(this FileStream fileStream, byte[] data) {
+            fileStream.Write(data, 0, data.Length);
+            return data.Length;
+        }
     }
 }
