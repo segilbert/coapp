@@ -72,7 +72,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     policy_max_version = maxPolicy,
                     dependencies = new List<Package>(),
                     // type and flavor
-                    roles = new List<Tuple<string, string>>(),
+                    roles = new List<Tuple<PackageRole, string>>(),
                     assemblies = new Dictionary<string, PackageAssemblyInfo>(),
 
                     // new cosmetic metadata fields
@@ -112,10 +112,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 var numOfSharedLibs = 0;
 
                 foreach (var record in packageData.CO_ROLES as IEnumerable<dynamic>) {
-                    var type = record.type;
-                    if (type == "sharedlib")
+                    PackageRole type = Enum.Parse(typeof(PackageRole), record.type.ToString(), true);
+                    
+                    if (type == PackageRole.SharedLib )
                         numOfSharedLibs++;
-                    var role = new Tuple<string, string>(type, record.flavor);
+
+                    var role = new Tuple<PackageRole, string>(type, record.flavor);
 
                     result.roles.Add(role);
                 }

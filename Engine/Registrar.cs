@@ -188,8 +188,6 @@ namespace CoApp.Toolkit.Engine {
 
         #endregion
 
-        internal static List<Tuple<string,string>> PackagesChanged = new List<Tuple<string, string>>();
-
         internal static IEnumerable<Package> Packages {
             get { return _packages; }
         }
@@ -355,7 +353,7 @@ namespace CoApp.Toolkit.Engine {
                 pkg.LocalPackagePath.Value = localPackagePath;
 
                 pkg.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) pkgDetails.assemblies.Values);
-                pkg.Roles.AddRange((IEnumerable<Tuple<string, string>>) pkgDetails.roles);
+                pkg.Roles.AddRange((IEnumerable<Tuple<PackageRole, string>>) pkgDetails.roles);
 
                 pkg.PolicyMinimumVersion = pkgDetails.policy_min_version;
                 pkg.PolicyMaximumVersion = pkgDetails.policy_max_version;
@@ -582,78 +580,7 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        internal static ulong GetCurrentPackageVersion(string packageName, string publicKeyToken ) {
-            var ver = (ulong) PackageManagerSettings.PerPackageLongSetting["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"];
-
-            if (ver != 0) {
-                var isVerInstalled = (from pkg in InstalledPackages
-                    where pkg.Name == packageName && pkg.PublicKeyToken == publicKeyToken && pkg.Version == ver
-                    orderby pkg.Version descending
-                    select pkg).FirstOrDefault() != null;
-
-                if( isVerInstalled)
-                    return ver;
-                
-                // Otherwise... this is a bad case.
-                // the listed version isn't installed, we're gonna fix that up while we're here, if we can
-                if (AdminPrivilege.IsRunAsAdmin) {
-                    SetCurrentPackageVersion(packageName, publicKeyToken, 0);
-                    var latestPackageInstalled = (from pkg in InstalledPackages
-                        where pkg.Name == packageName && pkg.PublicKeyToken == publicKeyToken
-                        orderby pkg.Version descending
-                        select pkg).FirstOrDefault();
-
-                    PackageManagerSettings.PerPackageLongSetting["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"] = (long)latestPackageInstalled.Version;
-
-                    latestPackageInstalled.DoPackageComposition(true);
-                    return latestPackageInstalled.Version;
-                }
-            }
-
-            return (from pkg in InstalledPackages
-                           where pkg.Name == packageName && pkg.PublicKeyToken == publicKeyToken
-                           orderby pkg.Version descending
-                           select pkg.Version).FirstOrDefault();
-        }
-
-        internal static void SetCurrentPackageVersion(string packageName, string publicKeyToken, ulong version) {
-            var versionAskingFor = (from pkg in InstalledPackages
-                       where pkg.Name == packageName && pkg.PublicKeyToken == publicKeyToken && pkg.Version == version
-                       select pkg).FirstOrDefault();
-
-            if (versionAskingFor.Version == 0)
-                throw new Exception("VERY BAD: trying to set the current version on a package that isn't installed");
-                    // trying to set the current version on a package that isn't installed?
-
-            var currentSetVersion = (ulong) PackageManagerSettings.PerPackageLongSetting["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"];
-
-            if( versionAskingFor.Version == currentSetVersion ) {
-                return;
-                // it's already set to the current version.
-            }
-
-            var latestVersionInstalled = (from pkg in InstalledPackages
-                       where pkg.Name == packageName && pkg.PublicKeyToken == publicKeyToken
-                       orderby pkg.Version descending
-                       select pkg).FirstOrDefault();
-
-            if( latestVersionInstalled.Version == version ) {
-                // setting to latest version; just remove the entry.
-                PackageManagerSettings.packageInformation["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"] = null;
-                return;
-            }
-
-            /*
-            (from pkg in InstalledPackages
-                where pkg.Name == packageName && pkg.PublicKeyToken == publicKeyToken && pkg.Version == version
-                select pkg).FirstOrDefault();
-            */
-            PackageManagerSettings.PerPackageLongSetting["{0}-{1}".format(packageName, publicKeyToken),"CurrentVersion"] = (long)version;
-        }
-
-        internal void UpdatePackageComposition( string packagename ) {
-            
-        }
+       
 
     }
 }

@@ -29,7 +29,7 @@ namespace CoApp.Toolkit.Engine {
         /// <summary>
         /// the tuple is: (role name, flavor)
         /// </summary>
-        public readonly List<Tuple<string, string>> Roles = new List<Tuple<string, string>>();
+        public readonly List<Tuple<PackageRole, string>> Roles = new List<Tuple<PackageRole, string>>();
         public readonly List<PackageAssemblyInfo> Assemblies = new List<PackageAssemblyInfo>();
         public string ProductCode { get; internal set; }
 
@@ -42,8 +42,9 @@ namespace CoApp.Toolkit.Engine {
         internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
         internal bool UserSpecified;
 
-        private readonly Lazy<string> _cosmeticName;
-        private readonly Lazy<string> _canonicalName;
+        private readonly Lazy<string> _generalName;// foo-1234567890ABCDEF 
+        private readonly Lazy<string> _cosmeticName; // foo-1.2.3.4-x86 
+        private readonly Lazy<string> _canonicalName; // foo-1.2.3.4-x86-1234567890ABCDEF 
 
         private bool _couldNotDownload;
         private bool? _isInstalled;
@@ -103,6 +104,7 @@ namespace CoApp.Toolkit.Engine {
 
             _canonicalName = new Lazy<string>(() => "{0}-{1}-{2}-{3}".format(Name, Version.UInt64VersiontoString(), Architecture, PublicKeyToken).ToLowerInvariant());
             _cosmeticName = new Lazy<string>(() => "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+            _generalName = new Lazy<string>(() => "{0}-{1}".format(Name, PublicKeyToken).ToLowerInvariant());
         }
 
         internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) {
@@ -115,6 +117,7 @@ namespace CoApp.Toolkit.Engine {
 
             _canonicalName = new Lazy<string>(() => "{0}-{1}-{2}-{3}".format(Name, Version.UInt64VersiontoString(), Architecture, PublicKeyToken).ToLowerInvariant());
             _cosmeticName = new Lazy<string>(() => "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+            _generalName = new Lazy<string>(() => "{0}-{1}".format(Name, PublicKeyToken).ToLowerInvariant());
 
             Publisher = new Party() {
                 Name = string.Empty,
@@ -167,6 +170,10 @@ namespace CoApp.Toolkit.Engine {
                     Changed();
                 }
             }
+        }
+
+        public string GeneralName {
+            get { return _generalName.Value; }
         }
 
         public string CosmeticName {
@@ -245,16 +252,17 @@ namespace CoApp.Toolkit.Engine {
 
         public void Install(Action<int> progress = null) {
             try {
+                var currentVersion = GetCurrentPackage(Name, PublicKeyToken);
+
                 packageHandler.Install(this , progress);
                 _isInstalled = true;
-                Registrar.PackagesChanged.Add(new Tuple<string, string>(Name, PublicKeyToken));
 
-                var currentVersion = Registrar.GetCurrentPackageVersion(Name, PublicKeyToken);
-                var isLatest = currentVersion <= Version;
-                DoPackageComposition(isLatest);
                 
-                if(isLatest)
-                    Registrar.SetCurrentPackageVersion(Name, PublicKeyToken,Version);
+                if( Version > currentVersion ) {
+                    SetPackageCurrent();
+                } else {
+                    DoPackageComposition(false);  
+                }
                 
                 SaveCachedInfo();
             }
@@ -269,10 +277,8 @@ namespace CoApp.Toolkit.Engine {
                 packageHandler.Remove(this, progress);
                 _isInstalled = false;
 
-                var currentVersion = Registrar.GetCurrentPackageVersion(Name, PublicKeyToken);
-                
-
-                
+                // this will activate the next one in line
+                GetCurrentPackage(Name, PublicKeyToken);
             }
             catch {
                 PackageManagerMessages.Invoke.PackageRemoveFailed(this);
@@ -330,8 +336,30 @@ namespace CoApp.Toolkit.Engine {
             return result;
         }
 
+        public IEnumerable<CompositionRule> ImplicitRules {
+            get {
+                foreach (var role in Roles.Select(each => each.Item1)) {
+                    switch (role) {
+                        case PackageRole.AppRole:
+                            yield return new CompositionRule(this) {
+                                Action = CompositionAction.SymlinkFolder,
+                                Location = "{$PACKAGEDIR}",
+                                Target = "{$CANONICALPACKAGEDIR}",
+                            };
+                            break;
+                        case PackageRole.DeveloperLib:
+                            break;
+                        case PackageRole.SharedLib:
+                            break;
+                        case PackageRole.SourceCode:
+                            break;
+                    }
+                }
+            }
+        }
+
         public void DoPackageComposition(bool makeCurrent) {
-            var rules = packageHandler.GetCompositionRules(this);
+            var rules = ImplicitRules.Union(packageHandler.GetCompositionRules(this));
             
             foreach( var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)) {
                 var link = rule.Location.GetFullPath();
@@ -361,7 +389,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public void UndoPackageComposition() {
-            var rules = packageHandler.GetCompositionRules(this);
+            var rules = ImplicitRules.Union(packageHandler.GetCompositionRules(this));
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.Shortcut)
                 let target = rule.Target.GetFullPath()
@@ -386,6 +414,46 @@ namespace CoApp.Toolkit.Engine {
                 select link) {
                     Symlink.DeleteSymlink(link);
             }
+        }
+
+        internal static ulong GetCurrentPackage(string packageName, string publicKeyToken) {
+            var installedVersionsOfPackage = from pkg in Registrar.InstalledPackages
+                where pkg.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase) && pkg.PublicKeyToken.Equals( publicKeyToken, StringComparison.CurrentCultureIgnoreCase)
+                orderby pkg.Version descending
+                select pkg;
+
+            var latestPackage = installedVersionsOfPackage.FirstOrDefault();
+
+            if (latestPackage == null) {
+                PackageManagerSettings.PerPackageStringSetting["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"] = null;
+                return 0;
+            }
+
+            var ver = (ulong)PackageManagerSettings.PerPackageLongSetting[latestPackage.GeneralName, "CurrentVersion"];
+
+            if (ver == 0 || installedVersionsOfPackage.Where(p => p.Version == ver).FirstOrDefault() == null) {
+                // hmm. Nothing is marked as current, or the 'current' version isn't installed.
+                // either way, we're gonna fix that up while we're here, if we can.
+                if (AdminPrivilege.IsRunAsAdmin) {
+                    latestPackage.SetPackageCurrent();
+                }
+                return latestPackage.Version;
+            }
+
+            return ver;
+        }
+
+        public void SetPackageCurrent() {
+            if(!IsInstalled) {
+                throw new PackageNotInstalledException(this);
+            }
+
+            if (Version == (ulong)PackageManagerSettings.PerPackageLongSetting[GeneralName, "CurrentVersion"]) {
+                return; // it's already set to the current version.
+            }
+
+            DoPackageComposition(true);
+            PackageManagerSettings.PerPackageLongSetting[GeneralName, "CurrentVersion"] = (long)Version;
         }
     }
 }
