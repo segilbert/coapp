@@ -85,8 +85,6 @@ namespace CoApp.Toolkit.Tasks {
             return Task as Task<TResult>;
         }
 
-        
-
         private List<MessageHandlers> _messageHandlerList = new List<MessageHandlers>();
         public List<MessageHandlers> MessageHandlerList { get { return _messageHandlerList; } }
         
@@ -104,14 +102,9 @@ namespace CoApp.Toolkit.Tasks {
         }
 
         public MessageHandlers GetMessageHandler(Type t) {
-            // return (from handler in MessageHandlerList where handler.GetType() == t select handler).FirstOrDefault() ??
-               //  (ParentTask != null ? (from handler in ParentTasklet.MessageHandlerList where handler.GetType() == t select handler).FirstOrDefault() : null);
-
             return (from handler in MessageHandlerList where handler.GetType() == t select handler).FirstOrDefault() ??
                 (ParentTasklet != null ? ParentTasklet.GetMessageHandler(t) : null);
         }
-
-
 
         public void AddMessageHandlers(IEnumerable<MessageHandlers> handlers) {
             foreach (var handler in handlers)

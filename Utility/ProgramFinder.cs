@@ -21,6 +21,7 @@ namespace CoApp.Toolkit.Utility {
     using System.Linq;
     using System.Diagnostics;
     using Extensions;
+    using Win32;
 
     public class ProgramFinder {
         private static IEnumerable<string> commonSearchLocations = new List<string>();
@@ -31,6 +32,7 @@ namespace CoApp.Toolkit.Utility {
         public static ProgramFinder ProgramFilesAndSys32;
         public static ProgramFinder ProgramFilesAndDotNet;
         public static ProgramFinder ProgramFilesSys32AndDotNet;
+
         private static readonly Dictionary<string, ExecutableInfo> ExeTypeCache = new Dictionary<string, ExecutableInfo>();
         private static readonly Dictionary<string, string> ToolVersionCache = new Dictionary<string, string>();
         private static readonly Dictionary<string, UInt64> ToolVersionNumericCache = new Dictionary<string, UInt64>();
@@ -174,7 +176,7 @@ namespace CoApp.Toolkit.Utility {
                 if (ToolVersionCache.ContainsKey(fileName))
                     return ToolVersionCache[fileName];
 
-                FileVersionInfo info = FileVersionInfo.GetVersionInfo(fileName);
+                var info = FileVersionInfo.GetVersionInfo(fileName);
                 
                 string fv = info.FileVersion;
                 if( !string.IsNullOrEmpty(fv) ) {
@@ -202,36 +204,16 @@ namespace CoApp.Toolkit.Utility {
         public static ExecutableInfo GetExeType(string filename) {
             if (ExeTypeCache.ContainsKey(filename))
                 return ExeTypeCache[filename];
+            
+            var pe = new PEInfo(filename);
+            var result = (pe.Is32Bit ? ExecutableInfo.x86 : ExecutableInfo.none)
+                & (pe.Is64Bit ? ExecutableInfo.x64 : ExecutableInfo.none)
+                & (pe.IsManaged ? ExecutableInfo.managed : ExecutableInfo.native)
+                & (pe.IsAny ? ExecutableInfo.any : ExecutableInfo.none);
 
-            using (FileStream s = File.OpenRead(filename)) {
-                var buffer = new byte[4096];
-                int iRead = s.Read(buffer, 0, 4096);
-                ExecutableInfo result;
-                if (buffer[0] != 77 || buffer[1] != 90 || iRead < 2048) {
-                    result = ExecutableInfo.none;
-                }
-                else {
-                    unsafe {
-                        fixed (byte* pData = buffer) {
-                            var idh = (IMAGE_DOS_HEADER*) pData;
-                            var inhs = (IMAGE_NT_HEADERS32*) (idh->e_lfanew + pData);
-
-                            result = inhs->OptionalHeader.Magic == 0x20b
-                                         ? (((IMAGE_NT_HEADERS64*) inhs)->OptionalHeader.DataDirectory.Size > 0
-                                                ? ExecutableInfo.x64 | ExecutableInfo.managed
-                                                : ExecutableInfo.x64 | ExecutableInfo.native)
-                                         : (inhs->OptionalHeader.DataDirectory.Size == 0
-                                                ? ExecutableInfo.x86 | ExecutableInfo.native
-                                                : ( true ? 
-                                                ExecutableInfo.x86 | ExecutableInfo.managed:
-                                                ExecutableInfo.Any | ExecutableInfo.managed
-                                                ));
-                        }
-                    }
-                }
-                ExeTypeCache.Add(filename, result);
-                return result;
-            }
+            ExeTypeCache.Add(filename, result);
+            return result;
+            
         }
     }
 }

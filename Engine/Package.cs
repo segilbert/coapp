@@ -14,6 +14,7 @@ namespace CoApp.Toolkit.Engine {
     using Extensions;
     
     using PackageFormatHandlers;
+    using Shell;
     using Tasks;
     using Win32;
 
@@ -246,6 +247,15 @@ namespace CoApp.Toolkit.Engine {
             try {
                 packageHandler.Install(this , progress);
                 _isInstalled = true;
+                Registrar.PackagesChanged.Add(new Tuple<string, string>(Name, PublicKeyToken));
+
+                var currentVersion = Registrar.GetCurrentPackageVersion(Name, PublicKeyToken);
+                var isLatest = currentVersion <= Version;
+                DoPackageComposition(isLatest);
+                
+                if(isLatest)
+                    Registrar.SetCurrentPackageVersion(Name, PublicKeyToken,Version);
+                
                 SaveCachedInfo();
             }
             catch {
@@ -255,8 +265,14 @@ namespace CoApp.Toolkit.Engine {
 
         public void Remove(Action<int> progress = null) {
             try {
+                UndoPackageComposition(); 
                 packageHandler.Remove(this, progress);
                 _isInstalled = false;
+
+                var currentVersion = Registrar.GetCurrentPackageVersion(Name, PublicKeyToken);
+                
+
+                
             }
             catch {
                 PackageManagerMessages.Invoke.PackageRemoveFailed(this);
@@ -272,10 +288,14 @@ namespace CoApp.Toolkit.Engine {
         /// <param name="text"></param>
         /// <returns></returns>
         internal string ResolveVariables(string text) {
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
             //System Constants:
             // {$APPS} CoApp Application directory (c:\apps)
             // {$BIN} CoApp bin directory (in PATH) ({$APPS}\bin)
             // {$LIB} CoApp lib directory ({$APPS}\lib)
+            // {$DOTNETASSEMBLIES} CoApp .NET Reference Assembly directory ({$APPS}\.NET\Assemblies)
             // {$INCLUDE} CoApp include directory ({$APPS}\include)
             // {$INSTALL} CoApp .installed directory ({$APPS}\.installed)
             
@@ -289,9 +309,6 @@ namespace CoApp.Toolkit.Engine {
             // {$PACKAGEDIR}        Where the product is getting installed into
             // {$CANONICALPACKAGEDIR} The "publicly visible location" of the "current" version of the package.
 
-            if (string.IsNullOrEmpty(text))
-                return text;
-
             var result = text;
 
             result = result.Replace(@"{$PACKAGEDIR}", @"{$INSTALL}\{$PUBLISHER}\{$PRODUCTNAME}-{$VERSION}-{$PLATFORM}\");
@@ -299,6 +316,7 @@ namespace CoApp.Toolkit.Engine {
 
             result = result.Replace(@"{$INCLUDE}", Path.Combine( PackageManagerSettings.CoAppRootDirectory, "include"));
             result = result.Replace(@"{$LIB}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "lib"));
+            result = result.Replace(@"{$DOTNETASSEMBLIES}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, @".NET\Assemblies"));
             result = result.Replace(@"{$BIN}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin"));
             result = result.Replace(@"{$APPS}", PackageManagerSettings.CoAppRootDirectory);
             result = result.Replace(@"{$INSTALL}", PackageManagerSettings.CoAppInstalledDirectory);
@@ -312,40 +330,62 @@ namespace CoApp.Toolkit.Engine {
             return result;
         }
 
-        public void DoPackageComposition(Package package) {
+        public void DoPackageComposition(bool makeCurrent) {
+            var rules = packageHandler.GetCompositionRules(this);
+            
+            foreach( var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)) {
+                var link = rule.Location.GetFullPath();
+                var dir = rule.Target.GetFullPath();
+
+                if (Directory.Exists(dir) && ( makeCurrent || !Directory.Exists(link) ) ) {
+                    Symlink.MakeDirectoryLink(link, dir);
+                }
+            }
+
+            foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)) {
+                var file = rule.Target.GetFullPath();
+                var link = rule.Location.GetFullPath();
+                if (File.Exists(file) && (makeCurrent || !File.Exists(link))) {
+                    Symlink.MakeDirectoryLink(link, file);
+                }
+            }
+
+            foreach (var rule in rules.Where(r => r.Action == CompositionAction.Shortcut)) {
+                var target = rule.Target.GetFullPath();
+                var link = rule.Location.GetFullPath();
+
+                if (File.Exists(target) && (makeCurrent || !File.Exists(link))) {
+                    ShellLink.CreateShortcut(link, target);
+                }
+            }
+        }
+
+        public void UndoPackageComposition() {
             var rules = packageHandler.GetCompositionRules(this);
 
-            /*
-            if( )
-            Symlink.MakeDirectoryLink(ResolveVariables("{$CANONICALPACKAGEDIR}"), ResolveVariables("{$PACKAGEDIR}"));
+            foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.Shortcut)
+                let target = rule.Target.GetFullPath()
+                let link = rule.Location.GetFullPath()
+                where ShellLink.PointsTo(link, target)
+                select link) {
+                    link.TryHardToDeleteFile();
+            }
 
-            rules = rules.Add(
-                new CompositionRule {
-                    Action = CompositionAction.SymlinkFolder,
-                    Location = "{$CANONICALPACKAGEDIR}",
-                    Target = "{$PACKAGEDIR}"
-                });
+            foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)
+                let target = rule.Target.GetFullPath()
+                let link = rule.Location.GetFullPath()
+                where File.Exists(target) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
+                select link) {
+                    Symlink.DeleteSymlink(link);
+            }
 
-
-            */
-            // perform install-folder composition tasks.
-            // implicit tasks
-
-
-            // folder symlinks 
-            // file symlinks 
-            // shortcuts 
+            foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)
+                let target = rule.Target.GetFullPath()
+                let link = rule.Location.GetFullPath()
+                where File.Exists(target) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
+                select link) {
+                    Symlink.DeleteSymlink(link);
+            }
         }
-
-        public void UndoPackageComposition(Package package) {
-            // dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
-
-            // clean up appropriate things.
-            // implicit tasks
-            // folder symlinks (reparse points on XP)
-            // file symlinks (copies for XP?)
-            // shortcuts (.lnk)
-        }
-
     }
 }

@@ -26,14 +26,17 @@ namespace CoApp.Toolkit.Win32 {
             if (!File.Exists(actualFilePath)) {
                 throw new FileNotFoundException("Cannot link to non-existent file", actualFilePath);
             }
+            if (Directory.Exists(linkPath)) {
+                throw new ConflictingFileOrFolderException(linkPath);
+            }
 
             if (File.Exists(linkPath) && IsSymlink(linkPath)) {
                 ChangeLinkTarget(linkPath, actualFilePath);
                 return;
             }
 
-            if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
-                throw new ConflictingFileOrFolderException(linkPath);
+            if( File.Exists(linkPath) ) {
+                linkPath.TryHardToDeleteFile();
             }
 
             Kernel32.CreateHardLink(linkPath, actualFilePath, IntPtr.Zero);
@@ -63,6 +66,10 @@ namespace CoApp.Toolkit.Win32 {
         public void ChangeLinkTarget(string linkPath, string newActualPath) {
             linkPath = linkPath.GetFullPath();
             newActualPath = GetActualPath(newActualPath.GetFullPath());
+            var oldActualPath = GetActualPath(linkPath);
+            if (oldActualPath.Equals(newActualPath, StringComparison.CurrentCultureIgnoreCase)) {
+                return;
+            }
 
             if (!IsSymlink(linkPath)) {
                 throw new PathIsNotSymlinkException(linkPath);

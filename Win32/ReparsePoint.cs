@@ -280,6 +280,10 @@ namespace CoApp.Toolkit.Win32 {
         public static ReparsePoint ChangeReparsePointTarget(string reparsePointPath, string newReparsePointTarget) {
             reparsePointPath = reparsePointPath.GetFullPath();
             newReparsePointTarget = newReparsePointTarget.GetFullPath();
+            var oldReparsePointTarget = GetActualPath(reparsePointPath).GetFullPath();
+            if (newReparsePointTarget.Equals(oldReparsePointTarget, StringComparison.CurrentCultureIgnoreCase)) {
+                return Open(reparsePointPath);
+            }
 
             if (!IsReparsePoint(reparsePointPath)) {
                 throw new IOException("Path is not a reparse point.");

@@ -62,7 +62,6 @@ namespace CoApp.Toolkit.Extensions {
             return collection.Union( new[] { newItem } );
         }
 
-
         private class IndexedEnumerator : IEnumerator<int> {
             private int _max;
 

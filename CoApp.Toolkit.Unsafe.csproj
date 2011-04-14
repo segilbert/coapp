@@ -21,7 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -61,9 +61,6 @@
   <ItemGroup>
     <Compile Include="Properties\Unsafe.AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\..\coapp-solution\Source\AssemblyStrongName.cs" />
-    <Compile Include="Utility\NativeMethods.cs" />
-    <Compile Include="Utility\ProcessUtility.cs" />
-    <Compile Include="Utility\ProgramFinder.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CoApp.Toolkit.csproj">

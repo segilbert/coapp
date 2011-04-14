@@ -289,10 +289,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             if (packageData.CO_INSTALL_PROPERTIES == null) {
                 return Enumerable.Empty<CompositionRule>();
             }
-
-            return from rec in packageData.CO_INSTALL_PROPERTIES as IEnumerable<dynamic> 
-                        where Enum.GetNames(typeof (CompositionAction)).Contains((string)rec.type, StringComparer.CurrentCultureIgnoreCase)
-                        select new CompositionRule {
+            
+            return from rec in packageData.CO_INSTALL_PROPERTIES as IEnumerable<dynamic>
+                   where CompositionRule.IsCompositionAction(rec.type) /* ensures the parse below always succeeds */
+                        select new CompositionRule(package) {
                             Location = rec.link,
                             Target = rec.target,
                             Action = Enum.Parse(typeof (CompositionAction), rec.type, true),

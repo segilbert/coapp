@@ -53,6 +53,35 @@ namespace CoApp.Toolkit.Shell {
             return link;
         }
 
+        public static bool IsShellLink(string shortcutPath) {
+            shortcutPath = shortcutPath.GetFullPath();
+
+            if( File.Exists(shortcutPath) ) {
+                try {
+                    var shortcut = Load(shortcutPath);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        public static bool PointsTo(string shortcutPath, string targetPath) {
+            shortcutPath = shortcutPath.GetFullPath();
+            targetPath = targetPath.GetFullPath();
+
+            if (File.Exists(shortcutPath)) {
+                try {
+                    return Load(shortcutPath).Path.GetFullPath().Equals(targetPath, StringComparison.CurrentCultureIgnoreCase);
+                }
+                catch {
+                    return false;
+                }
+            }
+            return false;
+        }
 
         #region Construction and Disposal
 
