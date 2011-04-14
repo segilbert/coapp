@@ -26,8 +26,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.CLI", "..\coapp-cli\C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.AutoItX3", "..\coapp-toolkit\CoApp.Toolkit.AutoItX3.csproj", "{A126ABBC-D13E-432E-9714-4A1BEF84EE89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Unsafe", "..\coapp-toolkit\CoApp.Toolkit.Unsafe.csproj", "{59D1DBB3-5848-4026-9523-BBC7618B7B77}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.ASPNetHost", "..\coapp-toolkit\CoApp.Toolkit.ASPNetHost.csproj", "{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.UI", "..\coapp-toolkit\CoApp.Toolkit.UI.csproj", "{11F73E3B-EAAB-4D21-1121-9EBA252C10C2}"
@@ -99,12 +97,6 @@ Global
 		{A126ABBC-D13E-432E-9714-4A1BEF84EE89}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A126ABBC-D13E-432E-9714-4A1BEF84EE89}.Test|Any CPU.ActiveCfg = Test|Any CPU
 		{A126ABBC-D13E-432E-9714-4A1BEF84EE89}.Test|Any CPU.Build.0 = Test|Any CPU
-		{59D1DBB3-5848-4026-9523-BBC7618B7B77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{59D1DBB3-5848-4026-9523-BBC7618B7B77}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{59D1DBB3-5848-4026-9523-BBC7618B7B77}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{59D1DBB3-5848-4026-9523-BBC7618B7B77}.Release|Any CPU.Build.0 = Release|Any CPU
-		{59D1DBB3-5848-4026-9523-BBC7618B7B77}.Test|Any CPU.ActiveCfg = Test|Any CPU
-		{59D1DBB3-5848-4026-9523-BBC7618B7B77}.Test|Any CPU.Build.0 = Test|Any CPU
 		{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11F73E3B-EAAB-4D21-85E7-9EBA252C10C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
