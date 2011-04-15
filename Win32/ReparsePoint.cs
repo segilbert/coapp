@@ -94,17 +94,7 @@ namespace CoApp.Toolkit.Win32 {
 
             var reparsePoint = Open(linkPath);
 
-            var target = reparsePoint.SubstituteName;
-
-            if (target.StartsWith(NonInterpretedPathPrefix)) {
-                if (UncPrefixRx.Match(target).Success) {
-                    target = UncPrefixRx.Replace(target, @"\\");
-                }
-
-                if (DrivePrefixRx.Match(target).Success) {
-                    target = target.Replace(NonInterpretedPathPrefix, "");
-                }
-            }
+            var target = reparsePoint.SubstituteName.NormalizePath();
 
             if (reparsePoint.IsRelativeSymlink) {
                 target = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(linkPath), target));

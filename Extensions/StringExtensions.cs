@@ -25,7 +25,7 @@ namespace CoApp.Toolkit.Extensions {
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
-        private static readonly HashSet<string> FullPathCache = new HashSet<string>();
+        
 
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
@@ -211,22 +211,6 @@ namespace CoApp.Toolkit.Extensions {
         public static string MakeSafeDirectoryId(this string input) {
             return Regex.Replace(input, @"\s|\.|\-", "_");
         }
-
-        
-        /// <summary>
-        /// Short circuts the process if the string is a known full path already. 
-        /// (ie, the result of a preivious GetFullPath())
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public static string GetFullPath(this string path) {
-            if (FullPathCache.Contains(path))
-                return path;
-            path = Path.GetFullPath(path);
-
-            FullPathCache.Add(path);
-
-            return path;
-        }
+       
     }
 }
