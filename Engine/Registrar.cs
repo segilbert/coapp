@@ -18,6 +18,7 @@ namespace CoApp.Toolkit.Engine {
     using Feeds;
     using PackageFormatHandlers;
     using Tasks;
+    using Win32;
 
     internal class Registrar {
         private static readonly HashSet<long> _nonCoAppMSIFiles = new HashSet<long>();
@@ -352,7 +353,7 @@ namespace CoApp.Toolkit.Engine {
                 pkg.LocalPackagePath.Value = localPackagePath;
 
                 pkg.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) pkgDetails.assemblies.Values);
-                pkg.Roles.AddRange((IEnumerable<Tuple<string, string>>) pkgDetails.roles);
+                pkg.Roles.AddRange((IEnumerable<Tuple<PackageRole, string>>) pkgDetails.roles);
 
                 pkg.PolicyMinimumVersion = pkgDetails.policy_min_version;
                 pkg.PolicyMaximumVersion = pkgDetails.policy_max_version;
@@ -578,5 +579,8 @@ namespace CoApp.Toolkit.Engine {
                 Console.WriteLine("\rNo packages.");
             }
         }
+
+       
+
     }
 }

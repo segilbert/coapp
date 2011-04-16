@@ -18,14 +18,13 @@ namespace CoApp.Toolkit.Win32 {
                 throw new FileNotFoundException("Cannot link to non-existent file", actualFilePath);
             }
 
-            if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
-                if (IsSymlink(linkPath)) {
-                    deleteSymlink(linkPath);
-                }
+            if (File.Exists(linkPath) && IsSymlink(linkPath)) {
+                ReparsePoint.ChangeReparsePointTarget(linkPath, actualFilePath);
+                return;
+            }
 
-                if (!File.Exists(linkPath) || Directory.Exists(linkPath)) {
-                    throw new ConflictingFileOrFolderException(linkPath);
-                }
+            if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
+                throw new ConflictingFileOrFolderException(linkPath);
             }
 
             Kernel32.CreateSymbolicLink(linkPath, actualFilePath, 0);
@@ -39,14 +38,13 @@ namespace CoApp.Toolkit.Win32 {
                 throw new FileNotFoundException("Cannot link to non-existent directory", actualFolderPath);
             }
 
-            if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
-                if (IsSymlink(linkPath)) {
-                    deleteSymlink(linkPath);
-                }
+            if (Directory.Exists(linkPath) && IsSymlink(linkPath)) {
+                ReparsePoint.ChangeReparsePointTarget(linkPath, actualFolderPath);
+                return;
+            }
 
-                if (!File.Exists(linkPath) || Directory.Exists(linkPath)) {
-                    throw new ConflictingFileOrFolderException(linkPath);
-                }
+            if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
+                throw new ConflictingFileOrFolderException(linkPath);
             }
 
             Kernel32.CreateSymbolicLink(linkPath, actualFolderPath, 1);
@@ -55,6 +53,7 @@ namespace CoApp.Toolkit.Win32 {
         public void ChangeLinkTarget(string linkPath, string newActualPath) {
             linkPath = linkPath.GetFullPath();
             newActualPath = GetActualPath(newActualPath.GetFullPath());
+
             if (!IsSymlink(linkPath)) {
                 throw new PathIsNotSymlinkException(linkPath);
             }
@@ -63,8 +62,9 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         public void DeleteSymlink(string linkPath) {
+            linkPath = linkPath.GetFullPath();
             if (!File.Exists(linkPath) && !Directory.Exists(linkPath)) {
-                throw new FileNotFoundException(linkPath);
+                return;
             }
 
             if (IsSymlink(linkPath)) {

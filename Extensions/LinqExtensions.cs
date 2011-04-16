@@ -8,6 +8,7 @@ namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
 
     public static class LinqExtensions {
         public static IEnumerable<T> Traverse<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> recurseFunction) {
@@ -46,6 +47,19 @@ namespace CoApp.Toolkit.Extensions {
         }
         public static IEnumerable<T> SingleItemAsEnumerable<T>(this T source) {
             return new[] {source};
+        }
+
+        /// <summary>
+        /// Returns a new collection including the given item.
+        /// 
+        /// DOES NOT MODIFY THE ORIGINAL COLLECTION.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection"></param>
+        /// <param name="newItem"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> Add<T>(this IEnumerable<T> collection, T newItem) {
+            return collection.Union( new[] { newItem } );
         }
 
         private class IndexedEnumerator : IEnumerator<int> {

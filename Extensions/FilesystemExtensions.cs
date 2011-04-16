@@ -20,10 +20,18 @@ namespace CoApp.Toolkit.Extensions {
     using System;
     using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using Win32;
 
     public static class FilesystemExtensions {
         private static int counter;
+        private static readonly HashSet<string> FullPathCache = new HashSet<string>();
+        private const string NonInterpretedPathPrefix = @"\??\";
+
+        private static readonly Regex UncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
+        private static readonly Regex DrivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
+        private static readonly Regex VolumePrefixRx = new Regex(@"\\\?\?\\Volume");
+
 
         /// <summary>
         ///   Determines if the childPath is a sub path of the rootPath
@@ -311,6 +319,47 @@ namespace CoApp.Toolkit.Extensions {
         public static int Write(this FileStream fileStream, byte[] data) {
             fileStream.Write(data, 0, data.Length);
             return data.Length;
+        }
+
+        /// <summary>
+        /// Short circuts the process if the string is a known full path already. 
+        /// (ie, the result of a preivious GetFullPath())
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string GetFullPath(this string path) {
+            if (FullPathCache.Contains(path))
+                return path;
+            path = Path.GetFullPath(path);
+
+            FullPathCache.Add(path);
+
+            return path;
+        }
+
+        /// <summary>
+        /// Translates paths starting with \??\ to regular paths.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string NormalizePath( this string path ) {
+            if (path.StartsWith(NonInterpretedPathPrefix)) {
+                if (UncPrefixRx.Match(path).Success) {
+                    path = UncPrefixRx.Replace(path, @"\\");
+                }
+
+                if (DrivePrefixRx.Match(path).Success) {
+                    path = path.Replace(NonInterpretedPathPrefix, "");
+                }
+            }
+            if (path.EndsWith("\\")) {
+                var CouldBeFilePath = path.Substring(0, path.Length - 1);
+                if (File.Exists(CouldBeFilePath)) {
+                    path = CouldBeFilePath;
+                }
+            }
+
+            return path;
         }
     }
 }

@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\ExpiringList.cs" />
+    <Compile Include="Collections\LazyCache.cs" />
     <Compile Include="Configuration\Settings.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
@@ -193,6 +194,9 @@
       <DependentUpon>Tracing.xsd</DependentUpon>
     </Compile>
     <Compile Include="Trace\Variable.cs" />
+    <Compile Include="Utility\ExecutableInfo.cs" />
+    <Compile Include="Utility\ProcessUtility.cs" />
+    <Compile Include="Utility\ProgramFinder.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\Advapi32.cs" />
     <Compile Include="Win32\ByHandleFileInformation.cs" />
@@ -206,6 +210,11 @@
     <Compile Include="Win32\ControlCodes.cs" />
     <Compile Include="Win32\Coord.cs" />
     <Compile Include="Win32\FocusInputRecord.cs" />
+    <Compile Include="Win32\ImageCoffHeader.cs" />
+    <Compile Include="Win32\ImageCor20Header.cs" />
+    <Compile Include="Win32\ImageDataDirectory.cs" />
+    <Compile Include="Win32\ImageOptionalHeaderNt.cs" />
+    <Compile Include="Win32\ImageSectionHeader.cs" />
     <Compile Include="Win32\IoReparseTag.cs" />
     <Compile Include="Win32\ISymlink.cs" />
     <Compile Include="Win32\Kernel32.cs" />

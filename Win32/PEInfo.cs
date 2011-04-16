@@ -15,27 +15,27 @@ namespace CoApp.Toolkit.Win32 {
     using System.IO;
 
     public class PEInfo {
-        private IMAGE_SECTION_HEADER[] sectionHeaders;
-        private IMAGE_OPTIONAL_HEADER_NT ntHeader;
-        private IMAGE_COR20_HEADER corHeader;
-        private IMAGE_COFF_HEADER coffHeader;
+        private ImageSectionHeader[] sectionHeaders;
+        private ImageOptionalHeaderNt ntHeader;
+        private ImageCor20Header corHeader;
+        private ImageCoffHeader coffHeader;
 
-        private IMAGE_DATA_DIRECTORY exportTable;
-        private IMAGE_DATA_DIRECTORY importTable;
-        private IMAGE_DATA_DIRECTORY resourceTable;
-        private IMAGE_DATA_DIRECTORY exceptionTable;
-        private IMAGE_DATA_DIRECTORY certificateTable;
-        private IMAGE_DATA_DIRECTORY baseRelocationTable;
-        private IMAGE_DATA_DIRECTORY debug;
-        private IMAGE_DATA_DIRECTORY copyright;
-        private IMAGE_DATA_DIRECTORY globalPtr;
-        private IMAGE_DATA_DIRECTORY tlsTable;
-        private IMAGE_DATA_DIRECTORY loadConfigTable;
-        private IMAGE_DATA_DIRECTORY boundImport;
-        private IMAGE_DATA_DIRECTORY iat;
-        private IMAGE_DATA_DIRECTORY delayImportDescriptor;
-        private IMAGE_DATA_DIRECTORY runtimeHeader;
-        private IMAGE_DATA_DIRECTORY reserved;
+        private ImageDataDirectory exportTable;
+        private ImageDataDirectory importTable;
+        private ImageDataDirectory resourceTable;
+        private ImageDataDirectory exceptionTable;
+        private ImageDataDirectory certificateTable;
+        private ImageDataDirectory baseRelocationTable;
+        private ImageDataDirectory debug;
+        private ImageDataDirectory copyright;
+        private ImageDataDirectory globalPtr;
+        private ImageDataDirectory tlsTable;
+        private ImageDataDirectory loadConfigTable;
+        private ImageDataDirectory boundImport;
+        private ImageDataDirectory iat;
+        private ImageDataDirectory delayImportDescriptor;
+        private ImageDataDirectory runtimeHeader;
+        private ImageDataDirectory reserved;
 
         private readonly BinaryReader reader;
 
@@ -94,7 +94,7 @@ namespace CoApp.Toolkit.Win32 {
             }
 
             // Read COFF header
-            coffHeader = new IMAGE_COFF_HEADER();
+            coffHeader = new ImageCoffHeader();
             coffHeader.Machine = reader.ReadUInt16();
             coffHeader.NumberOfSections = reader.ReadUInt16();
             coffHeader.TimeDateStamp = reader.ReadUInt32();
@@ -108,7 +108,7 @@ namespace CoApp.Toolkit.Win32 {
 
 
             // Read NT-specific fields
-            ntHeader = new IMAGE_OPTIONAL_HEADER_NT();
+            ntHeader = new ImageOptionalHeaderNt();
 
             ntHeader.Magic = reader.ReadUInt16();
             ntHeader.MajorLinkerVersion = reader.ReadByte();
@@ -185,7 +185,7 @@ namespace CoApp.Toolkit.Win32 {
 
             // Read data sections
             reader.BaseStream.Position = dataSectionsOffset;
-            sectionHeaders = new IMAGE_SECTION_HEADER[coffHeader.NumberOfSections];
+            sectionHeaders = new ImageSectionHeader[coffHeader.NumberOfSections];
             for (int i = 0; i < sectionHeaders.Length; i++) {
                 reader.ReadBytes(12);
                 sectionHeaders[i].VirtualAddress = reader.ReadUInt32();
@@ -196,7 +196,7 @@ namespace CoApp.Toolkit.Win32 {
 
             // Read COR20 Header
             reader.BaseStream.Position = RvaToVa(runtimeHeader.Rva);
-            corHeader = new IMAGE_COR20_HEADER {
+            corHeader = new ImageCor20Header {
                 Size = reader.ReadUInt32(),
                 MajorRuntimeVersion = reader.ReadUInt16(),
                 MinorRuntimeVersion = reader.ReadUInt16(),
@@ -213,8 +213,8 @@ namespace CoApp.Toolkit.Win32 {
             reader.Close();
         }
 
-        private IMAGE_DATA_DIRECTORY ReadDataDirectory() {
-            var directory = new IMAGE_DATA_DIRECTORY();
+        private ImageDataDirectory ReadDataDirectory() {
+            var directory = new ImageDataDirectory();
             directory.Rva = reader.ReadUInt32();
             directory.Size = reader.ReadUInt32();
             return directory;
@@ -233,79 +233,6 @@ namespace CoApp.Toolkit.Win32 {
 
         public long MetaDataRoot {
             get { return RvaToVa(corHeader.MetaData.Rva); }
-        }
-
-        private class IMAGE_COFF_HEADER {
-            public ushort Machine;
-            public ushort NumberOfSections;
-            public uint TimeDateStamp;
-            public uint SymbolTablePointer;
-            public uint NumberOfSymbols;
-            public ushort OptionalHeaderSize;
-            public ushort Characteristics;
-        }
-
-        private class IMAGE_OPTIONAL_HEADER_NT {
-            public ushort Magic;
-            public byte MajorLinkerVersion;
-            public byte MinorLinkerVersion;
-            public uint SizeOfCode;
-            public uint SizeOfInitializedData;
-            public uint SizeOfUninitializedData;
-            public uint AddressOfEntryPoint;
-            public uint BaseOfCode;
-            public uint BaseOfData_32bit; // 32bit only 
-            public uint ImageBase_32bit;
-            public UInt64 ImageBase_64bit;
-            public uint SectionAlignment;
-            public uint FileAlignment;
-            public ushort OsMajor;
-            public ushort OsMinor;
-            public ushort UserMajor;
-            public ushort UserMinor;
-            public ushort SubSysMajor;
-            public ushort SubSysMinor;
-            public uint Reserved;
-            public uint ImageSize;
-            public uint HeaderSize;
-            public uint FileChecksum;
-            public ushort SubSystem;
-            public ushort DllFlags;
-            public uint StackReserveSize_32bit;
-            public uint StackCommitSize_32bit;
-            public uint HeapReserveSize_32bit;
-            public uint HeapCommitSize_32bit;
-            public UInt64 StackReserveSize_64bit;
-            public UInt64 StackCommitSize_64bit;
-            public UInt64 HeapReserveSize_64bit;
-            public UInt64 HeapCommitSize_64bit;
-            public uint LoaderFlags;
-            public uint NumberOfDataDirectories;
-        }
-
-        private struct IMAGE_DATA_DIRECTORY {
-            public uint Rva;
-            public uint Size;
-        }
-
-        private struct IMAGE_SECTION_HEADER {
-            public uint VirtualAddress;
-            public uint SizeOfRawData;
-            public uint PointerToRawData;
-        }
-
-        private class IMAGE_COR20_HEADER {
-            public uint Size;
-            public ushort MajorRuntimeVersion;
-            public ushort MinorRuntimeVersion;
-            public IMAGE_DATA_DIRECTORY MetaData;
-            public uint Flags;
-            public uint EntryPointToken;
-            public IMAGE_DATA_DIRECTORY Resources;
-            public IMAGE_DATA_DIRECTORY StrongNameSignature;
-            public IMAGE_DATA_DIRECTORY CodeManagerTable;
-            public IMAGE_DATA_DIRECTORY VTableFixups;
-            public IMAGE_DATA_DIRECTORY ExportAddressTableJumps;
         }
     }
 }

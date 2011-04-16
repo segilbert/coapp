@@ -6,8 +6,10 @@
 
 namespace CoApp.Toolkit.Trace {
     using System;
+    using System.Diagnostics;
     using System.IO;
     using System.Xml.Serialization;
+    using Extensions;
     using Scripting;
 
     public partial class File {
@@ -20,14 +22,11 @@ namespace CoApp.Toolkit.Trace {
         public string FullPath {
             get { return fullPath; }
             set {
-                fullPath = value.ToLower();
-
+                fullPath = value.ToLower().NormalizePath();
                 extension = Path.GetExtension(fullPath);
                 name = Path.GetFileName(fullPath);
                 folder = Path.GetDirectoryName(fullPath);
             }
         }
-
-        
     }
 }

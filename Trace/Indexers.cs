@@ -19,7 +19,7 @@ namespace CoApp.Toolkit.Trace {
 
         public File this[string path] {
             get {
-                path = path.ToLower();
+                path = path.ToLower().NormalizePath();
 
                 lock (fileList) {
                     var result = fileList.Where(x => x.FullPath.Equals(path)).LastOrDefault();

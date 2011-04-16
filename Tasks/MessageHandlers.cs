@@ -3,6 +3,7 @@
     using System.Linq;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Threading.Tasks;
 
     public class MessageHandlers {
         private static Type[] GetDelegateParameterTypes(Type d) {
@@ -72,6 +73,11 @@
 
         public static implicit operator MessageHandlers<T>(Tasklet coTask) {
             return (coTask.GetMessageHandler(typeof(T)) ?? (coTask.AddMessageHandler(new T()))) as MessageHandlers<T>;
+        }
+
+        public static implicit operator MessageHandlers<T>(Task coTask) {
+            Tasklet tsklet = coTask;
+            return (tsklet.GetMessageHandler(typeof(T)) ?? (tsklet.AddMessageHandler(new T()))) as MessageHandlers<T>;
         }
 
         public static implicit operator T(MessageHandlers<T> handlers) {

@@ -72,7 +72,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     policy_max_version = maxPolicy,
                     dependencies = new List<Package>(),
                     // type and flavor
-                    roles = new List<Tuple<string, string>>(),
+                    roles = new List<Tuple<PackageRole, string>>(),
                     assemblies = new Dictionary<string, PackageAssemblyInfo>(),
 
                     // new cosmetic metadata fields
@@ -112,10 +112,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 var numOfSharedLibs = 0;
 
                 foreach (var record in packageData.CO_ROLES as IEnumerable<dynamic>) {
-                    var type = record.type;
-                    if (type == "sharedlib")
+                    PackageRole type = Enum.Parse(typeof(PackageRole), record.type.ToString(), true);
+                    
+                    if (type == PackageRole.SharedLib )
                         numOfSharedLibs++;
-                    var role = new Tuple<string, string>(type, record.flavor);
+
+                    var role = new Tuple<PackageRole, string>(type, record.flavor);
 
                     result.roles.Add(role);
                 }
@@ -282,5 +284,23 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 SetUIHandlersToSilent();
             }
         }
+
+        public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
+            dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
+
+            if (packageData.CO_INSTALL_PROPERTIES == null) {
+                return Enumerable.Empty<CompositionRule>();
+            }
+            
+            return from rec in packageData.CO_INSTALL_PROPERTIES as IEnumerable<dynamic>
+                   where CompositionRule.IsCompositionAction(rec.type) /* ensures the parse below always succeeds */
+                        select new CompositionRule(package) {
+                            Location = rec.link,
+                            Target = rec.target,
+                            Action = Enum.Parse(typeof (CompositionAction), rec.type, true),
+                            Parameters = string.Empty
+                        };
+        }
+
     }
 }

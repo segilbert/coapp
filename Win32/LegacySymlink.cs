@@ -20,40 +20,56 @@ namespace CoApp.Toolkit.Win32 {
         private static readonly int originalFileLength = originalFile.Length;
 
         public void MakeFileLink(string linkPath, string actualFilePath) {
-            actualFilePath = GetActualPath(actualFilePath.GetFullPath());
             linkPath = linkPath.GetFullPath();
+            actualFilePath = GetActualPath(actualFilePath.GetFullPath());
 
-            if (File.Exists(actualFilePath)) {
-                if (Directory.Exists(linkPath) || File.Exists(linkPath)) {
-                    throw new ConflictingFileOrFolderException(linkPath);
-                }
-                Kernel32.CreateHardLink(linkPath, actualFilePath, IntPtr.Zero);
-                AddSymlinkToAlternateStream(actualFilePath, linkPath);
+            if (!File.Exists(actualFilePath)) {
+                throw new FileNotFoundException("Cannot link to non-existent file", actualFilePath);
             }
-            else {
-                throw new FileNotFoundException("Target file not found");
+            if (Directory.Exists(linkPath)) {
+                throw new ConflictingFileOrFolderException(linkPath);
             }
+
+            if (File.Exists(linkPath) && IsSymlink(linkPath)) {
+                ChangeLinkTarget(linkPath, actualFilePath);
+                return;
+            }
+
+            if( File.Exists(linkPath) ) {
+                linkPath.TryHardToDeleteFile();
+            }
+
+            Kernel32.CreateHardLink(linkPath, actualFilePath, IntPtr.Zero);
+            AddSymlinkToAlternateStream(actualFilePath, linkPath);
         }
 
         public void MakeDirectoryLink(string linkPath, string actualFolderPath) {
-            actualFolderPath = GetActualPath(actualFolderPath.GetFullPath());
-            
             linkPath = linkPath.GetFullPath();
+            actualFolderPath = GetActualPath(actualFolderPath.GetFullPath());
 
-            if( Directory.Exists(actualFolderPath)) {
-                if( Directory.Exists(linkPath) || File.Exists(linkPath)) {
-                    throw new ConflictingFileOrFolderException(linkPath);
-                }
-
-                ReparsePoint.CreateJunction(linkPath, actualFolderPath);
-            } else {
-                throw new DirectoryNotFoundException("Target directory not found");
+            if (!Directory.Exists(actualFolderPath)) {
+                throw new FileNotFoundException("Cannot link to non-existent directory", actualFolderPath);
             }
+
+            if (Directory.Exists(linkPath) && IsSymlink(linkPath)) {
+                ReparsePoint.ChangeReparsePointTarget(linkPath, actualFolderPath);
+                return;
+            }
+
+            if (File.Exists(linkPath) || Directory.Exists(linkPath)) {
+                throw new ConflictingFileOrFolderException(linkPath);
+            }
+
+            ReparsePoint.CreateJunction(linkPath, actualFolderPath);
         }
 
         public void ChangeLinkTarget(string linkPath, string newActualPath) {
             linkPath = linkPath.GetFullPath();
             newActualPath = GetActualPath(newActualPath.GetFullPath());
+            var oldActualPath = GetActualPath(linkPath);
+            if (oldActualPath.Equals(newActualPath, StringComparison.CurrentCultureIgnoreCase)) {
+                return;
+            }
 
             if (!IsSymlink(linkPath)) {
                 throw new PathIsNotSymlinkException(linkPath);
@@ -73,6 +89,10 @@ namespace CoApp.Toolkit.Win32 {
 
         public void DeleteSymlink(string linkPath) {
             linkPath = linkPath.GetFullPath();
+            if (!File.Exists(linkPath) && !Directory.Exists(linkPath)) {
+                return;
+            }
+
             if (IsSymlink(linkPath)) {
                 if (File.Exists(linkPath)) {
                     string canonicalFilePath;
