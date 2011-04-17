@@ -20,7 +20,7 @@ namespace CoApp.Toolkit.Crypto
             var fileContents = File.ReadAllBytes(file);
             var ptr = Marshal.AllocHGlobal(fileContents.Length);
             Marshal.Copy(fileContents, 0, ptr, fileContents.Length);
-            var cryptBlob = new CRYPT_DATA_BLOB() { cbData = fileContents.Length, pbData = ptr };
+            var cryptBlob = new CRYPT_DATA_BLOB() { cbData = (uint)fileContents.Length, pbData = ptr };
             if (!PFXIsPFXBlob(ref cryptBlob))
             {
                 return null;
@@ -45,9 +45,10 @@ namespace CoApp.Toolkit.Crypto
             uint dwFlags = 0);
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CRYPT_DATA_BLOB
+        internal struct CRYPT_DATA_BLOB
         {
-            public int cbData;
+            [MarshalAs(UnmanagedType.U4)]
+            public uint cbData;
             public IntPtr pbData;
         }
 

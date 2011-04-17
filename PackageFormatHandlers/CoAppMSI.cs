@@ -51,7 +51,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             UInt64 minPolicy = 0;
             UInt64 maxPolicy = 0;
             
-            if (packageData.CO_BINDING_POLICY != null) {
+            if (packageData.CO_BINDING_POLICY != null && 
+                ((IEnumerable<dynamic>)packageData.CO_BINDING_POLICY).Count() == 1) {
                 var policy = packageData.CO_BINDING_POLICY[0];
 
                 minPolicy = ((string)policy.minimum_version).VersionStringToUInt64();
