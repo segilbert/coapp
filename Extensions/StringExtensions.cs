@@ -26,6 +26,8 @@ namespace CoApp.Toolkit.Extensions {
     public static class StringExtensions {
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
 
+        public const string ValidVersionRegex = @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$";
+
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
         }
@@ -214,7 +216,7 @@ namespace CoApp.Toolkit.Extensions {
 
 		public static bool IsValidVersion(this string input)
         {
-            var regex = new Regex(@"\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}");
+            var regex = new Regex(ValidVersionRegex);
             return regex.IsMatch(input);
         }
     }
