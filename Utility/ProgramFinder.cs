@@ -207,9 +207,9 @@ namespace CoApp.Toolkit.Utility {
             
             var pe = new PEInfo(filename);
             var result = (pe.Is32Bit ? ExecutableInfo.x86 : ExecutableInfo.none)
-                & (pe.Is64Bit ? ExecutableInfo.x64 : ExecutableInfo.none)
-                & (pe.IsManaged ? ExecutableInfo.managed : ExecutableInfo.native)
-                & (pe.IsAny ? ExecutableInfo.any : ExecutableInfo.none);
+                | (pe.Is64Bit ? ExecutableInfo.x64 : ExecutableInfo.none)
+                | (pe.IsManaged ? ExecutableInfo.managed : ExecutableInfo.native)
+                | (pe.IsAny ? ExecutableInfo.any : ExecutableInfo.none);
 
             ExeTypeCache.Add(filename, result);
             return result;
