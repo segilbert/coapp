@@ -28,9 +28,11 @@ namespace CoApp.Toolkit.Extensions {
         
         
         public const string ValidVersionRegex = @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$";
+        
         //putting regexs here so they're only compiled once.
         private static Regex versionRegex = new Regex(ValidVersionRegex);
         private static Regex badDirIdCharsRegex = new Regex(@"\s|\.|\-");
+        private static Regex majorMinorRegex = new Regex(@"^\d{1,5}\.\d{1,5}$");
 
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
@@ -229,6 +231,20 @@ namespace CoApp.Toolkit.Extensions {
 		public static bool IsValidVersion(this string input)
         {
             return versionRegex.IsMatch(input);
+        }
+
+
+        /// <summary>
+        /// Checks if a string is a valid major.minor version string x.x
+        /// 
+        /// TODO: this allows x to have values LARGER than the max number 
+        /// for part of a version string. NEED TO FIX
+        /// </summary>
+        /// <param name="input">a string to be checked</param>
+        /// <returns>true if it the string is a valid major.minor version, false otherwise</returns>
+        public static bool IsValidMajorMinorVersion(this string input)
+        {
+            return majorMinorRegex.IsMatch(input);
         }
     }
 }
