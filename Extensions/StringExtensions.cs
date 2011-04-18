@@ -2,6 +2,7 @@
 // <copyright company="CoApp Project">
 //     Original Copyright (c) 2009 Microsoft Corporation. All rights reserved.
 //     Changes Copyright (c) 2011 Eric Schultz, 2010  Garrett Serack. All rights reserved.
+//     Version regex string from Wix toolkit
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -16,17 +17,20 @@
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
+    using System.Runtime.Remoting.Metadata.W3cXsd2001;
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
-    using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
-
+        
+        
         public const string ValidVersionRegex = @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$";
+        //putting regexs here so they're only compiled once.
+        private static Regex versionRegex = new Regex(ValidVersionRegex);
+        private static Regex badDirIdCharsRegex = new Regex(@"\s|\.|\-");
 
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
@@ -211,13 +215,20 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns>Your safe directory ID</returns>
         public static string MakeSafeDirectoryId(this string input)
         {
-            return Regex.Replace(input, @"\s|\.|\-", "_");
+            return badDirIdCharsRegex.Replace(input, "_");
         }
 
+        /// <summary>
+        /// Checks if a string is a valid version string x.x.x.x 
+        /// 
+        /// TODO: this allows x to have values LARGER than the max number 
+        /// for part of a version string. NEED TO FIX
+        /// </summary>
+        /// <param name="input">a string to be checked</param>
+        /// <returns>true if it the string is a valid version, false otherwise</returns>
 		public static bool IsValidVersion(this string input)
         {
-            var regex = new Regex(ValidVersionRegex);
-            return regex.IsMatch(input);
+            return versionRegex.IsMatch(input);
         }
     }
 }

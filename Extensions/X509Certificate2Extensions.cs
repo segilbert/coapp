@@ -1,10 +1,12 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2011 Eric Schultz. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 namespace CoApp.Toolkit.Extensions
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
     using System.Security.Cryptography.X509Certificates;
     public static class X509Certificate2Extensions
     {

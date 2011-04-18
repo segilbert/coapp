@@ -1,11 +1,15 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2011 Eric Schultz. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Crypto
 {
     using System;
-    using System.Security.Cryptography.X509Certificates;
-    using System.Runtime.InteropServices;
     using System.IO;
+    using System.Runtime.InteropServices;
+    using System.Security.Cryptography.X509Certificates;
 
     public static class PfxStoreLoader
     {
