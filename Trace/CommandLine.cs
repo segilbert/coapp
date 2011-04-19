@@ -5,10 +5,16 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Trace {
+    using System.Collections.Generic;
     using System.IO;
+    using System.Text.RegularExpressions;
     using System.Xml.Serialization;
+    using Extensions;
     using Scripting;
 
     public partial class CommandLine {
+        
+
     }
+
 }
