@@ -23,9 +23,16 @@ namespace CoApp.Toolkit.Trace {
             get { return fullPath; }
             set {
                 fullPath = value.ToLower().NormalizePath();
-                extension = Path.GetExtension(fullPath);
-                name = Path.GetFileName(fullPath);
-                folder = Path.GetDirectoryName(fullPath);
+                if (Directory.Exists(fullPath)) {
+                    folder = Path.GetDirectoryName(fullPath);
+                    name = "";
+                    extension = "";
+                }
+                else {
+                    extension = Path.GetExtension(fullPath);
+                    name = Path.GetFileName(fullPath);
+                    folder = Path.GetDirectoryName(fullPath);
+                }
             }
         }
     }
