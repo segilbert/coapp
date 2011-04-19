@@ -145,6 +145,10 @@ using System.Collections.Generic;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
+        public bool probed;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
         public string movedTo;
         
         /// <remarks/>
