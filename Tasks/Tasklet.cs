@@ -126,8 +126,8 @@ namespace CoApp.Toolkit.Tasks {
             lock (AllTasks) {
                 AllTasks.Add(task.Id, this);
             }
-            Debug.WriteLine("Adding Task {0}",Task.Id);
-            DebugExtensions.StackDump();
+            // Debug.WriteLine("Adding Task {0}",Task.Id);
+            // DebugExtensions.StackDump();
 
         }
 
@@ -139,8 +139,8 @@ namespace CoApp.Toolkit.Tasks {
             lock (AllTasks) {
                 AllTasks.Add(task.Id, this);
             }
-            Debug.WriteLine("Adding Task {0}", Task.Id);
-            DebugExtensions.StackDump();
+            // Debug.WriteLine("Adding Task {0}", Task.Id);
+            // DebugExtensions.StackDump();
         }
     }
 }

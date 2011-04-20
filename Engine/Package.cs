@@ -317,8 +317,9 @@ namespace CoApp.Toolkit.Engine {
 
             var result = text;
 
-            result = result.Replace(@"{$PACKAGEDIR}", @"{$INSTALL}\{$PUBLISHER}\{$PRODUCTNAME}-{$VERSION}-{$PLATFORM}\");
-            result = result.Replace(@"{$CANONICALPACKAGEDIR}", @"{$APPS}\{$NAME}\");
+            result = result.Replace(@"{$PKGDIR}", @"{$PACKAGEDIR}");
+            result = result.Replace(@"{$PACKAGEDIR}", @"{$INSTALL}\{$PUBLISHER}\{$PRODUCTNAME}-{$VERSION}-{$ARCH}\");
+            result = result.Replace(@"{$CANONICALPACKAGEDIR}", @"{$APPS}\{$PRODUCTNAME}\");
 
             result = result.Replace(@"{$INCLUDE}", Path.Combine( PackageManagerSettings.CoAppRootDirectory, "include"));
             result = result.Replace(@"{$LIB}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "lib"));
@@ -343,8 +344,8 @@ namespace CoApp.Toolkit.Engine {
                         case PackageRole.Application:
                             yield return new CompositionRule(this) {
                                 Action = CompositionAction.SymlinkFolder,
-                                Location = "{$PACKAGEDIR}",
-                                Target = "{$CANONICALPACKAGEDIR}",
+                                Location = "{$CANONICALPACKAGEDIR}",
+                                Target = "{$PACKAGEDIR}",
                             };
                             break;
                         case PackageRole.DeveloperLib:
@@ -366,6 +367,10 @@ namespace CoApp.Toolkit.Engine {
                 var dir = rule.Target.GetFullPath();
 
                 if (Directory.Exists(dir) && ( makeCurrent || !Directory.Exists(link) ) ) {
+                    if (!Directory.Exists(Path.GetDirectoryName(link))) {
+                        Directory.CreateDirectory(Path.GetDirectoryName(link));
+                    }
+
                     Symlink.MakeDirectoryLink(link, dir);
                 }
             }
@@ -374,7 +379,11 @@ namespace CoApp.Toolkit.Engine {
                 var file = rule.Target.GetFullPath();
                 var link = rule.Location.GetFullPath();
                 if (File.Exists(file) && (makeCurrent || !File.Exists(link))) {
-                    Symlink.MakeDirectoryLink(link, file);
+                    if( !Directory.Exists( Path.GetDirectoryName(link)) ) {
+                        Directory.CreateDirectory(Path.GetDirectoryName(link));
+                    }
+
+                    Symlink.MakeFileLink(link, file);
                 }
             }
 
@@ -383,6 +392,10 @@ namespace CoApp.Toolkit.Engine {
                 var link = rule.Location.GetFullPath();
 
                 if (File.Exists(target) && (makeCurrent || !File.Exists(link))) {
+                    if (!Directory.Exists(Path.GetDirectoryName(link))) {
+                        Directory.CreateDirectory(Path.GetDirectoryName(link));
+                    }
+
                     ShellLink.CreateShortcut(link, target);
                 }
             }
