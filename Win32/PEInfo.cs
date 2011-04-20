@@ -15,10 +15,10 @@ namespace CoApp.Toolkit.Win32 {
     using System.IO;
 
     public class PEInfo {
-        private ImageSectionHeader[] sectionHeaders;
-        private ImageOptionalHeaderNt ntHeader;
-        private ImageCor20Header corHeader;
-        private ImageCoffHeader coffHeader;
+        public ImageSectionHeader[] sectionHeaders;
+        public ImageOptionalHeaderNt ntHeader;
+        public ImageCor20Header corHeader;
+        public ImageCoffHeader coffHeader;
 
         private ImageDataDirectory exportTable;
         private ImageDataDirectory importTable;

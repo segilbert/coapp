@@ -11,7 +11,7 @@
 // http://www.aisto.com/roeder
 // roeder@aisto.com
 namespace CoApp.Toolkit.Win32 {
-    internal class ImageCor20Header {
+    public class ImageCor20Header {
         public uint Size;
         public ushort MajorRuntimeVersion;
         public ushort MinorRuntimeVersion;

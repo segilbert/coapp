@@ -11,7 +11,7 @@
 // http://www.aisto.com/roeder
 // roeder@aisto.com
 namespace CoApp.Toolkit.Win32 {
-    internal struct ImageDataDirectory {
+    public struct ImageDataDirectory {
         public uint Rva;
         public uint Size;
     }

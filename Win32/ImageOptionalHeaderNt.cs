@@ -13,7 +13,7 @@
 namespace CoApp.Toolkit.Win32 {
     using System;
 
-    internal class ImageOptionalHeaderNt {
+    public class ImageOptionalHeaderNt {
         public ushort Magic;
         public byte MajorLinkerVersion;
         public byte MinorLinkerVersion;
