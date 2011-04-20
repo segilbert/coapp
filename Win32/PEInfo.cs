@@ -75,6 +75,10 @@ namespace CoApp.Toolkit.Win32 {
             get { return (Is32BitPE && IsManaged && ((corHeader.Flags & 0x0002) == 0)); }
         }
 
+        public bool IsConsole {
+            get { return (ntHeader.SubSystem & 1) == 1; }   
+        }
+
         public PEInfo(string filename) {
             if( !File.Exists(filename)) 
                 throw new FileNotFoundException("Unable to find file",filename);
