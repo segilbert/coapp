@@ -30,7 +30,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
         internal static dynamic GetCoAppPackageFileDetails(string localPackagePath) {
             dynamic packageData = GetDynamicMSIData(localPackagePath);
-
+            
             if (packageData.CO_PACKAGE == null) {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
             }
@@ -59,6 +59,17 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 maxPolicy = ((string)policy.maximum_version).VersionStringToUInt64();
             }
 
+            string licenseText = null;
+            string licenseUrl = null;
+
+            if (packageData.CO_LICENSE != null &&
+                ((IEnumerable<dynamic>)packageData.CO_BINDING_POLICY).Count() == 1)
+            {
+                var license = packageData.CO_LICENSE[0];
+                licenseText = license.license_text;
+                licenseUrl = license.license_url;
+            }
+
             var properties = packageData.CO_PACKAGE_PROPERTIES[pkgid];
             var publisher = packageData.CO_PUBLISHER[pkt];
 
@@ -78,7 +89,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                     // new cosmetic metadata fields
                     displayName = properties.display_name,
-                    description = properties.description.GunzipFromBase64(),
+                    description = StringExtensions.GunzipFromBase64(properties.description),
                     publishDate = properties.publish_date,
                     authorVersion = properties.author_version,
                     originalLocation = GetURL(packageData.CO_URLS, properties.original_location ),
@@ -88,6 +99,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     publisherName = publisher.name,
                     publisherUrl = GetURL(packageData.CO_URLS,publisher.location ),
                     publisherEmail = publisher.email,
+                    license = StringExtensions.GunzipFromBase64(licenseText)
                 };
 
             if (packageData.CO_DEPENDENCY != null) {
