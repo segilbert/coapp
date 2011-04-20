@@ -340,7 +340,7 @@ namespace CoApp.Toolkit.Engine {
             get {
                 foreach (var role in Roles.Select(each => each.Item1)) {
                     switch (role) {
-                        case PackageRole.AppRole:
+                        case PackageRole.Application:
                             yield return new CompositionRule(this) {
                                 Action = CompositionAction.SymlinkFolder,
                                 Location = "{$PACKAGEDIR}",

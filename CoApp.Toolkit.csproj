@@ -190,6 +190,7 @@
     </Compile>
     <Compile Include="Trace\Variable.cs" />
     <Compile Include="Utility\ExecutableInfo.cs" />
+    <Compile Include="Utility\PathEqualityComparer.cs" />
     <Compile Include="Utility\ProcessUtility.cs" />
     <Compile Include="Utility\ProgramFinder.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />

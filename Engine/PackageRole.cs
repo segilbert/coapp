@@ -9,6 +9,6 @@ namespace CoApp.Toolkit.Engine {
         SharedLib,
         DeveloperLib,
         SourceCode, 
-        AppRole
+        Application
     }
 }

@@ -22,6 +22,8 @@ namespace CoApp.Toolkit.Extensions {
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.IO.Compression;
+    using System.IO;
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
@@ -31,7 +33,7 @@ namespace CoApp.Toolkit.Extensions {
         
         //putting regexs here so they're only compiled once.
         private static Regex versionRegex = new Regex(ValidVersionRegex);
-        private static Regex badDirIdCharsRegex = new Regex(@"\s|\.|\-");
+        private static Regex badDirIdCharsRegex = new Regex(@"\s|\.|\-|\\");
         private static Regex majorMinorRegex = new Regex(@"^\d{1,5}\.\d{1,5}$");
 
         public static string format(this string formatString, params object[] args) {
@@ -245,6 +247,54 @@ namespace CoApp.Toolkit.Extensions {
         public static bool IsValidMajorMinorVersion(this string input)
         {
             return majorMinorRegex.IsMatch(input);
+        }
+
+
+        public static byte[] Gzip(this string input)
+        {
+
+            var memStream = new MemoryStream();
+            using (GZipStream gzStr = new GZipStream(memStream, CompressionMode.Compress))
+            {
+                gzStr.Write(input.ToByteArray(), 0, input.ToByteArray().Length);
+            }
+
+            return memStream.ToArray();
+        }
+
+        public static string GzipToBase64(this string input)
+        {
+            if (input == null || input == String.Empty)
+                return input;
+            return Convert.ToBase64String(Gzip(input));
+        }
+
+        public static string GunzipFromBase64(this string input)
+        {
+            if (input == null || input == String.Empty)
+                return input;
+            return Gunzip(Convert.FromBase64String(input));
+        }
+
+        public static string Gunzip(this byte[] input)
+        {
+            var bytes = new List<byte>();
+            using (GZipStream gzStr = new GZipStream(new MemoryStream(input), CompressionMode.Decompress))
+            {
+                var bytesRead = new byte[512];
+                while (true)
+                {
+                    int numRead = gzStr.Read(bytesRead, 0, 512);
+                    if (numRead > 0)
+                    {
+                        bytes.AddRange(bytesRead.Take(numRead));
+                    }
+                    else
+                        break;
+                }
+            }
+
+            return bytes.ToArray().ToUtf8String();
         }
     }
 }

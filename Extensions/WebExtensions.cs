@@ -282,5 +282,10 @@ namespace CoApp.Toolkit.Extensions {
             } catch {}
             return null;
         }
+
+        public static bool IsHttpScheme(this Uri uri, bool acceptHttps=true)
+        {
+            return (uri.Scheme == Uri.UriSchemeHttp || (acceptHttps && uri.Scheme == Uri.UriSchemeHttps));
+        }
     }
 }

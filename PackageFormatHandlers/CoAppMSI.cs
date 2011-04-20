@@ -78,7 +78,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                     // new cosmetic metadata fields
                     displayName = properties.display_name,
-                    description = properties.description,
+                    description = properties.description.GunzipFromBase64(),
                     publishDate = properties.publish_date,
                     authorVersion = properties.author_version,
                     originalLocation = GetURL(packageData.CO_URLS, properties.original_location ),
