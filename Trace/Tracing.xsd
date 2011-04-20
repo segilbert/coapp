@@ -82,7 +82,10 @@
     <xs:attribute name="created" type="xs:boolean"  use="required" />
     <xs:attribute name="deleted" type="xs:boolean"  use="required" />
     <xs:attribute name="moved" type="xs:boolean"  use="required" />
+    <xs:attribute name="copied" type="xs:boolean"  use="required" />
+    <xs:attribute name="probed" type="xs:boolean"  use="required" />
     <xs:attribute name="movedTo" type="xs:string" />
+    <xs:attribute name="copiedTo" type="xs:string" />
   </xs:complexType>
 
 </xs:schema>

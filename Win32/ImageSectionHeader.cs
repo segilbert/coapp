@@ -11,7 +11,7 @@
 // http://www.aisto.com/roeder
 // roeder@aisto.com
 namespace CoApp.Toolkit.Win32 {
-    internal struct ImageSectionHeader {
+    public struct ImageSectionHeader {
         public uint VirtualAddress;
         public uint SizeOfRawData;
         public uint PointerToRawData;

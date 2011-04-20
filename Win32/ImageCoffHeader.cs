@@ -11,7 +11,7 @@
 // http://www.aisto.com/roeder
 // roeder@aisto.com
 namespace CoApp.Toolkit.Win32 {
-    internal class ImageCoffHeader {
+    public class ImageCoffHeader {
         public ushort Machine;
         public ushort NumberOfSections;
         public uint TimeDateStamp;
