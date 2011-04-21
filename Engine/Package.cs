@@ -319,7 +319,7 @@ namespace CoApp.Toolkit.Engine {
 
             result = result.Replace(@"{$PKGDIR}", @"{$PACKAGEDIR}");
             result = result.Replace(@"{$PACKAGEDIR}", @"{$INSTALL}\{$PUBLISHER}\{$PRODUCTNAME}-{$VERSION}-{$ARCH}\");
-            result = result.Replace(@"{$CANONICALPACKAGEDIR}", @"{$APPS}\{$PRODUCTNAME}\");
+            result = result.Replace(@"{$CANONICALPACKAGEDIR}", @"{$BIN}\{$PRODUCTNAME}\");
 
             result = result.Replace(@"{$INCLUDE}", Path.Combine( PackageManagerSettings.CoAppRootDirectory, "include"));
             result = result.Replace(@"{$LIB}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "lib"));
@@ -367,10 +367,6 @@ namespace CoApp.Toolkit.Engine {
                 var dir = rule.Target.GetFullPath();
 
                 if (Directory.Exists(dir) && ( makeCurrent || !Directory.Exists(link) ) ) {
-                    if (!Directory.Exists(Path.GetDirectoryName(link))) {
-                        Directory.CreateDirectory(Path.GetDirectoryName(link));
-                    }
-
                     Symlink.MakeDirectoryLink(link, dir);
                 }
             }
