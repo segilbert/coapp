@@ -368,6 +368,10 @@ namespace CoApp.Toolkit.Engine {
                 var dir = rule.Target.GetFullPath();
 
                 if (Directory.Exists(dir) && ( makeCurrent || !Directory.Exists(link) ) ) {
+                    if (!Directory.Exists(Path.GetDirectoryName(link))) {
+                        Directory.CreateDirectory(Path.GetDirectoryName(link));
+                    }
+
                     Symlink.MakeDirectoryLink(link, dir);
                 }
             }
