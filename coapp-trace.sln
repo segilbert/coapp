@@ -19,6 +19,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-x86", "..\coapp-trace\trace-x86.csproj", "{E0F8AFB8-56F1-487C-BF20-89E03BDA517C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-x64", "..\coapp-trace\trace-x64.csproj", "{99256BA6-AF02-4B94-885F-827CFB61610B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E0F8AFB8-56F1-487C-BF20-89E03BDA517C} = {E0F8AFB8-56F1-487C-BF20-89E03BDA517C}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
