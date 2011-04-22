@@ -36,6 +36,9 @@ namespace CoApp.Toolkit.Extensions {
         private static Regex badDirIdCharsRegex = new Regex(@"\s|\.|\-|\\");
         private static Regex majorMinorRegex = new Regex(@"^\d{1,5}\.\d{1,5}$");
 
+        //TODO this SUCKS. Thanks MS.
+        private static Regex emailRegex = new Regex(@"^(?<name>\S+)@(?<domain>\S+)$");
+
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
         }
@@ -295,6 +298,12 @@ namespace CoApp.Toolkit.Extensions {
             }
 
             return bytes.ToArray().ToUtf8String();
+        }
+
+
+        public static bool IsEmail(this string email)
+        {
+            return emailRegex.IsMatch(email);
         }
     }
 }

@@ -97,9 +97,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     icon = properties.icon,
                     summary = properties.short_description,
                     publisherName = publisher.name,
-                    publisherUrl = GetURL(packageData.CO_URLS,publisher.location ),
+                    publisherUrl = GetURL(packageData.CO_URLS,publisher.location),
                     publisherEmail = publisher.email,
-                    license = StringExtensions.GunzipFromBase64(licenseText)
+                    license = StringExtensions.GunzipFromBase64(licenseText),
+                    licenseUrl = GetURL(packageData.CO_URLS, licenseUrl)
                 };
 
             if (packageData.CO_DEPENDENCY != null) {

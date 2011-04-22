@@ -280,7 +280,8 @@ namespace CoApp.Toolkit.Engine {
                 // this will activate the next one in line
                 GetCurrentPackage(Name, PublicKeyToken);
             }
-            catch {
+            catch (Exception e)
+            {
                 PackageManagerMessages.Invoke.PackageRemoveFailed(this);
                 throw new OperationCompletedBeforeResultException();
             }
@@ -411,7 +412,8 @@ namespace CoApp.Toolkit.Engine {
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)
                 let target = rule.Target.GetFullPath()
                 let link = rule.Location.GetFullPath()
-                where File.Exists(target) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
+                where File.Exists(target) && File.Exists(link) && Symlink.IsSymlink(link) && 
+                    Symlink.GetActualPath(link).Equals(target)
                 select link) {
                     Symlink.DeleteSymlink(link);
             }

@@ -17,12 +17,12 @@ namespace CoApp.Toolkit.Utility
         {
             var xPath = x.GetFullPath();
             var yPath = y.GetFullPath();
-            return xPath == yPath;
+            return string.Compare(xPath, yPath, System.StringComparison.InvariantCultureIgnoreCase) == 0;
         }
 
         public int GetHashCode(string obj)
         {
-            return obj.GetFullPath().GetHashCode();
+            return obj.GetFullPath().ToUpperInvariant().GetHashCode();
         }
     }
 }
