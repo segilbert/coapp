@@ -63,7 +63,7 @@
   <ItemGroup>
     <Compile Include="OData\PackageService.cs" />
     <Compile Include="Properties\OData.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\coapp-solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CoApp.Toolkit.csproj">

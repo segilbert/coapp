@@ -60,7 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\Unsafe.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\coapp-solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CoApp.Toolkit.csproj">

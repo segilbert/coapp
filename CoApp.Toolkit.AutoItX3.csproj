@@ -57,7 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AutoItX3.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\coapp-solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
     <Compile Include="AutoItX3\AutoIt.cs" />
     <Compile Include="AutoItX3\x64\NativeMethods.cs" />
     <Compile Include="AutoItX3\x86\NativeMethods.cs" />
