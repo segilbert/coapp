@@ -2,4 +2,5 @@
 *.user
 *.sdf
 *.opensdf
-
+obj
+bin
