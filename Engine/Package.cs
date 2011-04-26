@@ -353,7 +353,7 @@ namespace CoApp.Toolkit.Engine {
                             break;
                         case PackageRole.SharedLib:
                             break;
-                        case PackageRole.SourceCode:
+                        case PackageRole.Source:
                             break;
                     }
                 }

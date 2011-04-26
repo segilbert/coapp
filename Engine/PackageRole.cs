@@ -8,7 +8,7 @@ namespace CoApp.Toolkit.Engine {
     public enum PackageRole {
         SharedLib,
         DeveloperLib,
-        SourceCode, 
+        Source, 
         Application
     }
 }
