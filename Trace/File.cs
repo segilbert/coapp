@@ -20,7 +20,7 @@ namespace CoApp.Toolkit.Trace {
 
         [XmlIgnore]
         public string FullPath {
-            get { return fullPath; }
+            get { return fullPath ?? (fullPath = Path.Combine(folder, name)); }
             set {
                 fullPath = value.ToLower().NormalizePath();
                 if (Directory.Exists(fullPath)) {

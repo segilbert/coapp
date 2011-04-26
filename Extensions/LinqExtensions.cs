@@ -12,12 +12,12 @@ namespace CoApp.Toolkit.Extensions {
 
     public static class LinqExtensions {
         public static IEnumerable<T> Traverse<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> recurseFunction) {
-            foreach(T item in source) {
+            foreach(var item in source) {
                 yield return item;
-                IEnumerable<T> enumerable = recurseFunction(item);
+                var enumerable = recurseFunction(item);
 
                 if(enumerable != null) {
-                    foreach(T itemRecurse in Traverse(enumerable, recurseFunction)) {
+                    foreach(var itemRecurse in Traverse(enumerable, recurseFunction)) {
                         yield return itemRecurse;
                     }
                 }
