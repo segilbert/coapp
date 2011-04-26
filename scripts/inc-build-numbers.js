@@ -52,9 +52,9 @@ if( exists(ASNfile) ) {
     }
 }
 
-var installerManifest = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\coapp-interim-stub\\coapp.installer.manifest");
-var installerWix = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\coapp-interim-stub\\coapp.installer.wxs");
-var installerPolicy = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\coapp-interim-stub\\policy.1.0.coapp.installer.manifest");
+var installerManifest = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\installer-proxy\\coapp.installer.manifest");
+var installerWix = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\installer-proxy\\coapp.installer.wxs");
+var installerPolicy = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\installer-proxy\\policy.1.0.coapp.installer.manifest");
 var mmbr = ''+major+'.'+minor+'.'+build+'.'+revision;
 var range = '1.0.0.0-'+major+'.'+minor+'.'+build+'.'+(revision-1);
     
@@ -97,7 +97,7 @@ if( exists(installerManifest) ) {
     f.Close();
 }
 
-var bootstrapManifest = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\coapp-bootstrap\\BootstrapInstaller.manifest.xml");
+var bootstrapManifest = fullpath(thisScript.substring(0,thisScript.lastIndexOf("\\"))+"\\..\\..\\bootstrap\\BootstrapInstaller.manifest.xml");
 if( exists(bootstrapManifest) ) {
  print("Incrementing build number data in {0}",bootstrapManifest);
     

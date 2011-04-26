@@ -10,7 +10,7 @@
     <CommonOutputDir>$(SolutionDir)..\</CommonOutputDir>
     <!--
     if you want it all to end up in a subdir of the solution folder:
-    <CommonOutputDir>$(SolutionDir)..\coapp-solution\</CommonOutputDir>
+    <CommonOutputDir>$(SolutionDir)..\solution\</CommonOutputDir>
     -->
   </PropertyGroup>
   <ItemGroup>

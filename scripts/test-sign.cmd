@@ -2,4 +2,4 @@
 :test-sign.cmd
 cd %~dp0
 
-start /wait coapp-simplesigner --certificate-path=%~dp0\..\CoAppTest.pfx --password=password ..\..\output\any\test\bin\*.exe ..\..\output\any\test\bin\*.dll
+start /wait %~dp0\..\tools\simplesigner\simplesigner --certificate-path=%~dp0\..\CoAppTest.pfx --password=password ..\..\output\any\test\bin\*.exe ..\..\output\any\test\bin\*.dll

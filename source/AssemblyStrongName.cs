@@ -15,27 +15,38 @@ using System.Runtime.InteropServices;
 #pragma warning disable 1699
 
 #if SIGN_ASSEMBLY || TEST_SIGN_ASSEMBLY
-[assembly: AssemblyVersion("1.0.2.826")] //SIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.2.826")] //SIGNED VERSION
+[assembly: AssemblyVersion("1.0.2.837")] //SIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.2.837")] //SIGNED VERSION
 
 #if SIGN_ASSEMBLY 
-    [assembly: AssemblyKeyFileAttribute(@"..\coapp-signing\coapp-release-public-key.snk")]
+    [assembly: AssemblyKeyFileAttribute(@"..\signing\coapp-release-public-key.snk")]
     [assembly:AssemblyDelaySignAttribute(true)]
 #endif 
 
 #if TEST_SIGN_ASSEMBLY
-    [assembly: AssemblyKeyFileAttribute(@"..\coapp-solution\CoApp-Development.SNK")]
+    [assembly: AssemblyKeyFileAttribute(@"..\solution\CoApp-Development.SNK")]
     [assembly:AssemblyDelaySignAttribute(true)]
 #endif 
 
 #else
 
-[assembly: AssemblyVersion("1.0.3.826")] //UNSIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.3.826")] //UNSIGNED VERSION
+[assembly: AssemblyVersion("1.0.3.837")] //UNSIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.3.837")] //UNSIGNED VERSION
 
 #endif
 
 #pragma warning restore 1699
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace", "..\coapp-trace\trace.csproj", "{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace", "..\trace\trace.csproj", "{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2BDE3A15-0C09-470D-92FD-4AAEF7B6C6E2} = {2BDE3A15-0C09-470D-92FD-4AAEF7B6C6E2}
 		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2} = {4D4611C4-EDEA-4F57-AD84-774C9BB946D2}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit", "..\coapp-toolkit\CoApp.Toolkit.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit", "..\toolkit\CoApp.Toolkit.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours", "..\managed-detours\detours.vcxproj", "{2BDE3A15-0C09-470D-92FD-4AAEF7B6C6E2}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -16,9 +16,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours", "..\managed-detou
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detoured", "..\managed-detours\detoured.vcxproj", "{4D4611C4-EDEA-4F57-AD84-774C9BB946D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-x86", "..\coapp-trace\trace-x86.csproj", "{E0F8AFB8-56F1-487C-BF20-89E03BDA517C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-x86", "..\trace\trace-x86.csproj", "{E0F8AFB8-56F1-487C-BF20-89E03BDA517C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-x64", "..\coapp-trace\trace-x64.csproj", "{99256BA6-AF02-4B94-885F-827CFB61610B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace-x64", "..\trace\trace-x64.csproj", "{99256BA6-AF02-4B94-885F-827CFB61610B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E0F8AFB8-56F1-487C-BF20-89E03BDA517C} = {E0F8AFB8-56F1-487C-BF20-89E03BDA517C}
 	EndProjectSection
