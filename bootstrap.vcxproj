@@ -51,39 +51,39 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\local.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\x86.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\debug.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
+    <Import Project="$(SolutionDir)\..\solution\local.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\x86.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\exe.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\debug.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\link-with-ddk.props" />
+    <Import Project="bootstrap.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\local.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\x64.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\debug.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
+    <Import Project="$(SolutionDir)\..\solution\local.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\x64.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\exe.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\debug.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\link-with-ddk.props" />
+    <Import Project="bootstrap.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\local.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\x86.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\release.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
+    <Import Project="$(SolutionDir)\..\solution\local.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\x86.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\exe.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\release.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\link-with-ddk.props" />
+    <Import Project="bootstrap.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\x64.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\local.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\exe.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\release.props" />
-    <Import Project="$(SolutionDir)\..\coapp-solution\properties\link-with-ddk.props" />
-    <Import Project="coapp-bootstrap.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\x64.props" />
+    <Import Project="$(SolutionDir)\..\solution\local.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\exe.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\release.props" />
+    <Import Project="$(SolutionDir)\..\solution\properties\link-with-ddk.props" />
+    <Import Project="bootstrap.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -175,8 +175,8 @@
     </Manifest>
     <PostBuildEvent>
       <Command>mt -manifest $(ProjectDir)BootstrapInstaller.manifest.xml -outputresource:$(TargetPath);1100
-coapp-simplesigner --sign-only "$(TargetPath)"
-copy "$(TargetPath)" "$(SolutionDir)..\coapp-mkpackage\Resources\coapp-bootstrap.exe"</Command>
+simplesigner --sign-only "$(TargetPath)"
+copy "$(TargetPath)" "$(SolutionDir)..\mkpackage\Resources\bootstrap.exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
