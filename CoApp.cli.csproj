@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{D1102D1E-7ACE-4A81-96B8-36DA8F5D65BC}</ProjectGuid>
+    <ProjectGuid>{0EB44E9E-2674-4C0E-AE3F-E9071F45A765}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CoApp.CLI</RootNamespace>
