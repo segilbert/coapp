@@ -59,6 +59,12 @@ namespace CoApp.Toolkit.Utility
             }
         }
 
+        public void Kill() {
+            if( IsRunning) {
+                currentProcess.Kill();
+            }
+        }
+
         public void SendToStandardIn(string text)
         {
             if (!string.IsNullOrEmpty(text) && IsRunning)
@@ -136,6 +142,22 @@ namespace CoApp.Toolkit.Utility
             currentProcess.BeginOutputReadLine();
         }
 
+        public void ExecAsyncNoRedirections(string arguments, params string[] args) {
+            if (IsRunning)
+                throw new InvalidAsynchronousStateException("Process is currently running.");
+
+            Failed = false;
+            sErr = new StringBuilder();
+            sOut = new StringBuilder();
+
+            currentProcess = new Process { StartInfo = { FileName = Executable, Arguments = string.Format(arguments, args), WorkingDirectory = Environment.CurrentDirectory, RedirectStandardError = false, RedirectStandardInput = false, RedirectStandardOutput = false, UseShellExecute = false, WindowStyle = ConsoleExtensions.IsConsole ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden } };
+
+            currentProcess.Exited += CurrentProcess_Exited;
+
+            currentProcess.Start();
+        }
+
+
         public void ExecAsyncNoStdInRedirect(string arguments, params string[] args) {
             if (IsRunning)
                 throw new InvalidAsynchronousStateException("Process is currently running.");
@@ -176,6 +198,21 @@ namespace CoApp.Toolkit.Utility
 
             return currentProcess.ExitCode;
         }
+
+        public int ExecNoRedirections(string arguments, params string[] args) {
+            try {
+                ExecAsyncNoRedirections(arguments, args);
+                WaitForExit();
+            }
+            catch (Exception e) {
+                currentProcess = null;
+                sErr.AppendFormat("Failed to execute program [{0}]\r\n   {1}", Executable, e.Message);
+                return 100;
+            }
+
+            return currentProcess.ExitCode;
+        }
+
 
         public int ExecWithStdin(string stdIn, string arguments, params string[] args)
         {

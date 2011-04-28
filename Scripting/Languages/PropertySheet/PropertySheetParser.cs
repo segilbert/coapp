@@ -110,6 +110,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
+                                Console.WriteLine("RULE {0}", rule.FullSelector);
                                 throw new Exception("Unexpected Token in stream [Selector]:" + token.Data);
                         }
 

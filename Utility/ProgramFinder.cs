@@ -204,13 +204,18 @@ namespace CoApp.Toolkit.Utility {
         public static ExecutableInfo GetExeType(string filename) {
             if (ExeTypeCache.ContainsKey(filename))
                 return ExeTypeCache[filename];
-            
-            var pe = new PEInfo(filename);
-            var result = (pe.Is32Bit ? ExecutableInfo.x86 : ExecutableInfo.none)
-                | (pe.Is64Bit ? ExecutableInfo.x64 : ExecutableInfo.none)
-                | (pe.IsManaged ? ExecutableInfo.managed : ExecutableInfo.native)
-                | (pe.IsAny ? ExecutableInfo.any : ExecutableInfo.none);
+            var result = ExecutableInfo.none;
 
+            try {
+                var pe = new PEInfo(filename);
+                result = (pe.Is32Bit ? ExecutableInfo.x86 : ExecutableInfo.none)
+                    | (pe.Is64Bit ? ExecutableInfo.x64 : ExecutableInfo.none)
+                        | (pe.IsManaged ? ExecutableInfo.managed : ExecutableInfo.native)
+                            | (pe.IsAny ? ExecutableInfo.any : ExecutableInfo.none);
+
+            } catch {
+                
+            }
             ExeTypeCache.Add(filename, result);
             return result;
             

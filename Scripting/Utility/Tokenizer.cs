@@ -264,6 +264,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
         public static readonly Token Comma = new Token {Type = TokenType.Comma, Data = ","};
         public static readonly Token Colon = new Token {Type = TokenType.Colon, Data = ":"};
         public static readonly Token Semicolon = new Token {Type = TokenType.Semicolon, Data = ";"};
+        public static readonly Token Pound = new Token { Type = TokenType.Pound, Data = "#" };
 
         #endregion
 

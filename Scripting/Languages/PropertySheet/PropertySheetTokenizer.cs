@@ -53,6 +53,10 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             return tokenizer.Tokens;
         }
 
+        protected override void ParsePound() {
+            Tokens.Add(Pound);
+        }
+
         protected override bool PoachParse() {
             if (CurrentCharacter == '-') {
             }
