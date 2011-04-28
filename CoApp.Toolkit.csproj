@@ -151,11 +151,11 @@
     <Compile Include="Scripting\Languages\CSharp\CSharpTokenizer.cs" />
     <Compile Include="Scripting\Languages\GSharp\GSharpProcessor.cs" />
     <Compile Include="Scripting\Languages\GSharp\GSharpTokenizer.cs" />
-    <Compile Include="Spec\PropertySheet.cs" />
-    <Compile Include="Spec\PropertySheetParser.cs" />
-    <Compile Include="Spec\PropertySheetTokenizer.cs" />
-    <Compile Include="Spec\Rule.cs" />
-    <Compile Include="Spec\RuleProperty.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\PropertySheet.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\PropertySheetParser.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\PropertySheetTokenizer.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\Rule.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\RuleProperty.cs" />
     <Compile Include="Spec\TargetSchema.cs">
       <DependentUpon>TargetSchema.xsd</DependentUpon>
       <AutoGen>True</AutoGen>

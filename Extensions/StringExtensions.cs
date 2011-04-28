@@ -27,6 +27,7 @@ namespace CoApp.Toolkit.Extensions {
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
+        public const string LettersNumbersUnderscoresAndDashesAndDots = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-.";
         
         
         public const string ValidVersionRegex = @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$";
@@ -91,7 +92,7 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static int PositionOfFirstCharacterNotIn(this string str, char[] characters) {
-            int p = 0;
+            var p = 0;
             while (p < str.Length) {
                 if (!characters.Contains(str[p])) {
                     return p;

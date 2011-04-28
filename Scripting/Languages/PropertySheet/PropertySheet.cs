@@ -1,16 +1,24 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
-//     Copyright (c) 2010 Garrett Serack. All rights reserved.
+//     Copyright (c) 2011 Garrett Serack. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
-using System.Text;
-using CoApp.Toolkit.Scripting;
+namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
 
-namespace CoApp.Toolkit.Spec {
     public class PropertySheet {
-        public Dictionary<string, Rule> Rules = new Dictionary<string, Rule>();
+        internal readonly Dictionary<string, Rule> _rules = new Dictionary<string, Rule>();
+        
+        public IEnumerable<Rule> Rules {
+            get { return _rules.Values; }
+        }
+
+        public IEnumerable<Rule> this[string selector] {
+            get { return from r in _rules.Values where r.Selector == selector select r; }
+        }
 
         public static PropertySheet Parse(string text) {
             return PropertySheetParser.Parse(text);
@@ -26,13 +34,13 @@ namespace CoApp.Toolkit.Spec {
 
         public override string ToString() {
             var result = new StringBuilder();
-            foreach( var key in Rules.Keys ) {
+            foreach( var key in _rules.Keys ) {
                 result.Append(key);
                 result.Append(" {");
                 
-                foreach( var property in Rules[key].Properties ) {
+                foreach( var property in _rules[key].Properties ) {
                     result.AppendLine();
-                    result.Append("   ");
+                    result.Append("    ");
                     result.Append(property.Name);
                     result.Append(":");
                     result.Append(property.Value);

@@ -58,6 +58,8 @@ namespace CoApp.Toolkit.Scripting.Utility {
         Bang,
         BangEquals,
 
+        Dollar,
+
         Power,
         PowerEquals,
 
@@ -241,6 +243,8 @@ namespace CoApp.Toolkit.Scripting.Utility {
         public static readonly Token Bang = new Token {Type = TokenType.Bang, Data = "!"};
         public static readonly Token BangEquals = new Token {Type = TokenType.BangEquals, Data = "!="};
 
+        public static readonly Token Dollar = new Token { Type = TokenType.Bang, Data = "$" };
+
         public static readonly Token Power = new Token {Type = TokenType.Power, Data = "^"};
         public static readonly Token PowerEquals = new Token {Type = TokenType.PowerEquals, Data = "^="};
 
@@ -410,6 +414,10 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
                         case '!':
                             ParseBang();
+                            break;
+
+                        case '$':
+                            ParseDollar();
                             break;
 
                         case '^':
@@ -595,13 +603,18 @@ namespace CoApp.Toolkit.Scripting.Utility {
         }
 
         protected virtual void ParseBang() {
-            if(NextCharacter == '=') {
+            if (NextCharacter == '=') {
                 Tokens.Add(BangEquals);
                 Index++;
                 return;
             }
 
             Tokens.Add(Bang);
+        }
+
+        protected virtual void ParseDollar() {
+
+            Tokens.Add(Dollar);
         }
 
         protected virtual void ParseGreaterThan() {
