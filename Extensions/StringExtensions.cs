@@ -114,6 +114,8 @@ namespace CoApp.Toolkit.Extensions {
             return guid;
         }
 
+       
+
         private static Dictionary<string, Regex> wildcards = new Dictionary<string, Regex>();
 
         public static bool IsWildcardMatch(this string text, string wildcardMask) {
@@ -190,20 +192,10 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns>MD5 hash of the string</returns>
         public static string MD5Hash(this string input)
         {
-            StringBuilder sb = new StringBuilder();
-            using (MD5 hasher = MD5.Create())
-            {
-                byte[] inputBytes = Encoding.Unicode.GetBytes(input);
-                byte[] hashedInput = hasher.ComputeHash(inputBytes);
-
-
-                foreach (byte b in hashedInput)
-                {
-                    sb.Append(b.ToString("x2"));
-                }
-
+            using (var hasher = MD5.Create()) {
+                return hasher.ComputeHash(Encoding.Unicode.GetBytes(input)).Aggregate(string.Empty,
+                    (current, b) => current + b.ToString("x2").ToUpper());
             }
-            return sb.ToString().ToUpper();
         }
 
         public static string CreatePublicKeyToken(this string publicKey)
