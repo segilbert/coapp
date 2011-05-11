@@ -20,12 +20,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             get { return from r in _rules.Values where r.Selector == selector select r; }
         }
 
-        public static PropertySheet Parse(string text) {
-            return PropertySheetParser.Parse(text);
+        public static PropertySheet Parse(string text, string originalFilename) {
+            return PropertySheetParser.Parse(text, originalFilename);
         }
 
         public static PropertySheet Load(string path) {
-            return Parse(System.IO.File.ReadAllText(path));
+            return Parse(System.IO.File.ReadAllText(path),path);
         }
 
         public void Save(string path) {

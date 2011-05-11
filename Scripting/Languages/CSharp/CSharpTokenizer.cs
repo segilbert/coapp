@@ -47,14 +47,14 @@ namespace CoApp.Toolkit.Scripting.Languages.CSharp {
                 }
 
                 if(CharsLeft == 0) {
-                    Tokens.Add(new Token {Type = TokenType.Unknown, Data = "@"});
+                    AddToken(new Token {Type = TokenType.Unknown, Data = "@"});
                     return;
                 }
 
                 AdvanceAndRecognize();
 
                 if(!IsCurrentCharacterIdentifierStartCharacter) {
-                    Tokens.Add(new Token {Type = TokenType.Unknown, Data = "@"});
+                    AddToken(new Token {Type = TokenType.Unknown, Data = "@"});
                     Index--; // rewind back to last character.
                     return;
                 }
@@ -79,7 +79,7 @@ namespace CoApp.Toolkit.Scripting.Languages.CSharp {
                 AdvanceAndRecognize();
             } while(CurrentCharacter != '"' || (CurrentCharacter == '"' && NextCharacter == '"'));
 
-            Tokens.Add(new Token {Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) + 1)});
+            AddToken(new Token {Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         /// <summary>

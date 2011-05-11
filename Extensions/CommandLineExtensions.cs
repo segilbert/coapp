@@ -63,7 +63,6 @@ namespace CoApp.Toolkit.Extensions {
                 return switches;
             }
 
-            // var firstarg = 0;
             switches = new Dictionary<string, IEnumerable<string>>();
 
             // load a <exe>.properties file in the same location as the executing assembly.

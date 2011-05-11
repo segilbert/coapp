@@ -76,6 +76,7 @@
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
     <Compile Include="Exceptions\ConflictingFileOrFolderException.cs" />
     <Compile Include="Exceptions\PathIsNotSymlinkException.cs" />
+    <Compile Include="Exceptions\PropertySheetParseException.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\CommandLineExtensions.cs" />
@@ -118,6 +119,8 @@
     <Compile Include="Scan\Types\ScanReport.cs" />
     <Compile Include="Configuration\Indexers.cs" />
     <Compile Include="Configuration\QuickSettings.cs" />
+    <Compile Include="Scripting\Utility\Token.cs" />
+    <Compile Include="Scripting\Utility\TokenType.cs" />
     <Compile Include="Shell\ColorTable.cs" />
     <Compile Include="Shell\ConsoleProperties.cs" />
     <Compile Include="Shell\Coordinate.cs" />

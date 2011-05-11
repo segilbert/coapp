@@ -7,14 +7,17 @@
 namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using System;
     using System.Collections.Generic;
+    using Exceptions;
     using Spec;
     using Utility;
 
     public class PropertySheetParser {
         private readonly string PropertySheetText;
+        private readonly string Filename;
 
-        protected PropertySheetParser(string text) {
+        protected PropertySheetParser(string text, string originalFilename) {
             PropertySheetText = text;
+            Filename = originalFilename;
         }
 
         protected static Token? SkipToNext(ref List<Token>.Enumerator enumerator) {
@@ -88,7 +91,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 // tolerate extra semicolons.
                                 continue;
                             default:
-                                throw new Exception("Unexpected Token in stream [Global]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 100", "Unexpected Token in stream [Global]");
                         }
 
                     case ParseState.Selector:
@@ -110,8 +113,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                Console.WriteLine("RULE {0}", rule.FullSelector);
-                                throw new Exception("Unexpected Token in stream [Selector]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 101", "Unexpected Token in stream [Selector]" );
                         }
 
                     case ParseState.SelectorDot:
@@ -122,7 +124,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [SelectorDot]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 102", "Unexpected Token in stream [SelectorDot]");
                         }
 
                     case ParseState.SelectorPound:
@@ -133,7 +135,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [SelectorPound]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 103", "Unexpected Token in stream [SelectorPound]");
                         }
 
                     case ParseState.InRules:
@@ -154,7 +156,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [InRules]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 104", "Unexpected Token in stream [InRules]" );
                         }
 
                     case ParseState.HaveRuleName:
@@ -164,7 +166,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [HaveRuleName]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 105", "Unexpected Token in stream [HaveRuleName]" );
                         }
 
                     case ParseState.HaveRuleSeparator:
@@ -198,7 +200,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [HaveRuleSeparator]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 106", "Unexpected Token in stream [HaveRuleSeparator]" );
                         }
                     case ParseState.InRuleExpression:
                         switch (token.Type) {
@@ -232,7 +234,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [InRuleCollection]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 107", "Unexpected Token in stream [InRuleCollection]" );
                         }
 
                     case ParseState.HaveCollectionValue: 
@@ -246,7 +248,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [HaveCollectionValue]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 108", "Unexpected Token in stream [HaveCollectionValue]:");
                         }
 
                     case ParseState.HaveRuleValue:
@@ -259,7 +261,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 var t = SkipToNext(ref enumerator);
 
                                 if( !t.HasValue ) {
-                                    throw new Exception("Unexpected end of Token stream [HaveRuleValue]");
+                                    throw new PropertySheetParseException(token, Filename, "PSP 109", "Unexpected end of Token stream [HaveRuleValue]");
                                 }
                                 token = t.Value;
 
@@ -267,7 +269,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                     property.Value = property.Value + "." + token.Data;
                                 }
                                 else 
-                                    throw new Exception("Expected Identifier or NumericLiteral after Dot [HaveRuleValue]");
+                                    throw new PropertySheetParseException(token, Filename, "PSP 110", "Expected Identifier or NumericLiteral after Dot [HaveRuleValue]");
                                 continue;
                            
                             case TokenType.Semicolon:
@@ -277,7 +279,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [HaveRuleValue]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 111", "Unexpected Token in stream [HaveRuleValue]" );
                         }
 
                     case ParseState.HaveRuleEquals:
@@ -290,7 +292,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [HaveRuleEquals]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 112", "Unexpected Token in stream [HaveRuleEquals]" );
                         }
 
                     case ParseState.HaveRuleCompleted:
@@ -302,15 +304,15 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new Exception("Unexpected Token in stream [HaveRuleCompleted]:" + token.Data);
+                                throw new PropertySheetParseException(token, Filename, "PSP 113", "Unexpected Token in stream [HaveRuleCompleted]");
                         }
                 }
             } while (enumerator.MoveNext());
             return propertySheet;
         }
 
-        public static PropertySheet Parse(string propertySheetText) {
-            var p = new PropertySheetParser(propertySheetText);
+        public static PropertySheet Parse(string propertySheetText, string originalFilename) {
+            var p = new PropertySheetParser(propertySheetText,originalFilename);
             return p.Parse();
         }
 

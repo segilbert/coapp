@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
-//     Copyright (c) 2010 Garrett Serack . All rights reserved.
+//     Copyright (c) 2011 Garrett Serack . All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -8,179 +8,6 @@ namespace CoApp.Toolkit.Scripting.Utility {
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
-
-    /// <summary>
-    ///   Enumeration of different token types
-    /// </summary>
-    public enum TokenType {
-        Plus,
-        PlusPlus,
-        PlusEquals,
-
-        Minus,
-        MinusMinus,
-        MinusEquals,
-        DashArrow,
-
-        Asterisk,
-        AsteriskEquals,
-
-        Equal,
-        EqualEqual,
-        Lambda,
-
-        Slash,
-        SlashEquals,
-        LineComment,
-        MultilineComment,
-
-        Bar,
-        BarBar,
-        BarEquals,
-
-        Ampersand,
-        AmpersandAmpersand,
-        AmpersandEquals,
-
-        Percent,
-        PercentEquals,
-
-        LessThan,
-        LessThanEquals,
-        BitShiftLeft,
-        BitShiftLeftEquals,
-
-        GreaterThan,
-        GreaterThanEquals,
-        BitShiftRight,
-        BitShiftRightEquals,
-
-        Bang,
-        BangEquals,
-
-        Dollar,
-
-        Power,
-        PowerEquals,
-
-        Tilde,
-
-        QuestionMark,
-        QuestionMarkQuestionMark,
-
-        OpenBrace,
-        CloseBrace,
-        OpenBracket,
-        CloseBracket,
-        OpenParenthesis,
-        CloseParenthesis,
-
-        Dot,
-        Comma,
-        Colon,
-        Semicolon,
-
-        Pound,
-
-        Unicode,
-
-        Keyword,
-
-        Identifier,
-
-        StringLiteral,
-        NumericLiteral,
-        CharLiteral,
-
-        SelectorParameter,
-
-        WhiteSpace,
-
-        Unknown
-    }
-
-    /// <summary>
-    ///   Represents a Token along with the textual representation of the token
-    /// </summary>
-    public struct Token {
-        /// <summary>
-        ///   The TokenType of the token
-        /// </summary>
-        public TokenType Type { get; set; }
-
-        /// <summary>
-        ///   the data associated with the Token
-        /// </summary>
-        public dynamic Data { get; set; }
-
-        /// <summary>
-        ///    the data in its raw state.
-        /// </summary>
-        public dynamic RawData { get; set; }
-
-        /// <summary>
-        ///   Indicates whether two instance are equal.
-        /// </summary>
-        /// <param name = "first">first instance</param>
-        /// <param name = "second">second instance</param>
-        /// <returns>True if equal</returns>
-        public static bool operator ==(Token first, Token second) {
-            return first.Type == second.Type && first.Data == second.Data;
-        }
-
-        /// <summary>
-        ///   Indicates whether two instance are inequal.
-        /// </summary>
-        /// <param name = "first">first instance</param>
-        /// <param name = "second">second instance</param>
-        /// <returns>True if inequal</returns>
-        public static bool operator !=(Token first, Token second) {
-            return !(first.Type == second.Type && first.Data == second.Data);
-        }
-
-        /// <summary>
-        ///   Indicates whether this instance and a specified token are equal.
-        /// </summary>
-        /// <returns>
-        ///   true if <paramref name = "other" /> and this instance are the same type and represent the same value; otherwise, false.
-        /// </returns>
-        /// <param name = "other">Another object to compare to. </param>
-        /// <filterpriority>2</filterpriority>
-        public bool Equals(Token other) {
-            return Equals(other.Type, Type) && Equals(other.Data, Data);
-        }
-
-        /// <summary>
-        ///   Indicates whether this instance and a specified object are equal.
-        /// </summary>
-        /// <returns>
-        ///   true if <paramref name = "obj" /> and this instance are the same type and represent the same value; otherwise, false.
-        /// </returns>
-        /// <param name = "obj">Another object to compare to. </param>
-        /// <filterpriority>2</filterpriority>
-        public override bool Equals(object obj) {
-            if(ReferenceEquals(null, obj)) {
-                return false;
-            }
-            if(obj.GetType() != typeof(Token)) {
-                return false;
-            }
-            return Equals((Token) obj);
-        }
-
-        /// <summary>
-        ///   Returns the hash code for this instance.
-        /// </summary>
-        /// <returns>
-        ///   A 32-bit signed integer that is the hash code for this instance.
-        /// </returns>
-        /// <filterpriority>2</filterpriority>
-        public override int GetHashCode() {
-            unchecked {
-                return (Type.GetHashCode()*397) ^ (Data != null ? Data.GetHashCode() : 0);
-            }
-        }
-    }
 
     /// <summary>
     ///   A moderatly generic tokenizer class 
@@ -271,7 +98,75 @@ namespace CoApp.Toolkit.Scripting.Utility {
         protected char[] Text { get; set; }
 
         protected HashSet<string> Keywords { get; set; }
-        protected int Index { get; set; }
+        private int _index;
+        private int row = 1;
+        private int column = 1;
+        private List<int> linelengths = new List<int>();
+
+        protected int Index {
+            get { return _index; } 
+            set {
+                if( value == 0) {
+                    _index = 0;
+                    column = 1;
+                    row = 1;
+                    return;
+                }
+                var delta = value - _index;
+
+                if (delta == 0) {
+                    return;
+                }
+                var dir = 1;
+
+                if(delta < 0) {
+                    dir = -1;
+                }
+
+                while( delta < 0 ) {
+                    _index--;
+                    delta++;
+                    if (Index <= 0 )
+                        return;
+
+                    switch (Text[_index]) {
+                        case '\n':
+                            row--;
+                            column = linelengths[row - 1];
+                            linelengths.Remove(row - 1);
+                            break;
+                        case '\r':
+                            /* ignore */
+                            break;
+                        default:
+                            column--;
+                            break;
+                    }
+                }
+                while(delta > 0) {
+                    _index++;
+                    delta--;
+
+                    if (Index >= Text.Length)
+                        return;
+
+                    switch(Text[_index] ) {
+                        case '\n':
+                            linelengths.Add(column);
+                            column = 1;
+                            row++;
+                            break;
+                        case '\r':
+                            column = 1;
+                            break;
+                        default:
+                            column++;
+                            break;
+                    }
+                }
+            }
+        }
+
         protected int CharsLeft { get; set; }
         protected char CurrentCharacter { get; set; }
         protected char NextCharacter { get; set; }
@@ -297,7 +192,11 @@ namespace CoApp.Toolkit.Scripting.Utility {
             RecognizeNextCharacter();
         }
 
-        
+        protected void AddToken(Token token) {
+            token.Row = row;
+            token.Column = column;
+            Tokens.Add(token);
+        }
 
         protected virtual void Tokenize() {
             for(Index = 0; Index < Text.Length; Index++) {
@@ -306,7 +205,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 if(!PoachParse()) {
                     switch(CurrentCharacter) {
                         case '~':
-                            Tokens.Add(Tilde);
+                            AddToken(Tilde);
                             break;
 
                         case '?':
@@ -314,43 +213,43 @@ namespace CoApp.Toolkit.Scripting.Utility {
                             break;
 
                         case '{':
-                            Tokens.Add(OpenBrace);
+                            AddToken(OpenBrace);
                             break;
 
                         case '}':
-                            Tokens.Add(CloseBrace);
+                            AddToken(CloseBrace);
                             break;
 
                         case '[':
-                            Tokens.Add(OpenBracket);
+                            AddToken(OpenBracket);
                             break;
 
                         case ']':
-                            Tokens.Add(CloseBracket);
+                            AddToken(CloseBracket);
                             break;
 
                         case '(':
-                            Tokens.Add(OpenParenthesis);
+                            AddToken(OpenParenthesis);
                             break;
 
                         case ')':
-                            Tokens.Add(CloseParenthesis);
+                            AddToken(CloseParenthesis);
                             break;
 
                         case '.':
-                            Tokens.Add(Dot);
+                            AddToken(Dot);
                             break;
 
                         case ',':
-                            Tokens.Add(Comma);
+                            AddToken(Comma);
                             break;
 
                         case ':':
-                            Tokens.Add(Colon);
+                            AddToken(Colon);
                             break;
 
                         case ';':
-                            Tokens.Add(Semicolon);
+                            AddToken(Semicolon);
                             break;
 
                         case '\r':
@@ -358,19 +257,19 @@ namespace CoApp.Toolkit.Scripting.Utility {
                                 Index++;
                             }
 
-                            Tokens.Add(Eol);
+                            AddToken(Eol);
                             break;
 
                         case '\n':
-                            Tokens.Add(Eol);
+                            AddToken(Eol);
                             break;
 
                         case '\t':
-                            Tokens.Add(Tab);
+                            AddToken(Tab);
                             break;
 
                         case ' ':
-                            Tokens.Add(Space);
+                            AddToken(Space);
                             break;
 
                         case '+':
@@ -522,7 +421,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
+            AddToken(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         protected virtual void ParseHexadecimalLiteral() {
@@ -549,7 +448,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
+            AddToken(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         protected virtual void ParseCharLiteral() {
@@ -570,7 +469,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
-            Tokens.Add(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
+            AddToken(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
         }
 
         protected virtual void ParseStringLiteral() {
@@ -590,52 +489,52 @@ namespace CoApp.Toolkit.Scripting.Utility {
             data = data.Replace("\\\\", "\\");// .Replace("\\r", "\r").Replace("\\n", "\n").Replace("\\t", "\t");
             data = data.Substring(1, data.Length - 2);
             
-            Tokens.Add(new Token {Type = TokenType.StringLiteral, RawData = rawData, Data = data});
+            AddToken(new Token {Type = TokenType.StringLiteral, RawData = rawData, Data = data});
         }
 
         protected virtual void ParsePower() {
             if(NextCharacter == '=') {
-                Tokens.Add(PowerEquals);
+                AddToken(PowerEquals);
                 Index++;
                 return;
             }
 
-            Tokens.Add(Power);
+            AddToken(Power);
         }
 
         protected virtual void ParseBang() {
             if (NextCharacter == '=') {
-                Tokens.Add(BangEquals);
+                AddToken(BangEquals);
                 Index++;
                 return;
             }
 
-            Tokens.Add(Bang);
+            AddToken(Bang);
         }
 
         protected virtual void ParseDollar() {
 
-            Tokens.Add(Dollar);
+            AddToken(Dollar);
         }
 
         protected virtual void ParseGreaterThan() {
             switch(NextCharacter) {
                 case '=':
-                    Tokens.Add(GreaterThanEquals);
+                    AddToken(GreaterThanEquals);
                     Index++;
                     break;
                 case '>':
                     if(NextNextCharacter == '=') {
-                        Tokens.Add(BitShiftRightEquals);
+                        AddToken(BitShiftRightEquals);
                         Index += 2;
                         break;
                     }
 
-                    Tokens.Add(BitShiftRight);
+                    AddToken(BitShiftRight);
                     Index++;
                     break;
                 default:
-                    Tokens.Add(GreaterThan);
+                    AddToken(GreaterThan);
                     break;
             }
         }
@@ -643,47 +542,47 @@ namespace CoApp.Toolkit.Scripting.Utility {
         protected virtual void ParseLessThan() {
             switch(NextCharacter) {
                 case '=':
-                    Tokens.Add(LessThanEquals);
+                    AddToken(LessThanEquals);
                     Index++;
                     break;
                 case '<':
                     if(NextNextCharacter == '=') {
-                        Tokens.Add(BitShiftLeftEquals);
+                        AddToken(BitShiftLeftEquals);
                         Index += 2;
                         break;
                     }
 
-                    Tokens.Add(BitShiftLeft);
+                    AddToken(BitShiftLeft);
                     Index++;
                     break;
                 default:
-                    Tokens.Add(LessThan);
+                    AddToken(LessThan);
                     break;
             }
         }
 
         protected virtual void ParsePercent() {
             if(NextCharacter == '=') {
-                Tokens.Add(PercentEquals);
+                AddToken(PercentEquals);
                 Index++;
                 return;
             }
 
-            Tokens.Add(Percent);
+            AddToken(Percent);
         }
 
         protected virtual void ParseAmpersand() {
             switch(NextCharacter) {
                 case '&':
-                    Tokens.Add(AmpersandAmpersand);
+                    AddToken(AmpersandAmpersand);
                     Index++;
                     break;
                 case '=':
-                    Tokens.Add(AmpersandEquals);
+                    AddToken(AmpersandEquals);
                     Index++;
                     break;
                 default:
-                    Tokens.Add(Ampersand);
+                    AddToken(Ampersand);
                     break;
             }
         }
@@ -691,22 +590,22 @@ namespace CoApp.Toolkit.Scripting.Utility {
         protected virtual void ParseBar() {
             switch(NextCharacter) {
                 case '|':
-                    Tokens.Add(BarBar);
+                    AddToken(BarBar);
                     Index++;
                     break;
                 case '=':
-                    Tokens.Add(BarEquals);
+                    AddToken(BarEquals);
                     Index++;
                     break;
                 default:
-                    Tokens.Add(Bar);
+                    AddToken(Bar);
                     break;
             }
         }
 
         protected virtual void ParseSlash() {
             if(NextCharacter == '=') {
-                Tokens.Add(SlashEquals);
+                AddToken(SlashEquals);
                 Index++;
                 return;
             }
@@ -717,7 +616,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 Index += 2;
                 while(Index < (Text.Length - 1)) {
                     if(Text[Index] == '*' && Text[Index + 1] == '/') {
-                        Tokens.Add(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 2)});
+                        AddToken(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 2)});
                         start = -1;
                         break;
                     }
@@ -728,7 +627,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 if(start > -1) {
                     // didn't find the close marker (star slash) 
                     // adding an incomplete comment at the end I guess.
-                    Tokens.Add(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 1)});
+                    AddToken(new Token {Type = TokenType.MultilineComment, Data = new string(Text, start, (Index - start) + 1)});
                 }
 
                 Index++;
@@ -741,7 +640,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 Index += 2;
                 while(Index < Text.Length) {
                     if(Text[Index] == '\r' || Text[Index] == '\n') {
-                        Tokens.Add(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
+                        AddToken(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
                         start = -1;
                         break;
                     }
@@ -751,52 +650,52 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
                 if(start > -1) {
                     // adding a comment at the end I guess.
-                    Tokens.Add(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
+                    AddToken(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
                 }
 
                 Index++;
                 return;
             }
 
-            Tokens.Add(Slash);
+            AddToken(Slash);
         }
 
         protected virtual void ParseEquals() {
             if(NextCharacter == '=') {
-                Tokens.Add(EqualEqual);
+                AddToken(EqualEqual);
                 Index++;
                 return;
             }
 
-            Tokens.Add(Equal);
+            AddToken(Equal);
         }
 
         protected virtual void ParseStar() {
             if(NextCharacter == '=') {
-                Tokens.Add(StarEquals);
+                AddToken(StarEquals);
                 Index++;
                 return;
             }
 
-            Tokens.Add(Star);
+            AddToken(Star);
         }
 
         protected virtual void ParseMinus() {
             switch(NextCharacter) {
                 case '-':
-                    Tokens.Add(MinusMinus);
+                    AddToken(MinusMinus);
                     Index++;
                     break;
                 case '=':
-                    Tokens.Add(MinusEquals);
+                    AddToken(MinusEquals);
                     Index++;
                     break;
                 case '>':
-                    Tokens.Add(DashArrow);
+                    AddToken(DashArrow);
                     Index++;
                     break;
                 default:
-                    Tokens.Add(Minus);
+                    AddToken(Minus);
                     break;
             }
         }
@@ -804,15 +703,15 @@ namespace CoApp.Toolkit.Scripting.Utility {
         protected virtual void ParsePlus() {
             switch(NextCharacter) {
                 case '+':
-                    Tokens.Add(PlusPlus);
+                    AddToken(PlusPlus);
                     Index++;
                     break;
                 case '=':
-                    Tokens.Add(PlusEquals);
+                    AddToken(PlusEquals);
                     Index++;
                     break;
                 default:
-                    Tokens.Add(Plus);
+                    AddToken(Plus);
                     break;
             }
         }
@@ -834,7 +733,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
 
                 if(Text[Index] == '\r' || Text[Index] == '\n') {
-                    Tokens.Add(new Token {Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1)});
+                    AddToken(new Token {Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1)});
                     start = -1;
                     break;
                 }
@@ -844,7 +743,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
             if(start > -1) {
                 // adding directive at the end I guess.
-                Tokens.Add(new Token {Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1)});
+                AddToken(new Token {Type = TokenType.Pound, Data = new string(Text, start, (Index - start) + 1)});
             }
 
             Index++;
@@ -853,12 +752,12 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
         protected virtual void ParseQuestionMark() {
             if(NextCharacter == '?') {
-                Tokens.Add(QuestionMarkQuestionMark);
+                AddToken(QuestionMarkQuestionMark);
                 Index++;
                 return;
             }
 
-            Tokens.Add(QuestionMark);
+            AddToken(QuestionMark);
         }
 
         /// <summary>
@@ -932,18 +831,18 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
 
                 var identifier = new string(Text, start, (Index - start) + 1);
-                Tokens.Add(new Token {Type = Keywords.Contains(identifier) ? TokenType.Keyword : TokenType.Identifier, Data = identifier});
+                AddToken(new Token {Type = Keywords.Contains(identifier) ? TokenType.Keyword : TokenType.Identifier, Data = identifier});
                 return;
             }
 
-            Tokens.Add(new Token {Type = TokenType.Unknown, Data = CurrentCharacter});
+            AddToken(new Token {Type = TokenType.Unknown, Data = CurrentCharacter});
         }
 
-        public static List<Token> Tokenize(string text) {
+        public static IEnumerable<Token> Tokenize(string text) {
             return Tokenize(string.IsNullOrEmpty(text) ? new char[0] : text.ToCharArray());
         }
 
-        public static List<Token> Tokenize(char[] text) {
+        public static IEnumerable<Token> Tokenize(char[] text) {
             var tokenizer = new Tokenizer(text);
             tokenizer.Tokenize();
             return tokenizer.Tokens;

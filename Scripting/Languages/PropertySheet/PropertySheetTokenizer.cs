@@ -54,7 +54,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         protected override void ParsePound() {
-            Tokens.Add(Pound);
+            AddToken(Pound);
         }
 
         protected override bool PoachParse() {
@@ -72,7 +72,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 }
 
                 string selectorParameter = new string(Text, start, (Index - start)).Trim();
-                Tokens.Add(new Token {Type = TokenType.SelectorParameter, Data = selectorParameter});
+                AddToken(new Token {Type = TokenType.SelectorParameter, Data = selectorParameter});
 
                 return true;
             }
@@ -91,14 +91,14 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 }
 
                 if (CharsLeft == 0) {
-                    Tokens.Add(new Token { Type = TokenType.Unknown, Data = "@" });
+                    AddToken(new Token { Type = TokenType.Unknown, Data = "@" });
                     return;
                 }
 
                 AdvanceAndRecognize();
 
                 if (!IsCurrentCharacterIdentifierStartCharacter) {
-                    Tokens.Add(new Token { Type = TokenType.Unknown, Data = "@" });
+                    AddToken(new Token { Type = TokenType.Unknown, Data = "@" });
                     Index--; // rewind back to last character.
                     return;
                 }
@@ -124,7 +124,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 AdvanceAndRecognize();
             } while (CurrentCharacter != '"' || (CurrentCharacter == '"' && NextCharacter == '"'));
 
-            Tokens.Add(new Token { Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) ), RawData = "@Literal"});
+            AddToken(new Token { Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) ), RawData = "@Literal"});
         }
     }
 }
