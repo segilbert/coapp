@@ -91,7 +91,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 // tolerate extra semicolons.
                                 continue;
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 100", "Unexpected Token in stream [Global]");
+                                throw new PropertySheetParseException(token, Filename, "PSP 100", "Expected one of '.' , '#' or identifier");
                         }
 
                     case ParseState.Selector:
@@ -113,7 +113,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 101", "Unexpected Token in stream [Selector]" );
+                                throw new PropertySheetParseException(token, Filename, "PSP 101", "Expected one of '.' , '#' , '[' or '{{' ." );
                         }
 
                     case ParseState.SelectorDot:
@@ -124,7 +124,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 102", "Unexpected Token in stream [SelectorDot]");
+                                throw new PropertySheetParseException(token, Filename, "PSP 102", "Expected identifier");
                         }
 
                     case ParseState.SelectorPound:
@@ -135,7 +135,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 103", "Unexpected Token in stream [SelectorPound]");
+                                throw new PropertySheetParseException(token, Filename, "PSP 103", "Expected identifier");
                         }
 
                     case ParseState.InRules:
@@ -156,7 +156,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 104", "Unexpected Token in stream [InRules]" );
+                                throw new PropertySheetParseException(token, Filename, "PSP 104", "In rule, expected semi-colon ';', close-brace '}}' or value." );
                         }
 
                     case ParseState.HaveRuleName:
@@ -166,7 +166,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 105", "Unexpected Token in stream [HaveRuleName]" );
+                                throw new PropertySheetParseException(token, Filename, "PSP 105", "Found rule property name, expected colon ':'." );
                         }
 
                     case ParseState.HaveRuleSeparator:
@@ -178,7 +178,6 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                     property.LValue = token.Data;
                                 }
                                 else {
-                                    
                                     property.Value = token.Data;
                                 }
                                 continue;
@@ -200,7 +199,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 106", "Unexpected Token in stream [HaveRuleSeparator]" );
+                                throw new PropertySheetParseException(token, Filename, "PSP 106", "After rule property name, expected value, open-brace '{{' or open-parenthesis '('." );
                         }
                     case ParseState.InRuleExpression:
                         switch (token.Type) {
@@ -234,7 +233,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 107", "Unexpected Token in stream [InRuleCollection]" );
+                                throw new PropertySheetParseException(token, Filename, "PSP 107", "In property collection, expected value or close brace '}}'" );
                         }
 
                     case ParseState.HaveCollectionValue: 
@@ -248,7 +247,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 108", "Unexpected Token in stream [HaveCollectionValue]:");
+                                throw new PropertySheetParseException(token, Filename, "PSP 108", "With property collection value, expected comma ',' or close-brace '}}'.");
                         }
 
                     case ParseState.HaveRuleValue:
@@ -269,7 +268,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                     property.Value = property.Value + "." + token.Data;
                                 }
                                 else 
-                                    throw new PropertySheetParseException(token, Filename, "PSP 110", "Expected Identifier or NumericLiteral after Dot [HaveRuleValue]");
+                                    throw new PropertySheetParseException(token, Filename, "PSP 110", "Expected identifier or numeric literal after Dot '.'.");
                                 continue;
                            
                             case TokenType.Semicolon:
@@ -279,7 +278,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 111", "Unexpected Token in stream [HaveRuleValue]" );
+                                throw new PropertySheetParseException(token, Filename, "PSP 111", "After property value, expected semi-colon ';' or equals '='." );
                         }
 
                     case ParseState.HaveRuleEquals:
@@ -291,8 +290,13 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 property.RValue = token.Data;
                                 continue;
 
+                            case TokenType.OpenBrace:
+                                valueCollection = new List<string>();
+                                state = ParseState.InRuleCollection;
+                                continue;
+
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 112", "Unexpected Token in stream [HaveRuleEquals]" );
+                                throw new PropertySheetParseException(token, Filename, "PSP 112", "After equals in property, expected value or close-brace '{B{'." );
                         }
 
                     case ParseState.HaveRuleCompleted:
@@ -304,7 +308,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 113", "Unexpected Token in stream [HaveRuleCompleted]");
+                                throw new PropertySheetParseException(token, Filename, "PSP 113", "After rule completed, expected semi-colon ';'.");
                         }
                 }
             } while (enumerator.MoveNext());

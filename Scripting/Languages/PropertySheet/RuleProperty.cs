@@ -12,11 +12,16 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using Extensions;
 
     public class RuleProperty {
+        private IEnumerable<string> _values;
+
         public string LValue;
         public string Name;
         public string RValue;
-        public IEnumerable<string> Values;
         public string Expression;
+        public IEnumerable<string> Values { 
+            get { return IsCollection ? _values : Value.SingleItemAsEnumerable(); }
+            set { _values = value; }
+        }
 
         private static string QuoteIfNeeded(string val) {
             if (val.OnlyContains(StringExtensions.LettersNumbersUnderscoresAndDashesAndDots))
@@ -29,12 +34,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
         public string Value {
             get {
-                if (IsCompoundRule) {
-                    return String.Format(@"{0}={1}" , QuoteIfNeeded( LValue), QuoteIfNeeded(RValue));
+                if (IsCollection) {
+                    return _values.Aggregate(string.IsNullOrEmpty(LValue) ? "{\r\n" : "{0} = {{\r\n".format(QuoteIfNeeded(LValue)), (result, each) => result + "        " + (QuoteIfNeeded(each)) + " ,\r\n") + "    }";
                 }
 
-                if( IsCollection ) {
-                    return Values.Aggregate("{\r\n", (result, each) => result + "        " + ( QuoteIfNeeded( each  ) ) + " ,\r\n") + "    }";
+                if (IsCompoundRule) {
+                    return String.Format(@"{0}={1}" , QuoteIfNeeded( LValue), QuoteIfNeeded(RValue));
                 }
 
                 if (IsExpression) {
@@ -49,7 +54,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             }
 
             set {
-                int p = value.IndexOf('=');
+                var p = value.IndexOf('=');
                 if (p != -1) {
                     LValue = value.Substring(0, p ).Trim();
                     RValue = value.Substring(p + 1).Trim();
@@ -66,7 +71,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public bool IsCollection {
-            get { return Values != null; }
+            get { return _values != null; }
         }
 
         public bool IsExpression {
@@ -74,7 +79,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public bool IsValue {
-            get { return !(IsCompoundRule || IsCollection || IsExpression); }
+            get { return !(IsCollection || IsCompoundRule || IsExpression); }
         }
     }
 }

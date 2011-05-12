@@ -194,7 +194,7 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
         protected void AddToken(Token token) {
             token.Row = row;
-            token.Column = column;
+            token.Column = column - 1;
             Tokens.Add(token);
         }
 
