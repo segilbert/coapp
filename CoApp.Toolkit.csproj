@@ -76,6 +76,7 @@
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
     <Compile Include="Exceptions\ConflictingFileOrFolderException.cs" />
     <Compile Include="Exceptions\PathIsNotSymlinkException.cs" />
+    <Compile Include="Exceptions\PropertyRuleException.cs" />
     <Compile Include="Exceptions\PropertySheetParseException.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />

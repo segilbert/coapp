@@ -18,6 +18,10 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         public string Name;
         public string RValue;
         public string Expression;
+        public int SourceRow;
+        public int SourceColumn;
+        public string SourceFile;
+        
         public IEnumerable<string> Values {
             get { return IsCollection ? _values : LValue.SingleItemAsEnumerable(); }
             set { _values = value; }

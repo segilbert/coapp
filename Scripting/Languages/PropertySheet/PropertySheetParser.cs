@@ -147,9 +147,15 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                             case TokenType.Identifier:
                                 property.Name = token.Data;
                                 state = ParseState.HavePropertyName;
+                                property.SourceRow = token.Row;
+                                property.SourceColumn = token.Column;
+                                property.SourceFile = Filename;
                                 continue;
 
                             case TokenType.CloseBrace: // extra semicolons are tolerated.
+                                if (propertySheet._rules.ContainsKey(rule.FullSelector)) {
+                                    throw new PropertySheetParseException(token, Filename, "PSP 113", "Duplicate rule with identical selector not allowed: {0} ", rule.FullSelector);
+                                }
                                 propertySheet._rules.Add(rule.FullSelector, rule);
                                 rule = new Rule();
                                 state = ParseState.Global;
