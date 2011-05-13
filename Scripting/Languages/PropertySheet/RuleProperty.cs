@@ -32,7 +32,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 : @"""{0}""".format(val);
         }
 
-        public string Value {
+        public string RawValue {
             get {
                 if (IsCollection) {
                     return _values.Aggregate(string.IsNullOrEmpty(LValue) ? "{\r\n" : "{0} = {{\r\n".format(QuoteIfNeeded(LValue)), (result, each) => result + "        " + (QuoteIfNeeded(each)) + " ,\r\n") + "    }";

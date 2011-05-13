@@ -178,7 +178,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                     property.LValue = token.Data;
                                 }
                                 else {
-                                    property.Value = token.Data;
+                                    property.RawValue = token.Data;
                                 }
                                 continue;
 
@@ -265,7 +265,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 token = t.Value;
 
                                 if (token.Type == TokenType.Identifier || token.Type == TokenType.NumericLiteral) {
-                                    property.Value = property.Value + "." + token.Data;
+                                    property.RawValue = property.RawValue + "." + token.Data;
                                 }
                                 else 
                                     throw new PropertySheetParseException(token, Filename, "PSP 110", "Expected identifier or numeric literal after Dot '.'.");

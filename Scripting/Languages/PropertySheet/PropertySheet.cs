@@ -43,7 +43,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     result.Append("    ");
                     result.Append(property.Name);
                     result.Append(":");
-                    result.Append(property.Value);
+                    result.Append(property.RawValue);
                     result.Append(";");
                 }
                 result.AppendLine();
