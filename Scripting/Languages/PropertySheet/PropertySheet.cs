@@ -17,7 +17,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public IEnumerable<Rule> this[string selector] {
-            get { return from r in _rules.Values where r.Selector == selector select r; }
+            get { return from r in _rules.Values where r.Name == selector select r; }
         }
 
         public static PropertySheet Parse(string text, string originalFilename) {

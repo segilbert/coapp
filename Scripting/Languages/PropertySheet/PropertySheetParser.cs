@@ -72,18 +72,18 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         switch (token.Type) {
                             case TokenType.Identifier: // look for identifier as the start of a selector
                                 state = ParseState.Selector;
-                                rule.Selector = token.Data;
+                                rule.Name = token.Data;
                                 continue;
 
                             case TokenType.Dot:
                                 state = ParseState.SelectorDot;
-                                rule.Selector = "*";
+                                rule.Name = "*";
                                 // take next identifier as the classname
                                 continue;
 
                             case TokenType.Pound:
                                 state = ParseState.SelectorPound;
-                                rule.Selector = "*";
+                                rule.Name = "*";
                                 // take next identifier as the id
                                 continue;
 
@@ -109,7 +109,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             case TokenType.OpenBrace:
-                                state = ParseState.InRules;
+                                state = ParseState.InRule;
                                 continue;
 
                             default:
@@ -138,7 +138,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 throw new PropertySheetParseException(token, Filename, "PSP 103", "Expected identifier");
                         }
 
-                    case ParseState.InRules:
+                    case ParseState.InRule:
                         switch (token.Type) {
                             case TokenType.Semicolon: // extra semicolons are tolerated.
                                 continue;
@@ -146,7 +146,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                             case TokenType.StringLiteral:
                             case TokenType.Identifier:
                                 property.Name = token.Data;
-                                state = ParseState.HaveRuleName;
+                                state = ParseState.HavePropertyName;
                                 continue;
 
                             case TokenType.CloseBrace: // extra semicolons are tolerated.
@@ -159,21 +159,21 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 throw new PropertySheetParseException(token, Filename, "PSP 104", "In rule, expected semi-colon ';', close-brace '}}' or value." );
                         }
 
-                    case ParseState.HaveRuleName:
+                    case ParseState.HavePropertyName:
                         switch (token.Type) {
                             case TokenType.Colon:
-                                state = ParseState.HaveRuleSeparator;
+                                state = ParseState.HavePropertySeparator;
                                 continue;
 
                             default:
                                 throw new PropertySheetParseException(token, Filename, "PSP 105", "Found rule property name, expected colon ':'." );
                         }
 
-                    case ParseState.HaveRuleSeparator:
+                    case ParseState.HavePropertySeparator:
                         switch (token.Type) {
                             case TokenType.StringLiteral:
                             case TokenType.NumericLiteral:
-                                state = ParseState.HaveRuleValue;
+                                state = ParseState.HavePropertyValue;
                                 if ("@Literal" == token.RawData) {
                                     property.LValue = token.Data;
                                 }
@@ -183,30 +183,30 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             case TokenType.Identifier:
-                                state = ParseState.HaveRuleValue;
+                                state = ParseState.HavePropertyValue;
                                 property.LValue = token.Data;
                                 continue;
 
                             case TokenType.OpenBrace:
                                 valueCollection = new List<string>();
-                                state = ParseState.InRuleCollection;
+                                state = ParseState.InPropertyCollection;
                                 continue;
 
                             case TokenType.OpenParenthesis:
                                 depth = 1;
                                 property.Expression = string.Empty;
-                                state = ParseState.InRuleExpression;
+                                state = ParseState.InPropertyExpression;
                                 continue;
 
                             default:
                                 throw new PropertySheetParseException(token, Filename, "PSP 106", "After rule property name, expected value, open-brace '{{' or open-parenthesis '('." );
                         }
-                    case ParseState.InRuleExpression:
+                    case ParseState.InPropertyExpression:
                         switch (token.Type) {
                             case TokenType.CloseParenthesis:
                                 depth--;
                                 if (depth == 0) {
-                                    state = ParseState.HaveRuleCompleted;
+                                    state = ParseState.HavePropertyCompleted;
                                     continue;
                                 }
                                 break;
@@ -218,7 +218,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         continue;
                         
 
-                    case ParseState.InRuleCollection:
+                    case ParseState.InPropertyCollection:
                         switch (token.Type) {
                             case TokenType.StringLiteral:
                             case TokenType.NumericLiteral:
@@ -229,7 +229,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
                             case TokenType.CloseBrace:
                                 property.Values = valueCollection;
-                                state = ParseState.HaveRuleCompleted;
+                                state = ParseState.HavePropertyCompleted;
                                 continue;
 
                             default:
@@ -239,28 +239,28 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     case ParseState.HaveCollectionValue: 
                         switch (token.Type) {
                             case TokenType.Comma:
-                                state = ParseState.InRuleCollection;
+                                state = ParseState.InPropertyCollection;
                                 continue;
                             case TokenType.CloseBrace:
                                 property.Values = valueCollection;
-                                state = ParseState.HaveRuleCompleted;
+                                state = ParseState.HavePropertyCompleted;
                                 continue;
 
                             default:
                                 throw new PropertySheetParseException(token, Filename, "PSP 108", "With property collection value, expected comma ',' or close-brace '}}'.");
                         }
 
-                    case ParseState.HaveRuleValue:
+                    case ParseState.HavePropertyValue:
                         switch (token.Type) {
                             case TokenType.Equal:
-                                state = ParseState.HaveRuleEquals;
+                                state = ParseState.HavePropertyEquals;
                                 continue;
 
                             case TokenType.Dot:
                                 var t = SkipToNext(ref enumerator);
 
                                 if( !t.HasValue ) {
-                                    throw new PropertySheetParseException(token, Filename, "PSP 109", "Unexpected end of Token stream [HaveRuleValue]");
+                                    throw new PropertySheetParseException(token, Filename, "PSP 109", "Unexpected end of Token stream [HavePropertyValue]");
                                 }
                                 token = t.Value;
 
@@ -272,7 +272,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
                            
                             case TokenType.Semicolon:
-                                state = ParseState.InRules;
+                                state = ParseState.InRule;
                                 rule.Properties.Add(property);
                                 property = new RuleProperty();
                                 continue;
@@ -281,28 +281,28 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 throw new PropertySheetParseException(token, Filename, "PSP 111", "After property value, expected semi-colon ';' or equals '='." );
                         }
 
-                    case ParseState.HaveRuleEquals:
+                    case ParseState.HavePropertyEquals:
                         switch (token.Type) {
                             case TokenType.Identifier:
                             case TokenType.StringLiteral:
                             case TokenType.NumericLiteral:
-                                state = ParseState.HaveRuleCompleted;
+                                state = ParseState.HavePropertyCompleted;
                                 property.RValue = token.Data;
                                 continue;
 
                             case TokenType.OpenBrace:
                                 valueCollection = new List<string>();
-                                state = ParseState.InRuleCollection;
+                                state = ParseState.InPropertyCollection;
                                 continue;
 
                             default:
                                 throw new PropertySheetParseException(token, Filename, "PSP 112", "After equals in property, expected value or close-brace '{B{'." );
                         }
 
-                    case ParseState.HaveRuleCompleted:
+                    case ParseState.HavePropertyCompleted:
                         switch (token.Type) {
                             case TokenType.Semicolon:
-                                state = ParseState.InRules;
+                                state = ParseState.InRule;
                                 rule.Properties.Add(property);
                                 property = new RuleProperty();
                                 continue;
@@ -327,15 +327,15 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             Selector,
             SelectorDot,
             SelectorPound,
-            InRules,
-            HaveRuleName,
-            HaveRuleSeparator,
-            HaveRuleValue,
-            HaveRuleCompleted,
-            HaveRuleEquals,
-            InRuleCollection,
+            InRule,
+            HavePropertyName,
+            HavePropertySeparator,
+            HavePropertyValue,
+            HavePropertyCompleted,
+            HavePropertyEquals,
+            InPropertyCollection,
             HaveCollectionValue,
-            InRuleExpression,
+            InPropertyExpression,
 
         }
 

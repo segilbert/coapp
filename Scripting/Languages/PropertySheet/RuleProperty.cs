@@ -18,8 +18,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         public string Name;
         public string RValue;
         public string Expression;
-        public IEnumerable<string> Values { 
-            get { return IsCollection ? _values : Value.SingleItemAsEnumerable(); }
+        public IEnumerable<string> Values {
+            get { return IsCollection ? _values : LValue.SingleItemAsEnumerable(); }
             set { _values = value; }
         }
 
@@ -38,7 +38,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     return _values.Aggregate(string.IsNullOrEmpty(LValue) ? "{\r\n" : "{0} = {{\r\n".format(QuoteIfNeeded(LValue)), (result, each) => result + "        " + (QuoteIfNeeded(each)) + " ,\r\n") + "    }";
                 }
 
-                if (IsCompoundRule) {
+                if (IsCompoundProperty) {
                     return String.Format(@"{0}={1}" , QuoteIfNeeded( LValue), QuoteIfNeeded(RValue));
                 }
 
@@ -66,8 +66,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             }
         }
 
-        public bool IsCompoundRule {
+        public bool IsCompoundProperty {
             get { return !string.IsNullOrEmpty(RValue); }
+        }
+
+        public bool IsCompoundCollection {
+            get { return !string.IsNullOrEmpty(LValue) & IsCollection; }
         }
 
         public bool IsCollection {
@@ -79,7 +83,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public bool IsValue {
-            get { return !(IsCollection || IsCompoundRule || IsExpression); }
+            get { return !(IsCollection || IsCompoundProperty || IsExpression); }
         }
     }
 }

@@ -11,7 +11,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using Spec;
 
     public class Rule {
-        public string Selector;
+        public string Name;
         public string Class;
         public string Id;
         public string Parameter;
@@ -24,7 +24,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         public string FullSelector {
             get {
                 var result = new StringBuilder(); 
-                result.Append( string.IsNullOrEmpty(Selector) ? "*" : Selector);
+                result.Append( string.IsNullOrEmpty(Name) ? "*" : Name);
                 
                 if(!string.IsNullOrEmpty(Parameter)) {
                     result.Append("[");
