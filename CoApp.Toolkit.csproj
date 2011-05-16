@@ -75,9 +75,10 @@
     <Compile Include="DynamicXml\DynamicNode.cs" />
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
     <Compile Include="Exceptions\ConflictingFileOrFolderException.cs" />
+    <Compile Include="Exceptions\EndUserException.cs" />
     <Compile Include="Exceptions\PathIsNotSymlinkException.cs" />
-    <Compile Include="Exceptions\PropertyRuleException.cs" />
-    <Compile Include="Exceptions\PropertySheetParseException.cs" />
+    <Compile Include="Exceptions\EndUserPropertyException.cs" />
+    <Compile Include="Exceptions\EndUserParseException.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\CommandLineExtensions.cs" />

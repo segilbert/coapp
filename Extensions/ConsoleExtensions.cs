@@ -138,6 +138,9 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static IEnumerable<string> ToTable(this IEnumerable<object> data, int maxWidth = 500) {
+            if( !data.Any()) {
+                return "Collection does not contain any data.".SingleItemAsEnumerable();
+            }
             var fields = data.First().GetType().GetProperties();
             var columnTitles = (from field in fields select field.Name.Replace("_", " ").Trim()).ToArray();
             var rows = data.Select(row => (from field in fields select row.SafeGet(field)).ToArray()).ToArray();

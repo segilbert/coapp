@@ -91,7 +91,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 // tolerate extra semicolons.
                                 continue;
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 100", "Expected one of '.' , '#' or identifier");
+                                throw new EndUserParseException(token, Filename, "PSP 100", "Expected one of '.' , '#' or identifier");
                         }
 
                     case ParseState.Selector:
@@ -113,7 +113,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 101", "Expected one of '.' , '#' , '[' or '{{' ." );
+                                throw new EndUserParseException(token, Filename, "PSP 101", "Expected one of '.' , '#' , '[' or '{{' ." );
                         }
 
                     case ParseState.SelectorDot:
@@ -124,7 +124,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 102", "Expected identifier");
+                                throw new EndUserParseException(token, Filename, "PSP 102", "Expected identifier");
                         }
 
                     case ParseState.SelectorPound:
@@ -135,7 +135,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 103", "Expected identifier");
+                                throw new EndUserParseException(token, Filename, "PSP 103", "Expected identifier");
                         }
 
                     case ParseState.InRule:
@@ -154,7 +154,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
                             case TokenType.CloseBrace: // extra semicolons are tolerated.
                                 if (propertySheet._rules.ContainsKey(rule.FullSelector)) {
-                                    throw new PropertySheetParseException(token, Filename, "PSP 113", "Duplicate rule with identical selector not allowed: {0} ", rule.FullSelector);
+                                    throw new EndUserParseException(token, Filename, "PSP 113", "Duplicate rule with identical selector not allowed: {0} ", rule.FullSelector);
                                 }
                                 propertySheet._rules.Add(rule.FullSelector, rule);
                                 rule = new Rule();
@@ -162,7 +162,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 104", "In rule, expected semi-colon ';', close-brace '}}' or value." );
+                                throw new EndUserParseException(token, Filename, "PSP 104", "In rule, expected semi-colon ';', close-brace '}}' or value." );
                         }
 
                     case ParseState.HavePropertyName:
@@ -172,7 +172,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 105", "Found rule property name, expected colon ':'." );
+                                throw new EndUserParseException(token, Filename, "PSP 105", "Found rule property name, expected colon ':'." );
                         }
 
                     case ParseState.HavePropertySeparator:
@@ -205,7 +205,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 106", "After rule property name, expected value, open-brace '{{' or open-parenthesis '('." );
+                                throw new EndUserParseException(token, Filename, "PSP 106", "After rule property name, expected value, open-brace '{{' or open-parenthesis '('." );
                         }
                     case ParseState.InPropertyExpression:
                         switch (token.Type) {
@@ -239,7 +239,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 107", "In property collection, expected value or close brace '}}'" );
+                                throw new EndUserParseException(token, Filename, "PSP 107", "In property collection, expected value or close brace '}}'" );
                         }
 
                     case ParseState.HaveCollectionValue: 
@@ -253,7 +253,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 108", "With property collection value, expected comma ',' or close-brace '}}'.");
+                                throw new EndUserParseException(token, Filename, "PSP 108", "With property collection value, expected comma ',' or close-brace '}}'.");
                         }
 
                     case ParseState.HavePropertyValue:
@@ -266,7 +266,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 var t = SkipToNext(ref enumerator);
 
                                 if( !t.HasValue ) {
-                                    throw new PropertySheetParseException(token, Filename, "PSP 109", "Unexpected end of Token stream [HavePropertyValue]");
+                                    throw new EndUserParseException(token, Filename, "PSP 109", "Unexpected end of Token stream [HavePropertyValue]");
                                 }
                                 token = t.Value;
 
@@ -274,7 +274,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                     property.RawValue = property.RawValue + "." + token.Data;
                                 }
                                 else 
-                                    throw new PropertySheetParseException(token, Filename, "PSP 110", "Expected identifier or numeric literal after Dot '.'.");
+                                    throw new EndUserParseException(token, Filename, "PSP 110", "Expected identifier or numeric literal after Dot '.'.");
                                 continue;
                            
                             case TokenType.Semicolon:
@@ -284,7 +284,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 111", "After property value, expected semi-colon ';' or equals '='." );
+                                throw new EndUserParseException(token, Filename, "PSP 111", "After property value, expected semi-colon ';' or equals '='." );
                         }
 
                     case ParseState.HavePropertyEquals:
@@ -302,7 +302,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 112", "After equals in property, expected value or close-brace '{B{'." );
+                                throw new EndUserParseException(token, Filename, "PSP 112", "After equals in property, expected value or close-brace '{B{'." );
                         }
 
                     case ParseState.HavePropertyCompleted:
@@ -314,7 +314,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             default:
-                                throw new PropertySheetParseException(token, Filename, "PSP 113", "After rule completed, expected semi-colon ';'.");
+                                throw new EndUserParseException(token, Filename, "PSP 113", "After rule completed, expected semi-colon ';'.");
                         }
                 }
             } while (enumerator.MoveNext());
