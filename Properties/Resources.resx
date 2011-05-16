@@ -157,5 +157,7 @@
   <data name="Error_UnknownError" xml:space="preserve">
     <value>Unknown error: {0}</value>
   </data>
-  
+  <data name="Invalid_WildcardPath" xml:space="preserve">
+    <value>The wildcard path {0} is invalid.</value>
+  </data>
 </root>

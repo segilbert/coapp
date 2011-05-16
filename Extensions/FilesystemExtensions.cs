@@ -22,6 +22,7 @@ namespace CoApp.Toolkit.Extensions {
     using System.Linq;
     using System.Text.RegularExpressions;
     using Win32;
+    using CoApp.Toolkit.Properties;
 
     public static class FilesystemExtensions {
         private static int counter;
@@ -31,6 +32,8 @@ namespace CoApp.Toolkit.Extensions {
         private static readonly Regex UncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
         private static readonly Regex DrivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
         private static readonly Regex VolumePrefixRx = new Regex(@"\\\?\?\\Volume");
+
+        private static readonly Regex InvalidDoubleWCRx = new Regex(@"\\.+\*\*|\*\*[^\\]+\\|\*\*\\\*\*");
 
 
         /// <summary>
@@ -225,6 +228,106 @@ namespace CoApp.Toolkit.Extensions {
             return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarter()));
         }
 
+        
+        
+
+
+
+        public static IEnumerable<string> FindFilesSmarterComplex( this string pathMask, string pathPrefix = null)
+        {
+
+            //pathMask safety
+            {
+                if (InvalidDoubleWCRx.IsMatch(pathMask))
+                {
+                    throw new ArgumentException(Resources.Invalid_WildcardPath.format(pathMask));
+                }
+            }
+
+
+            if (pathPrefix == null)
+                pathPrefix = Directory.GetCurrentDirectory();
+
+            pathMask = pathMask.Replace("/", "\\");
+            var nextPart = pathMask.GetNextPart();
+            var onLastPart = nextPart.Item2 == "";
+
+            if (nextPart.Item1 == "**")
+            {
+                if (onLastPart)
+                {
+                    //we just get every file from here on down
+
+                    return Directory.EnumerateFiles(pathPrefix, "*", SearchOption.AllDirectories);
+                }
+                else
+                {
+                    var partAfterWC = nextPart.Item2.GetNextPart();
+
+                    var nextPartIsLast = partAfterWC.Item2 == "";
+
+                    if (nextPartIsLast)
+                    {
+                        return Directory.EnumerateFiles(pathPrefix, partAfterWC.Item1, SearchOption.AllDirectories).
+                            Aggregate(Enumerable.Empty<string>(),
+                                (output, d) => output.Concat(pathPrefix.RelativePathTo(d).FindFilesSmarterComplex(pathPrefix)));
+                    }
+                    else
+                    {
+                        var dirs = Directory.EnumerateDirectories(pathPrefix, partAfterWC.Item1, SearchOption.AllDirectories);
+
+                        return dirs.
+                            Aggregate(Enumerable.Empty<string>(),
+                            (output, d) => output.Concat((pathPrefix.RelativePathTo(d) + "\\" + partAfterWC.Item2).FindFilesSmarterComplex(pathPrefix)));
+                    }
+                }
+
+
+            }
+            else if (nextPart.Item1.Contains("*"))
+            {
+                if (onLastPart)
+                {
+                    return Directory.EnumerateFiles(pathPrefix, nextPart.Item1).
+                        Aggregate(Enumerable.Empty<string>(),
+                        (output, d) => output.Concat(Path.GetFileName(d).FindFilesSmarterComplex(pathPrefix)));
+                }
+                else
+                {
+                    var dirs = Directory.EnumerateDirectories(pathPrefix, nextPart.Item1);
+
+                    return dirs.
+                        Aggregate(Enumerable.Empty<string>(),
+                        (output, d) => output.Concat((Path.GetFileName(d) + "\\" + nextPart.Item2).FindFilesSmarterComplex(pathPrefix)));
+                }
+            }
+            else
+            {
+                //recursively keep going
+                var newPathPrefix = pathPrefix + "\\" + nextPart.Item1;
+                if (onLastPart)
+                {
+                    return File.Exists(newPathPrefix) ? newPathPrefix.SingleItemAsEnumerable() : Enumerable.Empty<string>();
+                }
+                else
+                {
+                    return Directory.Exists(newPathPrefix) ? nextPart.Item2.FindFilesSmarterComplex(newPathPrefix) : Enumerable.Empty<string>();
+                }
+                
+            }
+
+
+            
+
+        }
+
+        public static IEnumerable<string> FindFilesSmarterComplex( this IEnumerable<string> pathMasks)
+        {
+            return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarterComplex()));
+
+        }
+
+
         /// <summary>
         /// Gets the name of a file minus it's extension, ie: if the file name is "test.exe", returns "test".
         /// </summary>
@@ -360,6 +463,22 @@ namespace CoApp.Toolkit.Extensions {
             }
 
             return path;
+        }
+
+
+        private static Tuple<string, string> GetNextPart(this string path)
+        {
+            var indexOfSlash = path.IndexOf('\\');
+
+            if (indexOfSlash == -1)
+            {
+                return new Tuple<string, string>(path, "");
+            }
+
+            else
+            {
+                return new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
+            }
         }
     }
 }
