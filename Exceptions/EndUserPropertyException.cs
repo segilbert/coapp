@@ -9,9 +9,9 @@ namespace CoApp.Toolkit.Exceptions {
     using Extensions;
     using Scripting.Languages.PropertySheet;
     
-    public class PropertyRuleException : Exception {
+    public class EndUserPropertyException : Exception {
         public RuleProperty Property;
-        public PropertyRuleException(RuleProperty property, string errorcode, string message, params object[] parameters)
+        public EndUserPropertyException(RuleProperty property, string errorcode, string message, params object[] parameters)
             : base("{0}({1},{2}):{3}:{4}".format(property.SourceFile, property.SourceRow, property.SourceColumn, errorcode, message.format(parameters))) {
             Property = property;
         }

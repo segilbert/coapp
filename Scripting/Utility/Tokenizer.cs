@@ -117,11 +117,6 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 if (delta == 0) {
                     return;
                 }
-                var dir = 1;
-
-                if(delta < 0) {
-                    dir = -1;
-                }
 
                 while( delta < 0 ) {
                     _index--;
