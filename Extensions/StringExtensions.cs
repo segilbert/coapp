@@ -226,7 +226,7 @@ namespace CoApp.Toolkit.Extensions {
         /// </summary>
         /// <param name="input">a string to be checked</param>
         /// <returns>true if it the string is a valid version, false otherwise</returns>
-		public static bool IsValidVersion(this string input)
+        public static bool IsValidVersion(this string input)
         {
             return versionRegex.IsMatch(input);
         }
