@@ -5,6 +5,8 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Configuration {
+    using System.Collections.Generic;
+    using System.Linq;
     using Microsoft.Win32;
 
     public class Settings {
@@ -20,6 +22,54 @@ namespace CoApp.Toolkit.Configuration {
             applicationName = name;
             this.hive = hive;
         }
+        
+        public void DeleteSubkey(string subkey) {
+            RegistryKey regkey = null;
+            try {
+                regkey = hive.CreateSubKey(@"Software\CoApp\" + applicationName);
+
+                if (null == regkey) {
+                    return;
+                }
+                regkey.DeleteSubKey(subkey);
+            }
+            catch {
+            }
+            finally {
+                if (null != regkey) {
+                    regkey.Close();
+                }
+            }
+        }
+
+        public IEnumerable<string> Subkeys {
+            get {
+                RegistryKey regkey = null;
+                try {
+                    regkey = hive.OpenSubKey(@"Software\CoApp\" + applicationName);
+
+                    if (null == regkey) {
+                        return Enumerable.Empty<string>();
+                    }
+                    return regkey.GetSubKeyNames();
+                }
+                catch {
+                }
+                finally {
+                    if (null != regkey) {
+                        regkey.Close();
+                    }
+                }
+                return Enumerable.Empty<string>();
+            }
+        }
+
+        public IEnumerable<string> SettingNames {
+            get {
+                return null;
+            }
+        }
+
 
         public object this[string keyName, string settingName] {
             get {
