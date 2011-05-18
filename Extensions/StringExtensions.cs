@@ -138,23 +138,16 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null) {
-            ignorePrefix = ignorePrefix ?? string.Empty;
+            ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : Regex.Escape(ignorePrefix);
 
-            if (ignorePrefix.EndsWith(@"\"))
-                ignorePrefix = ignorePrefix.Substring(ignorePrefix.Length - 1);
-
-            var key = wildcardMask + (ignorePrefix ?? string.Empty);
-
+            var key = wildcardMask + ignorePrefix;
             if (wildcards.ContainsKey(key))
                 return wildcards[key].IsMatch(text);
-
-            if (!wildcardMask.Contains("\\"))
-                wildcardMask = @"**\" + wildcardMask;
 
             if (wildcardMask.EndsWith("**"))
                 wildcardMask += @"\*";
 
-            var mask = new Regex('^' + Regex.Escape(ignorePrefix) +
+            var mask = new Regex('^' + ignorePrefix +
                 (wildcardMask
                    .Replace(".", @"[.]")
                    .Replace(@"\", @"\\")
@@ -283,7 +276,6 @@ namespace CoApp.Toolkit.Extensions {
 
         public static byte[] Gzip(this string input)
         {
-
             var memStream = new MemoryStream();
             using (GZipStream gzStr = new GZipStream(memStream, CompressionMode.Compress))
             {
@@ -333,5 +325,6 @@ namespace CoApp.Toolkit.Extensions {
         {
             return emailRegex.IsMatch(email);
         }
+
     }
 }
