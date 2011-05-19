@@ -64,6 +64,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "autopackage", "..\autopacka
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ptk", "..\ptk\ptk.csproj", "{C0A44000-B786-43FE-B14F-AB411403B499}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.AzureFS", "..\toolkit\CoApp.Toolkit.AzureFS.csproj", "{A126ABBC-9199-432E-9714-4A1BEF84EE89}"
+	ProjectSection(ProjectDependencies) = postProject
+		{201258A6-4FB1-4448-BBC0-37D2A8967916} = {201258A6-4FB1-4448-BBC0-37D2A8967916}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureSyncbox", "..\AzureSyncbox\AzureSyncbox.csproj", "{93838A7A-B28C-4A83-BB75-E9B25471E4AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Debug", "..\..\..\Dropbox\coapp\toolkit\CoApp.Toolkit.Debug.csproj", "{A126ABBC-9199-4096-9714-4A1BEF84EE89}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -175,6 +184,24 @@ Global
 		{C0A44000-B786-43FE-B14F-AB411403B499}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C0A44000-B786-43FE-B14F-AB411403B499}.Test|Any CPU.ActiveCfg = Test|Any CPU
 		{C0A44000-B786-43FE-B14F-AB411403B499}.Test|Any CPU.Build.0 = Test|Any CPU
+		{A126ABBC-9199-432E-9714-4A1BEF84EE89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A126ABBC-9199-432E-9714-4A1BEF84EE89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A126ABBC-9199-432E-9714-4A1BEF84EE89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A126ABBC-9199-432E-9714-4A1BEF84EE89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A126ABBC-9199-432E-9714-4A1BEF84EE89}.Test|Any CPU.ActiveCfg = Test|Any CPU
+		{A126ABBC-9199-432E-9714-4A1BEF84EE89}.Test|Any CPU.Build.0 = Test|Any CPU
+		{93838A7A-B28C-4A83-BB75-E9B25471E4AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93838A7A-B28C-4A83-BB75-E9B25471E4AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93838A7A-B28C-4A83-BB75-E9B25471E4AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93838A7A-B28C-4A83-BB75-E9B25471E4AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93838A7A-B28C-4A83-BB75-E9B25471E4AF}.Test|Any CPU.ActiveCfg = Release|Any CPU
+		{93838A7A-B28C-4A83-BB75-E9B25471E4AF}.Test|Any CPU.Build.0 = Release|Any CPU
+		{A126ABBC-9199-4096-9714-4A1BEF84EE89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A126ABBC-9199-4096-9714-4A1BEF84EE89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A126ABBC-9199-4096-9714-4A1BEF84EE89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A126ABBC-9199-4096-9714-4A1BEF84EE89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A126ABBC-9199-4096-9714-4A1BEF84EE89}.Test|Any CPU.ActiveCfg = Test|Any CPU
+		{A126ABBC-9199-4096-9714-4A1BEF84EE89}.Test|Any CPU.Build.0 = Test|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
