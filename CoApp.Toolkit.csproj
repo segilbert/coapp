@@ -89,7 +89,6 @@
     <Compile Include="Extensions\DebugExtensions.cs" />
     <Compile Include="Extensions\FilesystemExtensions.cs" />
     <Compile Include="Extensions\LinqExtensions.cs" />
-    <Compile Include="Extensions\PropertySheetExtensions.cs" />
     <Compile Include="Extensions\X509Certificate2Extensions.cs" />
     <Compile Include="Extensions\X509StoreExtensions.cs" />
     <Compile Include="Extensions\SortedObservableCollection.cs" />
@@ -122,6 +121,7 @@
     <Compile Include="Scan\Types\ScanReport.cs" />
     <Compile Include="Configuration\Indexers.cs" />
     <Compile Include="Configuration\QuickSettings.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\RulePropertyExtensions.cs" />
     <Compile Include="Scripting\Utility\Token.cs" />
     <Compile Include="Scripting\Utility\TokenType.cs" />
     <Compile Include="Shell\ColorTable.cs" />

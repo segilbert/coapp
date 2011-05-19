@@ -161,6 +161,10 @@ namespace CoApp.Toolkit.Extensions {
             return mask.IsMatch(text);
         }
 
+        public static bool ContainsIgnoreCase(this IEnumerable<string> source, string value) {
+            return (from each in source where each.Equals(value, StringComparison.CurrentCultureIgnoreCase) select each).Any();
+        }
+
         public static bool HasWildcardMatch(this IEnumerable<string> source, string value,string ignorePrefix = null) {
             return source.Any(wildcard => value.IsWildcardMatch(wildcard,ignorePrefix));
         }
