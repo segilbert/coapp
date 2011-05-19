@@ -5,9 +5,12 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
+    using Exceptions;
+    using Extensions;
     using Spec;
 
     public class Rule {
@@ -44,6 +47,10 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
                 return result.ToString();
             }
+        }
+
+        public bool HasProperty( string propertyName ) {
+            return this[propertyName].Any();
         }
     }
 }

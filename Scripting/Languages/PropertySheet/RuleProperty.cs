@@ -23,7 +23,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         public string SourceFile;
         
         public IEnumerable<string> Values {
-            get { return IsCollection ? _values : LValue.SingleItemAsEnumerable(); }
+            get { return IsCollection ? _values : (IsCompoundProperty ? RValue : LValue).SingleItemAsEnumerable(); }
             set { _values = value; }
         }
 
