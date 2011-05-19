@@ -71,7 +71,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.AzureFS", "..
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureSyncbox", "..\AzureSyncbox\AzureSyncbox.csproj", "{93838A7A-B28C-4A83-BB75-E9B25471E4AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Debug", "..\..\..\Dropbox\coapp\toolkit\CoApp.Toolkit.Debug.csproj", "{A126ABBC-9199-4096-9714-4A1BEF84EE89}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Debug", "..\toolkit\CoApp.Toolkit.Debug.csproj", "{A126ABBC-9199-4096-9714-4A1BEF84EE89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
