@@ -136,5 +136,17 @@ namespace CoApp.Toolkit.Extensions {
             dictionary.TryGetValue(key, out value);
             return value;
         }
+
+        public static Dictionary<string, IEnumerable<string>>Merge(this Dictionary<string, IEnumerable<string>> result, IDictionary<string, IEnumerable<string>> more ) {
+            foreach( var k in more.Keys) {
+                if( result.ContainsKey(k)) {
+                    result[k] = result[k].Union(more[k]).Distinct();
+                }
+                else {
+                    result.Add(k, more[k]);
+                }
+            }
+            return result;
+        }
     }
 }

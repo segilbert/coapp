@@ -8,6 +8,8 @@ using System.IO;
 using System.Xml.Serialization;
 
 namespace CoApp.Toolkit.Spec {
+    using Extensions;
+
     public partial class Target {
         private static XmlSerializer _serializer = new XmlSerializer(typeof(Target));
 
@@ -17,16 +19,17 @@ namespace CoApp.Toolkit.Spec {
         [XmlIgnore]
         public string Filename { 
             set { 
-                var p = Path.GetFullPath(value);
-                if (Path.HasExtension(p))
+                var p = value.GetFullPath();
+                if (Path.HasExtension(p)) {
                     p = Path.Combine(Path.GetDirectoryName(p), Path.GetFileNameWithoutExtension(p));
+                }
                 specFilename = p + ".spec";
                 cpsFilename = p + ".cps";
             }
         get { return specFilename; }}
 
         [XmlIgnore] 
-        public string Folder {get { return Path.GetDirectoryName(Path.GetFullPath(Filename)); }}
+        public string Folder {get { return Path.GetDirectoryName(Filename.GetFullPath()); }}
 
         [XmlIgnore]
         public bool Ignore;
