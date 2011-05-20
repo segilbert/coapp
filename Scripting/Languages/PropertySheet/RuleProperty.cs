@@ -58,11 +58,13 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             }
 
             set {
-                var p = value.IndexOf('=');
-                if (p != -1) {
-                    LValue = value.Substring(0, p ).Trim();
-                    RValue = value.Substring(p + 1).Trim();
-                    return;
+                if (!(value.Contains("\r") || value.Contains("\n"))) {
+                    var p = value.IndexOf('=');
+                    if (p != -1) {
+                        LValue = value.Substring(0, p).Trim();
+                        RValue = value.Substring(p + 1).Trim();
+                        return;
+                    }
                 }
 
                 LValue = value;
