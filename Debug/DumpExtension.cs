@@ -12,7 +12,7 @@ namespace CoApp.Toolkit.Debug {
     public static class DumpExtension {
         public static T Dump<T>(this T o) {
             var localUrl = Path.GetTempFileName() + ".html";
-            using (var writer = Util.CreateXhtmlWriter(true)) {
+            using (var writer = Util.CreateXhtmlWriter(true, 100)) {
                 writer.Write(o);
                 File.WriteAllText(localUrl, writer.ToString());
             }

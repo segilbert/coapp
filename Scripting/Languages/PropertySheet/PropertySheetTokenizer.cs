@@ -124,7 +124,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 AdvanceAndRecognize();
             } while (CurrentCharacter != '"' || (CurrentCharacter == '"' && NextCharacter == '"'));
 
-            AddToken(new Token { Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) ), RawData = "@Literal"});
+            AddToken(new Token { Type = TokenType.StringLiteral, Data = new string(Text, start, (Index - start) ).Replace("\"\"","\"" ), RawData = "@Literal"});
         }
     }
 }
