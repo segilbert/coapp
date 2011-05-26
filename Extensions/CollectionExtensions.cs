@@ -149,14 +149,4 @@ namespace CoApp.Toolkit.Extensions {
             return result;
         }
     }
-
-    public class Comparer<T> : IComparer<T> {
-        private readonly Func<T, T, int> _compareFuction;
-        public Comparer(Func<T,T,int> compareFn) {
-            _compareFuction = compareFn;
-        }
-        public int Compare(T x, T y) {
-            return _compareFuction(x,y);
-        }
-    }
 }

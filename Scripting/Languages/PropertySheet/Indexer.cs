@@ -18,8 +18,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
         public T this[string index] {
             get {
-                var rule = _lookupFn(index).FirstOrDefault() ?? _newRuleFn(index);
-                return (T)Activator.CreateInstance(typeof(T), rule);
+                return (T)Activator.CreateInstance(typeof(T),  _lookupFn(index).FirstOrDefault() ?? _newRuleFn(index));
             }
         }
 
@@ -35,51 +34,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             _newRuleFn = newRuleFn;
         }
 
-        /*
-        public class IndexerEnumerator : IEnumerator<T> {
-            private Indexer<T> _indexer;
-            private IEnumerator<string> _enumerator;
-
-            public IndexerEnumerator(Indexer<T> indexer) {
-                _indexer = indexer;
-                _enumerator = indexer.Keys.GetEnumerator();
-            }
-
-            public void Dispose() {
-                _indexer = null;
-                _enumerator = null;
-            }
-
-            public bool MoveNext() {
-                return _enumerator.MoveNext();
-            }
-
-            public void Reset() {
-                _enumerator.Reset();
-            }
-
-            public T Current {
-                get {
-                    return _indexer[_enumerator.Current];
-                }
-            }
-
-            object IEnumerator.Current {
-                get {
-                    return Current;
-                }
-            }
-        }
-        */
-
         public IEnumerator<T> GetEnumerator() {
             return new VirtualEnumerator<T>(Keys.GetEnumerator(), enumerator => this[(string)enumerator.Current]);
-            // return new IndexerEnumerator(this);
         }
 
         IEnumerator IEnumerable.GetEnumerator() {
             return new VirtualEnumerator<T>(Keys.GetEnumerator(), enumerator => this[(string)enumerator.Current]);
-            // return new IndexerEnumerator(this);
         }
     }
 }

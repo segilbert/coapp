@@ -9,6 +9,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
+    using Collections;
 
     public class DictionaryProperty : IDictionary<string, IList<string>>, IList<string> {
         private readonly Rule _rule;
@@ -99,30 +100,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public IEnumerator GetEnumerator() {
-            return new PDEnumerator(this);
-        }
-
-        public class PDEnumerator : IEnumerator {
-            private DictionaryProperty _dictionary;
-            private IEnumerator<string> _enumerator;
-            internal PDEnumerator(DictionaryProperty dictionary) {
-                _dictionary = dictionary;
-                _enumerator = _dictionary.Keys.GetEnumerator();
-            }
-
-            public bool MoveNext() {
-                return _enumerator.MoveNext();
-            }
-
-            public void Reset() {
-                _enumerator.Reset();
-            }
-
-            public object Current {
-                get {
-                    return _dictionary[_enumerator.Current];
-                }
-            }
+            return new VirtualEnumerator<IList<string>>(Keys.GetEnumerator(), enumerator => this[(string) enumerator.Current]);
         }
 
         #endregion
