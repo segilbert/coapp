@@ -1,0 +1,147 @@
+﻿.property-sheet {
+    name: SpecFile;
+    namespace: CoApp.Toolkit.Spec;
+}
+
+.classes {
+    process:"rules that apply to files or groups of files";
+    event:"custom actions for a project";
+    dependencies:"additional dependencies (usually libraries)";
+    link:"link command information";
+    library:"defines a library";
+    file-group:"file groups";
+}
+
+file-group.class {
+    key:name;
+    // when there is no class specified
+    // the name is the name
+    alias:class="*"; // this is a special case that gets matched after any other aliases.
+    
+    properties: files;
+}
+
+file-group#files {
+    type: dictionary;
+}
+
+process.class { 
+    key:parameter;
+    properties: {
+        compile-as,
+        read-only-string-pooling,
+        define,
+        include-directory
+    };
+};
+
+    process#compile-as {
+        type: enum = {
+            "none",
+            "c",
+            "c++",
+            "resource" 
+        };
+    };
+
+    process#read-only-string-pooling {
+        type:boolean;
+    };
+
+    process#define {
+        type:dictionary;
+    };
+
+    process#include-directory {
+        type:list;
+    };
+
+event.class { 
+    key:id;
+    properties: {
+        condition,
+        priority,
+        script
+    };
+};
+
+    event#condition {
+        type:enum = {
+            "pre-build",
+            "post-build",
+            "failure" 
+        };
+    };
+
+    event#priority {
+        type:int;
+    };
+
+    event#script {
+        type:string;
+    };
+
+
+dependencies.class {
+    properties : {
+        libraries
+    };
+};  
+
+    dependencies#libraries {
+        type:  list;
+    };
+
+link.class {
+    properties: {
+        output,
+		subsystem,
+		type
+    };
+};
+
+    link#output {
+        type:string;
+    }; 
+	
+	link#subsystem{
+        type:enum = {
+			console,
+			windows
+		};
+    }; 
+	
+	link#type {
+        type:enum = {
+			exe,
+			dll,
+			lib
+		};
+    };
+
+library.class {
+    key:parameter;
+    alias:name="library";
+    // for library[zlib] this means
+    // treat 
+    // any rule where name == library    
+    // and 
+    // take the parameter as the name 
+    
+    
+    properties: {
+        file,
+        version
+    };
+    requires-name:true;
+    
+    
+};
+
+library#file {
+    type:string;
+}
+
+library#version {
+    type:string;
+}

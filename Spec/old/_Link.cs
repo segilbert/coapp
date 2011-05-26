@@ -13,16 +13,13 @@ namespace CoApp.Toolkit.Spec {
     using System.Text;
     using System.Xml.Serialization;
 
-    public partial class File {
+    public partial class Link {
         [XmlIgnore]
-        public string RelativeFilePath { 
-            get { return Path.Combine(location, name); }
-        set { 
-            name = Path.GetFileName(value);
-            extension = Path.GetExtension(value);
-            location = Path.GetDirectoryName(value);
-        }
-        }
+        public string Extension { get {
+            return null; /* Path.GetExtension(output); */}}
+
+        [XmlIgnore]
+        public string Name { get { return null; /*Path.GetFileNameWithoutExtension(output);*/ } }
     }
 
 }

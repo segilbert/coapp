@@ -126,9 +126,6 @@ namespace CoApp.Toolkit.Tasks {
             lock (AllTasks) {
                 AllTasks.Add(task.Id, this);
             }
-            // Debug.WriteLine("Adding Task {0}",Task.Id);
-            // DebugExtensions.StackDump();
-
         }
 
         public Tasklet(Task task, Task parentTask) {
@@ -139,8 +136,6 @@ namespace CoApp.Toolkit.Tasks {
             lock (AllTasks) {
                 AllTasks.Add(task.Id, this);
             }
-            // Debug.WriteLine("Adding Task {0}", Task.Id);
-            // DebugExtensions.StackDump();
         }
     }
 }

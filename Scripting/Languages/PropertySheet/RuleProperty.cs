@@ -8,7 +8,6 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
     using Extensions;
 
     public class RuleProperty {
@@ -58,6 +57,9 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             }
 
             set {
+                _values = null;
+                Expression = null;
+
                 if (!(value.Contains("\r") || value.Contains("\n"))) {
                     var p = value.IndexOf('=');
                     if (p != -1) {
