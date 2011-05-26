@@ -11,6 +11,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
     public class PropertySheet {
         internal readonly Dictionary<string, Rule> _rules = new Dictionary<string, Rule>();
+        public string Filename;
         
         public IEnumerable<Rule> Rules {
             get { return _rules.Values; }
@@ -25,16 +26,24 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public static PropertySheet Load(string path) {
-            return Parse(System.IO.File.ReadAllText(path),path);
+            var result = Parse(System.IO.File.ReadAllText(path),path);
+            result.Filename = path;
+            return result;
         }
 
-        public void Save(string path) {
+        public virtual void Save(string path) {
             System.IO.File.WriteAllText(path, ToString());
+        }
+
+        public virtual IEnumerable<string> Keys {
+            get {
+                return _rules.Keys;
+            }
         }
 
         public override string ToString() {
             var result = new StringBuilder();
-            foreach( var key in _rules.Keys ) {
+            foreach( var key in Keys ) {
                 result.Append(key);
                 result.Append(" {");
                 

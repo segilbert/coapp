@@ -1,24 +1,50 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
-//     Copyright (c) 2010 Garrett Serack. All rights reserved.
+//     Copyright (c) 2011 Garrett Serack. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
-
 namespace CoApp.Toolkit.Spec {
-    using System;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Text;
-    using System.Xml.Serialization;
+    using Scripting.Languages.PropertySheet;
 
-    public partial class Link {
-        [XmlIgnore]
-        public string Extension { get { return Path.GetExtension(output); }}
+    public class Link : PropertySheetItem {
+        public Link(Rule rule): base(rule) {
+            
+        } 
 
-        [XmlIgnore]
-        public string Name { get { return Path.GetFileNameWithoutExtension(output); } }
+        public IList<string> Libraries {
+            get {
+                return Rule.PropertyAsList("libraries");
+            }
+        }
+
+        public string Output {
+            get {
+                return Rule["output"].AsString();
+            }
+            set {
+                Rule.SetSingleValue("output", value);
+            }
+        }
+
+        public LinkSubsystem Subsystem {
+            get {
+                return Rule["subsystem"].As<LinkSubsystem>();
+            }
+            set {
+                Rule.SetSingleValue("subsystem", value.ToString());
+            }
+        }
+
+        public LinkType Type {
+            get {
+                return Rule["type"].As<LinkType>();
+            }
+            set {
+                Rule.SetSingleValue("type", value.ToString());
+            }
+        }
+
     }
-
 }

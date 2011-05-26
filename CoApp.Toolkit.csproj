@@ -76,6 +76,7 @@
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
     <Compile Include="Exceptions\ConflictingFileOrFolderException.cs" />
     <Compile Include="Exceptions\EndUserException.cs" />
+    <Compile Include="Exceptions\EndUserRuleException.cs" />
     <Compile Include="Exceptions\PathIsNotSymlinkException.cs" />
     <Compile Include="Exceptions\EndUserPropertyException.cs" />
     <Compile Include="Exceptions\EndUserParseException.cs" />
@@ -123,6 +124,7 @@
     <Compile Include="Configuration\Indexers.cs" />
     <Compile Include="Configuration\QuickSettings.cs" />
     <Compile Include="Scripting\Languages\PropertySheet\RulePropertyExtensions.cs" />
+    <Compile Include="Collections\VirtualEnumerator.cs" />
     <Compile Include="Scripting\Utility\Token.cs" />
     <Compile Include="Scripting\Utility\TokenType.cs" />
     <Compile Include="Shell\ColorTable.cs" />
@@ -150,10 +152,6 @@
     <Compile Include="Shell\ShellLink.cs" />
     <Compile Include="Shell\ShellLinkFlags.cs" />
     <Compile Include="Shell\ShowWindowCommand.cs" />
-    <Compile Include="Spec\Dependency.cs" />
-    <Compile Include="Spec\File.cs" />
-    <Compile Include="Spec\Link.cs" />
-    <Compile Include="Spec\Target.cs" />
     <Compile Include="Scripting\Utility\ActiveScriptHost.cs" />
     <Compile Include="Scripting\Languages\CSharp\CSharpTokenizer.cs" />
     <Compile Include="Scripting\Languages\GSharp\GSharpProcessor.cs" />
@@ -163,14 +161,23 @@
     <Compile Include="Scripting\Languages\PropertySheet\PropertySheetTokenizer.cs" />
     <Compile Include="Scripting\Languages\PropertySheet\Rule.cs" />
     <Compile Include="Scripting\Languages\PropertySheet\RuleProperty.cs" />
-    <Compile Include="Spec\TargetSchema.cs">
-      <DependentUpon>TargetSchema.xsd</DependentUpon>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="Spec\Event.cs" />
+    <Compile Include="Spec\EventCondition.cs" />
+    <Compile Include="Spec\FileGroup.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\Indexer.cs" />
+    <Compile Include="Spec\Library.cs" />
+    <Compile Include="Spec\Link.cs" />
+    <Compile Include="Spec\LinkSubsystem.cs" />
+    <Compile Include="Spec\LinkType.cs" />
+    <Compile Include="Spec\Process.cs" />
+    <Compile Include="Spec\ProcessCompileAs.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\DictionaryProperty.cs" />
+    <Compile Include="Spec\ProductInfo.cs" />
+    <Compile Include="Spec\SpecFile.cs" />
+    <Compile Include="Scripting\Languages\PropertySheet\PropertySheetItem.cs" />
     <Compile Include="Tasks\CoTask.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
     <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
@@ -275,16 +282,11 @@
     <Folder Include="Installer\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="CoApp.Toolkit.anygen" />
     <None Include="Package\mkPackage.xsd">
       <Generator>XsdTool</Generator>
       <LastGenOutput>mkPackage.cs</LastGenOutput>
       <CustomToolNamespace>CoApp.Toolkit.Package</CustomToolNamespace>
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Spec\TargetSchema.xsd">
-      <Generator>XsdTool</Generator>
-      <LastGenOutput>TargetSchema.cs</LastGenOutput>
-      <CustomToolNamespace>CoApp.Toolkit.Spec</CustomToolNamespace>
       <SubType>Designer</SubType>
     </None>
     <None Include="Trace\Tracing.xsd">

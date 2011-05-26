@@ -7,8 +7,6 @@
 namespace CoApp.Toolkit.Console {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
     using System.Resources;
     using System.Threading;
     using System.Threading.Tasks;
@@ -18,7 +16,7 @@ namespace CoApp.Toolkit.Console {
 
     public abstract class AsyncConsoleProgram {
         protected abstract ResourceManager Res { get; }
-        protected int _counter = 0;
+        protected int Counter = 0;
 
         protected abstract int Main(IEnumerable<string> args);
         protected CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
@@ -26,7 +24,7 @@ namespace CoApp.Toolkit.Console {
         protected virtual int Startup(IEnumerable<string> args) {
             var task = CoTask.Factory.StartNew(() => { Main(args); }, CancellationTokenSource.Token, new DebugMessage {
                 WriteLine = (text) => {
-                   Console.WriteLine("[DEBUG][{0}] {1}", ++_counter,text);
+                   Console.WriteLine("[DEBUG][{0}] {1}", ++Counter,text);
                }
             });
             try {
