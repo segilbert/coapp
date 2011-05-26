@@ -178,7 +178,7 @@ namespace CoApp.Toolkit.Utility {
 
                 var info = FileVersionInfo.GetVersionInfo(fileName);
                 
-                string fv = info.FileVersion;
+                var fv = info.FileVersion;
                 if( !string.IsNullOrEmpty(fv) ) {
                     fv = fv.Substring(0, fv.PositionOfFirstCharacterNotIn("0123456789."));
                 }

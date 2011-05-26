@@ -14,17 +14,20 @@ namespace CoApp.Toolkit.Spec {
     using Scripting.Languages.PropertySheet;
 
     public class SpecFile : PropertySheet {
+        private readonly Indexer<ProductInfo> _productInfo;
+        private readonly Indexer<Link> _link;
+
         public readonly Indexer<FileGroup> FileGroups;
         public readonly Indexer<Process> Processes;
         public readonly Indexer<Event> Events;
-        private readonly Indexer<Link> _link;
+        public readonly Indexer<Library> Libraries;
+
         public Link Link {
             get {
                 return _link["unique"];
             }
         }
-        public readonly Indexer<Library> Libraries;
-         private readonly Indexer<ProductInfo> _productInfo;
+        
         public ProductInfo ProductInfo{
             get {
                 return _productInfo["unique"];
@@ -100,7 +103,6 @@ namespace CoApp.Toolkit.Spec {
                     _rules.Add(rule.FullSelector, rule);
                     return rule;
                 });              
-
         }
 
         private IEnumerable<Rule> FileGroupRules {
@@ -130,8 +132,6 @@ namespace CoApp.Toolkit.Spec {
                        select rule;
             }
         }
-
-        
 
         private IEnumerable<Rule> LibraryRules {
             get {
