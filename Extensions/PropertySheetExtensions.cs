@@ -11,20 +11,17 @@ namespace CoApp.Toolkit.Extensions
 
     public static class PropertySheetExtensions
     {
-        public static Rule GetSingleRule(this PropertySheet sheet, string selector)
+        public static Rule Rule(this PropertySheet sheet, string selector)
         {
             return sheet[selector].FirstOrDefault();
         }
 
-        public static RuleProperty GetSingleProperty(this PropertySheet sheet, string selector, string property)
+        public static RuleProperty Prop(this Rule rule, string prop)
         {
-            var rule = sheet.GetSingleRule(selector);
-            if (rule == null)
-                return null;
-            else
-                return (from p in rule.Properties
-                        where p.Name == property
-                        select p).FirstOrDefault();
+            return (from p in rule.Properties
+                    where p.Name == prop
+                    select p).FirstOrDefault();
         }
+
     }
 }
