@@ -43,13 +43,13 @@ namespace CoApp.Toolkit.Console {
             }
             catch( AggregateException ae ) {
                 ae = ae.Flatten();
-                ae.Handle(HandleExecption);
+                ae.Handle(HandleException);
                 return 1;
             }
             return 0;
         }
 
-        bool HandleExecption(Exception ex ) {
+        bool HandleException(Exception ex ) {
             if (ex is ConsoleException) {
                 Fail(ex.Message);
                 return true;
