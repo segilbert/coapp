@@ -280,7 +280,7 @@ namespace CoApp.Toolkit.Engine {
                 // this will activate the next one in line
                 GetCurrentPackage(Name, PublicKeyToken);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 PackageManagerMessages.Invoke.PackageRemoveFailed(this);
                 throw new OperationCompletedBeforeResultException();

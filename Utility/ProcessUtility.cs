@@ -94,6 +94,9 @@ namespace CoApp.Toolkit.Utility
 
         public ProcessUtility(string filename)
         {
+            if( string.IsNullOrEmpty(filename)) {
+                throw new ArgumentNullException("filename","Filename not permitted to be null");
+            }
             Executable = filename;
         }
 

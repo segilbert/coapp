@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\ExpiringList.cs" />
+    <Compile Include="Collections\LazyEnumerable.cs" />
     <Compile Include="Configuration\Settings.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
@@ -123,6 +124,20 @@
     <Compile Include="Scan\Types\ScanReport.cs" />
     <Compile Include="Configuration\Indexers.cs" />
     <Compile Include="Configuration\QuickSettings.cs" />
+    <Compile Include="Scripting\Languages\CSV\CachedCsvReader.cs" />
+    <Compile Include="Scripting\Languages\CSV\CachedCsvReader.CsvBindingList.cs" />
+    <Compile Include="Scripting\Languages\CSV\CachedCsvReader.CsvPropertyDescriptor.cs" />
+    <Compile Include="Scripting\Languages\CSV\CachedCsvReader.CsvRecordComparer.cs" />
+    <Compile Include="Scripting\Languages\CSV\CsvReader.cs" />
+    <Compile Include="Scripting\Languages\CSV\CsvReader.DataReaderValidations.cs" />
+    <Compile Include="Scripting\Languages\CSV\CsvReader.RecordEnumerator.cs" />
+    <Compile Include="Scripting\Languages\CSV\Events\ParseErrorEventArgs.cs" />
+    <Compile Include="Scripting\Languages\CSV\Exceptions\MalformedCsvException.cs" />
+    <Compile Include="Scripting\Languages\CSV\Exceptions\MissingFieldCsvException.cs" />
+    <Compile Include="Scripting\Languages\CSV\MissingFieldAction.cs" />
+    <Compile Include="Scripting\Languages\CSV\ParseErrorAction.cs" />
+    <Compile Include="Scripting\Languages\CSV\Resources\ExceptionMessage.Designer.cs" />
+    <Compile Include="Scripting\Languages\CSV\ValueTrimmingOptions.cs" />
     <Compile Include="Scripting\Languages\PropertySheet\RulePropertyExtensions.cs" />
     <Compile Include="Collections\VirtualEnumerator.cs" />
     <Compile Include="Scripting\Utility\Token.cs" />
@@ -203,6 +218,7 @@
       <DependentUpon>Tracing.xsd</DependentUpon>
     </Compile>
     <Compile Include="Trace\Variable.cs" />
+    <Compile Include="Utility\DependencyInformation.cs" />
     <Compile Include="Utility\ExecutableInfo.cs" />
     <Compile Include="Utility\PathEqualityComparer.cs" />
     <Compile Include="Utility\ProcessUtility.cs" />
@@ -302,11 +318,12 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="Scripting\Languages\CSV\Resources\ExceptionMessage.resx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>REM copy optional tools...
+if not exist $(TargetDir)\optional\ xcopy /q /s /c /i  $(SolutionDir)tools\optional $(TargetDir)\optional\</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-build-numbers.js" cscript /nologo "$(SolutionDir)scripts\inc-build-numbers.js"</PreBuildEvent>

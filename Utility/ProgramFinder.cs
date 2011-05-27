@@ -19,7 +19,6 @@ namespace CoApp.Toolkit.Utility {
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Diagnostics;
     using Extensions;
     using Win32;
 
@@ -32,10 +31,6 @@ namespace CoApp.Toolkit.Utility {
         public static ProgramFinder ProgramFilesAndSys32;
         public static ProgramFinder ProgramFilesAndDotNet;
         public static ProgramFinder ProgramFilesSys32AndDotNet;
-
-        private static readonly Dictionary<string, ExecutableInfo> ExeTypeCache = new Dictionary<string, ExecutableInfo>();
-        private static readonly Dictionary<string, string> ToolVersionCache = new Dictionary<string, string>();
-        private static readonly Dictionary<string, UInt64> ToolVersionNumericCache = new Dictionary<string, UInt64>();
 
         public static bool IgnoreCache;
 
@@ -93,6 +88,8 @@ namespace CoApp.Toolkit.Utility {
                     return result;
             }
 
+            Notify("[One moment.. Scanning for utility({0}/{1}/{2})]", filename, executableType.ToString(), minimumVersion);
+
             var ver = minimumVersion.VersionStringToUInt64();
 
             var files = commonSearchLocations.Union(searchLocations).AsParallel().SelectMany(
@@ -101,7 +98,7 @@ namespace CoApp.Toolkit.Utility {
                     recursiveSearchLocations.AsParallel().SelectMany(
                         directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.AllDirectories)));
 
-            files = files.Where(file => (GetExeType(file) & executableType) == executableType && GetToolVersionNumeric(file) >= ver);
+            files = files.Where(file => (PEInfo.Scan(file).ExecutableInfo & executableType) == executableType && PEInfo.Scan(file).FileVersionLong >= ver);
 
             if( filters != null  ) {
                 files = filters.Aggregate(files, (current, filter) => (from eachFile in current
@@ -109,12 +106,13 @@ namespace CoApp.Toolkit.Utility {
                                                                        select eachFile));
             }
 
-            var filePath = files.MaxElement(GetToolVersionNumeric);
+            var filePath = files.MaxElement(each => PEInfo.Scan(each).FileVersionLong);
+
             if (!string.IsNullOrEmpty(filePath)) {
                 SetCachedPath(filename, filePath, executableType, minimumVersion);
-                SetCachedPath(filename, filePath, executableType, GetToolVersion(filePath));
+                SetCachedPath(filename, filePath, executableType, PEInfo.Scan(filePath).FileVersion);
             }
-
+            
             return filePath;
         }
 
@@ -171,54 +169,8 @@ namespace CoApp.Toolkit.Utility {
             }
         }
 
-        public static string GetToolVersion(string fileName) {
-            try {
-                if (ToolVersionCache.ContainsKey(fileName))
-                    return ToolVersionCache[fileName];
-
-                var info = FileVersionInfo.GetVersionInfo(fileName);
-                
-                var fv = info.FileVersion;
-                if( !string.IsNullOrEmpty(fv) ) {
-                    fv = fv.Substring(0, fv.PositionOfFirstCharacterNotIn("0123456789."));
-                }
-                ToolVersionCache.Add(fileName,fv);
-
-                return fv;
-            }
-            catch {
-                return string.Empty;
-            }
-        }
-
-
-        public static UInt64 GetToolVersionNumeric(string fileName) {
-            if (ToolVersionNumericCache.ContainsKey(fileName))
-                return ToolVersionNumericCache[fileName];
-
-            var fv = GetToolVersion(fileName).VersionStringToUInt64();
-            ToolVersionNumericCache.Add(fileName,fv);
-            return fv;
-        }
-
-        public static ExecutableInfo GetExeType(string filename) {
-            if (ExeTypeCache.ContainsKey(filename))
-                return ExeTypeCache[filename];
-            var result = ExecutableInfo.none;
-
-            try {
-                var pe = new PEInfo(filename);
-                result = (pe.Is32Bit ? ExecutableInfo.x86 : ExecutableInfo.none)
-                    | (pe.Is64Bit ? ExecutableInfo.x64 : ExecutableInfo.none)
-                        | (pe.IsManaged ? ExecutableInfo.managed : ExecutableInfo.native)
-                            | (pe.IsAny ? ExecutableInfo.any : ExecutableInfo.none);
-
-            } catch {
-                
-            }
-            ExeTypeCache.Add(filename, result);
-            return result;
-            
+        private void Notify( string message, params string[] arguments ) {
+            Console.WriteLine(message.format(arguments));
         }
     }
 }

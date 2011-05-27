@@ -206,7 +206,7 @@ namespace CoApp.Toolkit.Extensions {
 
         public static string Post(this string url, Dictionary<string, string> args) {
             int resultCode;
-            var result = Service(new Uri(url), RequestType.POST, ResponseType.String, out resultCode);
+            var result = Service(new Uri(url), RequestType.POST, ResponseType.String, out resultCode, args);
             return result as string;
         }
 

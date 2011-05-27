@@ -21,9 +21,11 @@ namespace CoApp.Toolkit.Utility {
 
         x86 = 0x0001,
         x64 = 0x0002,
-        any = 0x0004,
+        ia64 = 0x0004,
+        arm = 0x0008,
+        any = 0x0010,
 
-        native = 0x0010,
-        managed = 0x0020
+        native = 0x0100,
+        managed = 0x0200
     }
 }

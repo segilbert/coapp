@@ -18,6 +18,7 @@ namespace CoApp.Toolkit.Extensions {
     using System.Diagnostics;
     using System.IO;
     using System.Reflection;
+    using Win32;
 
     public static class AssemblyExtensions {
         private static string logo;
@@ -75,7 +76,7 @@ namespace CoApp.Toolkit.Extensions {
 
         public static string Copyright(this Assembly assembly) {
             try {
-                return FileVersionInfo.GetVersionInfo(assembly.Location).LegalCopyright;
+                return PEInfo.Scan(assembly.Location).VersionInfo.LegalCopyright;
             }
             catch {
             }
@@ -84,7 +85,7 @@ namespace CoApp.Toolkit.Extensions {
 
         public static string Company(this Assembly assembly) {
             try {
-                return FileVersionInfo.GetVersionInfo(assembly.Location).CompanyName;
+                return PEInfo.Scan(assembly.Location).VersionInfo.CompanyName;
             }
             catch {
             }
@@ -93,7 +94,7 @@ namespace CoApp.Toolkit.Extensions {
 
         public static string Version(this Assembly assembly) {
             try {
-                var vi = FileVersionInfo.GetVersionInfo(assembly.Location);
+                var vi = PEInfo.Scan(assembly.Location).VersionInfo;
 
                 return "{0}.{1}.{2}.{3}".format(vi.FileMajorPart, vi.FileMinorPart, vi.FileBuildPart, vi.FilePrivatePart);
             }
@@ -104,7 +105,7 @@ namespace CoApp.Toolkit.Extensions {
 
         public static string Comments(this Assembly assembly) {
             try {
-                return FileVersionInfo.GetVersionInfo(assembly.Location).Comments;
+                return PEInfo.Scan(assembly.Location).VersionInfo.Comments;
             }
             catch {
             }

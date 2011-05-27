@@ -138,27 +138,29 @@ namespace CoApp.Toolkit.Extensions {
             return mask.IsMatch(text);
         }
 
-        public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null) {
-            ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : Regex.Escape(ignorePrefix);
+        public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null, bool escapePrefix=true) {
+            ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
 
             var key = wildcardMask + ignorePrefix;
             if (wildcards.ContainsKey(key))
                 return wildcards[key].IsMatch(text);
 
-            if (wildcardMask.EndsWith("**"))
-                wildcardMask += @"\*";
+            
 
-            var mask = new Regex('^' + ignorePrefix +
-                (wildcardMask
-                   .Replace(".", @"[.]")
-                   .Replace(@"\", @"\\")
-                   .Replace("?", ".")
-                   .Replace("**", @"?")// temporarily move it so the next one doesn't clobber
-                   .Replace("*", @"[^\\\/\<\>\|]*") //     \/\<\>\|
-                   .Replace("?", @"[^\<\>\|]*") + '$'), RegexOptions.IgnoreCase);
+                if (wildcardMask.EndsWith("**"))
+                    wildcardMask += @"\*";
 
-            wildcards.Add(key, mask);
-
+                var mask =
+                    new Regex(
+                        '^' + ignorePrefix +
+                            (wildcardMask.Replace(".", @"[.]").Replace(@"\", @"\\").Replace("?", @".").Replace("+", @"\+").Replace("**",
+                                @"?") // temporarily move it so the next one doesn't clobber
+                                .Replace("*", @"[^\\\/\<\>\|]*") //     \/\<\>\|
+                                .Replace("?", @"[^\<\>\|]*") + '$'), RegexOptions.IgnoreCase);
+            lock (wildcards) {
+                if (!wildcards.ContainsKey(key))
+                    wildcards.Add(key, mask);
+            }
             return mask.IsMatch(text);
         }
 
@@ -166,8 +168,8 @@ namespace CoApp.Toolkit.Extensions {
             return (from each in source where each.Equals(value, StringComparison.CurrentCultureIgnoreCase) select each).Any();
         }
 
-        public static bool HasWildcardMatch(this IEnumerable<string> source, string value,string ignorePrefix = null) {
-            return source.Any(wildcard => value.IsWildcardMatch(wildcard,ignorePrefix));
+        public static bool HasWildcardMatch(this IEnumerable<string> source, string value,string ignorePrefix = null, bool escapePrefix=true) {
+            return source.Any(wildcard => value.IsWildcardMatch(wildcard,ignorePrefix,escapePrefix));
         }
 
         public static bool IsTrue(this string text) {

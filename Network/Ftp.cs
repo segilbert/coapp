@@ -355,8 +355,9 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
 					Console.WriteLine("Resolving host");
 #endif
-
+                    #pragma warning disable 0618
                     dataIpEndPoint = new IPEndPoint(Dns.GetHostByName(server).AddressList[0], port);
+
 
 #if (FTP_DEBUG)
 					Console.WriteLine("Connecting..");
