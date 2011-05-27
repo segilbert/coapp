@@ -92,6 +92,7 @@
     <Compile Include="Extensions\DebugExtensions.cs" />
     <Compile Include="Extensions\FilesystemExtensions.cs" />
     <Compile Include="Extensions\LinqExtensions.cs" />
+    <Compile Include="Extensions\PropertySheetExtensions.cs" />
     <Compile Include="Extensions\X509Certificate2Extensions.cs" />
     <Compile Include="Extensions\X509StoreExtensions.cs" />
     <Compile Include="Extensions\SortedObservableCollection.cs" />
@@ -298,7 +299,6 @@
     <Folder Include="Installer\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CoApp.Toolkit.anygen" />
     <None Include="Package\mkPackage.xsd">
       <Generator>XsdTool</Generator>
       <LastGenOutput>mkPackage.cs</LastGenOutput>

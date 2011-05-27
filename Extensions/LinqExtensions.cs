@@ -50,6 +50,32 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
+        /// Returns all the contiguous elements from sequence except for a specified number from the end.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/></typeparam>
+        /// <param name="source">The sequence to return elements from.</param>
+        /// <param name="count">The number of elements to not return from the end.</param>
+        /// <returns>An <see cref="System.Collections.Generic.IEnumerable{T}"/> consisting of all the elements of <paramref name="source"/> 
+        /// except for the last <paramref name="count"/> elements.</returns>
+        public static IEnumerable<T> TakeAllBut<T>(this IEnumerable<T> source, int count)
+        {
+            return source.Reverse().Skip(count).Reverse();
+        }
+
+        /// <summary>
+        /// Returns the given number of elements from the end of the sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The sequence to return elements from.</param>
+        /// <param name="count">The number of elements to return from the end of the array.</param>
+        /// <returns>An <see cref="System.Collections.Generic.IEnumerable{T}"/> consisting of the last <paramref name="count"/>
+        /// elements of <paramref name="source"/>.</returns>
+        public static IEnumerable<T> TakeFromEnd<T>(this IEnumerable<T> source, int count)
+        {
+            return source.Reverse().Take(count).Reverse();
+        }
+
+        /// <summary>
         /// Returns a new collection including the given item.
         /// 
         /// DOES NOT MODIFY THE ORIGINAL COLLECTION.

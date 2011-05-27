@@ -217,10 +217,10 @@ namespace CoApp.Toolkit.Network {
             Byte[] cmd = Encoding.ASCII.GetBytes((command + "\r\n").ToCharArray());
 
 #if (FTP_DEBUG)
-			if (command.Length > 3 && command.Substring(0, 4) == "PASS")
-				Console.WriteLine("\rPASS xxx");
-			else
-				Console.WriteLine("\r" + command);
+            if (command.Length > 3 && command.Substring(0, 4) == "PASS")
+                Console.WriteLine("\rPASS xxx");
+            else
+                Console.WriteLine("\r" + command);
 #endif
 
             mainSock.Send(cmd, cmd.Length, 0);
@@ -284,7 +284,7 @@ namespace CoApp.Toolkit.Network {
                 buf = GetLineFromBucket();
 
 #if (FTP_DEBUG)
-				Console.WriteLine(buf);
+                Console.WriteLine(buf);
 #endif
                 // the server will respond with "000-Foo bar" on multi line responses
                 // "000 Foo bar" would be the last line it sent for that response.
@@ -310,7 +310,7 @@ namespace CoApp.Toolkit.Network {
         // are done with it, be sure to call CloseDataSocket()
         private void OpenDataSocket() {
             if (PassiveMode)		// #######################################
-			{
+            {
                 string[] pasv;
                 string server;
                 int port;
@@ -343,29 +343,29 @@ namespace CoApp.Toolkit.Network {
 
                 try {
 #if (FTP_DEBUG)
-					Console.WriteLine("Data socket: {0}:{1}", server, port);
+                    Console.WriteLine("Data socket: {0}:{1}", server, port);
 #endif
                     CloseDataSocket();
 
 #if (FTP_DEBUG)
-					Console.WriteLine("Creating socket...");
+                    Console.WriteLine("Creating socket...");
 #endif
                     dataSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 #if (FTP_DEBUG)
-					Console.WriteLine("Resolving host");
+                    Console.WriteLine("Resolving host");
 #endif
                     #pragma warning disable 0618
                     dataIpEndPoint = new IPEndPoint(Dns.GetHostByName(server).AddressList[0], port);
 
 
 #if (FTP_DEBUG)
-					Console.WriteLine("Connecting..");
+                    Console.WriteLine("Connecting..");
 #endif
                     dataSock.Connect(dataIpEndPoint);
 
 #if (FTP_DEBUG)
-					Console.WriteLine("Connected.");
+                    Console.WriteLine("Connected.");
 #endif
                 }
                 catch (Exception ex) {
@@ -373,22 +373,22 @@ namespace CoApp.Toolkit.Network {
                 }
             }
             else		// #######################################
-			{
+            {
                 Connect();
 
                 try {
 #if (FTP_DEBUG)
-					Console.WriteLine("Data socket (active mode)");
+                    Console.WriteLine("Data socket (active mode)");
 #endif
                     CloseDataSocket();
 
 #if (FTP_DEBUG)
-					Console.WriteLine("Creating listening socket...");
+                    Console.WriteLine("Creating listening socket...");
 #endif
                     listeningSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 #if (FTP_DEBUG)
-					Console.WriteLine("Binding it to local address/port");
+                    Console.WriteLine("Binding it to local address/port");
 #endif
                     // for the PORT command we need to send our IP address; let's extract it
                     // from the LocalEndPoint of the main socket, that's already connected
@@ -409,7 +409,7 @@ namespace CoApp.Toolkit.Network {
                     }
                     int nPort = int.Parse(sLocAddr.Substring(ix + 1));
 #if (FTP_DEBUG)
-					Console.WriteLine("Listening on {0}:{1}", sIPAddr, nPort);
+                    Console.WriteLine("Listening on {0}:{1}", sIPAddr, nPort);
 #endif
                     // start to listen for a connection request from the host (note that
                     // Listen is not blocking) and send the PORT command
@@ -436,7 +436,7 @@ namespace CoApp.Toolkit.Network {
 
             try {
 #if (FTP_DEBUG)
-				Console.WriteLine("Accepting the data connection.");
+                Console.WriteLine("Accepting the data connection.");
 #endif
                 dataSock = listeningSock.Accept();	// Accept is blocking
                 listeningSock.Close();
@@ -447,7 +447,7 @@ namespace CoApp.Toolkit.Network {
                         Convert.ToString(System.Runtime.InteropServices.Marshal.GetLastWin32Error()));
                 }
 #if (FTP_DEBUG)
-				Console.WriteLine("Connected.");
+                Console.WriteLine("Connected.");
 #endif
             }
             catch (Exception ex) {
@@ -458,16 +458,16 @@ namespace CoApp.Toolkit.Network {
 
         private void CloseDataSocket() {
 #if (FTP_DEBUG)
-			Console.WriteLine("Attempting to close data channel socket...");
+            Console.WriteLine("Attempting to close data channel socket...");
 #endif
             if (dataSock != null) {
                 if (dataSock.Connected) {
 #if (FTP_DEBUG)
-						Console.WriteLine("Closing data channel socket!");
+                        Console.WriteLine("Closing data channel socket!");
 #endif
                     dataSock.Close();
 #if (FTP_DEBUG)
-						Console.WriteLine("Data channel socket closed!");
+                        Console.WriteLine("Data channel socket closed!");
 #endif
                 }
                 dataSock = null;
@@ -655,7 +655,7 @@ namespace CoApp.Toolkit.Network {
             ReadResponse();
             if (response != 213) {
 #if (FTP_DEBUG)
-				Console.Write("\r" + responseStr);
+                Console.Write("\r" + responseStr);
 #endif
                 throw new Exception(responseStr);
             }
@@ -731,7 +731,7 @@ namespace CoApp.Toolkit.Network {
             ReadResponse();
             if (response != 250) {
 #if (FTP_DEBUG)
-				Console.Write("\r" + responseStr);
+                Console.Write("\r" + responseStr);
 #endif
                 throw new Exception(responseStr);
             }
@@ -766,7 +766,7 @@ namespace CoApp.Toolkit.Network {
             ReadResponse();
             if (response != 250) {
 #if (FTP_DEBUG)
-				Console.Write("\r" + responseStr);
+                Console.Write("\r" + responseStr);
 #endif
                 throw new Exception(responseStr);
             }
@@ -781,7 +781,7 @@ namespace CoApp.Toolkit.Network {
             ReadResponse();
             if (response != 250) {
 #if (FTP_DEBUG)
-				Console.Write("\r" + responseStr);
+                Console.Write("\r" + responseStr);
 #endif
                 throw new Exception(responseStr);
             }
@@ -798,7 +798,7 @@ namespace CoApp.Toolkit.Network {
             ReadResponse();
             if (response != 350) {
 #if (FTP_DEBUG)
-				Console.Write("\r" + responseStr);
+                Console.Write("\r" + responseStr);
 #endif
                 throw new Exception(responseStr);
             }
@@ -807,7 +807,7 @@ namespace CoApp.Toolkit.Network {
                 ReadResponse();
                 if (response != 250) {
 #if (FTP_DEBUG)
-					Console.Write("\r" + responseStr);
+                    Console.Write("\r" + responseStr);
 #endif
                     throw new Exception(responseStr);
                 }
@@ -824,7 +824,7 @@ namespace CoApp.Toolkit.Network {
             ReadResponse();
             if (response != 213) {
 #if (FTP_DEBUG)
-				Console.Write("\r" + responseStr);
+                Console.Write("\r" + responseStr);
 #endif
                 throw new Exception(responseStr);
             }

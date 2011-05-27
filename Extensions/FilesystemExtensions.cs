@@ -232,21 +232,26 @@ namespace CoApp.Toolkit.Extensions {
         
 
 
-
+        /// <summary>
+        /// always call IsWildcardMatch with a prefix!!!!
+        /// </summary>
+        /// <param name="pathMask"></param>
+        /// <param name="pathPrefix"></param>
+        /// <returns></returns>
         public static IEnumerable<string> FindFilesSmarterComplex( this string pathMask, string pathPrefix = null)
         {
 
             //pathMask safety
+            
+            if (InvalidDoubleWCRx.IsMatch(pathMask))
             {
-                if (InvalidDoubleWCRx.IsMatch(pathMask))
-                {
-                    throw new ArgumentException(Resources.Invalid_WildcardPath.format(pathMask));
-                }
+                throw new ArgumentException(Resources.Invalid_WildcardPath.format(pathMask));
             }
+            
 
 
-            if (pathPrefix == null)
-                pathPrefix = Directory.GetCurrentDirectory();
+            
+            pathPrefix = pathPrefix ?? Directory.GetCurrentDirectory();
 
             pathMask = pathMask.Replace("/", "\\");
             var nextPart = pathMask.GetNextPart();
