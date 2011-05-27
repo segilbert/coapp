@@ -303,15 +303,15 @@ namespace CoApp.CLI {
 
         private void DumpPackages(IEnumerable<Package> packages) {
             if (packages.Count() > 0) {
-                (from pkg in packages orderby pkg.Name
-                    select new {
-                        pkg.Name,
-                        Version = pkg.Version.UInt64VersiontoString(),
-                        Arch = pkg.Architecture,
-                        Publisher = pkg.Publisher.Name,
-                        // Local_Path = pkg.LocalPackagePath.Value ?? "<not local>",
-                        // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
-                    } ).ToTable().ConsoleOut();
+                    (from pkg in packages orderby pkg.Name
+                        select new {
+                            pkg.Name,
+                            Version = pkg.Version.UInt64VersiontoString(),
+                            Arch = pkg.Architecture,
+                            Publisher = pkg.Publisher.Name,
+                            // Local_Path = pkg.LocalPackagePath.Value ?? "<not local>",
+                            // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
+                        } ).ToTable().ConsoleOut();
             }
             else {
                 Console.WriteLine("\rNo packages.");
