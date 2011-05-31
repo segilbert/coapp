@@ -35,10 +35,12 @@ namespace CoApp.Toolkit.Trace {
             }
             lock (process) {
                 var newParent = process.Traverse(c => c.process).Where(x => x.id == ppid).LastOrDefault();
-                proc.ParentCollection.Remove(proc);
-                proc.ParentCollection = newParent.process;
+                if (newParent != null) {
+                    proc.ParentCollection.Remove(proc);
+                    proc.ParentCollection = newParent.process;
 
-                newParent.process.Add(proc);
+                    newParent.process.Add(proc);
+                }
             }
         }
 

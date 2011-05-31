@@ -16,7 +16,7 @@ namespace CoApp.Toolkit.Trace {
         private string fullPath;
 
         [XmlIgnore]
-        public IntPtr Handle { get; set; }
+        public long Handle { get; set; }
 
         [XmlIgnore]
         public string FullPath {

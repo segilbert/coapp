@@ -15,7 +15,7 @@ namespace CoApp.Toolkit.Trace {
             get { return line; }
             set {
                 line = value;
-                parameters = ParseResolveResponseFiles(value).Skip(1).ToList();
+                parameters = string.IsNullOrEmpty((value)) ? new List<string>() : ParseResolveResponseFiles(value).Skip(1).ToList();
             }
         }
 
