@@ -106,13 +106,7 @@
     <Compile Include="Network\RemoteFile.cs" />
     <Compile Include="Network\TransferManager.cs" />
     <Compile Include="Package\Huid.cs" />
-    <Compile Include="Package\IFileType.cs" />
-    <Compile Include="Package\mkPackage.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>mkPackage.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="Package\mkPackagePartials.cs" />
+    <Compile Include="Package\PackageType.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -299,12 +293,6 @@
     <Folder Include="Installer\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Package\mkPackage.xsd">
-      <Generator>XsdTool</Generator>
-      <LastGenOutput>mkPackage.cs</LastGenOutput>
-      <CustomToolNamespace>CoApp.Toolkit.Package</CustomToolNamespace>
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Trace\Tracing.xsd">
       <SubType>Designer</SubType>
       <CustomToolNamespace>CoApp.Toolkit.Trace</CustomToolNamespace>

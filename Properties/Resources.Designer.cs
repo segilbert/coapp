@@ -176,31 +176,5 @@ namespace CoApp.Toolkit.Properties {
                 return ResourceManager.GetString("Invalid_WildcardPath", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-        ///&lt;!--
-        ///&lt;![CDATA[
-        /////
-        ///// &lt;copyright company=&quot;CoApp Project&quot;&gt;
-        /////     Copyright (c) 2010-2011 Eric Schultz. All rights reserved.
-        /////     
-        /////     Certain types included from WiX project,
-        /////     Copyright (c) 2010 Windows Installer Xml
-        ///// &lt;/copyright&gt;
-        /////
-        ///]]&gt;
-        ///--&gt;
-        ///&lt;xs:schema id=&quot;InputSchema&quot;
-        ///    targetNamespace=&quot;http://coapp.org/ns/mkPackage.xsd&quot;
-        ///    elementFormDefault=&quot;qualified&quot;
-        ///    xmlns=&quot;http://coapp.org/ns/mkPackage.xsd&quot;
-        ///    xmlns:mstns=&quot;http://coapp.org/ns/ [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string mkPackage {
-            get {
-                return ResourceManager.GetString("mkPackage", resourceCulture);
-            }
-        }
     }
 }
