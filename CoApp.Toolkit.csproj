@@ -311,7 +311,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM copy optional tools...
-if not exist $(TargetDir)\optional\ xcopy /q /s /c /i  $(SolutionDir)tools\optional $(TargetDir)\optional\</PostBuildEvent>
+if not exist "$(TargetDir)optional\" xcopy /q /s /c /i  "$(SolutionDir)tools\optional" "$(TargetDir)optional\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-build-numbers.js" cscript /nologo "$(SolutionDir)scripts\inc-build-numbers.js"</PreBuildEvent>
