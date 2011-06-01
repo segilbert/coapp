@@ -411,6 +411,17 @@ namespace CoApp.Toolkit.Engine {
             },messageHandlers);
         }
 
+        public Task<IEnumerable<Package>> GetPackagesInScanLocations(MessageHandlers messageHandlers = null)
+        {
+            return CoTask.Factory.StartNew<IEnumerable<Package>>(() =>
+            {
+                MSIBase.ScanInstalledMSIs();
+                Registrar.SaveCache();
+                return Registrar.Packages.Union(Registrar.ScanForPackages("*"));
+            }, messageHandlers);
+        }
+
+
         public void GenerateAtomFeed(string outputFilename, string packageSource, bool recursive,  string rootUrl, string packageUrl, string actualUrl = null, string title = null) {
             outputFilename = Path.GetFullPath(outputFilename);
             PackageFeed.GetPackageFeedFromLocation(packageSource, recursive).ContinueWithParent(antecedent => {
