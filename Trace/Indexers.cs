@@ -64,7 +64,7 @@ namespace CoApp.Toolkit.Trace {
             fileList = collection;
         }
 
-        public File this[IntPtr handle] {
+        public File this[long handle] {
             get {
                 lock (fileList) {
                     var result = fileList.Where(x => x.Handle.Equals(handle)).LastOrDefault();

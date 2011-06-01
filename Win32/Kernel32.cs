@@ -158,6 +158,12 @@ namespace CoApp.Toolkit.Win32 {
             IntPtr lpStartupInfo,
             IntPtr lpProcessInformation);
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
+        public static extern bool CreateProcessA(String applicationName, String commandLine, IntPtr lpProcessAttributes,
+            IntPtr lpThreadAttributes, bool bInheritHandles, Int32 dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory,
+            IntPtr lpStartupInfo,
+            IntPtr lpProcessInformation);
+
         [DllImport("kernel32.dll")] //, CharSet=CharSet.Unicode
         public static extern IntPtr GetProcAddress(IntPtr hmod, String name);
 
