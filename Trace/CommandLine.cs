@@ -73,7 +73,7 @@ namespace CoApp.Toolkit.Trace {
         private IEnumerable<string> ParseResolveResponseFiles(string rawParameterText) {
             foreach (string par in SplitParameterString(rawParameterText)) {
                 if (par.StartsWith("@") && par.Length > 1) {
-                    string fname = par.Substring(1);
+                    string fname = par.Substring(1).Trim('"');
                     if (System.IO.File.Exists(fname)) {
                         foreach (string l in System.IO.File.ReadAllLines(fname)) {
                             yield return l;
