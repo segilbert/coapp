@@ -11,6 +11,11 @@ package
     
     
 }
+
+dependencies
+{
+	coapp:"DeploymentToolsFoundation-3.5.2519.52-any";
+}
  
 identity
 {
