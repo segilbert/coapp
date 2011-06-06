@@ -31,6 +31,7 @@ namespace CoApp.Toolkit.Utility {
         public static ProgramFinder ProgramFilesAndSys32;
         public static ProgramFinder ProgramFilesAndDotNet;
         public static ProgramFinder ProgramFilesSys32AndDotNet;
+        public static ProgramFinder ProgramFilesAndDotNetAndSDK;
 
         public static bool IgnoreCache;
 
@@ -42,6 +43,10 @@ namespace CoApp.Toolkit.Utility {
             ProgramFilesAndSys32 = new ProgramFinder("",@"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32");
             ProgramFilesAndDotNet = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET");
             ProgramFilesSys32AndDotNet = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32;%SystemRoot%\Microsoft.NET");
+
+            var SDKFolder = Configuration.RegistryView.LocalMachine[@"SOFTWARE\Microsoft\Microsoft SDKs\Windows", "CurrentInstallFolder"].Value as string;
+            
+            ProgramFilesAndDotNetAndSDK  = string.IsNullOrEmpty(SDKFolder) ? ProgramFilesAndDotNet : new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET;"+SDKFolder);
         }
 
         public ProgramFinder(string searchPath) {

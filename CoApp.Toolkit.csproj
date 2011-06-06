@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="Collections\ExpiringList.cs" />
     <Compile Include="Collections\LazyEnumerable.cs" />
+    <Compile Include="Configuration\RegistryView.cs" />
     <Compile Include="Configuration\Settings.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
