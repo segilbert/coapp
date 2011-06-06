@@ -261,10 +261,63 @@ namespace CoApp.Toolkit.Extensions {
         /// </summary>
         /// <param name="input">a string to be checked</param>
         /// <returns>true if it the string is a valid version, false otherwise</returns>
-        public static bool IsValidVersion(this string input)
+        public static bool IsValidVersion(this string input, bool strict = true)
         {
-            return versionRegex.IsMatch(input);
+            var verParts = input.Split('.');
+            //too many parts!
+            if (verParts.Length > 4)
+                return false;
+
+            foreach (var part in verParts)
+            {
+                if (!part.IsValidVersionPart())
+                    return false;
+            }
+
+            return true;
         }
+
+        public static bool IsValidVersionPart(this string input)
+        {
+            int part;
+            //it's not even an integer so we fail
+            if (!Int32.TryParse(input, out part))
+                return false;
+
+            //part is too damn big
+            if (part < 0 || part > 65535)
+                return false;
+
+            return true;
+
+        }
+
+        public static string ExtendVersion(this string input)
+        {
+            if (!input.IsValidVersion(false))
+                return null;
+
+            var partList = input.SplitToList('.');
+
+            if (partList.Count == 4)
+                return input;
+
+            while (partList.Count != 4)
+            {
+                partList.Add("0");
+            }
+
+            StringBuilder output = new StringBuilder();
+            for (int i = 0; i < 4; i++)
+            {
+                output.Append(partList[i]);
+                if (i != 3)
+                    output.Append(".");
+            }
+
+            return output.ToString();
+        }
+
 
 
         /// <summary>
