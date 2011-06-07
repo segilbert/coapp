@@ -205,13 +205,11 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static IEnumerable<byte> UnprotectBinaryForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
-            var data = binaryData.ToArray();
-
-            if (data == null || data.Length == 0)
+            if( binaryData.IsNullOrEmpty())
                 return Enumerable.Empty<byte>();
 
             try {
-                return ProtectedData.Unprotect(data, salt.ToByteArray(), DataProtectionScope.CurrentUser);
+                return ProtectedData.Unprotect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.CurrentUser);
             }
             catch {
                 /* suppress */
@@ -220,13 +218,11 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static IEnumerable<byte> UnprotectBinaryForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
-            var data = binaryData.ToArray();
-
-            if (data == null || data.Length == 0)
+            if (binaryData.IsNullOrEmpty())
                 return Enumerable.Empty<byte>();
 
             try {
-                return ProtectedData.Unprotect(data, salt.ToByteArray(), DataProtectionScope.LocalMachine);
+                return ProtectedData.Unprotect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.LocalMachine);
             }
             catch {
                 /* suppress */
