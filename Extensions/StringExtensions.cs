@@ -184,24 +184,64 @@ namespace CoApp.Toolkit.Extensions {
             return Encoding.UTF8.GetBytes(text);
         }
 
-        public static string ToUtf8String(this byte[] bytes) {
-            return Encoding.UTF8.GetString(bytes);
+        public static string ToUtf8String(this IEnumerable<byte> bytes) {
+            return Encoding.UTF8.GetString(bytes.ToArray());
         }
 
-        public static byte[] Protect(this string text, string salt = "CoAppToolkit") {
-            return ProtectedData.Protect((text ?? string.Empty).ToByteArray(), salt.ToByteArray(), DataProtectionScope.CurrentUser);
+        public static IEnumerable<byte> ProtectBinaryForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
+            return ProtectedData.Protect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.LocalMachine);
         }
 
-        public static string Unprotect(this byte[] data, string salt = "CoAppToolkit") {
+        public static IEnumerable<byte> ProtectBinaryForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
+            return ProtectedData.Protect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.CurrentUser);
+        }
+
+        public static IEnumerable<byte> ProtectForMachine(this string text, string salt = "CoAppToolkit") {
+            return ProtectBinaryForMachine((text ?? string.Empty).ToByteArray(), salt);
+        }
+
+        public static IEnumerable<byte> ProtectForUser(this string text, string salt = "CoAppToolkit") {
+            return ProtectBinaryForUser((text ?? string.Empty).ToByteArray(), salt);
+        }
+
+        public static IEnumerable<byte> UnprotectBinaryForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
+            var data = binaryData.ToArray();
+
             if (data == null || data.Length == 0)
-                return string.Empty;
+                return Enumerable.Empty<byte>();
+
             try {
-                return ProtectedData.Unprotect(data, salt.ToByteArray(), DataProtectionScope.CurrentUser).ToUtf8String();    
+                return ProtectedData.Unprotect(data, salt.ToByteArray(), DataProtectionScope.CurrentUser);
             }
             catch {
                 /* suppress */
             }
-            return string.Empty;
+            return Enumerable.Empty<byte>();
+        }
+
+        public static IEnumerable<byte> UnprotectBinaryForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
+            var data = binaryData.ToArray();
+
+            if (data == null || data.Length == 0)
+                return Enumerable.Empty<byte>();
+
+            try {
+                return ProtectedData.Unprotect(data, salt.ToByteArray(), DataProtectionScope.LocalMachine);
+            }
+            catch {
+                /* suppress */
+            }
+            return Enumerable.Empty<byte>();
+        }
+
+        public static string UnprotectForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
+            var data = binaryData.UnprotectBinaryForUser(salt);
+            return data.Any() ? data.ToUtf8String() : string.Empty;
+        }
+
+        public static string UnprotectForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
+            var data = binaryData.UnprotectBinaryForMachine(salt);
+            return data.Any() ? data.ToUtf8String() : string.Empty;
         }
 
         public static UInt64 VersionStringToUInt64(this string version) {

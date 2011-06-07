@@ -19,10 +19,10 @@ dependencies
  
 identity
 {
-   /* file: CoAppTest.pfx;*/
-   /* pass: password;*/
-    /*email: */
-    /*website: */
+    file: @"..\signing\coapp-private.pfk";
+    pass: "XXXXXXXXXXXXXX";
+    email: "gserack@microsoft.com";
+    website: "http://coapp.org";
 }
 
 app
@@ -41,16 +41,11 @@ assembly[../output/any/release/bin/Coapp.Toolkit.dll]
     name: Coapp.Toolkit;
 }
 
-assembly[../output/any/release/bin/Coapp.Toolkit.Debug.dll]
-{
-
-}
-
 assembly[../output/any/release/bin/Coapp.Toolkit.Engine.dll]
 {
 }
 
-/* the location of an exe-file in the OUTPUT, not input*/
+
 exe-file[coapp.exe]
 {
 	global-bin:true;

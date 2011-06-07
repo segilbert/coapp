@@ -65,7 +65,6 @@
     <Compile Include="Collections\ExpiringList.cs" />
     <Compile Include="Collections\LazyEnumerable.cs" />
     <Compile Include="Configuration\RegistryView.cs" />
-    <Compile Include="Configuration\Settings.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
     <Compile Include="Exceptions\ConsoleException.cs" />
@@ -118,8 +117,6 @@
     <Compile Include="Scan\Types\ScannedFile.cs" />
     <Compile Include="Scan\Types\ScannedFileType.cs" />
     <Compile Include="Scan\Types\ScanReport.cs" />
-    <Compile Include="Configuration\Indexers.cs" />
-    <Compile Include="Configuration\QuickSettings.cs" />
     <Compile Include="Scripting\Languages\CSV\CachedCsvReader.cs" />
     <Compile Include="Scripting\Languages\CSV\CachedCsvReader.CsvBindingList.cs" />
     <Compile Include="Scripting\Languages\CSV\CachedCsvReader.CsvPropertyDescriptor.cs" />

@@ -125,7 +125,8 @@ namespace CoApp.Toolkit.Engine {
         #region Cache Management
 
         public static void FlushCache() {
-            PackageManagerSettings.systemCache["nonCoAppPackageMap"] = null;
+            PackageManagerSettings.CacheSettings["#nonCoAppPackageMap"].Value = null;
+
             _nonCoAppMSIFiles.Clear();
             try {
                 Parallel.ForEach(Directory.GetDirectories(PackageManagerSettings.CoAppCacheDirectory), dir => Directory.Delete(dir, true));
@@ -149,21 +150,21 @@ namespace CoApp.Toolkit.Engine {
                     binaryWriter.Write(val);
                 }
 
-                PackageManagerSettings.systemCache["nonCoAppPackageMap"] = ms.GetBuffer();
+                PackageManagerSettings.CacheSettings["#nonCoAppPackageMap"].BinaryValue = ms.GetBuffer();
             }
 
-            PackageManagerSettings.SystemStringArraySetting["feedLocations"] = SystemFeedLocations;
+            PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = SystemFeedLocations;
         }
 
         public static void LoadCache() {
             if (!_readCache) {
                 _readCache = true;
-                var cache = PackageManagerSettings.systemCache["nonCoAppPackageMap"] as byte[];
+                var cache = PackageManagerSettings.CacheSettings["#nonCoAppPackageMap"].BinaryValue;
                 if (cache == null) {
                     return;
                 }
 
-                using (var ms = new MemoryStream(cache)) {
+                using (var ms = new MemoryStream(cache.ToArray())) {
                     var binaryReader = new BinaryReader(ms);
                     var count = binaryReader.ReadInt32();
                     for (var i = 0; i < count; i++) {
@@ -173,16 +174,16 @@ namespace CoApp.Toolkit.Engine {
                         }
                     }
                 }
-                AddSystemFeedLocations(PackageManagerSettings.SystemStringArraySetting["feedLocations"]);
+                AddSystemFeedLocations(PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue);
             }
         }
 
         public static IEnumerable<string> GetCachedStrings(string cachename, params object[] args ) {
-            return PackageManagerSettings.CacheStringArraySetting[cachename.format(args)];
+            return PackageManagerSettings.CacheSettings["#"+cachename.format(args)].StringsValue;
         }
 
         public static void SetCachedStrings(IEnumerable<string> values, string cachename, params object[] args) {
-            PackageManagerSettings.CacheStringArraySetting[cachename.format(args)] = values;
+            PackageManagerSettings.CacheSettings["#"+cachename.format(args)].StringsValue = values;
         } 
 
 

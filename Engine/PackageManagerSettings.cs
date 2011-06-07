@@ -11,45 +11,11 @@ namespace CoApp.Toolkit.Engine {
     using Configuration;
     using Exceptions;
     using Extensions;
-    using Microsoft.Win32;
 
     public class PackageManagerSettings {
-        public static Settings userSettings = new Settings("CoAppPackageManager");
-        public static Settings systemSettings = new Settings("CoAppPackageManager", Registry.LocalMachine);
-        public static Settings systemCache = new Settings(".cache", Registry.LocalMachine);
-        public static Settings packageInformation = new Settings(".packageInformation", Registry.LocalMachine);
-
-        public static SettingsStringIndexer StringSetting = new SettingsStringIndexer(userSettings);
-        public static SettingsStringArrayIndexer StringArraySetting = new SettingsStringArrayIndexer(userSettings);
-        public static SettingsBooleanIndexer BoolSetting = new SettingsBooleanIndexer(userSettings);
-        public static SettingsIntIndexer IntSetting = new SettingsIntIndexer(userSettings);
-        public static SettingsLongIndexer LongSetting = new SettingsLongIndexer(userSettings);
-
-        public static SettingsEncryptedStringIndexer EncryptedStringSetting =
-            new SettingsEncryptedStringIndexer(userSettings);
-
-        public static SettingsStringIndexer SystemStringSetting = new SettingsStringIndexer(systemSettings);
-        public static SettingsStringArrayIndexer SystemStringArraySetting = new SettingsStringArrayIndexer(systemSettings);
-        public static SettingsBooleanIndexer SystemBoolSetting = new SettingsBooleanIndexer(systemSettings);
-        public static SettingsIntIndexer SystemIntSetting = new SettingsIntIndexer(systemSettings);
-        public static SettingsLongIndexer SystemLongSetting = new SettingsLongIndexer(systemSettings);
-
-        public static SettingsEncryptedStringIndexer SystemEncryptedStringSetting =
-            new SettingsEncryptedStringIndexer(systemSettings);
-
-
-        public static SettingsStringIndexer CacheStringSetting = new SettingsStringIndexer(systemCache);
-        public static SettingsStringArrayIndexer CacheStringArraySetting = new SettingsStringArrayIndexer(systemCache);
-        public static SettingsBooleanIndexer CacheBoolSetting = new SettingsBooleanIndexer(systemCache);
-        public static SettingsIntIndexer CacheIntSetting = new SettingsIntIndexer(systemCache);
-        public static SettingsLongIndexer CacheLongSetting = new SettingsLongIndexer(systemCache);
-
-        public static SettingsStringIndexer PerPackageStringSetting = new SettingsStringIndexer(packageInformation);
-        public static SettingsStringArrayIndexer PerPackageStringArraySetting = new SettingsStringArrayIndexer(packageInformation);
-        public static SettingsBooleanIndexer PerPackageBoolSetting = new SettingsBooleanIndexer(packageInformation);
-        public static SettingsIntIndexer PerPackageIntSetting = new SettingsIntIndexer(packageInformation);
-        public static SettingsLongIndexer PerPackageLongSetting = new SettingsLongIndexer(packageInformation);
-        
+        public static RegistryView CoAppSettings = RegistryView.CoAppSystem[@"CoAppPackageManager"];
+        public static RegistryView CacheSettings = CoAppSettings[@".cache"];
+        public static RegistryView PerPackageSettings = CoAppSettings[@".packageInformation"];
 
         private static string DEFAULT_COAPP_ROOT {
             get { return Path.GetFullPath(Environment.ExpandEnvironmentVariables(@"%SystemDrive%\apps")); }
@@ -57,7 +23,8 @@ namespace CoApp.Toolkit.Engine {
 
         public static string CoAppRootDirectory {
             get {
-                string result = SystemStringSetting["RootDirectory"];
+                // string result = SystemStringSetting["RootDirectory"];
+                var result = CoAppSettings["#RootDirectory"].StringValue;
 
                 if (string.IsNullOrEmpty(result)) {
                     CoAppRootDirectory = result = DEFAULT_COAPP_ROOT;
@@ -71,9 +38,9 @@ namespace CoApp.Toolkit.Engine {
                 return result;
             }
             set {
-                string newRootDirectory = Path.GetFullPath(value);
+                var newRootDirectory = value.GetFullPath();
 
-                string rootDirectory = SystemStringSetting["RootDirectory"];
+                var rootDirectory = CoAppSettings["#RootDirectory"].StringValue;
 
                 if (string.IsNullOrEmpty(rootDirectory)) {
                     rootDirectory = DEFAULT_COAPP_ROOT;
@@ -102,7 +69,7 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 // Warning: the user might not have permissions to set this value
-                SystemStringSetting["RootDirectory"] = newRootDirectory;
+                CoAppSettings["#RootDirectory"].StringValue = newRootDirectory;
             }
         }
 

@@ -23,9 +23,9 @@ namespace CoApp.Toolkit.Utility {
     using Win32;
 
     public class ProgramFinder {
-        private static IEnumerable<string> commonSearchLocations = new List<string>();
-        private IEnumerable<string> searchLocations = new List<string>();
-        private IEnumerable<string> recursiveSearchLocations = new List<string>();
+        private static IEnumerable<string> _commonSearchLocations = new List<string>();
+        private IEnumerable<string> _searchLocations = new List<string>();
+        private IEnumerable<string> _recursiveSearchLocations = new List<string>();
 
         public static ProgramFinder ProgramFiles;
         public static ProgramFinder ProgramFilesAndSys32;
@@ -44,7 +44,7 @@ namespace CoApp.Toolkit.Utility {
             ProgramFilesAndDotNet = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET");
             ProgramFilesSys32AndDotNet = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32;%SystemRoot%\Microsoft.NET");
 
-            var SDKFolder = Configuration.RegistryView.LocalMachine[@"SOFTWARE\Microsoft\Microsoft SDKs\Windows", "CurrentInstallFolder"].Value as string;
+            var SDKFolder = Configuration.RegistryView.System[@"SOFTWARE\Microsoft\Microsoft SDKs\Windows", "CurrentInstallFolder"].Value as string;
             
             ProgramFilesAndDotNetAndSDK  = string.IsNullOrEmpty(SDKFolder) ? ProgramFilesAndDotNet : new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET;"+SDKFolder);
         }
@@ -67,15 +67,15 @@ namespace CoApp.Toolkit.Utility {
         }
 
         private void AddSearchLocations(string paths) {
-            AddPathsToList(paths, ref searchLocations);
+            AddPathsToList(paths, ref _searchLocations);
         }
 
         private void AddRecursiveSearchLocations(string paths) {
-            AddPathsToList(paths,ref recursiveSearchLocations);
+            AddPathsToList(paths,ref _recursiveSearchLocations);
         }
 
         private static void AddCommonSearchLocations(string paths) {
-            AddPathsToList(paths,ref commonSearchLocations);
+            AddPathsToList(paths,ref _commonSearchLocations);
         }
 
         public string ScanForFile(string filename, string minimumVersion, IEnumerable<string> filters = null) {
@@ -97,10 +97,10 @@ namespace CoApp.Toolkit.Utility {
 
             var ver = minimumVersion.VersionStringToUInt64();
 
-            var files = commonSearchLocations.Union(searchLocations).AsParallel().SelectMany(
+            var files = _commonSearchLocations.Union(_searchLocations).AsParallel().SelectMany(
                 directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.TopDirectoryOnly))
                 .Union(
-                    recursiveSearchLocations.AsParallel().SelectMany(
+                    _recursiveSearchLocations.AsParallel().SelectMany(
                         directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.AllDirectories)));
 
             files = files.Where(file => (PEInfo.Scan(file).ExecutableInfo & executableType) == executableType && PEInfo.Scan(file).FileVersionLong >= ver);

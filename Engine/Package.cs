@@ -140,13 +140,13 @@ namespace CoApp.Toolkit.Engine {
         }
 
         private void LoadCachedInfo() {
-            RemoteLocation.Add(PackageManagerSettings.CacheStringArraySetting[CanonicalName, "RemoteLocation"].Select(item => new Uri(item)));
-            FeedLocation.Add(PackageManagerSettings.CacheStringArraySetting[CanonicalName, "Feed"]);
+            RemoteLocation.Add(PackageManagerSettings.CacheSettings[CanonicalName, "RemoteLocation"].StringsValue.Select(item => new Uri(item)));
+            FeedLocation.Add(PackageManagerSettings.CacheSettings[CanonicalName, "Feed"].StringValue);
         }
 
         private void SaveCachedInfo() {
-            PackageManagerSettings.CacheStringArraySetting[CanonicalName, "RemoteLocation"] = RemoteLocation.Select(item => item.AbsoluteUri);
-            PackageManagerSettings.CacheStringArraySetting[CanonicalName, "Feed"] = FeedLocation;
+            PackageManagerSettings.CacheSettings[CanonicalName, "RemoteLocation"].StringsValue = RemoteLocation.Select(item => item.AbsoluteUri);
+            PackageManagerSettings.CacheSettings[CanonicalName, "Feed"].StringValue = FeedLocation;
         }
 
         // set once only:
@@ -440,11 +440,11 @@ namespace CoApp.Toolkit.Engine {
             var latestPackage = installedVersionsOfPackage.FirstOrDefault();
 
             if (latestPackage == null) {
-                PackageManagerSettings.PerPackageStringSetting["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"] = null;
+                PackageManagerSettings.PerPackageSettings["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"].Value = null;
                 return 0;
             }
 
-            var ver = (ulong)PackageManagerSettings.PerPackageLongSetting[latestPackage.GeneralName, "CurrentVersion"];
+            var ver = (ulong)PackageManagerSettings.PerPackageSettings[latestPackage.GeneralName, "CurrentVersion"].LongValue;
 
             if (ver == 0 || installedVersionsOfPackage.Where(p => p.Version == ver).FirstOrDefault() == null) {
                 // hmm. Nothing is marked as current, or the 'current' version isn't installed.
@@ -463,12 +463,12 @@ namespace CoApp.Toolkit.Engine {
                 throw new PackageNotInstalledException(this);
             }
 
-            if (Version == (ulong)PackageManagerSettings.PerPackageLongSetting[GeneralName, "CurrentVersion"]) {
+            if (Version == (ulong)PackageManagerSettings.PerPackageSettings[GeneralName, "CurrentVersion"].LongValue) {
                 return; // it's already set to the current version.
             }
 
             DoPackageComposition(true);
-            PackageManagerSettings.PerPackageLongSetting[GeneralName, "CurrentVersion"] = (long)Version;
+            PackageManagerSettings.PerPackageSettings[GeneralName, "CurrentVersion"].LongValue = (long)Version;
         }
     }
 }
