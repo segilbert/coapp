@@ -12,10 +12,14 @@ namespace CoApp.Toolkit.Extensions
     {
         public static Dictionary<string, string> GetSubjectNameParts(this X509Certificate2 cert)
         {
-            var subName = cert.SubjectName.Name;
-            var list = subName.SplitToList(',').ToDictionary(i => i.Split('=')[0], i => i.Split('=')[1]);
-                   
-            return list;
+            var result = new Dictionary<string, string>();
+
+            foreach (var bits in cert.SubjectName.Name.SplitToList(',').Select(each => each.Split('='))) {
+                var newKey= bits[0].Trim(' ');
+                result.Add(result.ContainsKey(newKey) ? newKey + result.Keys.Where(key => key.StartsWith(newKey)).Count() : newKey, bits[1]);
+            }
+
+            return result;
         }
     }
 }
