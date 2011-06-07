@@ -160,7 +160,7 @@ namespace CoApp.Toolkit.Engine {
             if (!_readCache) {
                 _readCache = true;
                 var cache = PackageManagerSettings.CacheSettings["#nonCoAppPackageMap"].BinaryValue;
-                if (cache == null) {
+                if (cache.IsNullOrEmpty()) {
                     return;
                 }
 

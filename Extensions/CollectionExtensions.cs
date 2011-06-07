@@ -148,5 +148,9 @@ namespace CoApp.Toolkit.Extensions {
             }
             return result;
         }
+
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T> collection ) {
+            return collection == null ? true : !collection.Any();
+        }
     }
 }
