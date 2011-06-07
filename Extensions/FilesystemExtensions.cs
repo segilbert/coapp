@@ -242,7 +242,10 @@ namespace CoApp.Toolkit.Extensions {
         {
 
             //pathMask safety
-            
+            if (String.IsNullOrEmpty(pathMask))
+            {
+                return FindFilesSmarterComplex(pathPrefix);
+            }
             if (InvalidDoubleWCRx.IsMatch(pathMask))
             {
                 throw new ArgumentException(Resources.Invalid_WildcardPath.format(pathMask));
@@ -309,7 +312,13 @@ namespace CoApp.Toolkit.Extensions {
             else
             {
                 //recursively keep going
-                var newPathPrefix = pathPrefix + "\\" + nextPart.Item1;
+                var newPathPrefix = pathPrefix;
+
+                if (!String.IsNullOrEmpty(nextPart.Item1))
+                {
+                    newPathPrefix += "\\" + nextPart.Item1;
+                }
+
                 if (onLastPart)
                 {
                     return File.Exists(newPathPrefix) ? newPathPrefix.SingleItemAsEnumerable() : Enumerable.Empty<string>();
