@@ -12,7 +12,9 @@ namespace CoApp.Toolkit.Trace {
     public partial class CommandLine {
         [XmlIgnore]
         public string Line {
-            get { return line; }
+            get {
+                return line;
+            }
             set {
                 line = value;
                 parameters = string.IsNullOrEmpty((value)) ? new List<string>() : ParseResolveResponseFiles(value).Skip(1).ToList();
@@ -20,12 +22,12 @@ namespace CoApp.Toolkit.Trace {
         }
 
         public static IEnumerable<string> SplitParameterString(string rawParameter) {
-            char[] text = rawParameter.ToCharArray();
-            int len = text.Length;
-            parseState state = parseState.none;
-            int begin = 0;
+            var text = rawParameter.ToCharArray();
+            var len = text.Length;
+            var state = parseState.none;
+            var begin = 0;
 
-            for (int i = 0; i < len; i++) {
+            for (var i = 0; i < len; i++) {
                 switch (state) {
                     case parseState.none:
                         if (text[i] == '"') {
@@ -71,12 +73,19 @@ namespace CoApp.Toolkit.Trace {
         }
 
         private IEnumerable<string> ParseResolveResponseFiles(string rawParameterText) {
-            foreach (string par in SplitParameterString(rawParameterText)) {
+            foreach (var par in SplitParameterString(rawParameterText)) {
                 if (par.StartsWith("@") && par.Length > 1) {
-                    string fname = par.Substring(1).Trim('"');
+                    var fname = par.Substring(1).Trim('"');
                     if (System.IO.File.Exists(fname)) {
-                        foreach (string l in System.IO.File.ReadAllLines(fname)) {
-                            yield return l;
+                        foreach (var l in System.IO.File.ReadAllLines(fname)) {
+                            if (l.Contains(" ")) {
+                                foreach (var s in SplitParameterString(l)) {
+                                    yield return s;
+                                }
+                            }
+                            else {
+                                yield return l;
+                            }
                         }
                         continue;
                     }

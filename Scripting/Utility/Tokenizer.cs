@@ -635,11 +635,14 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 Index += 2;
                 while(Index < Text.Length) {
                     if(Text[Index] == '\r' || Text[Index] == '\n') {
+                        if (Index >= Text.Length || Text[Index] == '\r' && Text[Index + 1] == '\n') {
+                            // if this is a CR, is there an LF after it?
+                            Index++;
+                        }
                         AddToken(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
-                        start = -1;
-                        break;
+                        return;
+                        
                     }
-
                     Index++;
                 }
 
@@ -647,8 +650,6 @@ namespace CoApp.Toolkit.Scripting.Utility {
                     // adding a comment at the end I guess.
                     AddToken(new Token {Type = TokenType.LineComment, Data = new string(Text, start, (Index - start) + 1)});
                 }
-
-                Index++;
                 return;
             }
 
