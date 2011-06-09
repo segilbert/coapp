@@ -62,7 +62,7 @@ namespace CoApp.Toolkit.Utility {
             list = list.Union(
                 from eachPath in
                     Environment.ExpandEnvironmentVariables(paths).Split(new []{ ';' }, StringSplitOptions.RemoveEmptyEntries)
-                where Directory.Exists(Path.GetFullPath(eachPath))
+                where Directory.Exists(eachPath.GetFullPath())
                 select eachPath);
         }
 

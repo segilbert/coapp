@@ -447,10 +447,12 @@ namespace CoApp.Toolkit.Extensions {
         public static string GetFullPath(this string path) {
             if (FullPathCache.Contains(path))
                 return path;
-            path = Path.GetFullPath(path);
-
-            FullPathCache.Add(path);
-
+            try {
+                path = Path.GetFullPath(path);
+                FullPathCache.Add(path);
+            } catch {
+                
+            }
             return path;
         }
 
