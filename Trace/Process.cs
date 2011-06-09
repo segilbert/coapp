@@ -9,6 +9,7 @@ using System.Collections.Generic;
 namespace CoApp.Toolkit.Trace {
     using System.IO;
     using System.Xml.Serialization;
+    using Utility;
 
     public partial class Process  {
 
@@ -29,6 +30,12 @@ namespace CoApp.Toolkit.Trace {
 
         [XmlIgnore]
         public FileIndexer Files;
+
+        [XmlIgnore]
+        public ToolType ToolType { 
+            get { return ToolSniffer.Sniffer.Identify(executablePath).Type; }
+        }
+
 
         [XmlIgnore]
         public EnvironmentVariableIndexer Environment;

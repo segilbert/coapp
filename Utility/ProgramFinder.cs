@@ -14,14 +14,15 @@
 // -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Utility {
-    using System.Reflection;
-    using Microsoft.Win32;
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Reflection;
     using Extensions;
+    using Microsoft.Win32;
     using Win32;
+    using RegistryView = Configuration.RegistryView;
 
     public class ProgramFinder {
         private static IEnumerable<string> _commonSearchLocations = new List<string>();
@@ -32,7 +33,7 @@ namespace CoApp.Toolkit.Utility {
         public static ProgramFinder ProgramFilesAndSys32;
         public static ProgramFinder ProgramFilesAndDotNet;
         public static ProgramFinder ProgramFilesSys32AndDotNet;
-        public static ProgramFinder ProgramFilesAndDotNetAndSDK;
+        public static ProgramFinder ProgramFilesAndDotNetAndSdk;
 
         public static bool IgnoreCache;
 
@@ -42,28 +43,31 @@ namespace CoApp.Toolkit.Utility {
             AddCommonSearchLocations(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
 
             ProgramFiles = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%");
-            ProgramFilesAndSys32 = new ProgramFinder("",@"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32");
+            ProgramFilesAndSys32 = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32");
             ProgramFilesAndDotNet = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET");
-            ProgramFilesSys32AndDotNet = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32;%SystemRoot%\Microsoft.NET");
+            ProgramFilesSys32AndDotNet = new ProgramFinder("",
+                @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32;%SystemRoot%\Microsoft.NET");
 
-            var SDKFolder = Configuration.RegistryView.System[@"SOFTWARE\Microsoft\Microsoft SDKs\Windows", "CurrentInstallFolder"].Value as string;
-            
-            ProgramFilesAndDotNetAndSDK  = string.IsNullOrEmpty(SDKFolder) ? ProgramFilesAndDotNet : new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET;"+SDKFolder);
+            var sdkFolder = RegistryView.System[@"SOFTWARE\Microsoft\Microsoft SDKs\Windows", "CurrentInstallFolder"].Value as string;
+
+            ProgramFilesAndDotNetAndSdk = string.IsNullOrEmpty(sdkFolder)
+                ? ProgramFilesAndDotNet
+                : new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET;" + sdkFolder);
         }
 
         public ProgramFinder(string searchPath) {
             AddSearchLocations(searchPath);
         }
-        
+
         public ProgramFinder(string searchPath, string recursivePath) {
             AddSearchLocations(searchPath);
             AddRecursiveSearchLocations(recursivePath);
         }
 
-        private static void AddPathsToList(string paths,ref IEnumerable<string> list) {
+        private static void AddPathsToList(string paths, ref IEnumerable<string> list) {
             list = list.Union(
                 from eachPath in
-                    Environment.ExpandEnvironmentVariables(paths).Split(new []{ ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    Environment.ExpandEnvironmentVariables(paths).Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries)
                 where Directory.Exists(eachPath.GetFullPath())
                 select eachPath);
         }
@@ -73,26 +77,28 @@ namespace CoApp.Toolkit.Utility {
         }
 
         private void AddRecursiveSearchLocations(string paths) {
-            AddPathsToList(paths,ref _recursiveSearchLocations);
+            AddPathsToList(paths, ref _recursiveSearchLocations);
         }
 
         private static void AddCommonSearchLocations(string paths) {
-            AddPathsToList(paths,ref _commonSearchLocations);
+            AddPathsToList(paths, ref _commonSearchLocations);
         }
 
         public string ScanForFile(string filename, string minimumVersion, IEnumerable<string> filters = null) {
-            return ScanForFile(filename, ExecutableInfo.none, minimumVersion,filters);
+            return ScanForFile(filename, ExecutableInfo.none, minimumVersion, filters);
         }
 
         public string ScanForFile(string filename, ExecutableInfo executableType, IEnumerable<string> filters) {
             return ScanForFile(filename, executableType, "0.0", filters);
         }
 
-        public string ScanForFile(string filename, ExecutableInfo executableType = ExecutableInfo.none, string minimumVersion = "0.0", IEnumerable<string> filters = null) {
+        public string ScanForFile(string filename, ExecutableInfo executableType = ExecutableInfo.none, string minimumVersion = "0.0",
+            IEnumerable<string> filters = null) {
             if (!IgnoreCache) {
-                string result = GetCachedPath(filename, executableType, minimumVersion);
-                if (!string.IsNullOrEmpty(result))
+                var result = GetCachedPath(filename, executableType, minimumVersion);
+                if (!string.IsNullOrEmpty(result)) {
                     return result;
+                }
             }
 
             Notify("[One moment.. Scanning for utility({0}/{1}/{2})]", filename, executableType.ToString(), minimumVersion);
@@ -106,23 +112,27 @@ namespace CoApp.Toolkit.Utility {
                         directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.AllDirectories)));
 
             if (executableType != ExecutableInfo.none || ver != 0.0) {
-                files = files.Where(file => (PEInfo.Scan(file).ExecutableInfo & executableType) == executableType && PEInfo.Scan(file).FileVersionLong >= ver);
+                files =
+                    files.Where(
+                        file =>
+                            (PEInfo.Scan(file).ExecutableInfo & executableType) == executableType &&
+                                PEInfo.Scan(file).FileVersionLong >= ver);
             }
 
-            if( filters != null  ) {
+            if (filters != null) {
                 files = filters.Aggregate(files, (current, filter) => (from eachFile in current
-                                                                       where !eachFile.IsWildcardMatch(filter)
-                                                                       select eachFile));
+                    where !eachFile.IsWildcardMatch(filter)
+                    select eachFile));
             }
 
-            
+
             var filePath = files.MaxElement(each => PEInfo.Scan(each).FileVersionLong);
 
             if (!string.IsNullOrEmpty(filePath)) {
                 SetCachedPath(filename, filePath, executableType, minimumVersion);
                 SetCachedPath(filename, filePath, executableType, PEInfo.Scan(filePath).FileVersion);
             }
-            
+
             return filePath;
         }
 
@@ -135,28 +145,31 @@ namespace CoApp.Toolkit.Utility {
         }
 
         private static string GetCachedPath(string toolEntry) {
-            if (IgnoreCache)
+            if (IgnoreCache) {
                 return null;
+            }
 
             RegistryKey regkey = null;
             string result = null;
             try {
                 regkey = Registry.CurrentUser.CreateSubKey(@"Software\CoApp\Tools");
 
-                if (null == regkey)
+                if (null == regkey) {
                     return null;
+                }
 
                 result = regkey.GetValue(toolEntry, null) as string;
 
-                if (null != result && !File.Exists(result))
+                if (null != result && !File.Exists(result)) {
                     regkey.DeleteValue(toolEntry);
-
+                }
             }
             catch {
             }
             finally {
-                if (null != regkey)
+                if (null != regkey) {
                     regkey.Close();
+                }
             }
             return result;
         }
@@ -166,20 +179,22 @@ namespace CoApp.Toolkit.Utility {
             try {
                 regkey = Registry.CurrentUser.CreateSubKey(@"Software\CoApp\Tools");
 
-                if (null == regkey)
+                if (null == regkey) {
                     return;
+                }
 
                 regkey.SetValue(toolEntry, location);
             }
             catch {
             }
             finally {
-                if (null != regkey)
+                if (null != regkey) {
                     regkey.Close();
+                }
             }
         }
 
-        private void Notify( string message, params string[] arguments ) {
+        private static void Notify(string message, params string[] arguments) {
             Console.WriteLine(message.format(arguments));
         }
     }

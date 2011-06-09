@@ -17,33 +17,36 @@
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Collections.Generic;
+    using System.IO;
+    using System.IO.Compression;
     using System.Linq;
     using System.Runtime.Remoting.Metadata.W3cXsd2001;
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
-    using System.IO.Compression;
-    using System.IO;
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscores = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_";
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
         public const string LettersNumbersUnderscoresAndDashesAndDots = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-.";
-        
-        
         public const string ValidVersionRegex = @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$";
-        
+
         //putting regexs here so they're only compiled once.
-        private static Regex versionRegex = new Regex(ValidVersionRegex);
-        private static Regex badDirIdCharsRegex = new Regex(@"\s|\.|\-|\\");
-        private static Regex majorMinorRegex = new Regex(@"^\d{1,5}\.\d{1,5}$");
+        #pragma warning disable 169
+        private static Regex _versionRegex = new Regex(ValidVersionRegex);
+        #pragma warning restore 169
+
+        private static readonly Regex _badDirIdCharsRegex = new Regex(@"\s|\.|\-|\\");
+        private static readonly Regex _majorMinorRegex = new Regex(@"^\d{1,5}\.\d{1,5}$");
 
         //TODO this SUCKS. Thanks MS.
-        private static Regex emailRegex = new Regex(@"^(?<name>\S+)@(?<domain>\S+)$");
+        private static readonly Regex _emailRegex = new Regex(@"^(?<name>\S+)@(?<domain>\S+)$");
 
+        // ReSharper disable InconsistentNaming
         public static string format(this string formatString, params object[] args) {
             return string.Format(formatString, args);
         }
+        // ReSharper restore InconsistentNaming
 
         public static void Print(this string formatString, params object[] args) {
             Console.WriteLine(formatString, args);
@@ -65,27 +68,13 @@ namespace CoApp.Toolkit.Extensions {
             return str.ToInt32(0);
         }
 
-        public static int ToInt32(this string str, int defaultValue) {
-            var i = defaultValue;
-            Int32.TryParse(str, out i);
-            return i;
+        public static int ToInt32(this string str, int defaultValue = 0) {
+            int i;
+            return Int32.TryParse(str, out i) ? i : defaultValue;
         }
 
         public static bool OnlyContains(this string str, char[] characters) {
-            for (int x = 0; x < str.Length; x++) {
-                char ch = str[x];
-                bool found = false;
-                for (int y = 0; y < characters.Length; y++) {
-                    if (ch == characters[y]) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    return false;
-                }
-            }
-            return true;
+            return str.Select(ch => characters.Any(t => ch == t)).All(found => found);
         }
 
         public static bool OnlyContains(this string str, string characters) {
@@ -115,51 +104,53 @@ namespace CoApp.Toolkit.Extensions {
             return guid;
         }
 
-       
 
-        private static Dictionary<string, Regex> wildcards = new Dictionary<string, Regex>();
+        private static readonly Dictionary<string, Regex> _wildcards = new Dictionary<string, Regex>();
 
-        public static bool oldIsWildcardMatch(this string text, string wildcardMask) {
-            if (wildcards.ContainsKey(wildcardMask))
-                return wildcards[wildcardMask].IsMatch(text);
-            
+        public static bool OldIsWildcardMatch(this string text, string wildcardMask) {
+            if (_wildcards.ContainsKey(wildcardMask)) {
+                return _wildcards[wildcardMask].IsMatch(text);
+            }
+
             var mask = new Regex(
                 '^' +
-                wildcardMask
-                    .Replace(".", "[.]")
-                    .Replace("\\", "\\\\")
-                    .Replace("*", ".*")
-                    .Replace("?", ".")
-                + '$',
+                    wildcardMask
+                        .Replace(".", "[.]")
+                        .Replace("\\", "\\\\")
+                        .Replace("*", ".*")
+                        .Replace("?", ".")
+                            + '$',
                 RegexOptions.IgnoreCase);
-            
-            wildcards.Add(wildcardMask,mask);
-            
+
+            _wildcards.Add(wildcardMask, mask);
+
             return mask.IsMatch(text);
         }
 
-        public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null, bool escapePrefix=true) {
+        public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null, bool escapePrefix = true) {
             ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
 
             var key = wildcardMask + ignorePrefix;
-            if (wildcards.ContainsKey(key))
-                return wildcards[key].IsMatch(text);
+            if (_wildcards.ContainsKey(key)) {
+                return _wildcards[key].IsMatch(text);
+            }
 
-            
 
-                if (wildcardMask.EndsWith("**"))
-                    wildcardMask += @"\*";
+            if (wildcardMask.EndsWith("**")) {
+                wildcardMask += @"\*";
+            }
 
-                var mask =
-                    new Regex(
-                        '^' + ignorePrefix +
-                            (wildcardMask.Replace(".", @"[.]").Replace(@"\", @"\\").Replace("?", @".").Replace("+", @"\+").Replace("**",
-                                @"?") // temporarily move it so the next one doesn't clobber
-                                .Replace("*", @"[^\\\/\<\>\|]*") //     \/\<\>\|
-                                .Replace("?", @"[^\<\>\|]*") + '$'), RegexOptions.IgnoreCase);
-            lock (wildcards) {
-                if (!wildcards.ContainsKey(key))
-                    wildcards.Add(key, mask);
+            var mask =
+                new Regex(
+                    '^' + ignorePrefix +
+                        (wildcardMask.Replace(".", @"[.]").Replace(@"\", @"\\").Replace("?", @".").Replace("+", @"\+").Replace("**",
+                            @"?") // temporarily move it so the next one doesn't clobber
+                            .Replace("*", @"[^\\\/\<\>\|]*") //     \/\<\>\|
+                            .Replace("?", @"[^\<\>\|]*") + '$'), RegexOptions.IgnoreCase);
+            lock (_wildcards) {
+                if (!_wildcards.ContainsKey(key)) {
+                    _wildcards.Add(key, mask);
+                }
             }
             return mask.IsMatch(text);
         }
@@ -168,8 +159,9 @@ namespace CoApp.Toolkit.Extensions {
             return (from each in source where each.Equals(value, StringComparison.CurrentCultureIgnoreCase) select each).Any();
         }
 
-        public static bool HasWildcardMatch(this IEnumerable<string> source, string value,string ignorePrefix = null, bool escapePrefix=true) {
-            return source.Any(wildcard => value.IsWildcardMatch(wildcard,ignorePrefix,escapePrefix));
+        public static bool HasWildcardMatch(this IEnumerable<string> source, string value, string ignorePrefix = null,
+            bool escapePrefix = true) {
+            return source.Any(wildcard => value.IsWildcardMatch(wildcard, wildcard.Contains(@"\\") ? ignorePrefix : null, escapePrefix));
         }
 
         public static bool IsTrue(this string text) {
@@ -205,8 +197,9 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static IEnumerable<byte> UnprotectBinaryForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
-            if( binaryData.IsNullOrEmpty())
+            if (binaryData.IsNullOrEmpty()) {
                 return Enumerable.Empty<byte>();
+            }
 
             try {
                 return ProtectedData.Unprotect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.CurrentUser);
@@ -218,8 +211,9 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static IEnumerable<byte> UnprotectBinaryForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
-            if (binaryData.IsNullOrEmpty())
+            if (binaryData.IsNullOrEmpty()) {
                 return Enumerable.Empty<byte>();
+            }
 
             try {
                 return ProtectedData.Unprotect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.LocalMachine);
@@ -241,175 +235,151 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static UInt64 VersionStringToUInt64(this string version) {
-            if (string.IsNullOrEmpty(version))
+            if (string.IsNullOrEmpty(version)) {
                 return 0;
+            }
             var vers = version.Split('.');
             var major = vers.Length > 0 ? vers[0].ToInt32(0) : 0;
             var minor = vers.Length > 1 ? vers[1].ToInt32(0) : 0;
             var build = vers.Length > 2 ? vers[2].ToInt32(0) : 0;
             var revision = vers.Length > 3 ? vers[3].ToInt32(0) : 0;
 
-            return (((UInt64)major) << 48) + (((UInt64)minor) << 32) + (((UInt64)build) << 16) + (UInt64)revision;
+            return (((UInt64) major) << 48) + (((UInt64) minor) << 32) + (((UInt64) build) << 16) + (UInt64) revision;
         }
 
-        public static string UInt64VersiontoString(this UInt64 version)
-        {
-            return string.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF, (version >> 32) & 0xFFFF, (version >> 16) & 0xFFFF, (version) & 0xFFFF);
+        public static string UInt64VersiontoString(this UInt64 version) {
+            return string.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF, (version >> 32) & 0xFFFF, (version >> 16) & 0xFFFF,
+                (version) & 0xFFFF);
         }
+
         /// <summary>
-        /// Calculates the MD5 hash of a string. Additionally all the letters in the hash are in uppercase.
+        ///   Calculates the MD5 hash of a string. Additionally all the letters in the hash are in uppercase.
         /// </summary>
-        /// <param name="input">a string to a calculate the hash for</param>
+        /// <param name = "input">a string to a calculate the hash for</param>
         /// <returns>MD5 hash of the string</returns>
-        public static string MD5Hash(this string input)
-        {
+        public static string MD5Hash(this string input) {
             using (var hasher = MD5.Create()) {
                 return hasher.ComputeHash(Encoding.Unicode.GetBytes(input)).Aggregate(string.Empty,
                     (current, b) => current + b.ToString("x2").ToUpper());
             }
         }
 
-        public static string CreatePublicKeyToken(this string publicKey)
-        {
-            SHA1Managed m = new SHA1Managed();
+        public static string CreatePublicKeyToken(this string publicKey) {
+            var m = new SHA1Managed();
             var hashBytes = m.ComputeHash(SoapHexBinary.Parse(publicKey).Value);
             var last8BytesReversed = hashBytes.Reverse().Take(8);
 
             return new SoapHexBinary(last8BytesReversed.ToArray()).ToString();
-           
         }
 
         /// <summary>
-        /// Creates a safe directory ID for MSI for a possibly non-safe one.
+        ///   Creates a safe directory ID for MSI for a possibly non-safe one.
         /// </summary>
-        /// <param name="input"></param>
+        /// <param name = "input"></param>
         /// <returns>Your safe directory ID</returns>
-        public static string MakeSafeDirectoryId(this string input)
-        {
-            return badDirIdCharsRegex.Replace(input, "_");
+        public static string MakeSafeDirectoryId(this string input) {
+            return _badDirIdCharsRegex.Replace(input, "_");
         }
 
         /// <summary>
-        /// Checks if a string is a valid version string x.x.x.x 
+        ///   Checks if a string is a valid version string x.x.x.x 
         /// 
-        /// TODO: this allows x to have values LARGER than the max number 
-        /// for part of a version string. NEED TO FIX
+        ///   TODO: this allows x to have values LARGER than the max number 
+        ///   for part of a version string. NEED TO FIX
         /// </summary>
-        /// <param name="input">a string to be checked</param>
+        /// <param name = "input">a string to be checked</param>
+        /// <param name="strict">should be strict?</param>
         /// <returns>true if it the string is a valid version, false otherwise</returns>
-        public static bool IsValidVersion(this string input, bool strict = true)
-        {
+        public static bool IsValidVersion(this string input, bool strict = true) {
             var verParts = input.Split('.');
             //too many parts!
-            if (verParts.Length > 4)
-                return false;
+            return verParts.Length <= 4 && verParts.All(part => part.IsValidVersionPart());
+        }
 
-            foreach (var part in verParts)
-            {
-                if (!part.IsValidVersionPart())
-                    return false;
+        public static bool IsValidVersionPart(this string input) {
+            int part;
+            //it's not even an integer so we fail
+            if (!Int32.TryParse(input, out part)) {
+                return false;
+            }
+
+            //part is too damn big
+            if (part < 0 || part > 65535) {
+                return false;
             }
 
             return true;
         }
 
-        public static bool IsValidVersionPart(this string input)
-        {
-            int part;
-            //it's not even an integer so we fail
-            if (!Int32.TryParse(input, out part))
-                return false;
-
-            //part is too damn big
-            if (part < 0 || part > 65535)
-                return false;
-
-            return true;
-
-        }
-
-        public static string ExtendVersion(this string input)
-        {
-            if (!input.IsValidVersion(false))
+        public static string ExtendVersion(this string input) {
+            if (!input.IsValidVersion(false)) {
                 return null;
+            }
 
             var partList = input.SplitToList('.');
 
-            if (partList.Count == 4)
+            if (partList.Count == 4) {
                 return input;
+            }
 
-            while (partList.Count != 4)
-            {
+            while (partList.Count != 4) {
                 partList.Add("0");
             }
 
-            StringBuilder output = new StringBuilder();
-            for (int i = 0; i < 4; i++)
-            {
+            var output = new StringBuilder();
+            for (var i = 0; i < 4; i++) {
                 output.Append(partList[i]);
-                if (i != 3)
+                if (i != 3) {
                     output.Append(".");
+                }
             }
 
             return output.ToString();
         }
 
 
-
         /// <summary>
-        /// Checks if a string is a valid major.minor version string x.x
+        ///   Checks if a string is a valid major.minor version string x.x
         /// 
-        /// TODO: this allows x to have values LARGER than the max number 
-        /// for part of a version string. NEED TO FIX
+        ///   TODO: this allows x to have values LARGER than the max number 
+        ///   for part of a version string. NEED TO FIX
         /// </summary>
-        /// <param name="input">a string to be checked</param>
+        /// <param name = "input">a string to be checked</param>
         /// <returns>true if it the string is a valid major.minor version, false otherwise</returns>
-        public static bool IsValidMajorMinorVersion(this string input)
-        {
-            return majorMinorRegex.IsMatch(input);
+        public static bool IsValidMajorMinorVersion(this string input) {
+            return _majorMinorRegex.IsMatch(input);
         }
 
 
-        public static byte[] Gzip(this string input)
-        {
+        public static byte[] Gzip(this string input) {
             var memStream = new MemoryStream();
-            using (GZipStream gzStr = new GZipStream(memStream, CompressionMode.Compress))
-            {
+            using (var gzStr = new GZipStream(memStream, CompressionMode.Compress)) {
                 gzStr.Write(input.ToByteArray(), 0, input.ToByteArray().Length);
             }
 
             return memStream.ToArray();
         }
 
-        public static string GzipToBase64(this string input)
-        {
-            if (input == null || input == String.Empty)
-                return input;
-            return Convert.ToBase64String(Gzip(input));
+        public static string GzipToBase64(this string input) {
+            return string.IsNullOrEmpty(input) ? input : Convert.ToBase64String(Gzip(input));
         }
 
-        public static string GunzipFromBase64(this string input)
-        {
-            if (input == null || input == String.Empty)
-                return input;
-            return Gunzip(Convert.FromBase64String(input));
+        public static string GunzipFromBase64(this string input) {
+            return string.IsNullOrEmpty(input) ? input : Gunzip(Convert.FromBase64String(input));
         }
 
-        public static string Gunzip(this byte[] input)
-        {
+        public static string Gunzip(this byte[] input) {
             var bytes = new List<byte>();
-            using (GZipStream gzStr = new GZipStream(new MemoryStream(input), CompressionMode.Decompress))
-            {
+            using (var gzStr = new GZipStream(new MemoryStream(input), CompressionMode.Decompress)) {
                 var bytesRead = new byte[512];
-                while (true)
-                {
-                    int numRead = gzStr.Read(bytesRead, 0, 512);
-                    if (numRead > 0)
-                    {
+                while (true) {
+                    var numRead = gzStr.Read(bytesRead, 0, 512);
+                    if (numRead > 0) {
                         bytes.AddRange(bytesRead.Take(numRead));
                     }
-                    else
+                    else {
                         break;
+                    }
                 }
             }
 
@@ -417,10 +387,8 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
-        public static bool IsEmail(this string email)
-        {
-            return emailRegex.IsMatch(email);
+        public static bool IsEmail(this string email) {
+            return _emailRegex.IsMatch(email);
         }
-
     }
 }

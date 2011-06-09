@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Extensions {
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Text;
+    using Collections;
 
     public static class CollectionExtensions {
         /// <summary>
@@ -151,6 +152,10 @@ namespace CoApp.Toolkit.Extensions {
 
         public static bool IsNullOrEmpty<T>(this IEnumerable<T> collection ) {
             return collection == null ? true : !collection.Any();
+        }
+
+        public static IEnumerable<T> ToLazyEnumerable<T>(this IEnumerable<T> collection) {
+            return new LazyEnumerable<T>(collection);
         }
     }
 }

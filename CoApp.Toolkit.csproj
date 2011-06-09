@@ -216,6 +216,7 @@
     <Compile Include="Utility\PathEqualityComparer.cs" />
     <Compile Include="Utility\ProcessUtility.cs" />
     <Compile Include="Utility\ProgramFinder.cs" />
+    <Compile Include="Utility\ToolSniffer.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\Advapi32.cs" />
     <Compile Include="Win32\ByHandleFileInformation.cs" />

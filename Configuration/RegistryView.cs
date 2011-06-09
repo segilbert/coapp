@@ -166,7 +166,7 @@
         }
 
         public void SetEnumValue<T>(T value ) {
-            StringValue = CastToString<T>(value);
+            StringValue = CastToString(value);
         }
 
         public string EncryptedStringValue {

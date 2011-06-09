@@ -99,17 +99,17 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
         protected HashSet<string> Keywords { get; set; }
         private int _index;
-        private int row = 1;
-        private int column = 1;
-        private List<int> linelengths = new List<int>();
+        private int _row = 1;
+        private int _column = 1;
+        private readonly List<int> _linelengths = new List<int>();
 
         protected int Index {
             get { return _index; } 
             set {
                 if( value == 0) {
                     _index = 0;
-                    column = 1;
-                    row = 1;
+                    _column = 1;
+                    _row = 1;
                     return;
                 }
                 var delta = value - _index;
@@ -126,15 +126,15 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
                     switch (Text[_index]) {
                         case '\n':
-                            row--;
-                            column = linelengths[row - 1];
-                            linelengths.Remove(row - 1);
+                            _row--;
+                            _column = _linelengths[_row - 1];
+                            _linelengths.Remove(_row - 1);
                             break;
                         case '\r':
                             /* ignore */
                             break;
                         default:
-                            column--;
+                            _column--;
                             break;
                     }
                 }
@@ -147,15 +147,15 @@ namespace CoApp.Toolkit.Scripting.Utility {
 
                     switch(Text[_index] ) {
                         case '\n':
-                            linelengths.Add(column);
-                            column = 1;
-                            row++;
+                            _linelengths.Add(_column);
+                            _column = 1;
+                            _row++;
                             break;
                         case '\r':
-                            column = 1;
+                            _column = 1;
                             break;
                         default:
-                            column++;
+                            _column++;
                             break;
                     }
                 }
@@ -188,8 +188,8 @@ namespace CoApp.Toolkit.Scripting.Utility {
         }
 
         protected void AddToken(Token token) {
-            token.Row = row;
-            token.Column = column - 1;
+            token.Row = _row;
+            token.Column = _column - 1;
             Tokens.Add(token);
         }
 

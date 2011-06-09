@@ -13,27 +13,28 @@
 // Courtesy of the Open Source Techology Center: http://port25.technet.com
 // -----------------------------------------------------------------------
 
-using System.Collections.Generic;
-using System.Collections.Specialized;
-
 namespace CoApp.Toolkit.Extensions {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using Properties;
     using Win32;
-    using CoApp.Toolkit.Properties;
 
     public static class FilesystemExtensions {
-        private static int counter;
-        private static readonly HashSet<string> FullPathCache = new HashSet<string>();
+        private static int _counter;
+        private static readonly HashSet<string> _fullPathCache = new HashSet<string>();
         private const string NonInterpretedPathPrefix = @"\??\";
 
-        private static readonly Regex UncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
-        private static readonly Regex DrivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
-        private static readonly Regex VolumePrefixRx = new Regex(@"\\\?\?\\Volume");
+        private static readonly Regex _uncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
+        private static readonly Regex _drivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
+        
+        #pragma warning disable 169
+        private static readonly Regex _volumePrefixRx = new Regex(@"\\\?\?\\Volume");
+        #pragma warning restore 169
 
-        private static readonly Regex InvalidDoubleWCRx = new Regex(@"\\.+\*\*|\*\*[^\\]+\\|\*\*\\\*\*");
+        private static readonly Regex _invalidDoubleWcRx = new Regex(@"\\.+\*\*|\*\*[^\\]+\\|\*\*\\\*\*");
 
 
         /// <summary>
@@ -57,7 +58,7 @@ namespace CoApp.Toolkit.Extensions {
         public static string GetSubPath(this string parentPath, string childPath) {
             var parent = Path.GetFullPath(parentPath);
             var child = Path.GetFullPath(childPath);
-            if(child.StartsWith(parent, StringComparison.CurrentCultureIgnoreCase)) {
+            if (child.StartsWith(parent, StringComparison.CurrentCultureIgnoreCase)) {
                 return child.Substring(parent.Length).Trim('/', '\\');
             }
             return string.Empty;
@@ -88,22 +89,26 @@ namespace CoApp.Toolkit.Extensions {
         }
         */
 
-       public static string ChangeFileExtensionTo(this string currentFilename, string newExtension) {
-           return Path.Combine(Path.GetDirectoryName(currentFilename)??"", Path.GetFileNameWithoutExtension(currentFilename) + "." + newExtension);
-       }
+        public static string ChangeFileExtensionTo(this string currentFilename, string newExtension) {
+            return Path.Combine(Path.GetDirectoryName(currentFilename) ?? "",
+                Path.GetFileNameWithoutExtension(currentFilename) + "." + newExtension);
+        }
 
         public static string RelativePathTo(this string currentDirectory, string pathToMakeRelative) {
-            if (string.IsNullOrEmpty(currentDirectory))
+            if (string.IsNullOrEmpty(currentDirectory)) {
                 throw new ArgumentNullException("currentDirectory");
+            }
 
-            if (string.IsNullOrEmpty(pathToMakeRelative))
+            if (string.IsNullOrEmpty(pathToMakeRelative)) {
                 throw new ArgumentNullException("pathToMakeRelative");
+            }
 
             currentDirectory = Path.GetFullPath(currentDirectory);
             pathToMakeRelative = Path.GetFullPath(pathToMakeRelative);
 
-            if (!Path.GetPathRoot(currentDirectory).Equals(Path.GetPathRoot(pathToMakeRelative), StringComparison.CurrentCultureIgnoreCase))
+            if (!Path.GetPathRoot(currentDirectory).Equals(Path.GetPathRoot(pathToMakeRelative), StringComparison.CurrentCultureIgnoreCase)) {
                 return pathToMakeRelative;
+            }
 
             var relativePath = new List<string>();
             var currentDirectoryElements = currentDirectory.Split(Path.DirectorySeparatorChar);
@@ -111,19 +116,26 @@ namespace CoApp.Toolkit.Extensions {
             var commonDirectories = 0;
 
             for (; commonDirectories < Math.Min(currentDirectoryElements.Length, pathToMakeRelativeElements.Length); commonDirectories++) {
-                if (!currentDirectoryElements[commonDirectories].Equals(pathToMakeRelativeElements[commonDirectories], StringComparison.CurrentCultureIgnoreCase))
+                if (
+                    !currentDirectoryElements[commonDirectories].Equals(pathToMakeRelativeElements[commonDirectories],
+                        StringComparison.CurrentCultureIgnoreCase)) {
                     break;
+                }
             }
 
-            for (var index = commonDirectories; index < currentDirectoryElements.Length; index++)
-                if (currentDirectoryElements[index].Length > 0)
+            for (var index = commonDirectories; index < currentDirectoryElements.Length; index++) {
+                if (currentDirectoryElements[index].Length > 0) {
                     relativePath.Add("..");
+                }
+            }
 
-            for (var index = commonDirectories; index < pathToMakeRelativeElements.Length; index++)
+            for (var index = commonDirectories; index < pathToMakeRelativeElements.Length; index++) {
                 relativePath.Add(pathToMakeRelativeElements[index]);
+            }
 
             return string.Join(Path.DirectorySeparatorChar.ToString(), relativePath);
         }
+
         public static string CanonicalizePath(this string filename, string filenameHint) {
             var result = filename;
             /*
@@ -142,12 +154,12 @@ namespace CoApp.Toolkit.Extensions {
 
              *
             */
-            if(!filenameHint.StartsWith("\\\\")) {
-                if(filenameHint.StartsWith("/") || filenameHint.StartsWith("\\")) {
+            if (!filenameHint.StartsWith("\\\\")) {
+                if (filenameHint.StartsWith("/") || filenameHint.StartsWith("\\")) {
                     filenameHint = Environment.CurrentDirectory.Substring(0, 2) + filenameHint;
                 }
 
-                if(filenameHint.IndexOf(":") == -1) {
+                if (filenameHint.IndexOf(":") == -1) {
                     filenameHint = Path.Combine(Environment.CurrentDirectory, filenameHint);
                 }
             }
@@ -161,11 +173,11 @@ namespace CoApp.Toolkit.Extensions {
             result = result.Replace(@"{ext}", Path.GetExtension(localPath));
             result = result.Replace(@"{folder}", Path.GetDirectoryName(localPath));
             var pr = Path.GetPathRoot(localPath);
-            if(!string.IsNullOrEmpty(pr)) {
+            if (!string.IsNullOrEmpty(pr)) {
                 result = result.Replace(@"{subfolder}", Path.GetDirectoryName(localPath).Remove(0, pr.Length));
             }
 
-            result = result.Replace(@"{count}", "" + counter++);
+            result = result.Replace(@"{count}", "" + _counter++);
             result = result.Replace(@"{date}", DateTime.Now.ToString("yyyy-MM-dd"));
             result = result.Replace(@"{date-long}", DateTime.Now.ToString("MMMM dd YYYY"));
             result = result.Replace(@"{time}", DateTime.Now.ToString("hh-mm-ss"));
@@ -174,6 +186,7 @@ namespace CoApp.Toolkit.Extensions {
 
             return result;
         }
+
         public static string FormatFilename(this string filename, params string[] parameters) {
             var result = filename;
             /*
@@ -185,8 +198,8 @@ namespace CoApp.Toolkit.Extensions {
                 {counter}   - a running counter
              *
             */
-           
-            result = result.Replace(@"{counter}", "" + counter++);
+
+            result = result.Replace(@"{counter}", "" + _counter++);
             result = result.Replace(@"{date}", DateTime.Now.ToString("yyyy-MM-dd"));
             result = result.Replace(@"{date-long}", DateTime.Now.ToString("MMMM dd YYYY"));
             result = result.Replace(@"{time}", DateTime.Now.ToString("hhmmss"));
@@ -197,158 +210,133 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
-        public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption, IEnumerable<string> skipPathPatterns = null) {
-            IEnumerable<string> result = Enumerable.Empty<string>();
+        public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption,
+            IEnumerable<string> skipPathPatterns = null) {
+            var result = Enumerable.Empty<string>();
 
             try {
-                if (skipPathPatterns != null ? skipPathPatterns.Any(pattern => path.IsWildcardMatch(pattern)) : false)
+                if (skipPathPatterns != null ? skipPathPatterns.Any(pattern => path.IsWildcardMatch(pattern)) : false) {
                     return result;
+                }
 
                 result = Directory.EnumerateFiles(path, searchPattern, SearchOption.TopDirectoryOnly);
             }
-            catch { }
+            catch {
+            }
 
             if (searchOption == SearchOption.AllDirectories) {
                 try {
-                    result = result.Union(Directory.EnumerateDirectories(path).Aggregate(result, (current, directory) => current.Union(DirectoryEnumerateFilesSmarter(directory, searchPattern, SearchOption.AllDirectories))));
+                    result =
+                        result.Union(Directory.EnumerateDirectories(path).Aggregate(result,
+                            (current, directory) =>
+                                current.Union(DirectoryEnumerateFilesSmarter(directory, searchPattern, SearchOption.AllDirectories))));
                 }
-                catch { }
+                catch {
+                }
             }
             return result;
         }
 
-        public static IEnumerable<string> FindFilesSmarter( this string pathMask, SearchOption searchOption = SearchOption.TopDirectoryOnly) {
-            var path = Path.GetFullPath(pathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$")).Replace("$$STAR$$","*").Replace( "$$QUERY$$", "?");
+
+
+        public static IEnumerable<string> FindFilesSmarter(this string pathMask, SearchOption searchOption = SearchOption.TopDirectoryOnly) {
+            var path = (pathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$")).Replace("$$STAR$$", "*").Replace("$$QUERY$$", "?").GetFullPath();
             var mask = path.Substring(path.LastIndexOf("\\") + 1);
+
             path = path.Substring(0, path.LastIndexOf("\\"));
             return path.DirectoryEnumerateFilesSmarter(mask, searchOption);
         }
 
-        public static IEnumerable<string> FindFilesSmarter( this IEnumerable<string> pathMasks) {
+        public static IEnumerable<string> FindFilesSmarter(this IEnumerable<string> pathMasks) {
             return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarter()));
         }
 
-        
-        
-
 
         /// <summary>
-        /// always call IsWildcardMatch with a prefix!!!!
+        ///   always call IsWildcardMatch with a prefix!!!!
         /// </summary>
-        /// <param name="pathMask"></param>
-        /// <param name="pathPrefix"></param>
+        /// <param name = "pathMask"></param>
+        /// <param name = "pathPrefix"></param>
         /// <returns></returns>
-        public static IEnumerable<string> FindFilesSmarterComplex( this string pathMask, string pathPrefix = null)
-        {
-
+        public static IEnumerable<string> FindFilesSmarterComplex(this string pathMask, string pathPrefix = null) {
             //pathMask safety
-            if (String.IsNullOrEmpty(pathMask))
-            {
+            if (String.IsNullOrEmpty(pathMask)) {
                 return FindFilesSmarterComplex(pathPrefix);
             }
-            if (InvalidDoubleWCRx.IsMatch(pathMask))
-            {
+            if (_invalidDoubleWcRx.IsMatch(pathMask)) {
                 throw new ArgumentException(Resources.Invalid_WildcardPath.format(pathMask));
             }
-            
 
 
-            
             pathPrefix = pathPrefix ?? Directory.GetCurrentDirectory();
 
             pathMask = pathMask.Replace("/", "\\");
             var nextPart = pathMask.GetNextPart();
             var onLastPart = nextPart.Item2 == "";
 
-            if (nextPart.Item1 == "**")
-            {
-                if (onLastPart)
-                {
+            if (nextPart.Item1 == "**") {
+                if (onLastPart) {
                     //we just get every file from here on down
 
                     return Directory.EnumerateFiles(pathPrefix, "*", SearchOption.AllDirectories);
                 }
-                else
-                {
+                else {
                     var partAfterWC = nextPart.Item2.GetNextPart();
 
                     var nextPartIsLast = partAfterWC.Item2 == "";
 
-                    if (nextPartIsLast)
-                    {
+                    if (nextPartIsLast) {
                         return Directory.EnumerateFiles(pathPrefix, partAfterWC.Item1, SearchOption.AllDirectories).
                             Aggregate(Enumerable.Empty<string>(),
                                 (output, d) => output.Concat(pathPrefix.RelativePathTo(d).FindFilesSmarterComplex(pathPrefix)));
                     }
-                    else
-                    {
-                        var dirs = Directory.EnumerateDirectories(pathPrefix, partAfterWC.Item1, SearchOption.AllDirectories);
-
-                        return dirs.
-                            Aggregate(Enumerable.Empty<string>(),
-                            (output, d) => output.Concat((pathPrefix.RelativePathTo(d) + "\\" + partAfterWC.Item2).FindFilesSmarterComplex(pathPrefix)));
-                    }
-                }
-
-
-            }
-            else if (nextPart.Item1.Contains("*"))
-            {
-                if (onLastPart)
-                {
-                    return Directory.EnumerateFiles(pathPrefix, nextPart.Item1).
-                        Aggregate(Enumerable.Empty<string>(),
-                        (output, d) => output.Concat(Path.GetFileName(d).FindFilesSmarterComplex(pathPrefix)));
-                }
-                else
-                {
-                    var dirs = Directory.EnumerateDirectories(pathPrefix, nextPart.Item1);
+                    var dirs = Directory.EnumerateDirectories(pathPrefix, partAfterWC.Item1, SearchOption.AllDirectories);
 
                     return dirs.
                         Aggregate(Enumerable.Empty<string>(),
+                            (output, d) =>
+                                output.Concat(
+                                    (pathPrefix.RelativePathTo(d) + "\\" + partAfterWC.Item2).FindFilesSmarterComplex(pathPrefix)));
+                }
+            }
+            if (nextPart.Item1.Contains("*")) {
+                if (onLastPart) {
+                    return Directory.EnumerateFiles(pathPrefix, nextPart.Item1).
+                        Aggregate(Enumerable.Empty<string>(),
+                            (output, d) => output.Concat(Path.GetFileName(d).FindFilesSmarterComplex(pathPrefix)));
+                }
+                var dirs = Directory.EnumerateDirectories(pathPrefix, nextPart.Item1);
+
+                return dirs.
+                    Aggregate(Enumerable.Empty<string>(),
                         (output, d) => output.Concat((Path.GetFileName(d) + "\\" + nextPart.Item2).FindFilesSmarterComplex(pathPrefix)));
-                }
             }
-            else
-            {
-                //recursively keep going
-                var newPathPrefix = pathPrefix;
+            //recursively keep going
+            var newPathPrefix = pathPrefix;
 
-                if (!String.IsNullOrEmpty(nextPart.Item1))
-                {
-                    newPathPrefix += "\\" + nextPart.Item1;
-                }
-
-                if (onLastPart)
-                {
-                    return File.Exists(newPathPrefix) ? newPathPrefix.SingleItemAsEnumerable() : Enumerable.Empty<string>();
-                }
-                else
-                {
-                    return Directory.Exists(newPathPrefix) ? nextPart.Item2.FindFilesSmarterComplex(newPathPrefix) : Enumerable.Empty<string>();
-                }
-                
+            if (!String.IsNullOrEmpty(nextPart.Item1)) {
+                newPathPrefix += "\\" + nextPart.Item1;
             }
 
-
-            
-
+            if (onLastPart) {
+                return File.Exists(newPathPrefix) ? newPathPrefix.SingleItemAsEnumerable() : Enumerable.Empty<string>();
+            }
+            return Directory.Exists(newPathPrefix)
+                ? nextPart.Item2.FindFilesSmarterComplex(newPathPrefix)
+                : Enumerable.Empty<string>();
         }
 
-        public static IEnumerable<string> FindFilesSmarterComplex( this IEnumerable<string> pathMasks)
-        {
+        public static IEnumerable<string> FindFilesSmarterComplex(this IEnumerable<string> pathMasks) {
             return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarterComplex()));
-
         }
 
 
         /// <summary>
-        /// Gets the name of a file minus it's extension, ie: if the file name is "test.exe", returns "test".
+        ///   Gets the name of a file minus it's extension, ie: if the file name is "test.exe", returns "test".
         /// </summary>
-        /// <param name="fi"></param>
+        /// <param name = "fi"></param>
         /// <returns></returns>
-        public static string NameWithoutExt(this FileInfo fi)
-        {
+        public static string NameWithoutExt(this FileInfo fi) {
             return fi.Name.Remove(fi.Name.Length - fi.Extension.Length);
         }
 
@@ -356,8 +344,7 @@ namespace CoApp.Toolkit.Extensions {
             try {
                 return Directory.Exists(path);
             }
-            catch  {
-                
+            catch {
             }
             return false;
         }
@@ -368,7 +355,7 @@ namespace CoApp.Toolkit.Extensions {
             }
 
             using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read)) {
-                stream.Write(ms.GetBuffer(), 0, (int)ms.Length);
+                stream.Write(ms.GetBuffer(), 0, (int) ms.Length);
             }
         }
 
@@ -379,11 +366,11 @@ namespace CoApp.Toolkit.Extensions {
 
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                 ms.SetLength(stream.Length);
-                stream.Read(ms.GetBuffer(), 0, (int)stream.Length);
+                stream.Read(ms.GetBuffer(), 0, (int) stream.Length);
             }
         }
 
-        public static void TryHardToDeleteFile( this string filename ) {
+        public static void TryHardToDeleteFile(this string filename) {
             if (File.Exists(filename)) {
                 try {
                     File.Delete(filename);
@@ -400,7 +387,8 @@ namespace CoApp.Toolkit.Extensions {
                     var tmpFilename = Path.GetTempFileName();
                     File.Delete(tmpFilename);
                     File.Move(filename, tmpFilename);
-                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : filename, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : filename, null,
+                        MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
                 }
                 catch {
                     // really. Hmmm. 
@@ -425,7 +413,8 @@ namespace CoApp.Toolkit.Extensions {
                     var tmpFilename = Path.GetTempFileName();
                     File.Delete(tmpFilename);
                     Directory.Move(directoryName, tmpFilename);
-                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : directoryName, null,MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : directoryName, null,
+                        MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
                 }
                 catch {
                     // really. Hmmm. 
@@ -439,42 +428,43 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
-        /// Short circuts the process if the string is a known full path already. 
-        /// (ie, the result of a preivious GetFullPath())
+        ///   Short circuts the process if the string is a known full path already. 
+        ///   (ie, the result of a preivious GetFullPath())
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name = "path"></param>
         /// <returns></returns>
         public static string GetFullPath(this string path) {
-            if (FullPathCache.Contains(path))
+            if (_fullPathCache.Contains(path)) {
                 return path;
+            }
             try {
                 path = Path.GetFullPath(path.Trim('"'));
-                FullPathCache.Add(path);
-            } catch {
-                
+                _fullPathCache.Add(path);
+            }
+            catch {
             }
             return path;
         }
 
         /// <summary>
-        /// Translates paths starting with \??\ to regular paths.
+        ///   Translates paths starting with \??\ to regular paths.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name = "path"></param>
         /// <returns></returns>
-        public static string NormalizePath( this string path ) {
+        public static string NormalizePath(this string path) {
             if (path.StartsWith(NonInterpretedPathPrefix)) {
-                if (UncPrefixRx.Match(path).Success) {
-                    path = UncPrefixRx.Replace(path, @"\\");
+                if (_uncPrefixRx.Match(path).Success) {
+                    path = _uncPrefixRx.Replace(path, @"\\");
                 }
 
-                if (DrivePrefixRx.Match(path).Success) {
+                if (_drivePrefixRx.Match(path).Success) {
                     path = path.Replace(NonInterpretedPathPrefix, "");
                 }
             }
             if (path.EndsWith("\\")) {
-                var CouldBeFilePath = path.Substring(0, path.Length - 1);
-                if (File.Exists(CouldBeFilePath)) {
-                    path = CouldBeFilePath;
+                var couldBeFilePath = path.Substring(0, path.Length - 1);
+                if (File.Exists(couldBeFilePath)) {
+                    path = couldBeFilePath;
                 }
             }
 
@@ -482,19 +472,9 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
-        private static Tuple<string, string> GetNextPart(this string path)
-        {
+        private static Tuple<string, string> GetNextPart(this string path) {
             var indexOfSlash = path.IndexOf('\\');
-
-            if (indexOfSlash == -1)
-            {
-                return new Tuple<string, string>(path, "");
-            }
-
-            else
-            {
-                return new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
-            }
+            return indexOfSlash == -1 ? new Tuple<string, string>(path, "") : new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
         }
     }
 }
