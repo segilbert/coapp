@@ -448,7 +448,7 @@ namespace CoApp.Toolkit.Extensions {
             if (FullPathCache.Contains(path))
                 return path;
             try {
-                path = Path.GetFullPath(path);
+                path = Path.GetFullPath(path.Trim('"'));
                 FullPathCache.Add(path);
             } catch {
                 

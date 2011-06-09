@@ -14,6 +14,7 @@
 // -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Utility {
+    using System.Reflection;
     using Microsoft.Win32;
     using System;
     using System.Collections.Generic;
@@ -38,6 +39,7 @@ namespace CoApp.Toolkit.Utility {
         static ProgramFinder() {
             AddCommonSearchLocations("%path%");
             AddCommonSearchLocations(Environment.CurrentDirectory);
+            AddCommonSearchLocations(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
 
             ProgramFiles = new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%");
             ProgramFilesAndSys32 = new ProgramFinder("",@"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32");
@@ -103,7 +105,9 @@ namespace CoApp.Toolkit.Utility {
                     _recursiveSearchLocations.AsParallel().SelectMany(
                         directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.AllDirectories)));
 
-            files = files.Where(file => (PEInfo.Scan(file).ExecutableInfo & executableType) == executableType && PEInfo.Scan(file).FileVersionLong >= ver);
+            if (executableType != ExecutableInfo.none || ver != 0.0) {
+                files = files.Where(file => (PEInfo.Scan(file).ExecutableInfo & executableType) == executableType && PEInfo.Scan(file).FileVersionLong >= ver);
+            }
 
             if( filters != null  ) {
                 files = filters.Aggregate(files, (current, filter) => (from eachFile in current
@@ -111,6 +115,7 @@ namespace CoApp.Toolkit.Utility {
                                                                        select eachFile));
             }
 
+            
             var filePath = files.MaxElement(each => PEInfo.Scan(each).FileVersionLong);
 
             if (!string.IsNullOrEmpty(filePath)) {
