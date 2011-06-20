@@ -1,24 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System;
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
+﻿//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2003 Motus Technologies Inc. (http://www.motus.com)
+//     Copyright (c) 2004-2006 Novell Inc. (http://www.novell.com)
+//     Copyright (c) 2011 Eric Schultz
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace CoApp.Toolkit.Crypto
 {
-#if INSIDE_CORLIB
-    internal
-#else
-    public
-#endif
- sealed class CryptoConvert
-    {
+    using System;
+    using System.Globalization;
+    using System.Security.Cryptography;
+    using System.Text;
 
-        private CryptoConvert()
-        {
-        }
+    /// <summary>
+    /// Originally from Mono project in Mono.Security assembly as Mono.Security.Cryptography.CryptoConvert
+    /// </summary>
+    internal static class CryptoConvert
+    {
 
         static private int ToInt32LE(byte[] bytes, int offset)
         {

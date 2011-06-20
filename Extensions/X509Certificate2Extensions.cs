@@ -8,6 +8,8 @@ namespace CoApp.Toolkit.Extensions
     using System.Collections.Generic;
     using System.Linq;
     using System.Security.Cryptography.X509Certificates;
+    using CoApp.Toolkit.Crypto;
+    using System.Security.Cryptography;
     public static class X509Certificate2Extensions
     {
         public static Dictionary<string, string> GetSubjectNameParts(this X509Certificate2 cert)
@@ -20,6 +22,23 @@ namespace CoApp.Toolkit.Extensions
             }
 
             return result;
+        }
+
+        public static byte[] GetPublicKey(this X509Certificate2 cert)
+        {
+            var sn = new StrongName(cert.PublicKey.Key as RSA);
+            return sn.PublicKey;
+        }
+
+        public static byte[] GetPublicKeyToken(this X509Certificate2 cert)
+        {
+            var sn = new StrongName(cert.PublicKey.Key as RSA);
+            return sn.PublicKeyToken;
+        }
+
+        public static string GetPktAsString(this X509Certificate2 cert)
+        {
+            return cert.GetPublicKeyToken().ToHexString();
         }
     }
 }

@@ -431,5 +431,16 @@ namespace CoApp.Toolkit.Extensions {
             return hash;
         }
 
+
+        public static string ToHexString(this IEnumerable<byte> bytes)
+        {
+            var sb = new StringBuilder();
+            foreach (var b in bytes)
+            {
+                sb.Append(b.ToString("x2"));
+            }
+            return sb.ToString();
+        }
+
     }
 }
