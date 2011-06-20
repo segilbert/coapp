@@ -11,7 +11,7 @@ namespace CoApp.Toolkit.Crypto {
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
-    using Win32;
+    using CoApp.Toolkit.Win32;
 
     public enum WinTrustDataUIChoice : uint {
         All = 1,

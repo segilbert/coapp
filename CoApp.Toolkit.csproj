@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -67,6 +68,10 @@
     <Compile Include="Configuration\RegistryView.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
+    <Compile Include="Crypto\BitConverterLE.cs" />
+    <Compile Include="Crypto\CryptoConvert.cs" />
+    <Compile Include="Crypto\PubKeyTest.cs" />
+    <Compile Include="Crypto\StrongName.cs" />
     <Compile Include="Exceptions\ConsoleException.cs" />
     <Compile Include="Crypto\PfxStoreLoader.cs" />
     <Compile Include="Crypto\Verifier.cs" />
