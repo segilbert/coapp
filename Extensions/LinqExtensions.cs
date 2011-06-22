@@ -12,12 +12,12 @@ namespace CoApp.Toolkit.Extensions {
 
     public static class LinqExtensions {
         public static IEnumerable<T> Traverse<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> recurseFunction) {
-            foreach(var item in source) {
+            foreach (var item in source) {
                 yield return item;
                 var enumerable = recurseFunction(item);
 
-                if(enumerable != null) {
-                    foreach(var itemRecurse in Traverse(enumerable, recurseFunction)) {
+                if (enumerable != null) {
+                    foreach (var itemRecurse in Traverse(enumerable, recurseFunction)) {
                         yield return itemRecurse;
                     }
                 }
@@ -25,7 +25,8 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static T MaxElement<T, U>(this IEnumerable<T> source, Func<T, U> selector) where U : IComparable<U> {
-            if (source == null) throw new ArgumentNullException("source");
+            if (source == null)
+                throw new ArgumentNullException("source");
             bool first = true;
             T maxObj = default(T);
             U maxKey = default(U);
@@ -46,7 +47,7 @@ namespace CoApp.Toolkit.Extensions {
             return maxObj;
         }
         public static IEnumerable<T> SingleItemAsEnumerable<T>(this T source) {
-            return new[] {source};
+            return new[] { source };
         }
 
         /// <summary>
@@ -57,8 +58,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="count">The number of elements to not return from the end.</param>
         /// <returns>An <see cref="System.Collections.Generic.IEnumerable{T}"/> consisting of all the elements of <paramref name="source"/> 
         /// except for the last <paramref name="count"/> elements.</returns>
-        public static IEnumerable<T> TakeAllBut<T>(this IEnumerable<T> source, int count)
-        {
+        public static IEnumerable<T> TakeAllBut<T>(this IEnumerable<T> source, int count) {
             return source.Reverse().Skip(count).Reverse();
         }
 
@@ -70,8 +70,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="count">The number of elements to return from the end of the array.</param>
         /// <returns>An <see cref="System.Collections.Generic.IEnumerable{T}"/> consisting of the last <paramref name="count"/>
         /// elements of <paramref name="source"/>.</returns>
-        public static IEnumerable<T> TakeFromEnd<T>(this IEnumerable<T> source, int count)
-        {
+        public static IEnumerable<T> TakeFromEnd<T>(this IEnumerable<T> source, int count) {
             return source.Reverse().Take(count).Reverse();
         }
 
@@ -84,8 +83,8 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="collection"></param>
         /// <param name="newItem"></param>
         /// <returns></returns>
-        public static IEnumerable<T> Add<T>(this IEnumerable<T> collection, T newItem) {
-            return collection.Union( new[] { newItem } );
+        public static IEnumerable<T> UnionSingleItem<T>(this IEnumerable<T> collection, T newItem) {
+            return collection.Union(new[] { newItem });
         }
 
         private class IndexedEnumerator : IEnumerator<int> {
@@ -107,10 +106,15 @@ namespace CoApp.Toolkit.Extensions {
                 Current = -1;
             }
 
-            public int Current { get; private set; }
+            public int Current {
+                get;
+                private set;
+            }
 
             object IEnumerator.Current {
-                get { return Current; }
+                get {
+                    return Current;
+                }
             }
         }
 
@@ -131,5 +135,95 @@ namespace CoApp.Toolkit.Extensions {
         public static IEnumerable<int> ByIndex<T>(this IList<T> lst) {
             return new ListIndex(lst.Count);
         }
+
+
+        public static CompareResult<T, T> Compare<T>(this IEnumerable<T> left, IEnumerable<T> right) {
+            return Compare(left, right, (x, y) => x.Equals(y));
+        }
+
+        public static CompareResult<T, TRight> Compare<T, TRight>(this IEnumerable<T> left, IEnumerable<TRight> right, Func<T, TRight, bool> isEqual) {
+            return Compare(left, right, isEqual, isEqual);
+        }
+
+        public static CompareResult<TLeft, TRight> Compare<TLeft, TRight>(this IEnumerable<TLeft> leftList, IEnumerable<TRight> rightList, Func<TLeft, TRight, bool> isEqual, Func<TLeft, TRight, bool> isSame) {
+
+            var results = new CompareResult<TLeft, TRight>();
+
+            results.Removed.AddRange(leftList.Where(x => rightList.Any(y => isSame(x, y)) == false));
+            results.Added.AddRange(rightList.Where(x => leftList.Any(y => isSame(y, x)) == false));
+
+            foreach (var left in leftList) {
+                var right = rightList.FirstOrDefault(x => isSame(left, x));
+
+                if (right == null)
+                    continue;
+
+                if (!isEqual(left, right))
+                    results.Different.Add(left, right);
+                else
+                    results.Equal.Add(left, right);
+            }
+            return results;
+        }
+
+    }
+
+
+    public class CompareResult<TLeft, TRight> {
+        #region Fields
+        private List<TLeft> _onlyInLeftList = new List<TLeft>();
+        private List<TRight> _onlyInRightList = new List<TRight>();
+        private Dictionary<TLeft, TRight> _different = new Dictionary<TLeft, TRight>();
+        private Dictionary<TLeft, TRight> _equal = new Dictionary<TLeft, TRight>();
+        #endregion
+        #region Properties
+        public Dictionary<TLeft, TRight> Equal {
+            get {
+                return _equal;
+            }
+        }
+
+        public Dictionary<TLeft, TRight> Different {
+            get {
+                return _different;
+            }
+        }
+
+        /// <summary>
+        /// Items in the left list no also in the right list
+        /// </summary>
+        public List<TLeft> Removed {
+            get {
+                return _onlyInLeftList;
+            }
+        }
+
+        /// <summary>
+        /// Items in the right list not in the left list
+        /// </summary>
+        public List<TRight> Added {
+            get {
+                return _onlyInRightList;
+            }
+        }
+
+        public bool IsSame {
+            get {
+                return TotalDifferences == 0;
+            }
+        }
+
+        public int TotalDifferences {
+            get {
+                return _onlyInLeftList.Count + _onlyInRightList.Count + _different.Count;
+            }
+        }
+        #endregion
+        #region Constructor
+        public CompareResult() {
+
+        }
+        #endregion
     }
 }
+

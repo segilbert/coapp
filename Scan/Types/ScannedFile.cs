@@ -10,6 +10,7 @@ namespace CoApp.Toolkit.Scan.Types
 {
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Xml.Serialization;
 
     /// <summary>
@@ -91,32 +92,34 @@ namespace CoApp.Toolkit.Scan.Types
 			Includes = new List<int>();
 		}
 
+
+        private static readonly Dictionary<string,ScannedFileType> _scannedFileType = new Dictionary<string,ScannedFileType>();
+
 		/// <summary>
 		/// Determines the type of the file by checking extensions and full names.
 		/// </summary>
 		/// <param name="fileName">Name of the file.</param>
 		/// <returns>The type of the file</returns>
-		public static ScannedFileType DetermineFileType(string fileName)
-		{
-			fileName = fileName.ToLower();
+		public static ScannedFileType DetermineFileType(string fileName) {
+            if (_scannedFileType.ContainsKey(fileName)) {
+                return _scannedFileType[fileName];
+            }
 
-			string extension = Path.GetExtension(fileName);
+		    var lowerfileName = fileName.ToLower();
 
-			if (_knownExtensions.ContainsKey(extension))
-			{
-				return _knownExtensions[extension];
-			}
+			var extension = Path.GetExtension(lowerfileName );
 
-			if (fileName == "install" || fileName.StartsWith("install.")) return ScannedFileType.Document;
-			if (fileName == "readme" || fileName.StartsWith("readme.")) return ScannedFileType.Document;
-			if (fileName == "makefile" || fileName.StartsWith("makefile.")) return ScannedFileType.BuildFile;
-			if (fileName == "build.xml") return ScannedFileType.BuildFile;
-			if (fileName == "license" || fileName == "faq" || fileName == "news" || fileName == "problems" || fileName == "issues") return ScannedFileType.Document;
-			if (fileName == "changes" || fileName.StartsWith("changes.")) return ScannedFileType.Document;
-			if (fileName == "config" || fileName == "configure" || fileName.StartsWith("configure.")) return ScannedFileType.BuildFile;
-			if (fileName == "copyright" || fileName == "version") return ScannedFileType.Document;
-            if (fileName == "copying" || fileName == "news" || fileName == "authors" || fileName == "manifest" || fileName == "changelog") return ScannedFileType.Document;
-			return ScannedFileType.Unknown;
+		    var result = (from pattern in KnownPatterns
+		        where pattern.Value.Contains(lowerfileName ) || pattern.Value.HasWildcardMatch(lowerfileName ) || pattern.Value.Contains(extension)
+		        select pattern.Key).DefaultIfEmpty(ScannedFileType.Unknown).First();
+
+            lock (_scannedFileType) {
+                _scannedFileType.Add(fileName, result);
+            }
+
+		    return result;
+
+
 		}
 
 		/// <summary>
@@ -130,91 +133,35 @@ namespace CoApp.Toolkit.Scan.Types
 			return string.Format("File - Name: {0}, Path: {1}, Type: {2}", Name, Directory, Type);
 		}
 
-		#region Static Information ----------------------------------------------------------------------------------------------
-		private static Dictionary<string, ScannedFileType> _knownExtensions = new Dictionary<string, ScannedFileType>()
-		{
-			{ ".c", ScannedFileType.C },
-			{ ".cpp", ScannedFileType.C},
-			{ ".cxx", ScannedFileType.C},
-			{ ".h", ScannedFileType.Header},
-			{ ".hpp", ScannedFileType.Header},
-			{ ".hxx", ScannedFileType.Header},
-			{ ".cc", ScannedFileType.C},
-			{ ".hh", ScannedFileType.Header},
-			{ ".rc", ScannedFileType.Resource},
-			{ ".asm", ScannedFileType.Assembly},
-			{ ".pas", ScannedFileType.Pascal},
-			{ ".inc", ScannedFileType.Pascal},
-			{ ".xs", ScannedFileType.Source},
-			{ ".s", ScannedFileType.Source},
+        // yeah, this doesn't make it exactly trivial to use, but it's easier to fill coming from the config files.
+        public static Dictionary<ScannedFileType, List<string>> KnownPatterns = new Dictionary<ScannedFileType, List<string>> {
+            { ScannedFileType.C , new List<string> {".c"}},
+            { ScannedFileType.Cpp, new List<string>{".cpp", ".cxx", ".cc", ".c++"} },
+            { ScannedFileType.Header, new List<string>{".h", ".hpp", ".hxx", ".hh"} },
+            { ScannedFileType.Resource , new List<string>{".rc"} },
+            { ScannedFileType.Assembly , new List<string>{".asm" } },
+            { ScannedFileType.Idl, new List<string>{".idl"} },
+            { ScannedFileType.Source, new List<string>{".s", ".xs" } }, 
+            { ScannedFileType.Pascal, new List<string>{ ".pas", ".inc" } }, 
+            { ScannedFileType.CSharp, new List<string>{ ".cs"} }, 
+            { ScannedFileType.VB, new List<string>{".vb" } }, 
+            { ScannedFileType.Manifest, new List<string>{ ".manifest" } }, 
+            { ScannedFileType.BuildFile, new List<string>{ ".mak", ".sln", ".csproj",".vcproj",".vcxproj", ".spec", ".buildinfo", "makefile", "makefile.*" , "build.xml", "config", "configure" , "configure.*" , } }, 
+            { ScannedFileType.Script, new List<string>{ ".bat",".cmd",".js", ".vbs",".sh", ".ps1",".wsh",".py", ".pl", ".pm", ".pod",".pem",".php",".phps",".m4", ".awk", } }, 
+            { ScannedFileType.Media, new List<string>{ ".png", ".gif", ".avi", ".mpg", ".mp2", ".mp3", ".mp4", ".mkv", ".ico", ".wav", ".jpg", ".jpeg",".xpm", } }, 
+            { ScannedFileType.PeBinary, new List<string>{ ".exe",".dll",".sys",".com", } }, 
+            { ScannedFileType.Library, new List<string>{".lib",".a", } }, 
+            { ScannedFileType.Document, new List<string>{ ".txt", ".man", ".xslt", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".readme", "install", "install.*" , "readme" , "readme.*", "license", "faq", "issues", "news", "problems" , "copying"  , "changes" , "changelog" , "copyright" , "version" , "authors", "copying"} }, 
+            { ScannedFileType.Debug, new List<string>{ ".pdb" } }, 
+            { ScannedFileType.Object, new List<string>{ ".o" , ".obj" } }, 
+            { ScannedFileType.Xml, new List<string>{".xml" } }, 
+            { ScannedFileType.Xaml, new List<string>{".xaml" } }, 
+            { ScannedFileType.Configuration, new List<string>{".config",".properties" } }, 
+            { ScannedFileType.Invalid, new List<string>{ } }, 
+            { ScannedFileType.Unknown, new List<string>{ } }, 
+            { ScannedFileType.Discard, new List<string>{".bak" } }, 
+        };
 
-			{ ".cs", ScannedFileType.CSharp},
-			{ ".vb", ScannedFileType.VB},
-			{ ".pdb", ScannedFileType.Debug},
-			{ ".obj", ScannedFileType.Object},
-
-			{ ".bat", ScannedFileType.Script},
-            { ".cmd", ScannedFileType.Script},
-			{ ".js", ScannedFileType.Script},
-			{ ".vbs", ScannedFileType.Script},
-			{ ".sh", ScannedFileType.Script},
-			{ ".ps1", ScannedFileType.Script},
-			{ ".wsh", ScannedFileType.Script},
-			{ ".py", ScannedFileType.Script},
-			{ ".pl", ScannedFileType.Script},
-			{ ".pm", ScannedFileType.Script},
-			{ ".pod", ScannedFileType.Script},
-			{ ".pem", ScannedFileType.Script},
-			{ ".php", ScannedFileType.Script},
-			{ ".phps", ScannedFileType.Script},
-			{ ".m4", ScannedFileType.Script},
-            { ".awk", ScannedFileType.Script},
-
-			{ ".png", ScannedFileType.Media},
-			{ ".gif", ScannedFileType.Media},
-			{ ".avi", ScannedFileType.Media},
-			{ ".mpg", ScannedFileType.Media},
-			{ ".mp2", ScannedFileType.Media},
-			{ ".mp3", ScannedFileType.Media},
-			{ ".mp4", ScannedFileType.Media},
-			{ ".mkv", ScannedFileType.Media},
-			{ ".ico", ScannedFileType.Media},
-			{ ".wav", ScannedFileType.Media},
-			{ ".jpg", ScannedFileType.Media},
-			{ ".jpeg", ScannedFileType.Media},
-			{ ".xpm", ScannedFileType.Media},
-
-			{ ".exe", ScannedFileType.PeBinary},
-			{ ".dll", ScannedFileType.PeBinary},
-			{ ".sys", ScannedFileType.PeBinary},
-			{ ".com", ScannedFileType.PeBinary},
-
-			{ ".lib", ScannedFileType.Library},
-			{ ".a", ScannedFileType.Library},
-
-			{ ".mak", ScannedFileType.BuildFile},
-			{ ".sln", ScannedFileType.BuildFile},
-			{ ".csproj", ScannedFileType.BuildFile},
-            { ".vcproj", ScannedFileType.BuildFile},
-            { ".vcxproj", ScannedFileType.BuildFile},
-            { ".spec", ScannedFileType.BuildFile},
-            { ".cps", ScannedFileType.BuildFile},
-			{ ".config", ScannedFileType.Configuration},
-            { ".properties", ScannedFileType.Configuration},
-
-			{ ".txt", ScannedFileType.Document},
-            { ".man", ScannedFileType.Document},
-			{ ".xml", ScannedFileType.Xml},
-			{ ".xslt", ScannedFileType.Document},
-			{ ".doc", ScannedFileType.Document},
-			{ ".docx", ScannedFileType.Document},
-			{ ".xls", ScannedFileType.Document},
-			{ ".xlsx", ScannedFileType.Document},
-			{ ".ppt", ScannedFileType.Document},
-			{ ".pptx", ScannedFileType.Document},
-			{ ".readme", ScannedFileType.Document}
-		};
-		#endregion --------------------------------------------------------------------------------------------------------------
 
 	}
 }

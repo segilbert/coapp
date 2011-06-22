@@ -7,6 +7,7 @@
 namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using System.Collections.Generic;
     using Exceptions;
+    using Extensions;
     using Utility;
 
     public class PropertySheetParser {
@@ -239,9 +240,38 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 state = ParseState.HavePropertyCompleted;
                                 continue;
 
+                            case TokenType.OpenParenthesis:
+                                depth = 1;
+                                property.Expression = "EXPRESSION:"; // we're just borrowing this to store the expression during parsing
+                                state = ParseState.InPropertyCollectionExpression;
+                                continue;
+
                             default:
-                                throw new EndUserParseException(token, _filename, "PSP 107", "In property collection, expected value or close brace '}}'" );
+                                throw new EndUserParseException(token, _filename, "PSP 107", "In property collection, expected value, expression or close brace '}}'" );
                         }
+
+                    case ParseState.InPropertyCollectionExpression:
+                        switch (token.Type) {
+                            case TokenType.CloseParenthesis:
+                                depth--;
+                                if (depth == 0) {
+                                    state = ParseState.HaveCollectionValue;
+                                    valueCollection.Add(property.Expression);
+                                    property.Expression = null; // we're just borrowing this to store the expression during parsing
+                                    continue;
+                                }
+                                break;
+                            case TokenType.OpenParenthesis:
+                                depth++;
+                                break;
+
+                            case TokenType.StringLiteral:
+                                property.Expression += ("@Literal" == token.RawData) ? "@\"{0}\"".format((string)token.Data) : token.RawData;
+                                continue;
+                        }
+                        property.Expression += token.Data ; // we're just borrowing this to store the expression during parsing
+                        continue;
+
 
                     case ParseState.HaveCollectionValue: 
                         switch (token.Type) {
@@ -341,6 +371,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             HavePropertyCompleted,
             HavePropertyEquals,
             InPropertyCollection,
+            InPropertyCollectionExpression,
             HaveCollectionValue,
             InPropertyExpression,
 

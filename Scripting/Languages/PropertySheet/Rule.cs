@@ -72,7 +72,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public IList<string> CompoundPropertyAsList(string name, string LValue) {
-            var result = (IList<string>) (from prp in Properties where prp.Name == name && prp.IsCompoundCollection && prp.LValue == LValue && prp.Values is IList<string> select prp.Values).FirstOrDefault();
+
+            var result = (IList<string>) (from prp in Properties where prp.Name == name && prp.IsCollection && prp.LValue == LValue && prp.Values is IList<string> select prp.Values).FirstOrDefault();
             if (result == null) {
                 var compoundProperties = from prp in Properties where prp.IsCompoundProperty || prp.IsCompoundCollection select prp;
 

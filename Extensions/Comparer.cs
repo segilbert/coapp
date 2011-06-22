@@ -17,4 +17,21 @@ namespace CoApp.Toolkit.Extensions {
             return _compareFuction(x,y);
         }
     }
+
+     public class EqualityComparer<T> : IEqualityComparer<T> {
+        private readonly Func<T, T, bool> _equalityCompareFn;
+        private readonly Func<T, int> _getHashCodeFn;
+        public EqualityComparer(Func<T,T,bool> equalityCompareFn,Func<T,int> getHashCodeFn) {
+            _equalityCompareFn= equalityCompareFn;
+            _getHashCodeFn = getHashCodeFn;
+        }
+
+         public bool Equals(T x, T y) {
+             return _equalityCompareFn(x, y);
+         }
+
+         public int GetHashCode(T obj) {
+             return _getHashCodeFn(obj);
+         }
+     }
 }

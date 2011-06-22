@@ -48,7 +48,7 @@ namespace CoApp.Toolkit.Spec {
 
             Processes = new Indexer<Process>(
                 () => from rule in ProcessRules select rule.Parameter,
-                parameter => from rule in ProcessRules where rule.Parameter == parameter select rule,
+                parameter => from rule in ProcessRules where rule.Parameter.Equals( parameter, StringComparison.CurrentCultureIgnoreCase) select rule,
                 parameter => {
                     var rule = new Rule {
                         Class = "process",
@@ -102,7 +102,9 @@ namespace CoApp.Toolkit.Spec {
                     };
                     _rules.Add(rule.FullSelector, rule);
                     return rule;
-                });              
+                });        
+      
+
         }
 
         private IEnumerable<Rule> FileGroupRules {
@@ -174,6 +176,11 @@ namespace CoApp.Toolkit.Spec {
 
             specfile.Validate();
             specfile.Filename = path;
+
+            foreach( var proc in specfile.Processes ) {
+                proc.Load();
+            }
+
             return specfile;
         }
 
@@ -181,6 +188,11 @@ namespace CoApp.Toolkit.Spec {
             // fix: make sure that events are numbered correctly.
             foreach (var v in Events.Where(v => v.Priority == -1)) {
                 v.Priority = Events.Max(each => each.Priority) + 1;
+            }
+
+            // And, push the values from the .process rules into the page 
+            foreach( var proc in Processes ) {
+                proc.Save();
             }
 
             base.Save(path);

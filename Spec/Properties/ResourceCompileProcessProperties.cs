@@ -4,15 +4,10 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Spec {
+namespace CoApp.mkSpec.Tool.Properties {
+    using System;
     using System.Collections.Generic;
-    using Scripting.Languages.PropertySheet;
 
-    public class FileGroup : PropertySheetItem {
-        public readonly IList<string> Files;
-
-        public FileGroup(Rule rule) : base(rule) {
-            Files = new DictionaryProperty(Rule, "files");
-        }
+    class ResourceCompileProcessProperties {
     }
 }

@@ -18,6 +18,10 @@
 		/// </summary>
 		C,
 		/// <summary>
+		/// C++ code file (headers are seperate)
+		/// </summary>
+		Cpp,
+		/// <summary>
 		/// Pascal source file
 		/// </summary>
 		Pascal,
@@ -82,9 +86,22 @@
         /// </summary>
         Xml,
         /// <summary>
+        /// Xaml files (*.xml, etc)
+        /// </summary>
+        Xaml,
+        /// <summary>
         /// Configuration files
         /// </summary>
         Configuration,
+
+        /// <summary>
+        /// Idl files
+        /// </summary>
+        Idl,
+        /// <summary>
+        /// files intended to be discarded.
+        /// </summary>
+        Discard,
 
         Invalid
 

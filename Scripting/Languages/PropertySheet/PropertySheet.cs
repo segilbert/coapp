@@ -5,14 +5,15 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
 
     public class PropertySheet {
         internal readonly Dictionary<string, Rule> _rules = new Dictionary<string, Rule>();
-        public string Filename;
-        
+        public string Filename; 
+
         public IEnumerable<Rule> Rules {
             get { return _rules.Values; }
         }
