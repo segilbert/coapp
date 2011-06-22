@@ -26,19 +26,25 @@ namespace CoApp.Toolkit.Extensions
 
         public static byte[] GetPublicKey(this X509Certificate2 cert)
         {
-            var sn = new StrongName(cert.PublicKey.Key as RSA);
+            var sn = new StrongNameCertificate(cert.PublicKey.Key as RSA);
             return sn.PublicKey;
         }
 
         public static byte[] GetPublicKeyToken(this X509Certificate2 cert)
         {
-            var sn = new StrongName(cert.PublicKey.Key as RSA);
+            var sn = new StrongNameCertificate(cert.PublicKey.Key as RSA);
             return sn.PublicKeyToken;
         }
 
         public static string GetPktAsString(this X509Certificate2 cert)
         {
             return cert.GetPublicKeyToken().ToHexString();
+        }
+
+        public static bool FinishStrongNaming(this X509Certificate2 cert, string fileToDelaySign)
+        {
+            var sn = new StrongNameCertificate(cert.PrivateKey as RSA);
+            return sn.Sign(fileToDelaySign);
         }
     }
 }
