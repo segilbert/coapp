@@ -251,7 +251,6 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public void Install(Action<int> progress = null) {
-
             try {
                 var currentVersion = GetCurrentPackage(Name, PublicKeyToken);
 
