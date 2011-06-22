@@ -227,7 +227,8 @@
                 using (var key = WriteableKey) {
                     if (key != null) {
                         if (value == null) {
-                            key.DeleteValue(_valueName);
+                            if (key.GetValue(_valueName, null) != null)
+                                key.DeleteValue(_valueName);
                         }
                         else if (value is long) {
                             key.SetValue(_valueName, value, RegistryValueKind.QWord);
