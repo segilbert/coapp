@@ -251,6 +251,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public void Install(Action<int> progress = null) {
+
             try {
                 var currentVersion = GetCurrentPackage(Name, PublicKeyToken);
 
@@ -266,7 +267,10 @@ namespace CoApp.Toolkit.Engine {
                 
                 SaveCachedInfo();
             }
-            catch {
+            catch (Exception e) {
+                //we could get here and the MSI had installed but nothing else
+                packageHandler.Remove(this, null);
+                _isInstalled = false;
                 throw new PackageInstallFailedException(this);
             }
         }
