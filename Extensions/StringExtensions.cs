@@ -371,7 +371,18 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string GunzipFromBase64(this string input) {
-            return string.IsNullOrEmpty(input) ? input : Gunzip(Convert.FromBase64String(input));
+            if (string.IsNullOrEmpty(input))
+                return input;
+            try
+            {
+                return Gunzip(Convert.FromBase64String(input));
+            }
+            catch
+            {
+                return input;
+            }
+            
+            
         }
 
         public static string Gunzip(this byte[] input) {
