@@ -69,6 +69,8 @@
     <Compile Include="Configuration\RegistryView.cs" />
     <Compile Include="Console\AsyncConsoleProgram.cs" />
     <Compile Include="Console\ConsoleApi.cs" />
+    <Compile Include="Crypto\CryptoConvert.cs" />
+    <Compile Include="Crypto\StrongName.cs" />
     <Compile Include="Exceptions\ConsoleException.cs" />
     <Compile Include="Crypto\PfxStoreLoader.cs" />
     <Compile Include="Crypto\Verifier.cs" />

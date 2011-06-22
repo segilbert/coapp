@@ -10,9 +10,17 @@ namespace CoApp.Toolkit.Crypto
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
+    using System.Collections.Generic;
 
     public static class PfxStoreLoader
     {
+
+        public static readonly List<string> TimestampServers = new List<string>() {
+            "http://timestamp.verisign.com/scripts/timstamp.dll", 
+            "http://tsa.starfieldtech.com", 
+            "http://timestamp.comodoca.com/authenticode"};
+
+
         public static X509Store Load(string file, string password)
         {
             if (file == null || password == null)

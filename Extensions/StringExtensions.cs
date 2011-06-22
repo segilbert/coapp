@@ -31,6 +31,11 @@ namespace CoApp.Toolkit.Extensions {
         public const string LettersNumbersUnderscoresAndDashesAndDots = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-.";
         public const string ValidVersionRegex = @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$";
 
+        /// <summary>
+        /// These are crazy, but valid filepath characters that cause regexs to puke and fail.
+        /// </summary>
+        private static readonly string[] _validFpCharsThatHurtRegexs = { ".", "$", "^", "{", "[", "(", "|", ")", "+" };
+
         //putting regexs here so they're only compiled once.
         #pragma warning disable 169
         private static Regex _versionRegex = new Regex(ValidVersionRegex);
@@ -135,6 +140,7 @@ namespace CoApp.Toolkit.Extensions {
                 return _wildcards[key].IsMatch(text);
             }
 
+          //  wildcardMask = wildcardMask.CommentEach(_validFpCharsThatHurtRegexs);
 
             if (wildcardMask.EndsWith("**")) {
                 wildcardMask += @"\*";
@@ -264,9 +270,9 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
-        public static string CreatePublicKeyToken(this string publicKey) {
+        public static string CreatePublicKeyToken(this IEnumerable<byte> publicKey) {
             var m = new SHA1Managed();
-            var hashBytes = m.ComputeHash(SoapHexBinary.Parse(publicKey).Value);
+            var hashBytes = m.ComputeHash(publicKey.ToArray());
             var last8BytesReversed = hashBytes.Reverse().Take(8);
 
             return new SoapHexBinary(last8BytesReversed.ToArray()).ToString();
@@ -365,7 +371,18 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string GunzipFromBase64(this string input) {
-            return string.IsNullOrEmpty(input) ? input : Gunzip(Convert.FromBase64String(input));
+            if (string.IsNullOrEmpty(input))
+                return input;
+            try
+            {
+                return Gunzip(Convert.FromBase64String(input));
+            }
+            catch
+            {
+                return input;
+            }
+            
+            
         }
 
         public static string Gunzip(this byte[] input) {
@@ -390,5 +407,51 @@ namespace CoApp.Toolkit.Extensions {
         public static bool IsEmail(this string email) {
             return _emailRegex.IsMatch(email);
         }
+
+        public static string ReplaceEach(this string input, IEnumerable<string> oldValues, IEnumerable<string> newValues) {
+            //TODO I feel like there's a LINQ-ier way to do this.
+
+            if (oldValues.Count() != newValues.Count())
+            {
+                return null;
+            }
+            
+
+
+            //oldValues.Aggregate(input, (output, ))
+
+
+            return oldValues.Zip(newValues, (first, second) => new { first, second }).Aggregate(input, (accm, x) => accm.Replace(x.first, x.second));
+
+        }
+
+        public static string CommentEach(this string input, IEnumerable<string> toComment)
+        {
+            return input.ReplaceEach(toComment, toComment.Select((s) => @"\" + s));
+        }
+
+        public static byte[] GetKeyTokenFromFullKey(this byte[] fullKey)
+        {
+            SHA1CryptoServiceProvider csp = new SHA1CryptoServiceProvider();
+            byte[] hash = csp.ComputeHash(fullKey);
+
+            byte[] token = new byte[8];
+            for (int i = 0; i < 8; i++ )
+                token[i] = hash[hash.Length - (i+1)];
+
+            return hash;
+        }
+
+
+        public static string ToHexString(this IEnumerable<byte> bytes)
+        {
+            var sb = new StringBuilder();
+            foreach (var b in bytes)
+            {
+                sb.Append(b.ToString("x2"));
+            }
+            return sb.ToString();
+        }
+
     }
 }
