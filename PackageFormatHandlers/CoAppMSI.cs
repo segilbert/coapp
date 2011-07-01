@@ -62,8 +62,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             string licenseText = null;
             string licenseUrl = null;
 
-            if (packageData.CO_LICENSE != null &&
-                ((IEnumerable<dynamic>)packageData.CO_BINDING_POLICY).Count() == 1)
+            if (packageData.CO_LICENSE != null)
             {
                 var license = packageData.CO_LICENSE[0];
                 licenseText = license.license_text;
