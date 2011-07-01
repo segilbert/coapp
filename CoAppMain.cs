@@ -179,7 +179,7 @@ namespace CoApp.CLI {
                 var command = parameters.FirstOrDefault().ToLower();
                 parameters = parameters.Skip(1);
 
-                if (File.Exists(command)) {
+                if (command.EndsWith(".msi") && File.Exists(command)) {
                     // assume install if the only thing given is a filename.
                     Install(command.SingleItemAsEnumerable());
                 }
