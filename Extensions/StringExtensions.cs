@@ -481,11 +481,5 @@ namespace CoApp.Toolkit.Extensions {
             return sb.ToString();
         }
 
-
-        public static string FixFilePathSlashes(this string filepath)
-        {
-            return filepath.Replace(@"/", @"\");
-        }
-
     }
 }

@@ -41,6 +41,19 @@ namespace CoApp.Toolkit.Extensions
             return cert.GetPublicKeyToken().ToHexString();
         }
 
+        /// <summary>
+        /// Checks that two certificate are equal. Verifies that the public keys and expiration dates for <paramref name="first"/>
+        /// and <paramref name="second"/> are the same.
+        /// </summary>
+        /// <param name="first">The first certificate to compare</param>
+        /// <param name="second">The second certificate to compare</param>
+        /// <returns>True if the certificates are equal, otherwise false</returns>
+        public static bool IsEqualTo(this X509Certificate2 first, X509Certificate2 second)
+        {
+            return first.GetPublicKey() == second.GetPublicKey() &&
+                first.NotAfter == second.NotAfter;
+        }
+
         public static bool FinishStrongNaming(this X509Certificate2 cert, string fileToDelaySign)
         {
             var sn = new StrongNameCertificate(cert.PrivateKey as RSA);
