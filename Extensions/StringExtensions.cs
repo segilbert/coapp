@@ -205,6 +205,11 @@ namespace CoApp.Toolkit.Extensions {
             return text.Equals("false", StringComparison.CurrentCultureIgnoreCase);
         }
 
+        public static bool IsBoolean(this string text)
+        {
+            return text.IsTrue() || text.IsFalse();
+        }
+
         public static byte[] ToByteArray(this string text) {
             return Encoding.UTF8.GetBytes(text);
         }

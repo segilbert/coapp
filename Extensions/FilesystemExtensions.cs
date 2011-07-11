@@ -478,9 +478,40 @@ namespace CoApp.Toolkit.Extensions {
                 new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
         }
 
+        /// <summary>
+        /// Replaces Unix style file path separators (/) with Windows style (\).
+        /// </summary>
+        /// <param name="filepath"></param>
+        /// <returns></returns>
         public static string FixFilepathSlashes(this string filepath)
         {
             return filepath.Replace(@"/", @"\");
+        }
+
+
+        /// <summary>
+        /// Tells whether a given path is a simple subpath.
+        /// 
+        /// A simple subpath has the following characteristics:
+        /// - No drive letter or colon
+        /// - Does not start with a slash
+        /// - Does not contain any path part sections consisting of just "." or ".."
+        /// - Does not contain wildcards
+        /// </summary>
+        /// <param name="path">the path to check</param>
+        /// <returns>True if it is a simple subpath, false otherwise.</returns>
+        public static bool IsSimpleSubPath(this string path)
+        {
+            var temp = path.FixFilepathSlashes();
+            if (temp.Contains(":") || temp.Contains("*"))
+                return false;
+            if (temp.StartsWith(@"\"))
+                return false;
+            var pathParts = temp.Split('\\');
+            if (pathParts.Any((i) => i == ".." || i == "."))
+                return false;
+
+            return true;
         }
     }
 }
