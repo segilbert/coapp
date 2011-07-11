@@ -46,6 +46,13 @@ namespace CoApp.Toolkit.Extensions {
             }
             return maxObj;
         }
+
+        /// <summary>
+        /// Creates an enumerable consisting of a single element.
+        /// </summary>
+        /// <typeparam name="T">The type of <paramref name="source"/></typeparam>
+        /// <param name="source">The sole element in the return IEnumerable</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> with <paramref name="source"/> as it's only element.</returns>
         public static IEnumerable<T> SingleItemAsEnumerable<T>(this T source) {
             return new[] { source };
         }

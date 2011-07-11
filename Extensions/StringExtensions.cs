@@ -34,7 +34,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <summary>
         /// These are crazy, but valid filepath characters that cause regexs to puke and fail.
         /// </summary>
-        private static readonly string[] _validFpCharsThatHurtRegexs = { ".", "$", "^", "{", "[", "(", "|", ")", "+" };
+        private static readonly string[] _validFpCharsThatHurtRegexs = { @"\", "$", "^", "{", "[", "(", "|", ")", "+", "." };
 
         //putting regexs here so they're only compiled once.
         #pragma warning disable 169
@@ -133,26 +133,48 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null, bool escapePrefix = true) {
-            ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
-
+            //find out if the wildcard is rooted?
+            if (Path.GetPathRoot(wildcardMask) == String.Empty)
+                ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
+            else
+                ignorePrefix = String.Empty;
+            
             var key = wildcardMask + ignorePrefix;
             if (_wildcards.ContainsKey(key)) {
                 return _wildcards[key].IsMatch(text);
             }
 
-          //  wildcardMask = wildcardMask.CommentEach(_validFpCharsThatHurtRegexs);
+          
 
             if (wildcardMask.EndsWith("**")) {
                 wildcardMask += @"\*";
             }
 
+            
+
+            var regexStuff = '^' + ignorePrefix;
+
+            var regexPart2 = wildcardMask.CommentEach(_validFpCharsThatHurtRegexs);
+            regexPart2 = regexPart2.Replace("?", @".");
+            regexPart2 = regexPart2.Replace("**", @"?");
+            regexPart2 = regexPart2.Replace("*", @"[^\\\/\<\>\|]*");
+            regexPart2 = regexPart2.Replace("?", @"[^\<\>\|]*");
+
+            regexStuff += regexPart2 + '$';
+
+
+
+            var mask = new Regex(regexStuff, RegexOptions.IgnoreCase);
+            /*
             var mask =
                 new Regex(
                     '^' + ignorePrefix +
                         (wildcardMask.Replace(".", @"[.]").Replace(@"\", @"\\").Replace("?", @".").Replace("+", @"\+").Replace("**",
                             @"?") // temporarily move it so the next one doesn't clobber
                             .Replace("*", @"[^\\\/\<\>\|]*") //     \/\<\>\|
-                            .Replace("?", @"[^\<\>\|]*") + '$'), RegexOptions.IgnoreCase);
+                            .Replace("?", @"[^\<\>\|]*") + '$'), RegexOptions.IgnoreCase);*/
+
+            
             lock (_wildcards) {
                 if (!_wildcards.ContainsKey(key)) {
                     _wildcards.Add(key, mask);
@@ -170,12 +192,22 @@ namespace CoApp.Toolkit.Extensions {
             return source.Any(wildcard => value.IsWildcardMatch(wildcard, wildcard.Contains(@"\\") ? ignorePrefix : null, escapePrefix));
         }
 
+        public static bool HasWildcards(this string input)
+        {
+            return input.Contains('*');
+        }
+
         public static bool IsTrue(this string text) {
             return text.Equals("true", StringComparison.CurrentCultureIgnoreCase);
         }
 
         public static bool IsFalse(this string text) {
             return text.Equals("false", StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        public static bool IsBoolean(this string text)
+        {
+            return text.IsTrue() || text.IsFalse();
         }
 
         public static byte[] ToByteArray(this string text) {
@@ -429,6 +461,7 @@ namespace CoApp.Toolkit.Extensions {
         {
             return input.ReplaceEach(toComment, toComment.Select((s) => @"\" + s));
         }
+
 
         public static byte[] GetKeyTokenFromFullKey(this byte[] fullKey)
         {

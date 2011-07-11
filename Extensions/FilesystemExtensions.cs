@@ -281,22 +281,22 @@ namespace CoApp.Toolkit.Extensions {
                     return Directory.EnumerateFiles(pathPrefix, "*", SearchOption.AllDirectories);
                 }
                 else {
-                    var partAfterWC = nextPart.Item2.GetNextPart();
+                    var partAfterWildcard = nextPart.Item2.GetNextPart();
 
-                    var nextPartIsLast = partAfterWC.Item2 == "";
+                    var nextPartIsLast = partAfterWildcard.Item2 == "";
 
                     if (nextPartIsLast) {
-                        return Directory.EnumerateFiles(pathPrefix, partAfterWC.Item1, SearchOption.AllDirectories).
+                        return Directory.EnumerateFiles(pathPrefix, partAfterWildcard.Item1, SearchOption.AllDirectories).
                             Aggregate(Enumerable.Empty<string>(),
                                 (output, d) => output.Concat(pathPrefix.RelativePathTo(d).FindFilesSmarterComplex(pathPrefix)));
                     }
-                    var dirs = Directory.EnumerateDirectories(pathPrefix, partAfterWC.Item1, SearchOption.AllDirectories);
+                    var dirs = Directory.EnumerateDirectories(pathPrefix, partAfterWildcard.Item1, SearchOption.AllDirectories);
 
                     return dirs.
                         Aggregate(Enumerable.Empty<string>(),
                             (output, d) =>
                                 output.Concat(
-                                    (pathPrefix.RelativePathTo(d) + "\\" + partAfterWC.Item2).FindFilesSmarterComplex(pathPrefix)));
+                                    (pathPrefix.RelativePathTo(d) + "\\" + partAfterWildcard.Item2).FindFilesSmarterComplex(pathPrefix)));
                 }
             }
             if (nextPart.Item1.Contains("*")) {
@@ -474,7 +474,44 @@ namespace CoApp.Toolkit.Extensions {
 
         private static Tuple<string, string> GetNextPart(this string path) {
             var indexOfSlash = path.IndexOf('\\');
-            return indexOfSlash == -1 ? new Tuple<string, string>(path, "") : new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
+            return indexOfSlash == -1 ? new Tuple<string, string>(path, "") : 
+                new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
+        }
+
+        /// <summary>
+        /// Replaces Unix style file path separators (/) with Windows style (\).
+        /// </summary>
+        /// <param name="filepath"></param>
+        /// <returns></returns>
+        public static string FixFilepathSlashes(this string filepath)
+        {
+            return filepath.Replace(@"/", @"\");
+        }
+
+
+        /// <summary>
+        /// Tells whether a given path is a simple subpath.
+        /// 
+        /// A simple subpath has the following characteristics:
+        /// - No drive letter or colon
+        /// - Does not start with a slash
+        /// - Does not contain any path part sections consisting of just "." or ".."
+        /// - Does not contain wildcards
+        /// </summary>
+        /// <param name="path">the path to check</param>
+        /// <returns>True if it is a simple subpath, false otherwise.</returns>
+        public static bool IsSimpleSubPath(this string path)
+        {
+            var temp = path.FixFilepathSlashes();
+            if (temp.Contains(":") || temp.Contains("*"))
+                return false;
+            if (temp.StartsWith(@"\"))
+                return false;
+            var pathParts = temp.Split('\\');
+            if (pathParts.Any((i) => i == ".." || i == "."))
+                return false;
+
+            return true;
         }
     }
 }
