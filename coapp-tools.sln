@@ -64,18 +64,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "autopackage", "..\autopacka
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ptk", "..\ptk\ptk.csproj", "{C0A44000-B786-43FE-B14F-AB411403B499}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.AzureFS", "..\toolkit\CoApp.Toolkit.AzureFS.csproj", "{A126ABBC-9199-432E-9714-4A1BEF84EE89}"
-	ProjectSection(ProjectDependencies) = postProject
-		{201258A6-4FB1-4448-BBC0-37D2A8967916} = {201258A6-4FB1-4448-BBC0-37D2A8967916}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureSyncbox", "..\AzureSyncbox\AzureSyncbox.csproj", "{93838A7A-B28C-4A83-BB75-E9B25471E4AF}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Debug", "..\toolkit\CoApp.Toolkit.Debug.csproj", "{A126ABBC-9199-4096-9714-4A1BEF84EE89}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnyGen", "..\AnyGen\AnyGen.csproj", "{BB3FBD31-1E35-4FFA-8DEE-695A7FE3AA7A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToolScanner", "..\ToolScanner\ToolScanner.csproj", "{FB140878-E3E6-41A9-B4F5-7AEF4D624E85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

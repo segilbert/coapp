@@ -4,3 +4,7 @@
 *.opensdf
 obj
 bin
+_Resharper*
+coapp-tools-personal.sln
+*.ReSharper
+ipch

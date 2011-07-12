@@ -4,6 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -15,8 +16,8 @@ using System.Runtime.InteropServices;
 #pragma warning disable 1699
 
 #if SIGN_ASSEMBLY || TEST_SIGN_ASSEMBLY
-[assembly: AssemblyVersion("1.0.2.1467")] //SIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.2.1467")] //SIGNED VERSION
+[assembly: AssemblyVersion("1.0.2.1758")] //SIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.2.1758")] //SIGNED VERSION
 
 #if SIGN_ASSEMBLY 
     [assembly: AssemblyKeyFileAttribute(@"..\signing\coapp-release-public-key.snk")]
@@ -30,12 +31,311 @@ using System.Runtime.InteropServices;
 
 #else
 
-[assembly: AssemblyVersion("1.0.3.1467")] //UNSIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.3.1467")] //UNSIGNED VERSION
+[assembly: AssemblyVersion("1.0.3.1758")] //UNSIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.3.1758")] //UNSIGNED VERSION
 
 #endif
 
 #pragma warning restore 1699
+
+[AttributeUsage(AttributeTargets.Assembly, Inherited = false)]
+internal class AssemblyBugtrackerAttribute : Attribute {
+    public readonly string TrackerUrl;
+    public AssemblyBugtrackerAttribute(string trackerURL) {
+        TrackerUrl = trackerURL;
+    }
+    public override string ToString() {
+        return TrackerUrl;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
