@@ -14,7 +14,9 @@
 // -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Extensions {
+    using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
@@ -96,6 +98,18 @@ namespace CoApp.Toolkit.Extensions {
                     continue;
                 }
 
+                if (arg.Equals("list-bugtracker") || arg.Equals("list-bugtrackers")) {
+                    // the user is asking for the bugtracker URLs for this application.
+                    ListBugTrackers();
+                    continue;
+                }
+
+                if (arg.Equals("open-bugtracker") || arg.Equals("open-bugtrackers")) {
+                    // the user is asking for the bugtracker URLs for this application.
+                    OpenBugTracker();
+                    continue;
+                }
+
                 if(!switches.ContainsKey(arg)) {
                     switches.Add(arg, new List<string>());
                 }
@@ -104,6 +118,37 @@ namespace CoApp.Toolkit.Extensions {
                 // firstarg++;
             }
             return switches;
+        }
+
+        public static void ListBugTrackers() {
+            using (new ConsoleColors(ConsoleColor.Cyan, ConsoleColor.Black)) {
+                Assembly.GetEntryAssembly().Logo().Print();
+            }
+            Assembly.GetEntryAssembly().SetLogo("");
+            using (new ConsoleColors(ConsoleColor.White, ConsoleColor.Black)) {
+                foreach (var a in GetBugTrackers()) {
+                    Console.WriteLine("Bug Tracker URL for Assembly [{0}]: {1}", a.Key.Title(), a.Value);
+                }
+            }
+        }
+
+        public static void OpenBugTracker() {
+            foreach (var a in GetBugTrackers()) {
+                if( a.Key == Assembly.GetEntryAssembly()) {
+                    Process.Start(a.Value);
+                    return;
+                }
+            }
+            var tracker = GetBugTrackers().FirstOrDefault().Value;
+            if( tracker != null ) {
+                Process.Start(tracker);
+            }
+        }
+
+        public static IEnumerable<KeyValuePair<Assembly,string>> GetBugTrackers() {
+            return from a in System.AppDomain.CurrentDomain.GetAssemblies() 
+                   let attributes = a.GetCustomAttributes(false) from attribute in attributes.Where(attribute => (attribute as Attribute) != null).Where(attribute => (attribute as Attribute).GetType().Name == "AssemblyBugtrackerAttribute") 
+                   select new KeyValuePair<Assembly, string>(a, attribute.ToString());
         }
 
         public static void LoadConfiguration(this string file) {
