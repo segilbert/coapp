@@ -130,7 +130,7 @@ namespace CoApp.Toolkit.Engine {
 
         internal void SetPackageProperties(string name, string architecture, UInt64 version, string publicKeyToken ) {
             // only to support the construction of a package object where only the product code is known
-            // at instanciation time.
+            // at instantiation time.
             Name = name;
             Version = version;
             Architecture = architecture;
