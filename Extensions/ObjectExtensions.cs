@@ -7,9 +7,7 @@
 namespace CoApp.Toolkit.Extensions
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
     public static class ObjectExtensions
     {
         static int[] tenPrimes = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 };
