@@ -26,21 +26,21 @@ namespace CoApp.Toolkit.Extensions
         /// </list>
         /// </para>
         /// </summary>
-        /// <param name="input">The object to create a hashcode for.</param>
+        /// <param name="input">The <see cref="System.Object"/> to create a hashcode for.</param>
         /// <param name="objects">The objects whose hashcodes you want to use.</param>
-        /// <returns>The resultant hashcode</returns>
+        /// <returns>The resultant <see cref="System.Int32"/> hashcode</returns>
         public static int CreateHashCode(this Object input, params object[] objects)
         {
             if (objects.Length == 0)
                 return 0;
 
-            var hashCodesWithPrimes = tenPrimes.Zip(objects, (prime, obj) => prime * obj.GetHashCode()).Aggregate((result, i) => result + i);
+            var hashCodesWithPrimes = tenPrimes.Zip(objects, (prime, obj) => prime * (obj == null ? 0 : obj.GetHashCode())).Aggregate((result, i) => result + i);
             if (objects.Length <= 10)
             {
                 return hashCodesWithPrimes;
             }
 
-            return objects.Skip(10).Aggregate(hashCodesWithPrimes, (result, obj) => result + obj.GetHashCode());    
+            return objects.Skip(10).Aggregate(hashCodesWithPrimes, (result, obj) => result + (obj == null ? 0 : obj.GetHashCode()));    
         }
 
     }
