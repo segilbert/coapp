@@ -175,8 +175,9 @@
     </Manifest>
     <PostBuildEvent>
       <Command>mt -manifest $(ProjectDir)BootstrapInstaller.manifest.xml -outputresource:$(TargetPath);1100
-simplesigner --sign-only "$(TargetPath)"
-copy "$(TargetPath)" "$(SolutionDir)..\mkpackage\Resources\bootstrap.exe"</Command>
+$(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe --sign-only "$(TargetPath)"
+copy "$(TargetPath)" "$(SolutionDir)..\solution\ext\lib\bootstrap.exe"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -206,9 +207,15 @@ copy "$(TargetPath)" "$(SolutionDir)..\mkpackage\Resources\bootstrap.exe"</Comma
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BootstrapGUI.c" />
-    <ClCompile Include="BootstrapUtility.c" />
-    <ClCompile Include="CoAppBootstrap.c" />
+    <ClCompile Include="BootstrapGUI.c">
+      <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">XYZ</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="BootstrapUtility.c">
+      <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">XYZ</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="CoAppBootstrap.c">
+      <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">XYZ</UndefinePreprocessorDefinitions>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="bitmap1.bmp" />

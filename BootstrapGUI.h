@@ -11,7 +11,9 @@
 
 extern HWND StatusDialog;
 extern BOOL Ready;
+extern int TaskCount;
 
+void SetProgressNextTask();
 void SetStatusMessage(  const wchar_t* format, ... );
 INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lParam);
 void SetLargeMessageText(const wchar_t* ps_text);

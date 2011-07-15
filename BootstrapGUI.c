@@ -20,6 +20,7 @@
 #include <Commctrl.h>
 #include "resource.h"
 #include "BootstrapGUI.h"
+#include "BootstrapUtility.h"
 
 #define BUFSIZE				8192
 
@@ -27,16 +28,23 @@ HWND StatusDialog = 0;
 BOOL Ready = FALSE;
 
 int overall_percentage =0;
+int TaskCount = 11;
+int CurrentTask = 0;
+
+void SetProgressNextTask() {
+	SetOverallProgressValue( (++CurrentTask)*100/TaskCount );
+}
 
 void SetStatusMessage(  const wchar_t* format, ... ) {
 	va_list args;
-	wchar_t* text = (wchar_t*)malloc(BUFSIZE);
+	wchar_t* text = NewString();
 
 	va_start(args, format);
 	vswprintf(text,format, args);
 
 	// recipient must free the text buffer!
 	PostMessage(StatusDialog, SETSTATUSMESSAGE, 0, (LPARAM)text );
+	Sleep(20);
 }
 
 
@@ -65,7 +73,8 @@ void SetLargeMessageText(const wchar_t* ps_text) {
 }
 
 void SetProgressValue( int percentage ) {
-	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)(overall_percentage+ (percentage/5)),0 );
+	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)(overall_percentage+ (percentage/TaskCount)),0 );
+	Sleep(20);
 }
 
 void SetOverallProgressValue( int percentage ) {

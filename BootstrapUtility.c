@@ -24,23 +24,134 @@
 #include <Softpub.h>
 #include <wincrypt.h>
 #include <wintrust.h>
+#include <Strsafe.h>
 
 
-#define BUFSIZE 8192
-#define FINISH(text_msg) {/* LogMessage(text_msg); */ goto fin;}
+#define FINISH(text_msg) {/* LogMessage(text_msg); */ totalBytesDownloaded = -1; goto fin;}
 void SetProgressValue( int percentage );
 void SetStatusMessage(  const wchar_t* format, ... );
+
+wchar_t* NewString() {
+	wchar_t* result = (wchar_t*) malloc(BUFSIZE*sizeof(wchar_t));
+	ASSERT_NOT_NULL( result );
+
+	ZeroMemory(result, BUFSIZE*sizeof(wchar_t));
+	return result;
+}
+
+void DeleteString(wchar_t* string) {
+	if( string ) {
+		free( string );
+	}
+}
 
 wchar_t* DuplicateString( const wchar_t* text ) {
 	size_t size;
 	wchar_t* result = NULL;
 	
-	if(text) {
-		size = wcslen(text);
-		result = (wchar_t*)malloc(BUFSIZE);
+	ASSERT_NOT_NULL( text );
+	ASSERT_STRING_SIZE( text );
+
+	size = SafeStringLengthInCharacters(text);
+	// if( size > 0 ) {
+		result = NewString();
 		wcsncpy_s(result , BUFSIZE, text, size );
-	}
+	// }
+
 	return result;
+}
+
+wchar_t* DuplicateAndTrimString(const wchar_t* text ) {
+	wchar_t* result;
+	size_t length;
+	wchar_t* p;
+
+	while( *text == L'\r' || *text == L'\n' || *text == L' ' || *text == L'\t' ) {
+		text++;
+	}
+
+	result = DuplicateString(text);
+	if( result ) {
+		length = SafeStringLengthInCharacters(result);
+		p = result + length -1;
+		while( *p== L'\r' || *p== L'\n' || *p== L' ' || *p== L'\t' ) {
+			*p = 0;
+			p--;
+		}
+	}
+	return result;	
+}
+
+size_t SafeStringLengthInBytes(const wchar_t* text) {
+	size_t stringLength;
+
+	if( SUCCEEDED( StringCbLengthW(text, BUFSIZE * sizeof(wchar_t), &stringLength )) ) {
+		return stringLength;
+	}
+	return -1;
+}
+
+size_t SafeStringLengthInCharacters(const wchar_t* text ) {
+	size_t stringLength;
+
+	if( SUCCEEDED( StringCchLengthW(text, BUFSIZE, &stringLength )) ) {
+		return stringLength;
+	}
+	return -1;
+}
+
+BOOL IsPathURL(const wchar_t* serverPath) {
+	ASSERT_NOT_NULL(serverPath);
+	return ( _wcsnicmp(serverPath, L"http://" , 7 ) == 0  || _wcsnicmp(serverPath, L"https://" , 7 ) == 0 );
+}
+
+BOOL IsNullOrEmpty(const wchar_t* text) {
+	return !( text && *text );
+}
+
+
+///
+/// <summary> 
+///		combines a path and a filename
+/// </summary>
+ wchar_t* UrlOrPathCombine(const wchar_t* path, const wchar_t* name, wchar_t seperator) {
+	wchar_t* result = NewString();
+
+	ASSERT_STRING_OK( path );
+	ASSERT_STRING_OK( name );
+
+	if( *(path +  SafeStringLengthInCharacters( path )-1) == seperator  ) {
+		if( !SUCCEEDED( StringCbPrintf( result, BUFSIZE,  L"%s%s" , path, name ) ) ) {
+			TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
+		}
+	}
+	else {
+		if( !SUCCEEDED( StringCbPrintf( result, BUFSIZE,  L"%s%c%s" , path, seperator, name ) ) ) {
+			TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__ );
+		}
+	}
+
+	return result;
+}
+
+
+///
+/// <summary> 
+///		creates a temporary name for a file 
+///		caller must free the memory for the string returned.
+///		returns NULL on error.
+/// </summary>
+ wchar_t* TempFileName(const wchar_t* name) {
+	DWORD returnValue = 0;
+	wchar_t tempFolderPath[BUFSIZE];
+
+	returnValue = GetTempPath(BUFSIZE,  tempFolderPath); 
+	
+	if (returnValue > BUFSIZE || (returnValue == 0)) {
+		TerminateApplicationWithError(EXIT_UNABLE_TO_FIND_TEMPDIR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
+	}
+
+	return UrlOrPathCombine( tempFolderPath, name , L'\\' );
 }
 
 ///
@@ -49,23 +160,29 @@ wchar_t* DuplicateString( const wchar_t* text ) {
 ///		caller must free the memory for the string returned.
 ///		returns NULL on error.
 /// </summary>
- wchar_t* TempFileName(wchar_t* name,wchar_t* extension) {
+wchar_t* UniqueTempFileName(const wchar_t* name,const wchar_t* extension) {
 	DWORD returnValue = 0;
 	wchar_t tempFolderPath[BUFSIZE];
-	wchar_t* result = (wchar_t*)malloc(BUFSIZE);
+	wchar_t* filename = NewString();
+	wchar_t* result;
 
 	returnValue = GetTempPath(BUFSIZE,  tempFolderPath); 
 	
 	if (returnValue > BUFSIZE || (returnValue == 0)) {
-		free( result );
+		free( filename );
 		return NULL;
 	}
 
-	// grab a unique file name to write the MSI to.
-	wsprintf( result, L"%s\\%s[%d].%s", tempFolderPath, name , GetTickCount(), extension );
+	
+	if( !SUCCEEDED( StringCbPrintf( filename, BUFSIZE, L"%s[%d].%s", name , GetTickCount(), extension ) ) ) {
+		TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
+	}
 
+	result = UrlOrPathCombine(tempFolderPath, filename, L'\\' );
+	DeleteString( filename );
 	return result;
 }
+
 
 // 
 //   FUNCTION: IsRunAsAdmin()
@@ -118,39 +235,40 @@ Cleanup:
     return fIsRunAsAdmin;
 }
 
-
-
-
-wchar_t* GetPathFromRegistry() {
+void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD expectedDataType  ) {
 	LSTATUS status;
 	HKEY key;
 	int index=0;
-	wchar_t* name = (wchar_t*)malloc(BUFSIZE);
-	wchar_t* value = (wchar_t*)malloc(BUFSIZE);
+	wchar_t* name = NewString();
+	wchar_t** value = (wchar_t**)(void*)NewString();
 	DWORD nameSize = BUFSIZE;
 	DWORD valueSize = BUFSIZE;
-	DWORD dataType = REG_SZ;
+	DWORD dataType;
 
-	status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\CoApp",&key);
+	status = RegOpenKey(HKEY_LOCAL_MACHINE, keyname,&key);
 	if( status != ERROR_SUCCESS ) {
-		status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Wow6432Node\\CoApp",&key);
-		if( status != ERROR_SUCCESS )
-			goto release_value;
-
+		goto release_value;
 	}
 
 	do {
+		ZeroMemory( name, BUFSIZE);
+		ZeroMemory( value, BUFSIZE);
+		nameSize = BUFSIZE;
+		valueSize = BUFSIZE;
 
 		status = RegEnumValue(key, index, name, &nameSize, NULL, &dataType,(LPBYTE)value, &valueSize);
 		if( !(status == ERROR_SUCCESS || status == ERROR_MORE_DATA) )
 			goto release_value;
 		
-		if( lstrcmpi(L"CoAppInstaller", name) == 0 )
-			goto release_name;
-
+		if( lstrcmpi(valueName, name) == 0 ) {
+			if( expectedDataType == REG_NONE || expectedDataType == dataType ) {
+				goto release_name;
+			} else {
+				goto release_value;
+			}
+		}
 		index++;
 	}while( status == ERROR_SUCCESS || status == ERROR_MORE_DATA  );
-
 
 release_value:  // called when the keys don't exist.
 		free(value);
@@ -161,17 +279,47 @@ release_name:
 		name = NULL;
 		
 	return value;
-
 }
 
-wchar_t* GetModuleFolder( HMODULE module ) {
-	wchar_t* result = (wchar_t*)malloc(BUFSIZE);
+BOOL RegistryKeyPresent(const wchar_t* regkey) {
+	wchar_t* keyname = DuplicateString( regkey );
+	wchar_t* valuename = keyname;
+	void* value; 
+
+	while( *valuename != 0 && *valuename != L'#') {
+		valuename++;
+	}
+
+	if( *valuename == L'#' ) {
+		*valuename = 0;
+		valuename++;
+	}
+
+	value = GetRegistryValue( keyname, valuename, REG_NONE );
+	if( value ) {
+		free(value);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+wchar_t* GetPathFromRegistry() {
+	wchar_t* result = NULL;
+
+	result = (wchar_t*)GetRegistryValue(L"Software\\CoApp", L"CoAppInstaller", REG_MULTI_SZ);
+	if( !result ) {
+		result = (wchar_t*)GetRegistryValue(L"Software\\Wow6432Node\\CoApp", L"CoAppInstaller", REG_MULTI_SZ);
+	}
+
+	return result;
+}
+
+// given a path, returns the folder that contains it.
+wchar_t* GetFolderFromPath( const wchar_t* path ) {
+	wchar_t* result = DuplicateString(path);
 	wchar_t* position = NULL;
-	int length=0;
+	int length= wcslen(result);
 
-	ZeroMemory(result, BUFSIZE);
-
-	length = GetModuleFileName(module, result, BUFSIZE);
 	position = result+length;
 	while( position >= result && position[0] != L'\\')
 		position--;
@@ -180,17 +328,27 @@ wchar_t* GetModuleFolder( HMODULE module ) {
 	return result;
 }
 
+// returns the full path for a given module
 wchar_t* GetModuleFullPath( HMODULE module ) {
-	wchar_t* result = (wchar_t*)malloc(BUFSIZE);
-	ZeroMemory(result, BUFSIZE);
+	wchar_t* result = NewString();
 	GetModuleFileName(module, result, BUFSIZE);
 	return result;
 }
+
+// returns the folder containing a given module
+wchar_t* GetModuleFolder( HMODULE module ) {
+	wchar_t* modulePath = GetModuleFullPath(module);
+	wchar_t* result = GetFolderFromPath(modulePath);
+	free(modulePath);
+	return result;
+}
+
 ///
 /// <summary> 
 ///		Downloads a file from a URL 
+///		returns file size on success, -1 on error.
 /// </summary>
-int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
+int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const wchar_t* cosmeticName) {
 
 	URL_COMPONENTS urlComponents;
 
@@ -206,7 +364,8 @@ int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	DWORD bytesWritten = 0;
 	DWORD dwStatusCode = 0;
 	DWORD contentLength;
-	DWORD tmp = 0;
+	__int64 totalBytesDownloaded = 0;
+	DWORD tmpValue= 0;
 	HANDLE localFile = NULL;
 
 	ZeroMemory(&urlComponents, sizeof(urlComponents));
@@ -220,21 +379,21 @@ int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	if(!WinHttpCrackUrl(URL, (DWORD)wcslen(URL), 0, &urlComponents))
 		FINISH( L"URL not valid" );
 
-	SetProgressValue( 15 );
 	wcsncpy_s( urlHost , BUFSIZE, URL+urlComponents.dwSchemeLength+3 ,urlComponents.dwHostNameLength );
 	wcsncpy_s( urlPath , BUFSIZE, URL+urlComponents.dwSchemeLength+urlComponents.dwHostNameLength+3, urlComponents.dwUrlPathLength );
 
-	SetStatusMessage(L"Contacting Server");
+	//SetStatusMessage(L"Contacting Server [%s]", urlHost);
 
 	// Use WinHttpOpen to obtain a session handle.
 	if(!(session = WinHttpOpen( L"CoAppBootstrapper/1.0",  WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0)))
 		FINISH( L"Unable to create session for download" );
 
+	WinHttpSetTimeouts( session, 12000, 12000, 12000, 12000);
+
 	// Specify an HTTP server.
 	if (!(connection = WinHttpConnect( session, urlHost, urlComponents.nPort, 0)))
 		FINISH( L"Unable to connect to URL for download" );
 
-	SetProgressValue( 20 );
 	// Create an HTTP request handle.
 	if (!(request = WinHttpOpenRequest( connection, L"GET",urlPath , NULL, WINHTTP_NO_REFERER,  WINHTTP_DEFAULT_ACCEPT_TYPES, 0)))
 		FINISH( L"Unable to open request for download" );
@@ -243,28 +402,27 @@ int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	if(!(WinHttpSendRequest( request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)))
 		FINISH( L"Unable to send request for download" );
  
-	SetProgressValue( 25 );
 	// End the request.
 	if(!(WinHttpReceiveResponse( request, NULL)))
 		FINISH( L"Unable to receive response for download" );
 
-	tmp = sizeof(DWORD);
-	WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE| WINHTTP_QUERY_FLAG_NUMBER, NULL, &dwStatusCode, &tmp, NULL );
+	tmpValue = sizeof(DWORD);
+	WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE| WINHTTP_QUERY_FLAG_NUMBER, NULL, &dwStatusCode, &tmpValue, NULL );
 	if( dwStatusCode != HTTP_STATUS_OK ) {
-		tmp = 0;
 		FINISH( (L"Remote file not found[%s]",URL ));
 	}
 
-	tmp = sizeof(DWORD);
-	WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &contentLength, &tmp , NULL);
-	tmp=0;
+	tmpValue = sizeof(DWORD);
+	WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &contentLength, &tmpValue , NULL);
 
 	if( INVALID_HANDLE_VALUE == (localFile = CreateFile(destinationFilename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,  FILE_ATTRIBUTE_NORMAL,NULL)))
 		FINISH( (L"Unable to create output file [%s]",destinationFilename ));
 
-	SetStatusMessage(L"Downloading");
+	
 	// Keep checking for data until there is nothing left.
 	do  {
+		SetStatusMessage(L"Downloading [%d%%]: %s ",(int)(totalBytesDownloaded*100/contentLength ),cosmeticName);
+
 		// Check for available data.
 		bytesAvailable = 0;
 
@@ -287,9 +445,8 @@ int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 			FINISH( L"ReadData Failure" )
 		
 		WriteFile( localFile, pszOutBuffer, bytesDownloaded, &bytesWritten, NULL ); 
-		tmp+=bytesDownloaded;
-
-		SetProgressValue( (tmp*25/contentLength )+25);
+		totalBytesDownloaded+=bytesDownloaded;
+		SetProgressValue( (int)(totalBytesDownloaded*100/contentLength ));
 		
 		// Free the memory allocated to the buffer.
 		free(pszOutBuffer);
@@ -301,6 +458,7 @@ int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 				
 	} while (bytesAvailable > 0);
 
+	SetStatusMessage(L"Downloading [100%%]: %s ",cosmeticName);
 	fin:
 	// Close any open handles.
 	if (localFile)
@@ -312,46 +470,7 @@ int DownloadFile(wchar_t* URL, wchar_t* destinationFilename) {
 	if (session) 
 		WinHttpCloseHandle(session);
 
-	return tmp; // bytes downloaded.
-}
-
-BOOL IsDotNet4Installed() {
-	LSTATUS status;
-	HKEY key;
-	int index=0;
-	wchar_t* name = (wchar_t*)malloc(BUFSIZE);
-	DWORD value = 0;
-	DWORD result = 0;
-	DWORD nameSize = BUFSIZE;
-	DWORD valueSize = sizeof(value);
-	DWORD dataType = REG_DWORD;
-
-	status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",&key);
-	if( status != ERROR_SUCCESS ) {
-		status = RegOpenKey(HKEY_LOCAL_MACHINE, L"Software\\Wow6432Node\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",&key);
-		if( status != ERROR_SUCCESS )
-			goto release;
-	}
-
-	do {
-		nameSize = BUFSIZE;
-		valueSize = sizeof(value);
-		status = RegEnumValue(key, index, name, &nameSize, NULL, &dataType,(LPBYTE)&value, &valueSize);
-		if( !(status == ERROR_SUCCESS || status == ERROR_MORE_DATA) )
-			goto release;
-		
-		if( lstrcmpi(L"Install", name) == 0 ) {
-			result = value;
-			goto release;
-		}
-		index++;
-	}while( status == ERROR_SUCCESS || status == ERROR_MORE_DATA );
-
-release:
-		free(name);
-		name = NULL;
-		
-	return result;
+	return totalBytesDownloaded; // bytes downloaded.
 }
 
 wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly ) {
@@ -388,7 +507,7 @@ wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManif
 	if( !fSuccess  )
 		goto deactivate;
 
-	result = (wchar_t*)malloc(BUFSIZE);
+	result = NewString();
 	if( !SearchPath(NULL, itemInAssembly, NULL, BUFSIZE, result, NULL) ) {
 		free( result );
 		result = NULL;
@@ -553,4 +672,21 @@ BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
     }
 
     return FALSE;
+}
+void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... ) {
+	va_list args;
+	wchar_t caption[BUFSIZE];
+	wchar_t message[BUFSIZE];
+	wchar_t fullMessage[BUFSIZE];
+
+	StringCbPrintf( caption, BUFSIZE,L"A problem has occured [%d]", errorLevel ) ;
+
+	va_start(args, format);
+	vswprintf(message,format, args);
+
+	StringCbPrintf( fullMessage, BUFSIZE,L"%s \r\n\r\nFor troubleshooting on this error please visit http://coapp.org/help/%d \r\n\r\nDebug Info:\r\n\r\n   CommandLine:[%s]\r\n   MsiFile:[%s]\r\n   MsiDirectory:[%s]\r\n   ManifestFilename:[%s]\r\n", message, errorLevel ,CommandLine, MsiFile, 	MsiDirectory, ManifestFilename);
+
+	MessageBox(NULL,fullMessage,caption, MB_ICONERROR );
+
+	ExitProcess(errorLevel);
 }
