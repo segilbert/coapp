@@ -48,6 +48,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             UInt64 version = ((string)newrecord.version).VersionStringToUInt64();
             string pkt = newrecord.public_key_token;
 
+
             UInt64 minPolicy = 0;
             UInt64 maxPolicy = 0;
             
@@ -91,8 +92,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     description = StringExtensions.GunzipFromBase64(properties.description),
                     publishDate = properties.publish_date,
                     authorVersion = properties.author_version,
-                    originalLocation = GetURL(packageData.CO_URLS, properties.original_location ),
-                    feedLocation = GetURL(packageData.CO_URLS, properties.feed_location),
+                    originalLocation = GetURL(packageData.CO_URLS, newrecord.original ),
+                    feedLocation = GetURL(packageData.CO_URLS, newrecord.feed),
                     icon = properties.icon,
                     summary = properties.short_description,
                     publisherName = publisher.name,
