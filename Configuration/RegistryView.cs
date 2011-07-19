@@ -245,6 +245,7 @@
                         else {
                             key.SetValue(_valueName, value);
                         }
+                        // key.SetValue(_valueName,value,RegistryValueKind.ExpandString);
                     }
                 }
             }

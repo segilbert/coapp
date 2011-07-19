@@ -13,6 +13,7 @@ namespace CoApp.Toolkit.Win32 {
     /// </summary>
     public static class User32
     {
+
         [DllImport("user32.dll")]
         public static extern bool RegisterHotKey(IntPtr hWnd,int id,int fsModifiers,int vlc);
         [DllImport("user32.dll")]
@@ -62,6 +63,12 @@ namespace CoApp.Toolkit.Win32 {
 
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr hwnd, Int32 msg, Int32 wparam, Int32 lparam);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr SendMessage(Int32 hwnd, Int32 msg, Int32 wparam, Int32 lparam);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr SendMessage(Int32 hwnd, Int32 msg, Int32 wparam, [MarshalAs(UnmanagedType.LPStr)] string lparam);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);

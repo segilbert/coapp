@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Engine {
     using Network;
     using PackageFormatHandlers;
     using Tasks;
+    using Win32;
     using OperationCompletedBeforeResultException = Tasks.OperationCompletedBeforeResultException;
 
 
@@ -98,6 +99,10 @@ namespace CoApp.Toolkit.Engine {
 
         public Task InstallPackages(IEnumerable<Package> packages, MessageHandlers messageHandlers = null) {
             return CoTask.Factory.StartNew(() => {
+                // if we're gonna install packages, we should make sure that CoApp has been properly installed
+                EnsureCoAppIsInstalledInPath();
+                RunCompositionOnInstlledPackages(); // not 100% sure if this is the best time to do this, but we'll see if this is painful in the real world.
+
                 foreach (var p in from p in packages from pas in PackagesAsSpecified where p.CosmeticName.IsWildcardMatch(pas) select p) {
                     p.DoNotSupercede = true;
                 }
@@ -436,5 +441,32 @@ namespace CoApp.Toolkit.Engine {
 
             }).Wait();
         }
+
+        /// <summary>
+        /// Checks (and corrects) to see if the CoApp\bin directory is in the path
+        /// </summary>
+        public void EnsureCoAppIsInstalledInPath() {
+            if (AdminPrivilege.IsRunAsAdmin) {
+                var coappbin = Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin");
+
+                if(! Directory.Exists(coappbin)) {
+                    Directory.CreateDirectory(coappbin);
+                }
+
+                SearchPath.SystemPath = SearchPath.SystemPath.Append(coappbin);
+            }
+        }
+
+        /// <summary>
+        /// Checks (and corrects) to see if the CoApp\bin directory is in the path
+        /// </summary>
+        public void RunCompositionOnInstlledPackages() {
+            if (AdminPrivilege.IsRunAsAdmin) {
+                foreach( var pkg in Registrar.InstalledPackages ) {
+                    pkg.DoPackageComposition(false);
+                }
+            }
+        }
+
     }
 }

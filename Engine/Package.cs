@@ -371,11 +371,15 @@ namespace CoApp.Toolkit.Engine {
                 var dir = rule.Target.GetFullPath();
 
                 if (Directory.Exists(dir) && ( makeCurrent || !Directory.Exists(link) ) ) {
-                    if (!Directory.Exists(Path.GetDirectoryName(link))) {
-                        Directory.CreateDirectory(Path.GetDirectoryName(link));
-                    }
+                   // if (!Directory.Exists(Path.GetDirectoryName(link))) {
+                        // Directory.CreateDirectory(Path.GetDirectoryName(link));
+                    // }
 
-                 //   Symlink.MakeDirectoryLink(link, dir);
+                    try {
+                        Symlink.MakeDirectoryLink(link, dir);
+                    } catch( Exception e ) {
+                        Console.WriteLine("Directory Link Failed. [{0}] => [{1}]", link, dir);
+                    }
                 }
             }
 
@@ -387,7 +391,11 @@ namespace CoApp.Toolkit.Engine {
                         Directory.CreateDirectory(Path.GetDirectoryName(link));
                     }
 
-                    Symlink.MakeFileLink(link, file);
+                    try {
+                        Symlink.MakeFileLink(link, file);
+                    } catch( Exception e ) {
+                        Console.WriteLine("Directory Link Failed. [{0}] => [{1}]", link, file);
+                    }
                 }
             }
 

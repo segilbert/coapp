@@ -267,6 +267,7 @@
     <Compile Include="Win32\Rect.cs" />
     <Compile Include="Win32\ReparseData.cs" />
     <Compile Include="Win32\ReparsePointError.cs" />
+    <Compile Include="Win32\SearchPath.cs" />
     <Compile Include="Win32\SecurityAttributes.cs" />
     <Compile Include="Win32\SmallRect.cs" />
     <Compile Include="Win32\StandardHandle.cs" />
@@ -301,6 +302,9 @@
     <Folder Include="Installer\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="coapp.autopkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="Trace\Tracing.xsd">
       <SubType>Designer</SubType>
       <CustomToolNamespace>CoApp.Toolkit.Trace</CustomToolNamespace>

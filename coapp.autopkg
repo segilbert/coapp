@@ -1,0 +1,30 @@
+// autopackage file for CoApp (coapp.toolkit, coapp.toolkit.engine, and coapp cli)
+package
+{
+    name: CoApp.Toolkit;
+    display-name: "CoApp Toolkit/Engine";
+    policy: 1.0;
+    /*license: <path to license on disk> */
+    orig-location: "http://coapp.org/repository/";
+    feed-location: "http://coapp.org/repository/packages.atom.xml";
+    /*binding-min:*/
+    /*binding-max: */
+    
+    
+}
+
+identity
+{
+    file: "c:\root\projects\CoApp\signing\coapp-private.pfx";
+    email: "gserack@microsoft.com";
+    website: "http://coapp.org";
+}
+
+exe-file[coapp.exe]{
+	global-bin: true;
+}
+
+assembly[CoApp.Toolkit.dll] {
+}
+assembly[CoApp.Toolkit.Engine.dll] {
+}
