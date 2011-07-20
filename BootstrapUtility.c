@@ -245,7 +245,8 @@ void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD ex
 	DWORD valueSize = BUFSIZE;
 	DWORD dataType;
 
-	status = RegOpenKey(HKEY_LOCAL_MACHINE, keyname,&key);
+	status = RegOpenKeyEx( HKEY_LOCAL_MACHINE, keyname, 0, KEY_READ | KEY_WOW64_64KEY , &key );
+
 	if( status != ERROR_SUCCESS ) {
 		goto release_value;
 	}
@@ -301,17 +302,6 @@ BOOL RegistryKeyPresent(const wchar_t* regkey) {
 		return TRUE;
 	}
 	return FALSE;
-}
-
-wchar_t* GetPathFromRegistry() {
-	wchar_t* result = NULL;
-
-	result = (wchar_t*)GetRegistryValue(L"Software\\CoApp", L"CoAppInstaller", REG_MULTI_SZ);
-	if( !result ) {
-		result = (wchar_t*)GetRegistryValue(L"Software\\Wow6432Node\\CoApp", L"CoAppInstaller", REG_MULTI_SZ);
-	}
-
-	return result;
 }
 
 // given a path, returns the folder that contains it.

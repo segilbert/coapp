@@ -55,7 +55,6 @@ wchar_t* UniqueTempFileName(const wchar_t* name,const wchar_t* extension);
 BOOL IsRunAsAdmin();
 void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, DWORD expectedDataType );
 BOOL RegistryKeyPresent(const wchar_t* regkey);
-wchar_t* GetPathFromRegistry();
 wchar_t* GetFolderFromPath( const wchar_t* path );
 wchar_t* GetModuleFullPath( HMODULE module );
 wchar_t* GetModuleFolder( HMODULE module );

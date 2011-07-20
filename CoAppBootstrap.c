@@ -79,7 +79,6 @@ void DeleteManifestEntry(struct ManifestEntry* entry) {
 	}
 }
 
-
 void Shutdown() {
     IsShuttingDown = TRUE;
     PostQuitMessage(0);
@@ -94,21 +93,25 @@ int FileExists(const wchar_t* installerPath) {
     return GetFileAttributesEx( installerPath, GetFileExInfoStandard, &fileData);
 }
 
+void TryUpdate() {
+	wchar_t* updateCommand;
+	
+	// check if there is a registry setting 
+	updateCommand = (wchar_t*)GetRegistryValue(L"Software\\CoApp", L"UpdateCommand", REG_SZ);
+
+		
+	DeleteString(updateCommand);
+	CoAppInstallerPath = NULL;
+}
+
 int IsCoAppInstalled( ) {
-	if( RegistryKeyPresent(L"Software\\CoApp#Reinstall") || RegistryKeyPresent(L"Software\\Wow6432Node\\CoApp#Reinstall") ) 
+	
+	if( RegistryKeyPresent(L"Software\\CoApp#Reinstall") ) 
 		return FALSE;
 
-    // check if there is a registry setting for the tiny installer
-    CoAppInstallerPath = GetPathFromRegistry();
-
-    if( FileExists(CoAppInstallerPath) )
-        return TRUE;
-
-    if(NULL != CoAppInstallerPath)
-        free(CoAppInstallerPath);
-
-    // if not, there damn well better be one in the WinSxS assembly
     CoAppInstallerPath = GetWinSxSResourcePathViaManifest((HMODULE)ApplicationInstance, INSTALLER_MANFIEST_ID, L"coapp.installer.exe");
+
+	
     return (NULL != CoAppInstallerPath);
 }
 int maxTicks;
@@ -204,9 +207,6 @@ wchar_t* GetBootstrapServerPaths() {
 	wchar_t* coapp_org = L"http://coapp.org/repository/";
 
 	result = (wchar_t*)GetRegistryValue(L"Software\\CoApp", L"BootstrapServers", REG_MULTI_SZ);
-	if( !result ) {
-		result = (wchar_t*)GetRegistryValue(L"Software\\Wow6432Node\\CoApp", L"BootstrapServers", REG_MULTI_SZ);
-	}
 
 	if( result == NULL ) {
 		result = NewString();
@@ -652,6 +652,17 @@ unsigned __stdcall InstallCoApp( void* pArguments ){
     if( IsShuttingDown )
         goto fin;
 
+	TryUpdate();
+
+	if( IsShuttingDown )
+        goto fin;
+
+	if( IsCoAppInstalled() ) {
+		SetStatusMessage(L"Launching package installer.");
+        Launch();
+		goto fin;
+    }
+
 	PerformInstall();
 
     if( IsShuttingDown )
@@ -720,7 +731,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR pszCmd
     // check for CoApp 
     if( IsCoAppInstalled() ) 
         return Launch();
-	
+
 	ZeroMemory(ManifestEntries, REASONABLE_MAXIMUM_ENTRIES * sizeof(struct ManifestEntry*) );
 	
 	// we're gonna leak this. :p
