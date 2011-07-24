@@ -7,9 +7,9 @@
     using Microsoft.Win32;
 
     public class RegistryView {
-        private static readonly Lazy<RegistryView> _classesRoot = new Lazy<RegistryView>(() => new RegistryView(Registry.ClassesRoot));
-        private static readonly Lazy<RegistryView> _system = new Lazy<RegistryView>(() => new RegistryView(Registry.LocalMachine));
-        private static readonly Lazy<RegistryView> _user = new Lazy<RegistryView>(() => new RegistryView(Registry.CurrentUser));
+        private static readonly Lazy<RegistryView> _classesRoot = new Lazy<RegistryView>(() => new RegistryView(RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, Microsoft.Win32.RegistryView.Registry64)));
+        private static readonly Lazy<RegistryView> _system = new Lazy<RegistryView>(() => new RegistryView(RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64)));
+        private static readonly Lazy<RegistryView> _user = new Lazy<RegistryView>(() => new RegistryView(RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, Microsoft.Win32.RegistryView.Registry64)));
         private static readonly Lazy<RegistryView> _coappSystem= new Lazy<RegistryView>(() => System[@"Software\CoApp\"]);
         private static readonly Lazy<RegistryView> _coappUser = new Lazy<RegistryView>(() => User[@"Software\CoApp\"]);
         private static readonly Lazy<RegistryView> _applicationSystem = new Lazy<RegistryView>(() => CoAppSystem[Assembly.GetEntryAssembly().Title()]);
@@ -41,12 +41,12 @@
             get { return _classesRoot.Value; }
         }
 
-       
         private readonly RegistryKey _rootKey;
         private readonly string _subKey;
         private readonly string _valueName;
 
         protected RegistryView(RegistryKey rootKey) {
+            
             _rootKey = rootKey;
             _subKey = null;
             _valueName = null;

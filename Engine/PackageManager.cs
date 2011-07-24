@@ -101,7 +101,7 @@ namespace CoApp.Toolkit.Engine {
             return CoTask.Factory.StartNew(() => {
                 // if we're gonna install packages, we should make sure that CoApp has been properly installed
                 EnsureCoAppIsInstalledInPath();
-                RunCompositionOnInstlledPackages(); // not 100% sure if this is the best time to do this, but we'll see if this is painful in the real world.
+                RunCompositionOnInstlledPackages(); // GS01: hack.
 
                 foreach (var p in from p in packages from pas in PackagesAsSpecified where p.CosmeticName.IsWildcardMatch(pas) select p) {
                     p.DoNotSupercede = true;
@@ -462,11 +462,20 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         public void RunCompositionOnInstlledPackages() {
             if (AdminPrivilege.IsRunAsAdmin) {
-                foreach( var pkg in Registrar.InstalledPackages ) {
-                    pkg.DoPackageComposition(false);
-                }
+                GetInstalledPackages().ContinueWithParent((antecedent) => {
+                    var pks = from pkg in Registrar.InstalledPackages
+                        select new {
+                            pkg.Name,
+                            pkg.PublicKeyToken
+                        };
+
+                    foreach (var pkg in pks.Distinct()) {
+                        //Console.WriteLine("Current Version [{0}] [{1}]",pkg.Name, Package.GetCurrentPackage(pkg.Name, pkg.PublicKeyToken));
+                        Package.GetCurrentPackage(pkg.Name, pkg.PublicKeyToken);
+                    }
+                }).Wait();
+
             }
         }
-
     }
 }

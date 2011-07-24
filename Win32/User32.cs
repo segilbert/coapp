@@ -69,6 +69,9 @@ namespace CoApp.Toolkit.Win32 {
 
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(Int32 hwnd, Int32 msg, Int32 wparam, [MarshalAs(UnmanagedType.LPStr)] string lparam);
+        
+        [DllImport("user32.dll")]
+        public static extern IntPtr SendMessageTimeout(Int32 hwnd, Int32 msg, Int32 wparam, [MarshalAs(UnmanagedType.LPStr)] string lparam, Int32  fuFlags , Int32 timeout, IntPtr result);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);

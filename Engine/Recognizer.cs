@@ -283,7 +283,9 @@ namespace CoApp.Toolkit.Engine {
                         }
                     }
                 }
-                catch {
+                catch(Exception e) {
+                    Console.WriteLine("Unexpected: "+e.Message);
+
                 }
             }
             if (!result.IsUnknown) {

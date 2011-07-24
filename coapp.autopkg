@@ -5,17 +5,18 @@ package
     display-name: "CoApp Toolkit/Engine";
     policy: 1.0;
     /*license: <path to license on disk> */
-    orig-location: "http://coapp.org/repository/";
+    orig-location: "http://coapp.org/repository/coapp.toolkit.msi";
     feed-location: "http://coapp.org/repository/packages.atom.xml";
-    /*binding-min:*/
-    /*binding-max: */
-    
-    
+    binding-min: "1.0.6.0";
+    binding-max: "1.0.6.0";
+}
+
+dependencies {
+	add: "deploymenttoolsfoundation-3.5.2519.65-any";
 }
 
 identity
 {
-    file: "c:\root\projects\CoApp\signing\coapp-private.pfx";
     email: "gserack@microsoft.com";
     website: "http://coapp.org";
 }

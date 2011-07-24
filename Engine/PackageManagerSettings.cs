@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Engine {
     using Extensions;
 
     public class PackageManagerSettings {
-        public static RegistryView CoAppSettings = RegistryView.CoAppSystem[@"CoAppPackageManager"];
+        public static RegistryView CoAppSettings = RegistryView.CoAppSystem[@"PackageManager"];
         public static RegistryView CacheSettings = CoAppSettings[@".cache"];
         public static RegistryView PerPackageSettings = CoAppSettings[@".packageInformation"];
 
@@ -24,7 +24,7 @@ namespace CoApp.Toolkit.Engine {
         public static string CoAppRootDirectory {
             get {
                 // string result = SystemStringSetting["RootDirectory"];
-                var result = CoAppSettings["#RootDirectory"].StringValue;
+                var result = CoAppSettings["#Root"].StringValue;
 
                 if (string.IsNullOrEmpty(result)) {
                     CoAppRootDirectory = result = DEFAULT_COAPP_ROOT;
@@ -40,7 +40,7 @@ namespace CoApp.Toolkit.Engine {
             set {
                 var newRootDirectory = value.GetFullPath();
 
-                var rootDirectory = CoAppSettings["#RootDirectory"].StringValue;
+                var rootDirectory = CoAppSettings["#Root"].StringValue;
 
                 if (string.IsNullOrEmpty(rootDirectory)) {
                     rootDirectory = DEFAULT_COAPP_ROOT;

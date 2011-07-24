@@ -374,7 +374,10 @@ namespace CoApp.Toolkit.Engine {
                     try {
                         Symlink.MakeDirectoryLink(link, dir);
                     } catch( Exception e ) {
-                        Console.WriteLine("Directory Symlink Link Failed. [{0}] => [{1}]", link, dir);
+                        Console.WriteLine("Warning: Directory Symlink Link Failed. [{0}] => [{1}]", link, dir);
+                        // Console.WriteLine(e.Message);
+                        // Console.WriteLine(e.StackTrace);
+
                     }
                 }
             }
@@ -390,7 +393,9 @@ namespace CoApp.Toolkit.Engine {
                     try {
                         Symlink.MakeFileLink(link, file);
                     } catch( Exception e ) {
-                        Console.WriteLine("File Symlink Link Failed. [{0}] => [{1}]", link, file);
+                        Console.WriteLine("Warning: File Symlink Link Failed. [{0}] => [{1}]", link, file);
+                        // Console.WriteLine(e.Message);
+                        // Console.WriteLine(e.StackTrace);
                     }
                 }
             }
@@ -446,6 +451,7 @@ namespace CoApp.Toolkit.Engine {
 
             var latestPackage = installedVersionsOfPackage.FirstOrDefault();
 
+            // clean as we go...
             if (latestPackage == null) {
                 PackageManagerSettings.PerPackageSettings["{0}-{1}".format(packageName, publicKeyToken), "CurrentVersion"].Value = null;
                 return 0;
@@ -475,7 +481,11 @@ namespace CoApp.Toolkit.Engine {
             }
 
             DoPackageComposition(true);
-            PackageManagerSettings.PerPackageSettings[GeneralName, "CurrentVersion"].LongValue = (long)Version;
+
+            if ( 0 != (ulong)PackageManagerSettings.PerPackageSettings[GeneralName, "CurrentVersion"].LongValue) {
+                // if there isn't a forced current version, let's not force it
+                PackageManagerSettings.PerPackageSettings[GeneralName, "CurrentVersion"].LongValue = (long) Version;
+            }
         }
     }
 }
