@@ -16,8 +16,8 @@ using System.Runtime.InteropServices;
 #pragma warning disable 1699
 
 #if SIGN_ASSEMBLY || TEST_SIGN_ASSEMBLY
-[assembly: AssemblyVersion("1.0.2.1811")] //SIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.2.1811")] //SIGNED VERSION
+[assembly: AssemblyVersion("1.0.6.71")] //SIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.6.71")] //SIGNED VERSION
 
 #if SIGN_ASSEMBLY 
     [assembly: AssemblyKeyFileAttribute(@"..\signing\coapp-release-public-key.snk")]
@@ -31,8 +31,8 @@ using System.Runtime.InteropServices;
 
 #else
 
-[assembly: AssemblyVersion("1.0.3.1811")] //UNSIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.3.1811")] //UNSIGNED VERSION
+[assembly: AssemblyVersion("1.0.5.71")] //UNSIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.5.71")] //UNSIGNED VERSION
 
 #endif
 
