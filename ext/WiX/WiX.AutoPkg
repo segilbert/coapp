@@ -1,0 +1,35 @@
+package
+{
+    name: DeploymentToolsFoundation;
+    display-name: "WiX Deployment Tools Foundation";
+    policy: 3.5;
+    /*license: <path to license on disk> */
+    orig-location: "http://coapp.org/repository/";
+    feed-location: "http://coapp.org/feed";
+    binding-min: "3.5.0.0";
+    binding-max: "3.5.2519.72";
+}
+
+identity
+{
+    file: "c:\root\projects\CoApp\signing\coapp-private.pfx";
+    email: "gserack@microsoft.com";
+    website: "http://coapp.org";
+}
+
+sharedlib {
+    policy-file: 3.5;
+}
+
+assembly[Microsoft.Deployment.Compression.dll] {
+}
+assembly[Microsoft.Deployment.Compression.Zip.dll] {
+}
+assembly[Microsoft.Deployment.Resources.dll] {
+}
+assembly[Microsoft.Deployment.WindowsInstaller.dll] {
+}
+assembly[Microsoft.Deployment.WindowsInstaller.Linq.dll] {
+}
+assembly[Microsoft.Deployment.WindowsInstaller.Package.dll] {
+}
