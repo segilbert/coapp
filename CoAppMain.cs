@@ -289,6 +289,11 @@ namespace CoApp.CLI {
                             CoTask.Factory.StartNew(() => GenerateFeed(parameters));
                             break;
 
+                        case "set-active":
+                            _pkgManager.EnsureCoAppIsInstalledInPath();
+                            _pkgManager.RunCompositionOnInstlledPackages();
+                            break;
+
                         default:
                             throw new ConsoleException(Resources.UnknownCommand, command);
                     }
