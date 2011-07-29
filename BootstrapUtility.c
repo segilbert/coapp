@@ -27,7 +27,7 @@
 #include <Strsafe.h>
 
 
-#define FINISH(text_msg) { MessageBox(NULL, Sprintf(L"Soft Download Error: %s \r\n [%s] \r\n code: [%x]\r\n line: %d",URL,text_msg , GetLastError(), __LINE__ ), "not an error", MB_OK ); totalBytesDownloaded = -1; goto fin;}
+#define FINISH(text_msg) { MessageBox(NULL, Sprintf(L"Soft Download Error: %s \r\n [%s] \r\n code: [%x]\r\n line: %d",URL,text_msg , GetLastError(), __LINE__ ), L"not an error", MB_OK ); totalBytesDownloaded = -1; goto fin;}
 void SetProgressValue( int percentage );
 void SetStatusMessage(  const wchar_t* format, ... );
 
@@ -435,7 +435,8 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 	tmpValue = sizeof(DWORD);
 	WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE| WINHTTP_QUERY_FLAG_NUMBER, NULL, &dwStatusCode, &tmpValue, NULL );
 	if( dwStatusCode != HTTP_STATUS_OK ) {
-		FINISH( L"Remote file not found" );
+		//FINISH( L"Remote file not found" );
+		totalBytesDownloaded = -1; goto fin;
 	}
 
 	tmpValue = sizeof(DWORD);
