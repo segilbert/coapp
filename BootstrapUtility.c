@@ -287,7 +287,23 @@ void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD ex
 	DWORD valueSize = BUFSIZE;
 	DWORD dataType;
 
-	status = RegOpenKeyEx( HKEY_LOCAL_MACHINE, keyname, 0, KEY_READ | KEY_WOW64_64KEY , &key );
+	DWORD version;
+    DWORD major;
+    DWORD flags;
+
+    version = GetVersion();
+    major = LOBYTE(LOWORD(version));
+
+    //
+    // Windows XP and below don't support WOW64 flags, despite the MSDN documentation.
+    // Will produce INVALID_PARAMETER HRESULT. - RR
+    //
+    if(major == 5)
+        flags = KEY_READ;
+    else
+        flags = KEY_READ | KEY_WOW64_64KEY;
+
+	status = RegOpenKeyEx( HKEY_LOCAL_MACHINE, keyname, 0, flags , &key );
 
 	if( status != ERROR_SUCCESS ) {
 		goto release_value;
