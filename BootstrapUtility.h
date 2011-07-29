@@ -11,7 +11,6 @@
 #include <SDKDDKVer.h>
 #include <windows.h>
 
-extern LPWSTR CommandLine;
 extern LPWSTR MsiFile;
 extern LPWSTR MsiDirectory;
 extern LPWSTR ManifestFilename;
@@ -34,13 +33,15 @@ extern LPWSTR ManifestFilename;
 #define EXIT_UNKNOWN_COMPONENT_TYPE			     10
 #define EXIT_NO_MSI_COMMANDLINE					 11
 #define EXIT_BOOTSTRAP_DIDNT_INSTALL_COAPP		 12
+#define EXIT_UNABLE_TO_CREATE_DIRECTORY			 13
 
 #define ASSERT_NOT_NULL( pointer ) { if(!pointer) { TerminateApplicationWithError(EXIT_NULL_POINTER,L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__); } }
 #define ASSERT_STRING_SIZE( stringpointer ) { if(SafeStringLengthInCharacters(stringpointer)< 0) { TerminateApplicationWithError(EXIT_INVALID_STRING, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__); } }
 #define ASSERT_STRING_OK( stringpointer) ASSERT_NOT_NULL( stringpointer ); ASSERT_STRING_SIZE( stringpointer );
 
+wchar_t* Sprintf(const wchar_t* format, ... );
 wchar_t* NewString();
-void DeleteString(wchar_t* string);
+void DeleteString(wchar_t** string);
 wchar_t* DuplicateString( const wchar_t* text );
 wchar_t* DuplicateAndTrimString(const wchar_t* text );
 size_t SafeStringLengthInCharacters(const wchar_t* text);
@@ -56,12 +57,11 @@ BOOL IsRunAsAdmin();
 void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, DWORD expectedDataType );
 BOOL RegistryKeyPresent(const wchar_t* regkey);
 wchar_t* GetFolderFromPath( const wchar_t* path );
-wchar_t* GetModuleFullPath( HMODULE module );
-wchar_t* GetModuleFolder( HMODULE module );
 int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const wchar_t* cosmeticName);
-wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly );
 BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile);
 void TerminateApplicationWithError(int errorLevel , const wchar_t* errorMessage, ... ); 
-
+BOOL FileExists(const wchar_t* installerPath);
+__int64 GetFileVersion(const wchar_t* filename);
+void SetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, const wchar_t* value );
 
 

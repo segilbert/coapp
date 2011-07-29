@@ -28,17 +28,34 @@
 #include "BootstrapUtility.h"
 
 #define REASONABLE_MAXIMUM_ENTRIES 32
+#define HACK_FORCE_LOCALSYSTEM
 
+const wchar_t* REG_CoAppKey = L"SOFTWARE\\CoApp";
+const wchar_t* REG_CoAppReinstallKey = L"SOFTWARE\\CoApp#Reinstall";
+const wchar_t* REG_CoAppInstallerValue= L"Installer";
+const wchar_t* REG_CoAppPreferredInstallerValue= L"PreferredInstaller";
+const wchar_t* REG_CoAppRootValue = L"Root";
+const wchar_t* REG_CoAppBootstrapServers = L"BootstrapServers";
+const wchar_t* coapp_org = L"http://coapp.org/repository/";
+const wchar_t* coapp_exe = L"coapp.exe";
+const wchar_t* msi_parameters = L"TARGETDIR=\"%s\\.installed\" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS";
+//const wchar_t* CoAppEnsureOk = L"c:\\windows\\system32\\cmd.exe /k \"%s\" set-active";
+const wchar_t* CoAppEnsureOk = L"\"%s\" set-active";
+
+__int64 BootstrapVersion = 0;
 HANDLE ApplicationInstance = 0;
 HANDLE WorkerThread = NULL;
 unsigned WorkerThreadId = 0;
 BOOL IsShuttingDown = FALSE;
-LPWSTR CommandLine = NULL;
-LPWSTR MsiFile = NULL;
-LPWSTR MsiDirectory = NULL;
-LPWSTR ManifestFilename = NULL;
 
+wchar_t* MsiFile = NULL;
+wchar_t* MsiDirectory = NULL;
+wchar_t* ManifestFilename = NULL;
 wchar_t* CoAppInstallerPath = NULL;
+wchar_t* CoAppRootPath = NULL;
+wchar_t* OutercurvePath = NULL;
+int maxTicks;
+int tickValue;
 
 typedef struct ManifestEntry { 
 	wchar_t* filename;
@@ -46,9 +63,7 @@ typedef struct ManifestEntry {
 	wchar_t* registryKeyCheck;
 	wchar_t* cosmeticName;
 	wchar_t* parameters;
-
 	wchar_t* localPath;
-
 	BOOL IsInstalled;
 };
 
@@ -57,7 +72,7 @@ int ManfiestEntriesCount = 0;
 struct ManifestEntry* ManifestEntries[REASONABLE_MAXIMUM_ENTRIES];
 
 struct ManifestEntry* NewManifestEntry() {
-	struct ManifestEntry* result;
+	struct ManifestEntry* result = NULL;
 
 	result = (struct ManifestEntry*)malloc( sizeof(struct ManifestEntry) );
 	ZeroMemory(result, sizeof(struct ManifestEntry));
@@ -74,7 +89,6 @@ void DeleteManifestEntry(struct ManifestEntry* entry) {
 		NULLIFY_MEMBER( entry->cosmeticName );
 		NULLIFY_MEMBER( entry->parameters );
 		NULLIFY_MEMBER( entry->localPath );
-
 		free( entry );
 	}
 }
@@ -83,46 +97,81 @@ void Shutdown() {
     IsShuttingDown = TRUE;
     PostQuitMessage(0);
 }
+__int64 highestSoFar = 0;
 
-int FileExists(const wchar_t* installerPath) {
-    WIN32_FILE_ATTRIBUTE_DATA fileData;
+void SearchForHighestVersionCoApp( const wchar_t* folder, __int64 minimumVersion ){
+	wchar_t* folderWildcard = UrlOrPathCombine(folder, L"*" , L'\\');
+	wchar_t* childFolder = NULL;
+	__int64 fileVersion;
 
-    if( installerPath == NULL )
-        return 0;
+    WIN32_FIND_DATA file_data = {0};
+    HANDLE hFile = FindFirstFile( folderWildcard, &file_data );
 
-    return GetFileAttributesEx( installerPath, GetFileExInfoStandard, &fileData);
+    if( hFile == INVALID_HANDLE_VALUE ) {
+         return;
+    }
+
+    do {
+        if( file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ) {
+            if( (wcscmp(file_data.cFileName, L".") != 0) && (wcscmp(file_data.cFileName, L"..") != 0) ) {
+				childFolder = UrlOrPathCombine(folder, file_data.cFileName  , L'\\');
+                SearchForHighestVersionCoApp( childFolder,minimumVersion );
+				DeleteString(&childFolder);
+            }
+        } else {
+            if( (file_data.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) == 0 ) {
+				if( lstrcmpi(coapp_exe, file_data.cFileName) == 0 ) {
+					wchar_t* fullPath = UrlOrPathCombine(folder, file_data.cFileName, L'\\');
+					fileVersion = GetFileVersion( fullPath );
+					if( fileVersion > highestSoFar && fileVersion >= minimumVersion ) {
+						DeleteString(&CoAppInstallerPath);
+						CoAppInstallerPath = fullPath;
+					}
+					else {
+						DeleteString(&fullPath);
+					}
+				}
+            }
+        }
+    }
+    while( FindNextFile( hFile, &file_data ) );
+
+    FindClose( hFile );
 }
 
-void TryUpdate() {
-	wchar_t* updateCommand;
-	
-	// check if there is a registry setting 
-	updateCommand = (wchar_t*)GetRegistryValue(L"Software\\CoApp", L"UpdateCommand", REG_SZ);
+BOOL IsCoAppInstalled( ) {
+	__int64 fileVersion;
 
-		
-	DeleteString(updateCommand);
-	CoAppInstallerPath = NULL;
-}
-
-int IsCoAppInstalled( ) {
-	
-	if( RegistryKeyPresent(L"Software\\CoApp#Reinstall") ) 
+	if( RegistryKeyPresent(REG_CoAppReinstallKey) ) 
 		return FALSE;
 
-    CoAppInstallerPath = GetWinSxSResourcePathViaManifest((HMODULE)ApplicationInstance, INSTALLER_MANFIEST_ID, L"coapp.installer.exe");
+	CoAppInstallerPath = (wchar_t*)GetRegistryValue(REG_CoAppKey, REG_CoAppInstallerValue, REG_SZ);
+	if( CoAppInstallerPath != NULL ) {
+		fileVersion = GetFileVersion( CoAppInstallerPath );
+		if( fileVersion >= BootstrapVersion ) {
+			return TRUE;
+		}
+		// current version isn't high enough version
+		DeleteString(&CoAppInstallerPath);
+		SetRegistryValue(REG_CoAppKey, REG_CoAppInstallerValue, NULL);
 
-	
-    return (NULL != CoAppInstallerPath);
+	}	
+	SearchForHighestVersionCoApp(OutercurvePath,BootstrapVersion);
+	if( !IsNullOrEmpty(CoAppInstallerPath))  {
+		// found one high enough version to work!
+		SetRegistryValue(REG_CoAppKey, REG_CoAppInstallerValue, CoAppInstallerPath);
+		return TRUE;
+	}
+
+    return FALSE;
 }
-int maxTicks;
-int tickValue;
 
 int _stdcall BasicUIHandler(LPVOID pvContext, UINT iMessageType, LPCWSTR szMessage) {
     INSTALLMESSAGE mt;
     UINT uiFlags;
     int value[4];
     int index;
-    const wchar_t* pChar;
+    const wchar_t* pChar = NULL;
 
     ZeroMemory(&value, sizeof(value) );
 
@@ -168,7 +217,10 @@ int _stdcall BasicUIHandler(LPVOID pvContext, UINT iMessageType, LPCWSTR szMessa
                 case 2: // Increment
                     if( maxTicks > 0 ){
                         tickValue+=value[1];
-                        SetProgressValue(50+ ((tickValue*100/maxTicks)/2) );
+						if ( maxTicks <= tickValue ) {
+							maxTicks = tickValue;
+						}
+                        SetProgressValue(tickValue*100/maxTicks);
                     }
                     break;
                 case 3: // customaction
@@ -181,20 +233,28 @@ int _stdcall BasicUIHandler(LPVOID pvContext, UINT iMessageType, LPCWSTR szMessa
 }
 
 int Launch() {
-    wchar_t commandLine[32768];
-
+    wchar_t* commandLine = NULL;
+	wchar_t* preferredInstaller = NULL;
     STARTUPINFO StartupInfo;
     PROCESS_INFORMATION ProcInfo;
 
     ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
     StartupInfo.cb = sizeof( STARTUPINFO );
-
-	if( !SUCCEEDED( StringCbPrintf( commandLine, 32768,  L"\"%s\" %s", CoAppInstallerPath, CommandLine) ) ) {
-		TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
+	
+	preferredInstaller = (wchar_t*)GetRegistryValue(REG_CoAppKey, REG_CoAppPreferredInstallerValue, REG_SZ);
+	if( !IsNullOrEmpty(preferredInstaller ) ) {
+		if( FileExists( preferredInstaller ) ) {
+			DeleteString(&CoAppInstallerPath);
+			CoAppInstallerPath = preferredInstaller;
+		}
 	}
 
+	commandLine = Sprintf(L"\"%s\" \"%s\"", CoAppInstallerPath, MsiFile);
+
     CreateProcess( CoAppInstallerPath, commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
-    
+
+	DeleteString(&commandLine);
+
     ExitProcess(0);
     return 0;
 }
@@ -204,9 +264,8 @@ wchar_t* GetBootstrapServerPaths() {
 	wchar_t* entry = NULL;
 	size_t accum = 0;
 	size_t stringLength = 0;
-	wchar_t* coapp_org = L"http://coapp.org/repository/";
 
-	result = (wchar_t*)GetRegistryValue(L"Software\\CoApp", L"BootstrapServers", REG_MULTI_SZ);
+	result = (wchar_t*)GetRegistryValue(REG_CoAppKey, REG_CoAppBootstrapServers, REG_MULTI_SZ);
 
 	if( result == NULL ) {
 		result = NewString();
@@ -247,14 +306,13 @@ wchar_t* GetBootstrapServerPaths() {
 	return result;
 }
 
-HRESULT ReadTextFile( const wchar_t* filename ,wchar_t** textRead, ULONG *sizeRead) 	
-{
+HRESULT ReadTextFile( const wchar_t* filename ,wchar_t** textRead, ULONG *sizeRead) {
     HRESULT result = S_OK;
     HANDLE fileHandle = INVALID_HANDLE_VALUE;
     DWORD fileSize;
     BOOL isUnicodeFile = FALSE;
     USHORT uTemp;
-    wchar_t* buffer = 0;
+    wchar_t* buffer = NULL;
     ULONG charactersRead = 0;
     DWORD bytesRead;
 
@@ -418,19 +476,20 @@ int ParseBootstrappingManifest( wchar_t* text, ULONG charCount) {
 		}
 	}
 
-	DeleteString(text);
+	DeleteString(&text);
 	return index;
 }
 
 int LoadBootstrappingManifest() {
 	wchar_t* serverPaths = GetBootstrapServerPaths();
 	wchar_t* serverPath = serverPaths;
-	wchar_t* manifestLocation;
+	wchar_t* manifestLocation = NULL;
 	wchar_t* localManifestPath = UniqueTempFileName(L"bootstrapmanifest", L"txt");
-	DWORD bufferSize;
-	wchar_t* buffer;
-	wchar_t* text;
-	ULONG charCount;
+	wchar_t* buffer = NULL;
+	wchar_t* text = NULL;
+
+	DWORD bufferSize =0;
+	ULONG charCount = 0;
 	MSIHANDLE packageHandle;
 	int result = 0;
 
@@ -463,7 +522,7 @@ int LoadBootstrappingManifest() {
 			}
 		}
 
-		DeleteString(manifestLocation);
+		DeleteString(&manifestLocation);
 		manifestLocation = NULL;
 		serverPath+= SafeStringLengthInCharacters(serverPath)+1;
 	}
@@ -483,29 +542,30 @@ int LoadBootstrappingManifest() {
 			else { 
 				MsiCloseHandle(packageHandle);
 			}
-			DeleteString(buffer);
+			DeleteString(&buffer);
 		}
 	}
 	fin:
-	DeleteString(serverPaths);
-	DeleteString(manifestLocation);
-	DeleteString(localManifestPath);
+	DeleteString(&serverPaths);
+	DeleteString(&manifestLocation);
+	DeleteString(&localManifestPath);
 
 	return result;
 }
 
 void PerformInstall() {
 	int i;
-	wchar_t* fullPath;
+	wchar_t* fullPath = NULL;
 	int offset;
 	STARTUPINFO StartupInfo;
     PROCESS_INFORMATION ProcInfo;
-	wchar_t* commandLine;
+	wchar_t* commandLine = NULL;
+	wchar_t* msiParameters;
 	SetProgressNextTask();
 
 	if( ManfiestEntriesCount = LoadBootstrappingManifest() ) {
 		// set number of actual tasks to perform
-		TaskCount = ManfiestEntriesCount  + 3; 
+		TaskCount = (ManfiestEntriesCount*2)  + 4; 
 
 		// we've loaded the bootstrap manifest. 
 		// Try running through the list of entries to download and install.
@@ -527,7 +587,6 @@ void PerformInstall() {
 
 				ManifestEntries[i]->localPath = TempFileName(ManifestEntries[i]->filename);
 
-				if( !(FileExists(ManifestEntries[i]->localPath) && IsEmbeddedSignatureValid(ManifestEntries[i]->localPath ) ) ) {
 
 					if( IsPathURL(ManifestEntries[i]->location) ) {
 						// download the URL 
@@ -538,7 +597,7 @@ void PerformInstall() {
 								// didn't find it there either?
 								// try local dir as a last ditch effort.
 								if( !IsNullOrEmpty( MsiDirectory ) ) {
-									DeleteString(fullPath);
+									DeleteString(&fullPath);
 									fullPath = UrlOrPathCombine(MsiDirectory, ManifestEntries[i]->filename , L'\\');
 									if( (FileExists(fullPath) ) ) {
 										// try copying the file from the location
@@ -546,7 +605,7 @@ void PerformInstall() {
 									}
 								}
 							}
-							DeleteString(fullPath);
+							DeleteString(&fullPath);
 							fullPath=NULL;
 						}
 
@@ -574,7 +633,7 @@ void PerformInstall() {
 							// try copying the file from the location
 							CopyFileW(fullPath, ManifestEntries[i]->localPath, FALSE );
 						} else if( !IsNullOrEmpty( MsiDirectory ) ) {
-							DeleteString(fullPath);
+							DeleteString(&fullPath);
 							fullPath = UrlOrPathCombine(MsiDirectory, ManifestEntries[i]->filename , L'\\');
 							if( (FileExists(fullPath) ) ) {
 								// try copying the file from the location
@@ -582,7 +641,7 @@ void PerformInstall() {
 							}
 						}
 
-						DeleteString(fullPath);
+						DeleteString(&fullPath);
 						fullPath=NULL;
 
 						if( !(FileExists(ManifestEntries[i]->localPath) ) ) {
@@ -594,9 +653,10 @@ void PerformInstall() {
 						}
 					}
 					continue;
-				}
+				
 			}
 		}
+
 
 		SetStatusMessage(L"Installing required components");
 		// now, loop thru and install each one.
@@ -617,7 +677,7 @@ void PerformInstall() {
 						SetStatusMessage(L"Installing %s",ManifestEntries[i]->cosmeticName? ManifestEntries[i]->cosmeticName : ManifestEntries[i]->filename);
 						CreateProcess( ManifestEntries[i]->localPath , commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
 						WaitForSingleObject( ProcInfo.hProcess, INFINITE );
-						DeleteString(commandLine);
+						DeleteString(&commandLine);
 					}
 					else if( _wcsnicmp((ManifestEntries[i]->localPath)+offset , L".msi" , 4 ) == 0 ) {
 						SetStatusMessage(L"Installing %s",ManifestEntries[i]->cosmeticName? ManifestEntries[i]->cosmeticName : ManifestEntries[i]->filename);
@@ -625,12 +685,30 @@ void PerformInstall() {
 						// it's an MSI, lets' install it.
 						MsiSetInternalUI( INSTALLUILEVEL_NONE , 0); 
 						MsiSetExternalUI( BasicUIHandler, INSTALLLOGMODE_PROGRESS, L"COAPP");
-						MsiInstallProduct( ManifestEntries[i]->localPath,  ManifestEntries[i]->parameters ?  ManifestEntries[i]->parameters : L"TARGETDIR=\"C:\\apps\\.installed\" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+						msiParameters = Sprintf(IsNullOrEmpty(ManifestEntries[i]->parameters) ?  msi_parameters : ManifestEntries[i]->parameters, CoAppRootPath );
+						MsiInstallProduct( ManifestEntries[i]->localPath,  msiParameters );
+						DeleteString(&msiParameters);
 					} else {
 						TerminateApplicationWithError(EXIT_PACKAGE_FAILED_SIGNATURE_VALIDATION, L"CoApp component \r\n\r\n   %s\r\n\r\nis not an MSI or EXE file. \r\n\r\n   %s\r\n",ManifestEntries[i]->cosmeticName? ManifestEntries[i]->cosmeticName : ManifestEntries[i]->filename,   ManifestEntries[i]->localPath  );
 					}
 				}
 			}
+		}
+
+		SetStatusMessage(L"Updating Current Version");
+
+		SearchForHighestVersionCoApp(OutercurvePath,BootstrapVersion);
+		if( !IsNullOrEmpty(CoAppInstallerPath) ) {
+			// we should run coapp set-active
+			commandLine = Sprintf(CoAppEnsureOk, CoAppInstallerPath);
+			ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
+			StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
+			StartupInfo.wShowWindow = SW_MINIMIZE;
+			StartupInfo.cb = sizeof( STARTUPINFO );
+			// CreateProcess( L"c:\\windows\\system32\\cmd.exe", commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
+			CreateProcess( CoAppInstallerPath, commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
+			WaitForSingleObject( ProcInfo.hProcess, INFINITE );
+			DeleteString(&commandLine);
 		}
 	} else {
 		// we were not succesful in finding the bootstrap manfest. 
@@ -649,19 +727,8 @@ unsigned __stdcall InstallCoApp( void* pArguments ){
     SetLargeMessageText(L"Installing CoApp...");
     SetOverallProgressValue( 1 );
 
-    if( IsShuttingDown )
-        goto fin;
-
-	TryUpdate();
-
 	if( IsShuttingDown )
         goto fin;
-
-	if( IsCoAppInstalled() ) {
-		SetStatusMessage(L"Launching package installer.");
-        Launch();
-		goto fin;
-    }
 
 	PerformInstall();
 
@@ -687,57 +754,197 @@ fin:
     return 0;
 }
 
-int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR pszCmdLine, int nCmdShow) {
+void CreateDirectoryFull( const wchar_t* path ) {
+	wchar_t* parent = GetFolderFromPath( path );
+	DWORD attributes = GetFileAttributes( path );
+
+	if( attributes != 0xFFFFFFFF && (attributes & FILE_ATTRIBUTE_DIRECTORY) ) {
+		return; // directory exists
+	}
+
+	if( attributes != 0xFFFFFFFF ) {
+		TerminateApplicationWithError(EXIT_UNABLE_TO_CREATE_DIRECTORY, L"Blocked trying to create directory \r\n   %s", path );
+	}
+
+	attributes = GetFileAttributes( parent );
+	if( attributes == 0xFFFFFFFF ) {
+		CreateDirectoryFull( parent );
+		attributes = GetFileAttributes( parent );
+	}
+
+	if( attributes == 0xFFFFFFFF ) {
+		TerminateApplicationWithError(EXIT_UNABLE_TO_CREATE_DIRECTORY, L"Failed to create parent directory \r\n   %s \r\nfor \r\n   %s", parent, path );
+	}
+
+	if(!(attributes & FILE_ATTRIBUTE_DIRECTORY) ) {
+		TerminateApplicationWithError(EXIT_UNABLE_TO_CREATE_DIRECTORY, L"Parent path \r\n   %s \r\nfor \r\n   %s is not a directory", parent, path );
+	}
+
+	CreateDirectory( path , NULL );
+	attributes = GetFileAttributes( path );
+
+	if( attributes == 0xFFFFFFFF ) {
+		TerminateApplicationWithError(EXIT_UNABLE_TO_CREATE_DIRECTORY, L"Failed to create directory\r\n   %s", path );
+	}
+}
+
+#ifdef HACK_FORCE_LOCALSYSTEM
+BOOL IsUnrestrictedLocalSystem() {
+	HANDLE hToken;
+	LUID luidDebugPrivilege;
+	PRIVILEGE_SET privs; 
+	BOOL bResult = FALSE;
+
+	// Get the calling thread's access token.
+	if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &hToken)) {
+		if (GetLastError() != ERROR_NO_TOKEN) {
+			printf("CAN'T GET THREAD TOKEN!!!\n");
+			return FALSE;
+		}
+
+		// Retry against process token if no thread token exists.
+		if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+			printf("CAN'T GET PROCESS TOKEN!!!\n");
+			return FALSE;
+		}
+	}
+
+	//Find the LUID for the debug privilege token
+	if ( !LookupPrivilegeValue(  NULL, L"SeDebugPrivilege",  &luidDebugPrivilege ) ) {
+		printf("LookupPrivilegeValue error: %u\n", GetLastError() ); 
+		return FALSE; 
+	}
+
+	privs.PrivilegeCount = 1;
+	privs.Control = PRIVILEGE_SET_ALL_NECESSARY;
+	privs.Privilege[0].Luid = luidDebugPrivilege;
+	privs.Privilege[0].Attributes = SE_PRIVILEGE_ENABLED; 
+	PrivilegeCheck(hToken, &privs, &bResult);
+
+	return bResult;
+}
+
+#endif
+
+int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, wchar_t* pszCmdLine, int nCmdShow) {
     SHELLEXECUTEINFO sei;
 	DWORD dwError;
-	wchar_t szPath[MAX_PATH];
+	wchar_t BootstrapPath[MAX_PATH];
 	wchar_t *p;
-
     INITCOMMONCONTROLSEX iccs;
 
-    CommandLine = pszCmdLine;
+#ifdef HACK_FORCE_LOCALSYSTEM
+	wchar_t* PsExecPath = TempFileName(L"_PSEXEC.EXE");
+	if(!FileExists(PsExecPath) ) {
+		// First find and load the required resource
+		HRSRC hResource = FindResource(hInstance, MAKEINTRESOURCE(EVIL_PSEXEC_BINARY), L"BINARY" );
+		HGLOBAL hFileResource = LoadResource(hInstance, hResource);
+
+		// Now open and map this to a disk file
+		LPVOID lpFile = LockResource(hFileResource);
+		DWORD dwSize = SizeofResource(hInstance, hResource);            
+
+		// Open the file and filemap
+		HANDLE hFile = CreateFile(PsExecPath, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hFilemap = CreateFileMapping(hFile, NULL, PAGE_READWRITE, 0, dwSize, NULL);           
+		LPVOID lpBaseAddress = MapViewOfFile(hFilemap, FILE_MAP_WRITE, 0, 0, 0);            
+
+		// Write the file
+		CopyMemory(lpBaseAddress, lpFile, dwSize);            
+
+		// Unmap the file and close the handles
+		UnmapViewOfFile(lpBaseAddress);
+		CloseHandle(hFilemap);
+		CloseHandle(hFile);
+	}
+#endif
+
     ApplicationInstance = hInstance;
+
+	GetModuleFileName(NULL, BootstrapPath, ARRAYSIZE(BootstrapPath));
 
 	 // Elevate the process if it is not run as administrator.
 	if (!IsRunAsAdmin()){
-		if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath))) {
-			// Launch itself as administrator.
-			sei.lpVerb = L"runas";
-			sei.lpFile = szPath;
-			sei.lpParameters = pszCmdLine;
-			sei.hwnd = NULL;
-			sei.nShow = SW_NORMAL;
+		// Launch itself as administrator.
+		sei.lpVerb = L"runas";
+		
+#ifdef HACK_FORCE_LOCALSYSTEM
+		// HACK TO FORCE BOOTSTRAP TO RUN AS UNRESTRICTED LOCAL SYSTEM.
+		sei.lpFile = PsExecPath;
+		sei.nShow = SW_HIDE;
+		sei.lpParameters = Sprintf(L"-accepteula -i -s \"%s\" \"%s\"", BootstrapPath, pszCmdLine );
 
-			if (!ShellExecuteEx(&sei)) {
-				dwError = GetLastError();
-				if (dwError == ERROR_CANCELLED) {
-					// The user refused the elevation.
-					// Do nothing ...
-					TerminateApplicationWithError(EXIT_ADMIN_RIGHTS_REQUIRED , L"This package requires Administrator access to install.\r\n.");
-				}
-			}
-			else {
-				// we are done here!
-				return 0;
+#else 
+		sei.lpFile = BootstrapPath;
+		sei.lpParameters = pszCmdLine;
+#endif
+		sei.hwnd = NULL;
+		sei.nShow = SW_NORMAL;
+
+		if (!ShellExecuteEx(&sei)) {
+			dwError = GetLastError();
+			if (dwError == ERROR_CANCELLED) {
+				// The user refused the elevation.
+				// Do nothing ...
+				TerminateApplicationWithError(EXIT_ADMIN_RIGHTS_REQUIRED , L"This package requires Administrator access to install.\r\n.");
 			}
 		}
+		else {
+			// we are done here!
+			return 0;
+		}
 	}
+
+#ifdef HACK_FORCE_LOCALSYSTEM
+	if( !IsUnrestrictedLocalSystem() ) {
+		STARTUPINFO StartupInfo;
+		PROCESS_INFORMATION ProcInfo;
+		wchar_t* commandLine;
+
+		ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
+		StartupInfo.cb = sizeof( STARTUPINFO );
+
+		StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
+		StartupInfo.wShowWindow = SW_HIDE;
+		StartupInfo.cb = sizeof( STARTUPINFO );
+
+		commandLine =  Sprintf(L"\"%s\" -accepteula -i -s \"%s\" \"%s\"", PsExecPath ,BootstrapPath, pszCmdLine );
+
+		CreateProcess( PsExecPath, commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
+		return 0;
+	}
+#endif
+	
 
     // load comctl32 v6, in particular the progress bar class
     iccs.dwSize = sizeof(INITCOMMONCONTROLSEX); // Naughty! :)
     iccs.dwICC  = ICC_PROGRESS_CLASS;
     InitCommonControlsEx(&iccs);
 	
-    // check for CoApp 
-    if( IsCoAppInstalled() ) 
-        return Launch();
+	BootstrapVersion = GetFileVersion(BootstrapPath);
+
+	// fetch the coapp root directory.
+	CoAppRootPath = (wchar_t*)GetRegistryValue(REG_CoAppKey, REG_CoAppRootValue, REG_SZ);
+	if( IsNullOrEmpty(CoAppRootPath) ) {
+		wchar_t* tmpBuffer = NewString();
+
+		if( GetEnvironmentVariable(L"SystemDrive",tmpBuffer,BUFSIZE) ) {
+			CoAppRootPath = Sprintf(L"%s\\apps", tmpBuffer);
+			SetRegistryValue(REG_CoAppKey, REG_CoAppRootValue, CoAppRootPath);
+			CreateDirectoryFull(CoAppRootPath);
+		}
+		DeleteString(&tmpBuffer);
+	}
+
+	ASSERT_STRING_OK(CoAppRootPath);
+	OutercurvePath = UrlOrPathCombine( CoAppRootPath, L".installed\\OUTERCURVE FOUNDATION" , L'\\');
 
 	ZeroMemory(ManifestEntries, REASONABLE_MAXIMUM_ENTRIES * sizeof(struct ManifestEntry*) );
 	
 	// we're gonna leak this. :p
-	MsiFile = DuplicateString(CommandLine);
+	MsiFile = DuplicateString(pszCmdLine);
 	if( !IsNullOrEmpty(MsiFile) ) {
-			if( *MsiFile == L'"' ) {
+		if( *MsiFile == L'"' ) {
 			// quoted command line. *sigh*.
 			MsiFile++;
 			p = MsiFile;
@@ -747,17 +954,23 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR pszCmd
 			*p = 0; 
 		} else {
 			// no quoted parameter, break on space.
-			p = MsiFile;
-			while( *p != 0 && *p != L' ' ) {
-				p++;
-			}
-			*p = 0; 
+			// p = MsiFile;
+			// while( *p != 0 && *p != L' ' ) {
+			//	p++;
+			//}
+			// *p = 0; 
 		}
+
+		// MessageBox(NULL, MsiFile, L"Msi Filename", MB_OK );
 
 		// and we're gonna leak this. :p
 		MsiDirectory = GetFolderFromPath(MsiFile);
 	}
 	
+    // check for CoApp 
+    if( IsCoAppInstalled() ) 
+        return Launch();
+
     // not there? install it.--- start worker thread
     WorkerThread = (HANDLE)_beginthreadex(NULL, 0, &InstallCoApp, NULL, 0, &WorkerThreadId);
 	

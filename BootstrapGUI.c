@@ -21,6 +21,7 @@
 #include "resource.h"
 #include "BootstrapGUI.h"
 #include "BootstrapUtility.h"
+#include <Strsafe.h>
 
 #define BUFSIZE				8192
 
@@ -40,7 +41,7 @@ void SetStatusMessage(  const wchar_t* format, ... ) {
 	wchar_t* text = NewString();
 
 	va_start(args, format);
-	vswprintf(text,format, args);
+	StringCbVPrintf(text,BUFSIZE,format, args);
 
 	// recipient must free the text buffer!
 	PostMessage(StatusDialog, SETSTATUSMESSAGE, 0, (LPARAM)text );
@@ -73,6 +74,9 @@ void SetLargeMessageText(const wchar_t* ps_text) {
 }
 
 void SetProgressValue( int percentage ) {
+	if( percentage > 100 ) {
+		percentage = 100;
+	}
 	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)(overall_percentage+ (percentage/TaskCount)),0 );
 	Sleep(20);
 }

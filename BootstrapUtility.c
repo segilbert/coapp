@@ -27,9 +27,26 @@
 #include <Strsafe.h>
 
 
-#define FINISH(text_msg) {/* LogMessage(text_msg); */ totalBytesDownloaded = -1; goto fin;}
+#define FINISH(text_msg) { MessageBox(NULL, Sprintf(L"Soft Download Error: %s \r\n [%s] \r\n code: [%x]\r\n line: %d",URL,text_msg , GetLastError(), __LINE__ ), "not an error", MB_OK ); totalBytesDownloaded = -1; goto fin;}
 void SetProgressValue( int percentage );
 void SetStatusMessage(  const wchar_t* format, ... );
+
+wchar_t* Sprintf(const wchar_t* format, ... ) {
+	wchar_t* result = NewString();
+	va_list args;
+	
+	ASSERT_STRING_OK(format);
+
+	va_start(args, format);
+	
+	if( SUCCEEDED(StringCbVPrintf(result,BUFSIZE,format, args) ) ) {
+		return result;
+	}
+
+	TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
+
+	return NULL;
+}
 
 wchar_t* NewString() {
 	wchar_t* result = (wchar_t*) malloc(BUFSIZE*sizeof(wchar_t));
@@ -39,9 +56,12 @@ wchar_t* NewString() {
 	return result;
 }
 
-void DeleteString(wchar_t* string) {
-	if( string ) {
-		free( string );
+void DeleteString(wchar_t** stringPointer ) {
+	if( stringPointer )  {
+		if( *stringPointer ) {
+			free( *stringPointer );
+		}
+		*stringPointer = NULL;
 	}
 }
 
@@ -53,10 +73,9 @@ wchar_t* DuplicateString( const wchar_t* text ) {
 	ASSERT_STRING_SIZE( text );
 
 	size = SafeStringLengthInCharacters(text);
-	// if( size > 0 ) {
-		result = NewString();
-		wcsncpy_s(result , BUFSIZE, text, size );
-	// }
+	
+	result = NewString();
+	wcsncpy_s(result , BUFSIZE, text, size );
 
 	return result;
 }
@@ -115,23 +134,14 @@ BOOL IsNullOrEmpty(const wchar_t* text) {
 ///		combines a path and a filename
 /// </summary>
  wchar_t* UrlOrPathCombine(const wchar_t* path, const wchar_t* name, wchar_t seperator) {
-	wchar_t* result = NewString();
-
 	ASSERT_STRING_OK( path );
 	ASSERT_STRING_OK( name );
 
-	if( *(path +  SafeStringLengthInCharacters( path )-1) == seperator  ) {
-		if( !SUCCEEDED( StringCbPrintf( result, BUFSIZE,  L"%s%s" , path, name ) ) ) {
-			TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
-		}
-	}
-	else {
-		if( !SUCCEEDED( StringCbPrintf( result, BUFSIZE,  L"%s%c%s" , path, seperator, name ) ) ) {
-			TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__ );
-		}
+	if( *(path + SafeStringLengthInCharacters( path )-1) == seperator  ) {
+		return Sprintf( L"%s%s" , path, name );
 	}
 
-	return result;
+	return Sprintf(L"%s%c%s" , path, seperator, name );
 }
 
 
@@ -163,8 +173,8 @@ BOOL IsNullOrEmpty(const wchar_t* text) {
 wchar_t* UniqueTempFileName(const wchar_t* name,const wchar_t* extension) {
 	DWORD returnValue = 0;
 	wchar_t tempFolderPath[BUFSIZE];
-	wchar_t* filename = NewString();
-	wchar_t* result;
+	wchar_t* filename = NULL;
+	wchar_t* result = NULL;
 
 	returnValue = GetTempPath(BUFSIZE,  tempFolderPath); 
 	
@@ -173,13 +183,10 @@ wchar_t* UniqueTempFileName(const wchar_t* name,const wchar_t* extension) {
 		return NULL;
 	}
 
-	
-	if( !SUCCEEDED( StringCbPrintf( filename, BUFSIZE, L"%s[%d].%s", name , GetTickCount(), extension ) ) ) {
-		TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
-	}
+	filename = Sprintf(L"%s[%d].%s", name , GetTickCount(), extension );
 
 	result = UrlOrPathCombine(tempFolderPath, filename, L'\\' );
-	DeleteString( filename );
+	DeleteString( &filename );
 	return result;
 }
 
@@ -235,6 +242,26 @@ Cleanup:
     return fIsRunAsAdmin;
 }
 
+void SetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, const wchar_t* value ) {
+	LSTATUS status;
+	HKEY key;
+
+	status = RegCreateKeyEx( HKEY_LOCAL_MACHINE, keyname, 0,NULL, REG_OPTION_NON_VOLATILE,  KEY_WRITE  | KEY_WOW64_64KEY, NULL , &key, NULL );
+
+	if( status != ERROR_SUCCESS ) {
+		goto done;
+	}
+
+	if(IsNullOrEmpty(value)) {
+		 RegDeleteValue(key, valueName);
+	} else {
+		RegSetValueEx( key, valueName, 0 , REG_SZ, (const BYTE*)(void*)value , SafeStringLengthInBytes(value) +2 );
+	}
+
+done:
+	RegCloseKey(key);
+}
+
 void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD expectedDataType  ) {
 	LSTATUS status;
 	HKEY key;
@@ -279,6 +306,7 @@ release_name:
 		free(name);
 		name = NULL;
 		
+	RegCloseKey(key);
 	return value;
 }
 
@@ -301,6 +329,8 @@ BOOL RegistryKeyPresent(const wchar_t* regkey) {
 		free(value);
 		return TRUE;
 	}
+
+	DeleteString(&keyname);
 	return FALSE;
 }
 
@@ -366,8 +396,9 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 	urlComponents.dwUrlPathLength   = -1;
 	urlComponents.dwExtraInfoLength = -1;
 
-	if(!WinHttpCrackUrl(URL, (DWORD)wcslen(URL), 0, &urlComponents))
+	if(!WinHttpCrackUrl(URL, (DWORD)wcslen(URL), 0, &urlComponents)) {
 		FINISH( L"URL not valid" );
+	}
 
 	wcsncpy_s( urlHost , BUFSIZE, URL+urlComponents.dwSchemeLength+3 ,urlComponents.dwHostNameLength );
 	wcsncpy_s( urlPath , BUFSIZE, URL+urlComponents.dwSchemeLength+urlComponents.dwHostNameLength+3, urlComponents.dwUrlPathLength );
@@ -375,38 +406,44 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 	//SetStatusMessage(L"Contacting Server [%s]", urlHost);
 
 	// Use WinHttpOpen to obtain a session handle.
-	if(!(session = WinHttpOpen( L"CoAppBootstrapper/1.0",  WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0)))
+	if(!(session = WinHttpOpen( L"CoAppBootstrapper/1.0",  WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0))) {
 		FINISH( L"Unable to create session for download" );
+	}
 
 	WinHttpSetTimeouts( session, 12000, 12000, 12000, 12000);
 
 	// Specify an HTTP server.
-	if (!(connection = WinHttpConnect( session, urlHost, urlComponents.nPort, 0)))
+	if (!(connection = WinHttpConnect( session, urlHost, urlComponents.nPort, 0))) {
 		FINISH( L"Unable to connect to URL for download" );
+	}
 
 	// Create an HTTP request handle.
-	if (!(request = WinHttpOpenRequest( connection, L"GET",urlPath , NULL, WINHTTP_NO_REFERER,  WINHTTP_DEFAULT_ACCEPT_TYPES, 0)))
+	if (!(request = WinHttpOpenRequest( connection, L"GET",urlPath , NULL, WINHTTP_NO_REFERER,  WINHTTP_DEFAULT_ACCEPT_TYPES, 0))) {
 		FINISH( L"Unable to open request for download" );
+	}
 
 	// Send a request.
-	if(!(WinHttpSendRequest( request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)))
+	if(!(WinHttpSendRequest( request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))) {
 		FINISH( L"Unable to send request for download" );
+	}
  
 	// End the request.
-	if(!(WinHttpReceiveResponse( request, NULL)))
+	if(!(WinHttpReceiveResponse( request, NULL))) {
 		FINISH( L"Unable to receive response for download" );
+	}
 
 	tmpValue = sizeof(DWORD);
 	WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE| WINHTTP_QUERY_FLAG_NUMBER, NULL, &dwStatusCode, &tmpValue, NULL );
 	if( dwStatusCode != HTTP_STATUS_OK ) {
-		FINISH( (L"Remote file not found[%s]",URL ));
+		FINISH( L"Remote file not found" );
 	}
 
 	tmpValue = sizeof(DWORD);
 	WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &contentLength, &tmpValue , NULL);
 
-	if( INVALID_HANDLE_VALUE == (localFile = CreateFile(destinationFilename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,  FILE_ATTRIBUTE_NORMAL,NULL)))
-		FINISH( (L"Unable to create output file [%s]",destinationFilename ));
+	if( INVALID_HANDLE_VALUE == (localFile = CreateFile(destinationFilename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,  FILE_ATTRIBUTE_NORMAL,NULL))) {
+		FINISH( L"Unable to create output file [%s]");
+	}
 
 	
 	// Keep checking for data until there is nothing left.
@@ -416,23 +453,25 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 		// Check for available data.
 		bytesAvailable = 0;
 
-		if (!WinHttpQueryDataAvailable( request, &bytesAvailable))
+		if (!WinHttpQueryDataAvailable( request, &bytesAvailable)) {
 			FINISH( L"No data available");
-			
+		}
 		// No more available data.
 		if (!bytesAvailable)
 			break;
 
 		// Allocate space for the buffer.
 		pszOutBuffer = malloc(bytesAvailable+1);
-		if (!pszOutBuffer) 
+		if (!pszOutBuffer)  {
 			FINISH( L"Allocation Failure" );
+		}
 			
 		// Read the Data.
 		ZeroMemory(pszOutBuffer, bytesAvailable+1);
 
-		if (!WinHttpReadData( request, (LPVOID)pszOutBuffer, bytesAvailable, &bytesDownloaded)) 
-			FINISH( L"ReadData Failure" )
+		if (!WinHttpReadData( request, (LPVOID)pszOutBuffer, bytesAvailable, &bytesDownloaded))  {
+			FINISH( L"ReadData Failure" );
+		}
 		
 		WriteFile( localFile, pszOutBuffer, bytesDownloaded, &bytesWritten, NULL ); 
 		totalBytesDownloaded+=bytesDownloaded;
@@ -460,57 +499,38 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 	if (session) 
 		WinHttpCloseHandle(session);
 
-	return totalBytesDownloaded; // bytes downloaded.
+	return (int)totalBytesDownloaded; // bytes downloaded.
 }
 
-wchar_t* GetWinSxSResourcePathViaManifest(HMODULE module, int resourceIdForManifest, wchar_t* itemInAssembly ) {
-	wchar_t* result = NULL;
-	DWORD error;
-	ACTCTX_SECTION_KEYED_DATA ReturnedData;
-	ACTCTX ActivationContext;
-	ULONG_PTR WinSxSCookie = 0;
-	BOOL fSuccess = FALSE;
-	HANDLE ActivationContextHandle = INVALID_HANDLE_VALUE;
-	
-	ZeroMemory(&ActivationContext,sizeof(ACTCTX));
-	ZeroMemory(&ReturnedData,sizeof(ACTCTX_SECTION_KEYED_DATA));
-	ReturnedData.cbSize = sizeof(ACTCTX_SECTION_KEYED_DATA);
-	ActivationContext.cbSize = sizeof(ACTCTX);
-	ActivationContext.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID ; 
-	
-	ActivationContext.hModule = module;
-	
-	ActivationContext.lpSource = GetModuleFullPath( module );
-	ActivationContext.lpResourceName = MAKEINTRESOURCE(resourceIdForManifest);
+BOOL FileExists(const wchar_t* filePath) {
+    WIN32_FILE_ATTRIBUTE_DATA fileData;
 
-	ActivationContextHandle = CreateActCtx(&ActivationContext);
-	
-	if( ActivationContextHandle == INVALID_HANDLE_VALUE ){
-		error = GetLastError();
-		goto fin;
-	}
-	fSuccess = ActivateActCtx(ActivationContextHandle, &WinSxSCookie);
-	if( !fSuccess  )
-		goto release;
-	
-	fSuccess = FindActCtxSectionString(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX,NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, itemInAssembly, &ReturnedData);
-	if( !fSuccess  )
-		goto deactivate;
+    if( IsNullOrEmpty(filePath) )
+        return 0;
 
-	result = NewString();
-	if( !SearchPath(NULL, itemInAssembly, NULL, BUFSIZE, result, NULL) ) {
-		free( result );
-		result = NULL;
+    return GetFileAttributesEx( filePath, GetFileExInfoStandard, &fileData);
+}
+
+__int64 GetFileVersion(const wchar_t* filename)  {
+	DWORD dataSize, handle;
+	void *data;
+	UINT len;
+	VS_FIXEDFILEINFO *pFileInfo;
+	__int64 result = 0;
+	
+	if( FileExists( filename ) ) {
+		dataSize = GetFileVersionInfoSize(filename, &handle);
+		if( dataSize > 0 ) {
+			data = malloc(dataSize);
+			if(GetFileVersionInfo(filename, 0, dataSize, data) ) {
+				if( VerQueryValue( data, L"\\", (void**)&pFileInfo, &len ) ) {
+					result = (((__int64)pFileInfo->dwFileVersionMS)<<32) + ((__int64)pFileInfo->dwFileVersionLS);
+				}
+			}
+			free(data);
+		}
 	}
 
-deactivate:
-	DeactivateActCtx(0, WinSxSCookie);
-
-release:
-	ReleaseActCtx(ActivationContextHandle);
-
-fin:
-	free((void*)ActivationContext.lpSource);
 	return result;
 }
 
@@ -663,6 +683,9 @@ BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
 
     return FALSE;
 }
+
+
+
 void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... ) {
 	va_list args;
 	wchar_t caption[BUFSIZE];
@@ -672,9 +695,8 @@ void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... )
 	StringCbPrintf( caption, BUFSIZE,L"A problem has occured [%d]", errorLevel ) ;
 
 	va_start(args, format);
-	vswprintf(message,format, args);
-
-	StringCbPrintf( fullMessage, BUFSIZE,L"%s \r\n\r\nFor troubleshooting on this error please visit http://coapp.org/help/%d \r\n\r\nDebug Info:\r\n\r\n   CommandLine:[%s]\r\n   MsiFile:[%s]\r\n   MsiDirectory:[%s]\r\n   ManifestFilename:[%s]\r\n", message, errorLevel ,CommandLine, MsiFile, 	MsiDirectory, ManifestFilename);
+	StringCbVPrintf(message,BUFSIZE,format, args);
+	StringCbPrintf( fullMessage, BUFSIZE,L"%s \r\n\r\nFor troubleshooting on this error please visit http://coapp.org/help/%d \r\n\r\nDebug Info:\r\n\r\n   MsiFile:[%s]\r\n   MsiDirectory:[%s]\r\n   ManifestFilename:[%s]\r\n", message, errorLevel ,MsiFile, 	MsiDirectory, ManifestFilename);
 
 	MessageBox(NULL,fullMessage,caption, MB_ICONERROR );
 
