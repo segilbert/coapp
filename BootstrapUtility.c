@@ -245,8 +245,23 @@ Cleanup:
 void SetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, const wchar_t* value ) {
 	LSTATUS status;
 	HKEY key;
+    DWORD version;
+    DWORD major;
+    DWORD flags;
 
-	status = RegCreateKeyEx( HKEY_LOCAL_MACHINE, keyname, 0,NULL, REG_OPTION_NON_VOLATILE,  KEY_WRITE  | KEY_WOW64_64KEY, NULL , &key, NULL );
+    version = GetVersion();
+    major = LOBYTE(LOWORD(version));
+
+    //
+    // Windows XP and below don't support WOW64 flags, despite the MSDN documentation.
+    // Will produce INVALID_PARAMETER HRESULT. - RR
+    //
+    if(major == 5)
+        flags = KEY_WRITE;
+    else
+        flags = KEY_WRITE | KEY_WOW64_64KEY;
+
+	status = RegCreateKeyEx( HKEY_LOCAL_MACHINE, keyname, 0,NULL, REG_OPTION_NON_VOLATILE,  flags, NULL , &key, NULL );
 
 	if( status != ERROR_SUCCESS ) {
 		goto done;
