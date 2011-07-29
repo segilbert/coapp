@@ -22,7 +22,7 @@ package
 }
 
 dependencies {
-	add: "deploymenttoolsfoundation-3.5.2519.65-any";
+	add: "deploymenttoolsfoundation-3.5.2519.73-any";
 }
 
 identity
