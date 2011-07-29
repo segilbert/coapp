@@ -361,7 +361,11 @@ namespace CoApp.Toolkit.Engine {
                 
                 // pkgDetails.displayName
                 pkg.FullDescription = pkgDetails.description;
-                pkg.PublishDate = DateTime.Parse(pkgDetails.publishDate);
+                long publishDateTicks;
+                if (Int64.TryParse(pkgDetails.publishDate, out publishDateTicks))
+                {
+                    pkg.PublishDate = new DateTime(publishDateTicks);
+                }
                 pkg.AuthorVersion = pkgDetails.authorVersion;
                 pkg.CanonicalPackageLocation = pkgDetails.originalLocation;
                 pkg.CanonicalFeedLocation = pkgDetails.feedLocation;
