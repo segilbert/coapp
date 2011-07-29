@@ -3,6 +3,10 @@
 //     Original Copyright (c) 2009 Microsoft Corporation. All rights reserved.
 //     Changes Copyright (c) 2010  Eric Schultz, Garrett Serack. All rights reserved.
 // </copyright>
+// <license>
+//     The software is licensed under the Apache 2.0 License (the "License")
+//     You may not use the software except in compliance with the License. 
+// </license>
 //-----------------------------------------------------------------------
 
 // -----------------------------------------------------------------------
@@ -149,49 +153,19 @@ namespace CoApp.Toolkit.Utility {
                 return null;
             }
 
-            RegistryKey regkey = null;
-            string result = null;
-            try {
-                regkey = Registry.CurrentUser.CreateSubKey(@"Software\CoApp\Tools");
+            var view = Configuration.RegistryView.CoAppUser[@"Tools#" + toolEntry];
 
-                if (null == regkey) {
-                    return null;
-                }
+            var result = view.StringValue;
 
-                result = regkey.GetValue(toolEntry, null) as string;
+            if (null != result && !File.Exists(result)) {
+                view.StringValue = null;
+            }
 
-                if (null != result && !File.Exists(result)) {
-                    regkey.DeleteValue(toolEntry);
-                }
-            }
-            catch {
-            }
-            finally {
-                if (null != regkey) {
-                    regkey.Close();
-                }
-            }
             return result;
         }
 
         private static void SetCachedPath(string toolEntry, string location) {
-            RegistryKey regkey = null;
-            try {
-                regkey = Registry.CurrentUser.CreateSubKey(@"Software\CoApp\Tools");
-
-                if (null == regkey) {
-                    return;
-                }
-
-                regkey.SetValue(toolEntry, location);
-            }
-            catch {
-            }
-            finally {
-                if (null != regkey) {
-                    regkey.Close();
-                }
-            }
+            Configuration.RegistryView.CoAppUser[@"Tools#" + toolEntry].StringValue = location;
         }
 
         private static void Notify(string message, params string[] arguments) {

@@ -2,11 +2,16 @@
 // <copyright company="CoApp Project">
 //     Copyright (c) 2011 Garrett Serack . All rights reserved.
 // </copyright>
+// <license>
+//     The software is licensed under the Apache 2.0 License (the "License")
+//     You may not use the software except in compliance with the License. 
+// </license>
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Win32 {
     using System;
     using System.IO;
+    using System.Runtime.ExceptionServices;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -195,6 +200,7 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        [HandleProcessCorruptedStateExceptions]
         public static ReparsePoint CreateSymlink(string symlinkPath, string linkTarget) {
             symlinkPath = symlinkPath.GetFullPath();
             linkTarget = linkTarget.GetFullPath();
@@ -262,11 +268,19 @@ namespace CoApp.Toolkit.Win32 {
                 }
                 finally {
                     Marshal.FreeHGlobal(inBuffer);
-                    Ntdll.RtlReleasePrivilege(state);
+                   try {
+                        if (state != IntPtr.Zero) {
+                                Ntdll.RtlReleasePrivilege(state);
+                            }
+
+                        } catch {
+                            // sometimes this doesn't work so well
+                        }
                 }
             }
         }
 
+        [HandleProcessCorruptedStateExceptions]
         public static ReparsePoint ChangeReparsePointTarget(string reparsePointPath, string newReparsePointTarget) {
             reparsePointPath = reparsePointPath.GetFullPath();
             newReparsePointTarget = newReparsePointTarget.GetFullPath();
@@ -344,7 +358,13 @@ namespace CoApp.Toolkit.Win32 {
                 }
                 finally {
                     if (isSymlink) {
-                        Ntdll.RtlReleasePrivilege(state);
+                        try {
+                            if (state != IntPtr.Zero) {
+                                Ntdll.RtlReleasePrivilege(state);
+                            }
+                        } catch {
+                            // sometimes this doesn't work so well
+                        }
                     }
                     Marshal.FreeHGlobal(inBuffer);
                 }

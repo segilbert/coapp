@@ -2,6 +2,10 @@
 // <copyright company="CoApp Project">
 //     Copyright (c) 2011 Garrett Serack . All rights reserved.
 // </copyright>
+// <license>
+//     The software is licensed under the Apache 2.0 License (the "License")
+//     You may not use the software except in compliance with the License. 
+// </license>
 //-----------------------------------------------------------------------
 namespace CoApp.Toolkit.Win32 {
     using System;
@@ -17,9 +21,10 @@ namespace CoApp.Toolkit.Win32 {
 
         private const Int32 HWND_BROADCAST = 0xffff;
         private const Int32 WM_SETTINGCHANGE = 0x001A;
+        private const Int32 SMTO_ABORTIFHUNG = 0x0002;
 
         private static void BroadcastChange() {
-             CoTask.Factory.StartNew(() => { User32.SendMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment"); });
+            CoTask.Factory.StartNew(() => { User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero); });
         }
 
         public static IEnumerable<string> SystemPath {
