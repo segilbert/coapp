@@ -107,13 +107,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\toolkit\CoApp.Toolkit.csproj">
+    <ProjectReference Include="..\toolkit\CoApp.Toolkit.Core.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
-      <Name>CoApp.Toolkit</Name>
+      <Name>CoApp.Toolkit.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\toolkit\CoApp.Toolkit.Engine.csproj">
+    <ProjectReference Include="..\toolkit\CoApp.Toolkit.Engine.Core.csproj">
       <Project>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</Project>
-      <Name>CoApp.Toolkit.Engine</Name>
+      <Name>CoApp.Toolkit.Engine.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
