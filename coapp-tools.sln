@@ -55,6 +55,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bootstrap", "..\bootstrap\b
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "autopackage", "..\autopackage\autopackage.csproj", "{D1102D1E-7ACE-4A81-96B8-36DA12310001}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7CA121E2-DA8A-4318-92FA-14101826F04C} = {7CA121E2-DA8A-4318-92FA-14101826F04C}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ptk", "..\ptk\ptk.csproj", "{C0A44000-B786-43FE-B14F-AB411403B499}"
 EndProject

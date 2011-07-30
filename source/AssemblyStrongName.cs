@@ -16,8 +16,8 @@ using System.Runtime.InteropServices;
 #pragma warning disable 1699
 
 #if SIGN_ASSEMBLY || TEST_SIGN_ASSEMBLY
-[assembly: AssemblyVersion("1.0.6.97")] //SIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.6.97")] //SIGNED VERSION
+[assembly: AssemblyVersion("1.0.6.128")] //SIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.6.128")] //SIGNED VERSION
 
 #if SIGN_ASSEMBLY 
     [assembly: AssemblyKeyFileAttribute(@"..\signing\coapp-release-public-key.snk")]
@@ -31,8 +31,8 @@ using System.Runtime.InteropServices;
 
 #else
 
-[assembly: AssemblyVersion("1.0.5.97")] //UNSIGNED VERSION
-[assembly: AssemblyFileVersion("1.0.5.97")] //UNSIGNED VERSION
+[assembly: AssemblyVersion("1.0.5.128")] //UNSIGNED VERSION
+[assembly: AssemblyFileVersion("1.0.5.128")] //UNSIGNED VERSION
 
 #endif
 
@@ -48,6 +48,37 @@ internal class AssemblyBugtrackerAttribute : Attribute {
         return TrackerUrl;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
