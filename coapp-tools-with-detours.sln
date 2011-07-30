@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "trace", "..\trace\trace.csp
 		{4D4611C4-EDEA-4F57-AD84-774C9BB946D2} = {4D4611C4-EDEA-4F57-AD84-774C9BB946D2}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit", "..\toolkit\CoApp.Toolkit.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Core", "..\toolkit\CoApp.Toolkit.Core.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours", "..\managed-detours\detours.vcxproj", "{2BDE3A15-0C09-470D-92FD-4AAEF7B6C6E2}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -42,13 +42,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cli", "..\cli\Cli.csproj", 
 		{E00135E3-1811-4A63-889E-3DEC70A7FB8F} = {E00135E3-1811-4A63-889E-3DEC70A7FB8F}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Engine", "..\toolkit\CoApp.Toolkit.Engine.csproj", "{CC917E10-0068-4E91-8D3D-76CB446F7E43}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Engine.Core", "..\toolkit\CoApp.Toolkit.Engine.Core.csproj", "{CC917E10-0068-4E91-8D3D-76CB446F7E43}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scan", "..\scan\Scan.csproj", "{5E958A69-637E-4807-8DCE-5DDA6B254AFE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mkProject", "..\mkProject\mkProject.csproj", "{BDC4A28C-B786-43FE-B14F-AB411403B49B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mkSpec", "..\mkSpec\mkSpec.csproj", "{068134AB-30BD-4C0A-B842-1309236C79C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mkSpec", "..\mkspec\mkSpec.csproj", "{068134AB-30BD-4C0A-B842-1309236C79C8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "testpackagemaker", "..\testpackagemaker\testpackagemaker.csproj", "{24200A95-ABD9-4301-B54B-3A94FC9AD509}"
 EndProject
@@ -59,11 +59,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "simplesigner", "..\simplesigner\simplesigner.csproj", "{B2C3433E-931E-4D52-848E-A178B16E954C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mini-installer", "..\mini-installer\Mini-installer.csproj", "{E00135E3-1811-4A63-889E-3DEC70A7FB8F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoAppInstaller", "..\installer-proxy\CoAppInstaller.csproj", "{8D2A182F-A781-482F-8C65-3B0D638FF700}"
-	ProjectSection(ProjectDependencies) = postProject
-		{B2C3433E-931E-4D52-848E-A178B16E954C} = {B2C3433E-931E-4D52-848E-A178B16E954C}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bootstrap", "..\bootstrap\bootstrap.vcxproj", "{7CA121E2-DA8A-4318-92FA-14101826F04C}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -90,6 +85,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnyGen", "..\AnyGen\AnyGen.csproj", "{BB3FBD31-1E35-4FFA-8DEE-695A7FE3AA7A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToolScanner", "..\ToolScanner\ToolScanner.csproj", "{FB140878-E3E6-41A9-B4F5-7AEF4D624E85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Service", "..\coapp.service\CoApp.Service.csproj", "{93838A7A-1024-2048-BB75-E9B25471E4AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Client", "..\toolkit\CoApp.Toolkit.Client.csproj", "{A126ABBC-9199-4096-9714-16384F84EE89}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Engine.Client", "..\toolkit\CoApp.Toolkit.Engine.Client.csproj", "{CC917E10-0068-4E91-8D3D-3276846F7E43}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -238,6 +239,24 @@ Global
 		{FB140878-E3E6-41A9-B4F5-7AEF4D624E85}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FB140878-E3E6-41A9-B4F5-7AEF4D624E85}.Test|Any CPU.ActiveCfg = Release|Any CPU
 		{FB140878-E3E6-41A9-B4F5-7AEF4D624E85}.Test|Any CPU.Build.0 = Release|Any CPU
+		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Test|Any CPU.ActiveCfg = Test|Any CPU
+		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Test|Any CPU.Build.0 = Test|Any CPU
+		{A126ABBC-9199-4096-9714-16384F84EE89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A126ABBC-9199-4096-9714-16384F84EE89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A126ABBC-9199-4096-9714-16384F84EE89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A126ABBC-9199-4096-9714-16384F84EE89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A126ABBC-9199-4096-9714-16384F84EE89}.Test|Any CPU.ActiveCfg = Test|Any CPU
+		{A126ABBC-9199-4096-9714-16384F84EE89}.Test|Any CPU.Build.0 = Test|Any CPU
+		{CC917E10-0068-4E91-8D3D-3276846F7E43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC917E10-0068-4E91-8D3D-3276846F7E43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC917E10-0068-4E91-8D3D-3276846F7E43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC917E10-0068-4E91-8D3D-3276846F7E43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC917E10-0068-4E91-8D3D-3276846F7E43}.Test|Any CPU.ActiveCfg = Test|Any CPU
+		{CC917E10-0068-4E91-8D3D-3276846F7E43}.Test|Any CPU.Build.0 = Test|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
