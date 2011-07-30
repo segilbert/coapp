@@ -245,6 +245,7 @@ Cleanup:
 void SetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, const wchar_t* value ) {
 	LSTATUS status;
 	HKEY key;
+/*
     DWORD version;
     DWORD major;
     DWORD flags;
@@ -262,6 +263,9 @@ void SetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, const wc
         flags = KEY_WRITE | KEY_WOW64_64KEY;
 
 	status = RegCreateKeyEx( HKEY_LOCAL_MACHINE, keyname, 0,NULL, REG_OPTION_NON_VOLATILE,  flags, NULL , &key, NULL );
+	*/
+
+	status = RegCreateKeyEx( HKEY_LOCAL_MACHINE, keyname, 0,NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_WOW64_64KEY, NULL , &key, NULL );
 
 	if( status != ERROR_SUCCESS ) {
 		goto done;
@@ -286,7 +290,7 @@ void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD ex
 	DWORD nameSize = BUFSIZE;
 	DWORD valueSize = BUFSIZE;
 	DWORD dataType;
-
+	/*
 	DWORD version;
     DWORD major;
     DWORD flags;
@@ -304,6 +308,9 @@ void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD ex
         flags = KEY_READ | KEY_WOW64_64KEY;
 
 	status = RegOpenKeyEx( HKEY_LOCAL_MACHINE, keyname, 0, flags , &key );
+	*/
+
+	status = RegOpenKeyEx( HKEY_LOCAL_MACHINE, keyname, 0, KEY_READ | KEY_WOW64_64KEY , &key );
 
 	if( status != ERROR_SUCCESS ) {
 		goto release_value;

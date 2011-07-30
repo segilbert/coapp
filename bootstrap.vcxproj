@@ -175,7 +175,7 @@
       <AdditionalManifestFiles>CoAppBootstrap.manifest.xml</AdditionalManifestFiles>
     </Manifest>
     <PostBuildEvent>
-      <Command>mt -manifest $(ProjectDir)BootstrapInstaller.manifest.xml -outputresource:$(TargetPath);1100
+      <Command>REM mt -manifest $(ProjectDir)BootstrapInstaller.manifest.xml -outputresource:$(TargetPath);1100
 $(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe --sign-only "$(TargetPath)"
 copy "$(TargetPath)" "$(SolutionDir)..\solution\ext\lib\bootstrap.exe"
 </Command>
