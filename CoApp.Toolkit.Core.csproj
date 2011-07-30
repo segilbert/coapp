@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CoApp.Toolkit</RootNamespace>
-    <AssemblyName>CoApp.Toolkit</AssemblyName>
+    <AssemblyName>CoApp.Toolkit.Core</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -46,6 +46,9 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -87,7 +90,7 @@
     <Compile Include="Exceptions\EndUserParseException.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
-    <Compile Include="Extensions\CommandLineExtensions.cs" />
+    <Compile Include="Extensions\CommandLineExtensions.cs"/>
     <Compile Include="Extensions\Comparer.cs" />
     <Compile Include="Extensions\ConsoleExtensions.cs" />
     <Compile Include="Extensions\CookieExtensions.cs">
@@ -305,6 +308,7 @@
     <Content Include="coapp.autopkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
     <None Include="Trace\Tracing.xsd">
       <SubType>Designer</SubType>
       <CustomToolNamespace>CoApp.Toolkit.Trace</CustomToolNamespace>

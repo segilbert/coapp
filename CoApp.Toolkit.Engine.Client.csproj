@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</ProjectGuid>
+    <ProjectGuid>{CC917E10-0068-4E91-8D3D-3276846F7E43}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CoApp.Toolkit</RootNamespace>
-    <AssemblyName>CoApp.Toolkit.Engine</AssemblyName>
+    <AssemblyName>CoApp.Toolkit.Engine.Core</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -36,7 +36,7 @@
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisLogFile>..\output\any\release\bin\CoApp.Toolkit.Engine.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisLogFile>..\output\any\release\bin\CoApp.Toolkit.Engine.Core.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
     <ErrorReport>prompt</ErrorReport>
@@ -69,61 +69,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Engine\CompositionRule.cs" />
-    <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
-    <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs" />
-    <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs" />
-    <Compile Include="Engine\Exceptions\ConfigurationException.cs" />
-    <Compile Include="Engine\Exceptions\PackageInstallFailedException.cs" />
-    <Compile Include="Engine\Exceptions\PackageIsNotInstalledException.cs" />
-    <Compile Include="Engine\Exceptions\PackageMissingException.cs" />
-    <Compile Include="Engine\Exceptions\InvalidPackageException.cs" />
-    <Compile Include="Engine\Exceptions\PackageNotFoundException.cs" />
-    <Compile Include="Engine\Exceptions\PackageNotInstalledException.cs" />
-    <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
-    <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
-    <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs" />
-    <Compile Include="Engine\Feeds\ArchivePackageFeed.cs" />
-    <Compile Include="Engine\Feeds\AtomPackageFeed.cs" />
-    <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />
-    <Compile Include="Engine\Feeds\PackageFeed.cs" />
-    <Compile Include="Engine\MultiplexedProperty.cs" />
-    <Compile Include="Engine\NativeMethods.cs" />
-    <Compile Include="Engine\Package.cs" />
-    <Compile Include="Engine\PackageExtensions.cs" />
-    <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
-    <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
-    <Compile Include="Engine\PackageManager.cs" />
-    <Compile Include="Engine\PackageManagerSettings.cs" />
-    <Compile Include="Engine\PackageRole.cs" />
-    <Compile Include="Engine\Recognizer.cs" />
-    <Compile Include="Engine\Registrar.cs" />
-    <Compile Include="Engine\PackageAssemblyInfo.cs" />
-    <Compile Include="PackageFormatHandlers\CoAppMSI.cs" />
-    <Compile Include="PackageFormatHandlers\LegacyMSI.cs" />
-    <Compile Include="PackageFormatHandlers\MSIBase.cs" />
-    <Compile Include="PackageFormatHandlers\NuGet.cs" />
-    <Compile Include="PackageFormatHandlers\PackageFormatHandler.cs" />
-    <Compile Include="Properties\Engine.AssemblyInfo.cs" />
+    <Compile Include="Properties\Engine.Core.AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
-    <Compile Include="Engine\Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="CoApp.Toolkit.csproj">
+    <ProjectReference Include="CoApp.Toolkit.Core.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
-      <Name>CoApp.Toolkit</Name>
+      <Name>CoApp.Toolkit.Core</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Engine\Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <SubType>Designer</SubType>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
