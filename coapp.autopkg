@@ -15,10 +15,10 @@ package
     display-name: "CoApp Toolkit/Engine";
     policy: 1.0;
     /*license: <path to license on disk> */
-    orig-location: "http://coapp.org/repository/coapp.toolkit.msi";
+    orig-location: "http://coapp.org/repository/coapp.toolkit-1.0.6.128-any.msi";
     feed-location: "http://coapp.org/repository/packages.atom.xml";
     binding-min: "1.0.6.0";
-    binding-max: "1.0.6.0";
+    binding-max: ($CURRENT-1);
 }
 
 dependencies {
@@ -39,3 +39,7 @@ assembly[CoApp.Toolkit.dll] {
 }
 assembly[CoApp.Toolkit.Engine.dll] {
 }
+
+
+
+

@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Win32 {
 
     public static class WindowsVersionInfo {
         public static bool IsVistaOrBeyond {
-            get { return Environment.OSVersion.Version.Major >= 5; }
+            get { return Environment.OSVersion.Version.Major > 5; }
         }
 
         public static bool IsCurrentProcess32Bit {
