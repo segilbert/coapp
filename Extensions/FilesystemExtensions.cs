@@ -272,7 +272,7 @@ namespace CoApp.Toolkit.Extensions {
             }
 
 
-            pathPrefix = pathPrefix ?? Directory.GetCurrentDirectory();
+            pathPrefix = String.IsNullOrEmpty(pathPrefix) ? Directory.GetCurrentDirectory() : pathPrefix;
 
             pathMask = pathMask.Replace("/", "\\");
             var nextPart = pathMask.GetNextPart();

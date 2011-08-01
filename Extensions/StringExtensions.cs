@@ -467,19 +467,6 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
-        public static byte[] GetKeyTokenFromFullKey(this byte[] fullKey)
-        {
-            SHA1CryptoServiceProvider csp = new SHA1CryptoServiceProvider();
-            byte[] hash = csp.ComputeHash(fullKey);
-
-            byte[] token = new byte[8];
-            for (int i = 0; i < 8; i++ )
-                token[i] = hash[hash.Length - (i+1)];
-
-            return hash;
-        }
-
-
         public static string ToHexString(this IEnumerable<byte> bytes)
         {
             var sb = new StringBuilder();
