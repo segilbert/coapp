@@ -249,6 +249,7 @@
     <Compile Include="Win32\Kernel32.cs" />
     <Compile Include="Win32\KeyInputRecord.cs" />
     <Compile Include="Win32\KeyModifiers.cs" />
+    <Compile Include="Win32\KnownFolders.cs" />
     <Compile Include="Win32\LegacySymlink.cs" />
     <Compile Include="Win32\MenuItemInfo.cs" />
     <Compile Include="Win32\Miim.cs" />
