@@ -4,9 +4,9 @@
 //     Changes copyright (c) 2011 Garrett Serack . All rights reserved.
 // </copyright>
 // <license>
-//     The software is licensed under the Apache 2.0 License (the "License")
-//     You may not use the software except in compliance with the License. 
-// </license>
+// This source is subject to the Microsoft Public License.
+//  See http://www.microsoft.com/opensource/licenses.mspx#Ms-PL.
+//  All other rights reserved.// </license>
 //-----------------------------------------------------------------------
 
 /*********************************** Module Header ***********************************\
@@ -232,7 +232,7 @@ namespace CoApp.Toolkit.Win32 {
                     cbTokenElevation, out cbTokenElevation)) {
                     // When the process is run on operating systems prior to Windows 
                     // Vista, GetTokenInformation returns false with the error code 
-                    // ERROR_INVALID_PARAMETER because TokenElevation is not supported 
+                    // ERROR_INVALID_PIsProcessElevatedARAMETER because TokenElevation is not supported 
                     // on those operating systems.
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 }
@@ -245,6 +245,9 @@ namespace CoApp.Toolkit.Win32 {
                 // has elevated privileges; otherwise, a zero value.
                 fIsElevated = (elevation.TokenIsElevated != 0);
             }
+            catch (Exception) {
+                return false;
+                }
             finally {
                 // Centralized cleanup for all allocated resources. 
                 if (hToken != null) {

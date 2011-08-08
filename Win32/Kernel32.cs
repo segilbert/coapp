@@ -16,8 +16,9 @@ namespace CoApp.Toolkit.Win32 {
     using Microsoft.Win32.SafeHandles;
 
     public static class Kernel32 {
+#if !COAPP_ENGINE_CORE 
         public delegate bool ConsoleHandlerRoutine(ConsoleEvents eventId);
-
+#endif 
         [DllImport("kernel32.dll")]
         public static extern int GlobalAddAtom(string name);
         [DllImport("kernel32.dll")]
@@ -80,10 +81,10 @@ namespace CoApp.Toolkit.Win32 {
 
         [DllImport("kernel32.dll")]
         public static extern bool AllocConsole();
-
+#if !COAPP_ENGINE_CORE 
         [DllImport("kernel32.dll")]
         public static extern bool SetConsoleCtrlHandler(ConsoleHandlerRoutine routine, bool add);
-
+#endif 
         [DllImport("kernel32.dll")]
         public static extern bool FreeConsole();
 
@@ -93,12 +94,14 @@ namespace CoApp.Toolkit.Win32 {
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetConsoleWindow();
 
+#if !COAPP_ENGINE_CORE 
         [DllImport("kernel32.dll")]
         public static extern SafeFileHandle GetStdHandle(StandardHandle nStandardHandle);
-
+#endif 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool CloseHandle(IntPtr h);
 
+#if !COAPP_ENGINE_CORE 
         [DllImport("kernel32.dll")]
         public static extern Coord GetLargestConsoleWindowSize();
 
@@ -136,6 +139,7 @@ namespace CoApp.Toolkit.Win32 {
         public static extern bool WriteConsole(IntPtr hConsoleOutput, String lpBuffer, Int32 nNumberOfCharsToWrite,
             out Int32 lpNumberOfCharsWritten, IntPtr lpReserved);
 
+
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessW(
             IntPtr lpApplicationName,
@@ -156,6 +160,8 @@ namespace CoApp.Toolkit.Win32 {
             [MarshalAs(UnmanagedType.LPStruct)] [In] Startupinfo lpStartupInfo,
             [MarshalAs(UnmanagedType.LPStruct)] [In] ProcessInformation lpProcessInformation);
 
+#endif 
+        
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessW(String applicationName, String commandLine, IntPtr lpProcessAttributes,
             IntPtr lpThreadAttributes, bool bInheritHandles, Int32 dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory,

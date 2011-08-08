@@ -38,6 +38,9 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.WindowsAzure.StorageClient, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System" />
@@ -54,14 +57,15 @@
     <Compile Include="AzureFS\CachingFileSystem.cs" />
     <Compile Include="DllExportAttribute.cs" />
     <Compile Include="Properties\AzureFS.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
     <Compile Include="AzureFS\API.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CoApp.Toolkit.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
-      <Name>CoApp.Toolkit</Name>
+      <Name>CoApp.Toolkit %28coapp.toolkit\CoApp.Toolkit%29</Name>
     </ProjectReference>
+    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -101,7 +101,7 @@ namespace CoApp.Toolkit.Extensions {
                     // firstarg++;
                     continue;
                 }
-
+#if !COAPP_ENGINE_CORE 
                 if (arg.Equals("list-bugtracker") || arg.Equals("list-bugtrackers")) {
                     // the user is asking for the bugtracker URLs for this application.
                     ListBugTrackers();
@@ -113,7 +113,7 @@ namespace CoApp.Toolkit.Extensions {
                     OpenBugTracker();
                     continue;
                 }
-
+#endif 
                 if(!switches.ContainsKey(arg)) {
                     switches.Add(arg, new List<string>());
                 }
@@ -124,6 +124,7 @@ namespace CoApp.Toolkit.Extensions {
             return switches;
         }
 
+#if !COAPP_ENGINE_CORE 
         public static void ListBugTrackers() {
             using (new ConsoleColors(ConsoleColor.Cyan, ConsoleColor.Black)) {
                 Assembly.GetEntryAssembly().Logo().Print();
@@ -154,6 +155,7 @@ namespace CoApp.Toolkit.Extensions {
                    let attributes = a.GetCustomAttributes(false) from attribute in attributes.Where(attribute => (attribute as Attribute) != null).Where(attribute => (attribute as Attribute).GetType().Name == "AssemblyBugtrackerAttribute") 
                    select new KeyValuePair<Assembly, string>(a, attribute.ToString());
         }
+#endif
 
         public static void LoadConfiguration(this string file) {
             if(switches == null) {
@@ -258,7 +260,7 @@ namespace CoApp.Toolkit.Extensions {
             return optionList;
         }
 
-        // public static List<string> Parameters(this string[] args) {
+        // public static List<string> Data(this string[] args) {
         public static IEnumerable<string> Parameters(this IEnumerable<string> args) {
             return parameters ?? (parameters = from argument in args
                                                where !(argument.StartsWith("--"))

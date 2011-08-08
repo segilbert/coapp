@@ -78,6 +78,7 @@ namespace CoApp.Toolkit.Extensions {
             return "";
         }
 
+#if !COAPP_ENGINE_CORE
         public static string Copyright(this Assembly assembly) {
             try {
                 return PEInfo.Scan(assembly.Location).VersionInfo.LegalCopyright;
@@ -132,5 +133,6 @@ namespace CoApp.Toolkit.Extensions {
         public static void SetLogo(this Assembly assembly, string logoText) {
             logo = logoText;
         }
+#endif
     }
 }

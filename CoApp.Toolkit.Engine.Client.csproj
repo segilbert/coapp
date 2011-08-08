@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\output\any\debug\bin\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;COAPP_ENGINE_CLIENT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -26,13 +26,13 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\output\any\release\bin\</OutputPath>
-    <DefineConstants>TRACE;SIGN_ASSEMBLY</DefineConstants>
+    <DefineConstants>TRACE;SIGN_ASSEMBLY;COAPP_ENGINE_CLIENT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Test|AnyCPU'">
     <OutputPath>..\output\any\test\bin\</OutputPath>
-    <DefineConstants>TRACE;TEST_SIGN_ASSEMBLY</DefineConstants>
+    <DefineConstants>TRACE;TEST_SIGN_ASSEMBLY;COAPP_ENGINE_CLIENT</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -43,6 +43,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Deployment.WindowsInstaller, Version=3.5.2519.13, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
@@ -69,14 +72,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\Client\Package.cs" />
+    <Compile Include="Engine\Client\PackageManager.cs" />
+    <Compile Include="Engine\MultiplexedProperty.cs" />
+    <Compile Include="Engine\PackageAssemblyInfo.cs" />
+    <Compile Include="Engine\PackageManagerMessages.cs" />
     <Compile Include="Properties\Engine.Core.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="CoApp.Toolkit.Core.csproj">
+    <ProjectReference Include="CoApp.Toolkit.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
-      <Name>CoApp.Toolkit.Core</Name>
+      <Name>CoApp.Toolkit %28coapp.toolkit\CoApp.Toolkit%29</Name>
     </ProjectReference>
+    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

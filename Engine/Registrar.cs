@@ -565,6 +565,7 @@ namespace CoApp.Toolkit.Engine {
             return feeds.Aggregate(Enumerable.Empty<Package>(), (current, feed) => current.Union(feed.FindPackages(packageFilter)));
         }
 
+#if false
         public static void DumpPackages(IEnumerable<Package> packages = null) {
             if (packages == null)
                 packages = _packages;
@@ -587,7 +588,7 @@ namespace CoApp.Toolkit.Engine {
                 Console.WriteLine("\rNo packages.");
             }
         }
-
+#endif 
        
 
     }

@@ -270,7 +270,7 @@ namespace CoApp.Toolkit.Engine {
                 
                 SaveCachedInfo();
             }
-            catch (Exception e) {
+            catch (Exception) {
                 //we could get here and the MSI had installed but nothing else
                 packageHandler.Remove(this, null);
                 _isInstalled = false;
@@ -377,7 +377,7 @@ namespace CoApp.Toolkit.Engine {
                 if (Directory.Exists(dir) && ( makeCurrent || !Directory.Exists(link) ) ) {
                     try {
                         Symlink.MakeDirectoryLink(link, dir);
-                    } catch( Exception e ) {
+                    } catch( Exception ) {
                         Console.WriteLine("Warning: Directory Symlink Link Failed. [{0}] => [{1}]", link, dir);
                         // Console.WriteLine(e.Message);
                         // Console.WriteLine(e.StackTrace);
@@ -396,7 +396,7 @@ namespace CoApp.Toolkit.Engine {
 
                     try {
                         Symlink.MakeFileLink(link, file);
-                    } catch( Exception e ) {
+                    } catch( Exception ) {
                         Console.WriteLine("Warning: File Symlink Link Failed. [{0}] => [{1}]", link, file);
                         // Console.WriteLine(e.Message);
                         // Console.WriteLine(e.StackTrace);

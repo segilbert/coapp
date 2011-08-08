@@ -27,27 +27,6 @@ namespace CoApp.Toolkit.Engine {
     using OperationCompletedBeforeResultException = Tasks.OperationCompletedBeforeResultException;
 
 
-    public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
-        public Action<string, IEnumerable<Package>> MultiplePackagesMatch;
-        public Action<Package> PackageRemoveFailed;
-        public Action<string> PackageNotFound;
-        public Action<Package> PackageIsNotInstalled;
-
-        public Action<Package> RemovingPackage;
-        public Action<Package, int> RemovingProgress;
-
-        public Action<Package> InstallingPackage;
-        public Action<Package, int> InstallProgress;
-
-        public Action<int> PackageScanning;
-        public Action<Package> FailedDependentPackageInstall;
-        public Action<RemoteFile> DownloadingFile;
-        public Action<RemoteFile, long> DownloadingFileProgress;
-        public Action<Package> PackageNotSatisfied;
-        public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
-        public Action<IEnumerable<Package>> UpgradingPackage;
-    }
-
     public class PackageManager {
         // private readonly List<Package> _acquirePackageQueue = new List<Package>();
         // private readonly List<Package> _installQueue = new List<Package>();

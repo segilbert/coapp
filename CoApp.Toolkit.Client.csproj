@@ -38,7 +38,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
- <PropertyGroup>
+  <PropertyGroup>
     <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
@@ -54,22 +54,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\Client.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
   </ItemGroup>
-<ItemGroup>
- <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
-</ItemGroup>
+  <ItemGroup>
+    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
+  </ItemGroup>
   <ItemGroup>
     <Folder Include="Extensions\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="CoApp.Toolkit.Core.csproj">
+    <ProjectReference Include="CoApp.Toolkit.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
-      <Name>CoApp.Toolkit.Core</Name>
+      <Name>CoApp.Toolkit %28coapp.toolkit\CoApp.Toolkit%29</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
+  <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

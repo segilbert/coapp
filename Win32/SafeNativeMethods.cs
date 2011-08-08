@@ -223,7 +223,6 @@ namespace CoApp.Toolkit.Win32 {
                 throw new NotSupportedException(string.Format(Resources.Culture,
                     Resources.Error_NonFile, path));
             }
-
             return result;
         }
 

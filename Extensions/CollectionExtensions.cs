@@ -23,8 +23,9 @@ namespace CoApp.Toolkit.Extensions {
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Text;
+#if !COAPP_ENGINE_CORE
     using Collections;
-
+#endif 
     public static class CollectionExtensions {
         /// <summary>
         ///   Splits a string into a List of strings.
@@ -158,8 +159,10 @@ namespace CoApp.Toolkit.Extensions {
             return collection == null ? true : !collection.Any();
         }
 
+#if !COAPP_ENGINE_CORE
         public static IEnumerable<T> ToLazyEnumerable<T>(this IEnumerable<T> collection) {
             return new LazyEnumerable<T>(collection);
         }
+#endif
     }
 }

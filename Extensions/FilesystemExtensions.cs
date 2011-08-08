@@ -23,7 +23,9 @@ namespace CoApp.Toolkit.Extensions {
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
+#if ! COAPP_ENGINE_CORE 
     using Properties;
+#endif
     using Win32;
 
     public static class FilesystemExtensions {
@@ -255,7 +257,7 @@ namespace CoApp.Toolkit.Extensions {
             return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarter()));
         }
 
-
+#if !COAPP_ENGINE_CORE 
         /// <summary>
         ///   always call IsWildcardMatch with a prefix!!!!
         /// </summary>
@@ -333,7 +335,7 @@ namespace CoApp.Toolkit.Extensions {
         public static IEnumerable<string> FindFilesSmarterComplex(this IEnumerable<string> pathMasks) {
             return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarterComplex()));
         }
-
+#endif
 
         /// <summary>
         ///   Gets the name of a file minus it's extension, ie: if the file name is "test.exe", returns "test".

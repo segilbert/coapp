@@ -24,10 +24,12 @@ namespace CoApp.Toolkit.Extensions {
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
+    using System.Net;
     using System.Runtime.Remoting.Metadata.W3cXsd2001;
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
+    using Text;
 
     public static class StringExtensions {
         public const string LettersNumbersUnderscores = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_";
@@ -53,7 +55,7 @@ namespace CoApp.Toolkit.Extensions {
 
         // ReSharper disable InconsistentNaming
         public static string format(this string formatString, params object[] args) {
-            return string.Format(formatString, args);
+            return String.Format(formatString, args);
         }
         // ReSharper restore InconsistentNaming
 
@@ -139,7 +141,7 @@ namespace CoApp.Toolkit.Extensions {
         public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null, bool escapePrefix = true) {
             //find out if the wildcard is rooted?
             if (Path.GetPathRoot(wildcardMask) == String.Empty)
-                ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
+                ignorePrefix = String.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
             else
                 ignorePrefix = String.Empty;
             
@@ -231,11 +233,11 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static IEnumerable<byte> ProtectForMachine(this string text, string salt = "CoAppToolkit") {
-            return ProtectBinaryForMachine((text ?? string.Empty).ToByteArray(), salt);
+            return ProtectBinaryForMachine((text ?? String.Empty).ToByteArray(), salt);
         }
 
         public static IEnumerable<byte> ProtectForUser(this string text, string salt = "CoAppToolkit") {
-            return ProtectBinaryForUser((text ?? string.Empty).ToByteArray(), salt);
+            return ProtectBinaryForUser((text ?? String.Empty).ToByteArray(), salt);
         }
 
         public static IEnumerable<byte> UnprotectBinaryForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
@@ -268,16 +270,16 @@ namespace CoApp.Toolkit.Extensions {
 
         public static string UnprotectForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             var data = binaryData.UnprotectBinaryForUser(salt);
-            return data.Any() ? data.ToUtf8String() : string.Empty;
+            return data.Any() ? data.ToUtf8String() : String.Empty;
         }
 
         public static string UnprotectForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             var data = binaryData.UnprotectBinaryForMachine(salt);
-            return data.Any() ? data.ToUtf8String() : string.Empty;
+            return data.Any() ? data.ToUtf8String() : String.Empty;
         }
 
         public static UInt64 VersionStringToUInt64(this string version) {
-            if (string.IsNullOrEmpty(version)) {
+            if (String.IsNullOrEmpty(version)) {
                 return 0;
             }
             var vers = version.Split('.');
@@ -290,7 +292,7 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string UInt64VersiontoString(this UInt64 version) {
-            return string.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF, (version >> 32) & 0xFFFF, (version >> 16) & 0xFFFF,
+            return String.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF, (version >> 32) & 0xFFFF, (version >> 16) & 0xFFFF,
                 (version) & 0xFFFF);
         }
 
@@ -301,7 +303,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns>MD5 hash of the string</returns>
         public static string MD5Hash(this string input) {
             using (var hasher = MD5.Create()) {
-                return hasher.ComputeHash(Encoding.Unicode.GetBytes(input)).Aggregate(string.Empty,
+                return hasher.ComputeHash(Encoding.Unicode.GetBytes(input)).Aggregate(String.Empty,
                     (current, b) => current + b.ToString("x2").ToUpper());
             }
         }
@@ -403,11 +405,11 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string GzipToBase64(this string input) {
-            return string.IsNullOrEmpty(input) ? input : Convert.ToBase64String(Gzip(input));
+            return String.IsNullOrEmpty(input) ? input : Convert.ToBase64String(Gzip(input));
         }
 
         public static string GunzipFromBase64(this string input) {
-            if (string.IsNullOrEmpty(input))
+            if (String.IsNullOrEmpty(input))
                 return input;
             try
             {
@@ -490,5 +492,31 @@ namespace CoApp.Toolkit.Extensions {
             return sb.ToString();
         }
 
+        /// <summary>
+        ///   Encodes a string into HTML encoding format, encoding control characters as well.
+        /// </summary>
+        /// <param name = "s"></param>
+        /// <returns></returns>
+        public static string HtmlEncode(this string s) {
+            s = WebUtility.HtmlEncode(s);
+            var sb = new StringBuilder(s.Length + 100);
+
+            for(var p = 0; p < s.Length; p++)
+                sb.Append(s[p] < 31 ? String.Format("&#x{0:x2};", (int) s[p]) : "" + s[p]);
+
+            return sb.ToString();
+        }
+
+        public static string HtmlDecode(this string s) {
+            return WebUtility.HtmlDecode(s);
+        }
+
+        public static string UrlEncode(this string s) {
+            return HttpUtility.UrlEncode(s);
+        }
+
+        public static string UrlDecode(this string s) {
+            return HttpUtility.UrlDecode(s);
+        }
     }
 }
