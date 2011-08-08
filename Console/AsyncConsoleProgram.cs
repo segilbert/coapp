@@ -8,12 +8,16 @@
 // </license>
 //-----------------------------------------------------------------------
 
+
+using System.ComponentModel;
+
 namespace CoApp.Toolkit.Console {
     using System;
     using System.Collections.Generic;
     using System.Resources;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.Linq;
     using Exceptions;
     using Extensions;
     using Tasks;
@@ -70,6 +74,58 @@ namespace CoApp.Toolkit.Console {
 
             Console.WriteLine("Unhandled Exception:  {0}", ex.Message);
             return false;
+        }
+
+        protected Object AskUser(string question, Func<string, bool> decision)
+        {
+            Console.Write(question + "  ");
+            string response = null;
+            while (true)
+            {
+                response = Console.ReadLine();
+                if (decision.Invoke(response))
+                    break;
+
+                Console.Write("Invalid response.");
+
+            }
+
+            return response;
+
+        }
+
+        protected Object AskUser(string question, params object[] choices)
+        {
+            var dict = choices.
+                Aggregate(new List<KeyValuePair<object, string>>(),
+                          (temp, i) =>
+                              {
+                                  temp.Add(new KeyValuePair<object, string>(i, i.ToString()));
+                                  return temp;
+                              });
+
+            return AskUser(question, dict);
+        }
+
+        protected Object AskUser(string question, IEnumerable<KeyValuePair<object, string>> choices)
+        {
+            int response = -1;
+            Console.WriteLine(question);
+            while (true)
+            {
+                for (int i = 0; i < choices.Count(); i++) {
+                    Console.WriteLine("{0}. {1}", i+1, choices.ElementAt(i).Value);
+                }
+
+                var temp = Console.ReadLine();
+                if (int.TryParse(temp, out response) && response >= 1 || response <= choices.Count())
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid Entry.");
+            }
+
+            return choices.ElementAt(response).Key;
         }
 
         #region fail/help/logo

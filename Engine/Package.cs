@@ -495,5 +495,13 @@ namespace CoApp.Toolkit.Engine {
                 PackageManagerSettings.PerPackageSettings[GeneralName, "CurrentVersion"].LongValue = (long) Version;
             }
         }
+
+        public bool Supercedes(Package p)
+        {
+            return Architecture == p.Architecture &&
+                   PublicKeyToken == p.PublicKeyToken &&
+                   Name.Equals(p.Name, StringComparison.CurrentCultureIgnoreCase) &&
+                   p.Version <= PolicyMaximumVersion && p.Version >= PolicyMinimumVersion;
+        }
     }
 }

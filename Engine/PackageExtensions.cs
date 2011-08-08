@@ -70,5 +70,66 @@ namespace CoApp.Toolkit.Engine {
                 p.PolicyMinimumVersion <= package.Version &&
                 p.PolicyMaximumVersion >= package.Version).OrderByDescending(p => p.Version);
         }
+
+        public static IEnumerable<Package> AllVersionsOfPackage(this IEnumerable<Package> packageSet, Package package)
+        {
+            return from p in packageSet
+                   where p.Architecture == package.Architecture &&
+                         p.PublicKeyToken == package.PublicKeyToken &&
+                         p.Name.Equals(package.Name, StringComparison.CurrentCultureIgnoreCase)
+                   select p;
+        }
+
+        public static IEnumerable<IGrouping<Package, Package>> LatestSupercedentPackages(this IEnumerable<Package> packageSet, Package package)
+        {
+            var tempPkgs = packageSet.AllVersionsOfPackage(package).OrderByDescending((p) => p.Version);
+            PrivateGroup currentGroup = null;
+            foreach (var p in tempPkgs)
+            {
+                if (currentGroup == null)
+                {
+                    currentGroup = new PrivateGroup {Key = p};
+                    continue;
+                }
+                if (currentGroup.Key.Supercedes(p))
+                {
+                    currentGroup.Add(p);
+                }
+                else
+                {
+                    yield return currentGroup;
+                    currentGroup = new PrivateGroup {Key = p};
+                }
+
+            }
+
+            yield break;
+        }
+
+
+        private class PrivateGroup : IGrouping<Package, Package>
+        {
+            private readonly IList<Package> _pkgs = new List<Package>();
+            private Package _key;
+            public Package Key { 
+                get { return _key; }
+                set { _key = value;
+                Add(_key);} 
+            }
+
+            public IEnumerator<Package> GetEnumerator()
+            {
+                return _pkgs.GetEnumerator();
+            }
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+                return GetEnumerator();
+            }
+
+            public void Add(Package pkg)
+            {
+                _pkgs.Add(pkg);
+            }
+        }
     }
 }
