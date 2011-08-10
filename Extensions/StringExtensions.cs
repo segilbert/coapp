@@ -31,11 +31,29 @@ namespace CoApp.Toolkit.Extensions {
     using System.Text.RegularExpressions;
     using Text;
 
+    /// <summary>
+    /// Extensions for strings. Whheeee
+    /// </summary>
+    /// <remarks></remarks>
     public static class StringExtensions {
+        /// <summary>
+        /// a string with just letters, numbers and underscores. 
+        /// 
+        /// Used as a filter somewhere.
+        /// </summary>
         public const string LettersNumbersUnderscores = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_";
+        /// <summary>
+        /// a string with just letters, numbers, underscores and dashes. 
+        /// 
+        /// Used as a filter somewhere.
+        /// </summary>
         public const string LettersNumbersUnderscoresAndDashes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
+        /// <summary>
+        /// a string with just letters, numbers, underscores, dashes and dots. 
+        /// 
+        /// Used as a filter somewhere.
+        /// </summary>
         public const string LettersNumbersUnderscoresAndDashesAndDots = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-.";
-        public const string ValidVersionRegex = @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$";
 
         /// <summary>
         /// These are crazy, but valid filepath characters that cause regexs to puke and fail.
@@ -44,54 +62,135 @@ namespace CoApp.Toolkit.Extensions {
 
         //putting regexs here so they're only compiled once.
         #pragma warning disable 169
-        private static Regex _versionRegex = new Regex(ValidVersionRegex);
+        /// <summary>
+        /// 
+        /// </summary>
+        private static Regex _versionRegex = new Regex( @"^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$");
         #pragma warning restore 169
 
+        /// <summary>
+        /// What? 
+        /// Note: Eric is this yours?
+        /// </summary>
         private static readonly Regex _badDirIdCharsRegex = new Regex(@"\s|\.|\-|\\");
+        
+        /// <summary>
+        /// a two-part version regex.
+        /// </summary>
         private static readonly Regex _majorMinorRegex = new Regex(@"^\d{1,5}\.\d{1,5}$");
 
         //TODO this SUCKS. Thanks MS.
+        /// <summary>
+        /// Email regex. Needs revising
+        /// </summary>
         private static readonly Regex _emailRegex = new Regex(@"^(?<name>\S+)@(?<domain>\S+)$");
 
         // ReSharper disable InconsistentNaming
+        /// <summary>
+        /// Formats the specified format string.
+        /// </summary>
+        /// <param name="formatString">The format string.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string format(this string formatString, params object[] args) {
             return String.Format(formatString, args);
         }
         // ReSharper restore InconsistentNaming
 
+        /// <summary>
+        /// Prints the specified format string.
+        /// </summary>
+        /// <param name="formatString">The format string.</param>
+        /// <param name="args">The args.</param>
+        /// <remarks></remarks>
         public static void Print(this string formatString, params object[] args) {
             Console.WriteLine(formatString, args);
         }
 
+        /// <summary>
+        /// Errors the specified format string.
+        /// </summary>
+        /// <param name="formatString">The format string.</param>
+        /// <param name="args">The args.</param>
+        /// <remarks></remarks>
         public static void Error(this string formatString, params object[] args) {
             Console.Error.WriteLine(formatString, args);
         }
 
+        /// <summary>
+        /// Matches the specified input.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <param name="rxExpression">The rx expression.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Match Match(this string input, string rxExpression) {
             return new Regex(rxExpression).Match(input);
         }
 
+        /// <summary>
+        /// Matches a regular expression, ignoring case.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <param name="rxExpression">The rx expression.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Match MatchIgnoreCase(this string input, string rxExpression) {
             return new Regex(rxExpression, RegexOptions.IgnoreCase).Match(input);
         }
 
+        /// <summary>
+        /// coerces a string to an int32, defaults to zero.
+        /// </summary>
+        /// <param name="str">The STR.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static int ToInt32(this string str) {
             return str.ToInt32(0);
         }
 
+        /// <summary>
+        /// coerces a string to an int32, defaults to zero.
+        /// </summary>
+        /// <param name="str">The STR.</param>
+        /// <param name="defaultValue">The default value if the string isn't a valid int.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static int ToInt32(this string str, int defaultValue = 0) {
             int i;
             return Int32.TryParse(str, out i) ? i : defaultValue;
         }
 
+        /// <summary>
+        /// returns true when the string contains only the characters passed in.
+        /// </summary>
+        /// <param name="str">The STR.</param>
+        /// <param name="characters">The characters.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static bool OnlyContains(this string str, char[] characters) {
             return str.Select(ch => characters.Any(t => ch == t)).All(found => found);
         }
 
+        /// <summary>
+        /// returns true when the string contains only the characters in the string passed in .
+        /// </summary>
+        /// <param name="str">The STR.</param>
+        /// <param name="characters">The characters.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static bool OnlyContains(this string str, string characters) {
             return OnlyContains(str, characters.ToCharArray());
         }
 
+        /// <summary>
+        /// Gets the position of the first character that is not in the collection of characters passed in.
+        /// </summary>
+        /// <param name="str">The STR.</param>
+        /// <param name="characters">The characters.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static int PositionOfFirstCharacterNotIn(this string str, char[] characters) {
             var p = 0;
             while (p < str.Length) {
@@ -103,10 +202,23 @@ namespace CoApp.Toolkit.Extensions {
             return p;
         }
 
+        /// <summary>
+        /// Gets the position of the first character that is not in the string passed in.
+        /// </summary>
+        /// <param name="str">The STR.</param>
+        /// <param name="characters">The characters.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static int PositionOfFirstCharacterNotIn(this string str, string characters) {
             return PositionOfFirstCharacterNotIn(str, characters.ToCharArray());
         }
 
+        /// <summary>
+        /// Creates a GUID from an MD5 value of the string passed in.
+        /// </summary>
+        /// <param name="str">The STR.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Guid CreateGuid(this string str) {
             Guid guid;
             if (!Guid.TryParse(str, out guid)) {
@@ -116,28 +228,20 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
+        /// <summary>
+        /// wildcard cache for IsWildcardMatch (so we're not rebuilding the regex every time)
+        /// </summary>
         private static readonly Dictionary<string, Regex> _wildcards = new Dictionary<string, Regex>();
 
-        public static bool OldIsWildcardMatch(this string text, string wildcardMask) {
-            if (_wildcards.ContainsKey(wildcardMask)) {
-                return _wildcards[wildcardMask].IsMatch(text);
-            }
-
-            var mask = new Regex(
-                '^' +
-                    wildcardMask
-                        .Replace(".", "[.]")
-                        .Replace("\\", "\\\\")
-                        .Replace("*", ".*")
-                        .Replace("?", ".")
-                            + '$',
-                RegexOptions.IgnoreCase);
-
-            _wildcards.Add(wildcardMask, mask);
-
-            return mask.IsMatch(text);
-        }
-
+        /// <summary>
+        /// Determines if a given string is a match for the given wildcard pattern.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="wildcardMask">The wildcard mask.</param>
+        /// <param name="ignorePrefix">The ignore prefix.</param>
+        /// <param name="escapePrefix">if set to <c>true</c> [escape prefix].</param>
+        /// <returns><c>true</c> if [is wildcard match] [the specified text]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null, bool escapePrefix = true) {
             //find out if the wildcard is rooted?
             if (Path.GetPathRoot(wildcardMask) == String.Empty)
@@ -189,57 +293,146 @@ namespace CoApp.Toolkit.Extensions {
             return mask.IsMatch(text);
         }
 
+        /// <summary>
+        /// A case insensitive Contains() method.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <param name="value">The value.</param>
+        /// <returns><c>true</c> if [contains ignore case] [the specified source]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool ContainsIgnoreCase(this IEnumerable<string> source, string value) {
             return (from each in source where each.Equals(value, StringComparison.CurrentCultureIgnoreCase) select each).Any();
         }
 
+        /// <summary>
+        /// Runs IsWildcardMatch on a collection.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="ignorePrefix">The ignore prefix.</param>
+        /// <param name="escapePrefix">if set to <c>true</c> [escape prefix].</param>
+        /// <returns><c>true</c> if [has wildcard match] [the specified source]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool HasWildcardMatch(this IEnumerable<string> source, string value, string ignorePrefix = null,
             bool escapePrefix = true) {
             return source.Any(wildcard => value.IsWildcardMatch(wildcard, wildcard.Contains(@"\\") ? ignorePrefix : null, escapePrefix));
         }
 
+        /// <summary>
+        /// Determines whether the specified input has wildcards.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns><c>true</c> if the specified input has wildcards; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool HasWildcards(this string input)
-        {
+        {          
             return input.Contains('*');
         }
 
+        /// <summary>
+        /// Determines whether the specified text equal to "true" (ignoring case).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns><c>true</c> if the specified text is true; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsTrue(this string text) {
             return text.Equals("true", StringComparison.CurrentCultureIgnoreCase);
         }
 
+        /// <summary>
+        /// Determines whether the specified text is equal to "false" (ignoring case).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns><c>true</c> if the specified text is false; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsFalse(this string text) {
             return text.Equals("false", StringComparison.CurrentCultureIgnoreCase);
         }
 
+        /// <summary>
+        /// Determines whether the specified text is a boolean (true or false).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns><c>true</c> if the specified text is boolean; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsBoolean(this string text)
         {
             return text.IsTrue() || text.IsFalse();
         }
 
+        /// <summary>
+        /// Encodes the string as an array of UTF8 bytes.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static byte[] ToByteArray(this string text) {
             return Encoding.UTF8.GetBytes(text);
         }
 
+        /// <summary>
+        /// Creates a string from a collection of UTF8 bytes
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string ToUtf8String(this IEnumerable<byte> bytes) {
             return Encoding.UTF8.GetString(bytes.ToArray());
         }
 
+        /// <summary>
+        /// encrypts the given collection of bytes with the machine key and salt (defaults to "CoAppToolkit")
+        /// </summary>
+        /// <param name="binaryData">The binary data.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<byte> ProtectBinaryForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             return ProtectedData.Protect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.LocalMachine);
         }
 
+        /// <summary>
+        /// encrypts the given collection of bytes with the user key and salt (defaults to "CoAppToolkit")
+        /// </summary>
+        /// <param name="binaryData">The binary data.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<byte> ProtectBinaryForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             return ProtectedData.Protect(binaryData.ToArray(), salt.ToByteArray(), DataProtectionScope.CurrentUser);
         }
 
+        /// <summary>
+        /// encrypts the given string with the machine key and salt (defaults to "CoAppToolkit")
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<byte> ProtectForMachine(this string text, string salt = "CoAppToolkit") {
             return ProtectBinaryForMachine((text ?? String.Empty).ToByteArray(), salt);
         }
 
+        /// <summary>
+        /// encrypts the given string with the machine key and salt (defaults to "CoAppToolkit")
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<byte> ProtectForUser(this string text, string salt = "CoAppToolkit") {
             return ProtectBinaryForUser((text ?? String.Empty).ToByteArray(), salt);
         }
 
+        /// <summary>
+        /// decrypts the given collection of bytes with the user key and salt (defaults to "CoAppToolkit")
+        /// 
+        /// returns an empty collection of bytes on failure
+        /// </summary>
+        /// <param name="binaryData">The binary data.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<byte> UnprotectBinaryForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             if (binaryData.IsNullOrEmpty()) {
                 return Enumerable.Empty<byte>();
@@ -254,6 +447,15 @@ namespace CoApp.Toolkit.Extensions {
             return Enumerable.Empty<byte>();
         }
 
+        /// <summary>
+        /// decrypts the given collection of bytes with the machine key and salt (defaults to "CoAppToolkit")
+        /// 
+        /// returns an empty collection of bytes on failure
+        /// </summary>
+        /// <param name="binaryData">The binary data.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<byte> UnprotectBinaryForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             if (binaryData.IsNullOrEmpty()) {
                 return Enumerable.Empty<byte>();
@@ -268,16 +470,44 @@ namespace CoApp.Toolkit.Extensions {
             return Enumerable.Empty<byte>();
         }
 
+        /// <summary>
+        /// decrypts the given collection of bytes with the user key and salt (defaults to "CoAppToolkit")
+        /// and returns a string from the UTF8 representation of the bytes.
+        /// 
+        /// returns an empty string on failure
+        /// </summary>
+        /// <param name="binaryData">The binary data.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string UnprotectForUser(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             var data = binaryData.UnprotectBinaryForUser(salt);
             return data.Any() ? data.ToUtf8String() : String.Empty;
         }
 
+        /// <summary>
+        /// decrypts the given collection of bytes with the machine key and salt (defaults to "CoAppToolkit")
+        /// and returns a string from the UTF8 representation of the bytes.
+        /// 
+        /// returns an empty string on failure
+        /// </summary>
+        /// <param name="binaryData">The binary data.</param>
+        /// <param name="salt">The salt.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string UnprotectForMachine(this IEnumerable<byte> binaryData, string salt = "CoAppToolkit") {
             var data = binaryData.UnprotectBinaryForMachine(salt);
             return data.Any() ? data.ToUtf8String() : String.Empty;
         }
 
+        /// <summary>
+        /// returns a UInt64 of a standard version string. 
+        /// 
+        /// Returns 0 for parts that are not valid.
+        /// </summary>
+        /// <param name="version">The version.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static UInt64 VersionStringToUInt64(this string version) {
             if (String.IsNullOrEmpty(version)) {
                 return 0;
@@ -291,16 +521,23 @@ namespace CoApp.Toolkit.Extensions {
             return (((UInt64) major) << 48) + (((UInt64) minor) << 32) + (((UInt64) build) << 16) + (UInt64) revision;
         }
 
+        /// <summary>
+        /// returns a standard version string for a UInt64 version
+        /// </summary>
+        /// <param name="version">The version.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string UInt64VersiontoString(this UInt64 version) {
             return String.Format("{0}.{1}.{2}.{3}", (version >> 48) & 0xFFFF, (version >> 32) & 0xFFFF, (version >> 16) & 0xFFFF,
                 (version) & 0xFFFF);
         }
 
         /// <summary>
-        ///   Calculates the MD5 hash of a string. Additionally all the letters in the hash are in uppercase.
+        /// Calculates the MD5 hash of a string. Additionally all the letters in the hash are in uppercase.
         /// </summary>
-        /// <param name = "input">a string to a calculate the hash for</param>
+        /// <param name="input">a string to a calculate the hash for</param>
         /// <returns>MD5 hash of the string</returns>
+        /// <remarks></remarks>
         public static string MD5Hash(this string input) {
             using (var hasher = MD5.Create()) {
                 return hasher.ComputeHash(Encoding.Unicode.GetBytes(input)).Aggregate(String.Empty,
@@ -308,6 +545,14 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        /// <summary>
+        /// Creates the public key token given a public key..
+        /// 
+        /// Note: Does this work?
+        /// </summary>
+        /// <param name="publicKey">The public key.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string CreatePublicKeyToken(this IEnumerable<byte> publicKey) {
             var m = new SHA1Managed();
             var hashBytes = m.ComputeHash(publicKey.ToArray());
@@ -317,45 +562,44 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
-        ///   Creates a safe directory ID for MSI for a possibly non-safe one.
+        /// Creates a safe directory ID for MSI for a possibly non-safe one.
         /// </summary>
-        /// <param name = "input"></param>
+        /// <param name="input">The input.</param>
         /// <returns>Your safe directory ID</returns>
+        /// <remarks></remarks>
         public static string MakeSafeDirectoryId(this string input) {
             return _badDirIdCharsRegex.Replace(input, "_");
         }
 
         /// <summary>
-        ///   Checks if a string is a valid version string x.x.x.x 
-        /// 
-        ///   TODO: this allows x to have values LARGER than the max number 
-        ///   for part of a version string. NEED TO FIX
+        /// Checks if a string is a valid version string x.x.x.x
+        /// TODO: this allows x to have values LARGER than the max number
+        /// for part of a version string. NEED TO FIX
         /// </summary>
-        /// <param name = "input">a string to be checked</param>
+        /// <param name="input">a string to be checked</param>
         /// <param name="strict">should be strict?</param>
         /// <returns>true if it the string is a valid version, false otherwise</returns>
+        /// <remarks></remarks>
         public static bool IsValidVersion(this string input, bool strict = true) {
+            return input.VersionStringToUInt64().UInt64VersiontoString().Equals(input);
+            /*
             var verParts = input.Split('.');
             //too many parts!
             return verParts.Length <= 4 && verParts.All(part => part.IsValidVersionPart());
+             */
         }
 
-        public static bool IsValidVersionPart(this string input) {
-            int part;
-            //it's not even an integer so we fail
-            if (!Int32.TryParse(input, out part)) {
-                return false;
-            }
 
-            //part is too damn big
-            if (part < 0 || part > 65535) {
-                return false;
-            }
 
-            return true;
-        }
-
+        /// <summary>
+        /// Extends the version.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string ExtendVersion(this string input) {
+            return input.VersionStringToUInt64().UInt64VersiontoString();
+            /*
             if (!input.IsValidVersion(false)) {
                 return null;
             }
@@ -379,22 +623,29 @@ namespace CoApp.Toolkit.Extensions {
             }
 
             return output.ToString();
+             */
         }
 
 
         /// <summary>
-        ///   Checks if a string is a valid major.minor version string x.x
-        /// 
-        ///   TODO: this allows x to have values LARGER than the max number 
-        ///   for part of a version string. NEED TO FIX
+        /// Checks if a string is a valid major.minor version string x.x
+        /// TODO: this allows x to have values LARGER than the max number
+        /// for part of a version string. NEED TO FIX
         /// </summary>
-        /// <param name = "input">a string to be checked</param>
+        /// <param name="input">a string to be checked</param>
         /// <returns>true if it the string is a valid major.minor version, false otherwise</returns>
+        /// <remarks></remarks>
         public static bool IsValidMajorMinorVersion(this string input) {
             return _majorMinorRegex.IsMatch(input);
         }
 
 
+        /// <summary>
+        /// Gzips the specified input.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static byte[] Gzip(this string input) {
             var memStream = new MemoryStream();
             using (var gzStr = new GZipStream(memStream, CompressionMode.Compress)) {
@@ -404,10 +655,22 @@ namespace CoApp.Toolkit.Extensions {
             return memStream.ToArray();
         }
 
+        /// <summary>
+        /// Gzips to base64.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string GzipToBase64(this string input) {
             return String.IsNullOrEmpty(input) ? input : Convert.ToBase64String(Gzip(input));
         }
 
+        /// <summary>
+        /// Gunzips from base64.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string GunzipFromBase64(this string input) {
             if (String.IsNullOrEmpty(input))
                 return input;
@@ -423,6 +686,12 @@ namespace CoApp.Toolkit.Extensions {
             
         }
 
+        /// <summary>
+        /// Gunzips the specified input.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string Gunzip(this byte[] input) {
             var bytes = new List<byte>();
             using (var gzStr = new GZipStream(new MemoryStream(input), CompressionMode.Decompress)) {
@@ -442,10 +711,26 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
+        /// <summary>
+        /// Determines whether the specified email is email.
+        /// </summary>
+        /// <param name="email">The email.</param>
+        /// <returns><c>true</c> if the specified email is email; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsEmail(this string email) {
             return _emailRegex.IsMatch(email);
         }
 
+        /// <summary>
+        /// Replaces the each.
+        /// 
+        /// Eric ? 
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <param name="oldValues">The old values.</param>
+        /// <param name="newValues">The new values.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string ReplaceEach(this string input, IEnumerable<string> oldValues, IEnumerable<string> newValues) {
             //TODO I feel like there's a LINQ-ier way to do this.
 
@@ -463,12 +748,27 @@ namespace CoApp.Toolkit.Extensions {
 
         }
 
+        /// <summary>
+        /// Escapes items in a given string for regex.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <param name="toComment">To comment.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string CommentEach(this string input, IEnumerable<string> toComment)
         {
             return input.ReplaceEach(toComment, toComment.Select((s) => @"\" + s));
         }
 
 
+        /// <summary>
+        /// Gets the key token from full key.
+        /// 
+        /// Does this work?
+        /// </summary>
+        /// <param name="fullKey">The full key.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static byte[] GetKeyTokenFromFullKey(this byte[] fullKey)
         {
             SHA1CryptoServiceProvider csp = new SHA1CryptoServiceProvider();
@@ -482,6 +782,12 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
+        /// <summary>
+        /// Creates a hex representaion of a collection of bytes
+        /// </summary>
+        /// <param name="bytes">The bytes.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string ToHexString(this IEnumerable<byte> bytes)
         {
             var sb = new StringBuilder();
@@ -493,10 +799,11 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
-        ///   Encodes a string into HTML encoding format, encoding control characters as well.
+        /// Encodes a string into HTML encoding format, encoding control characters as well.
         /// </summary>
-        /// <param name = "s"></param>
+        /// <param name="s">The s.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static string HtmlEncode(this string s) {
             s = WebUtility.HtmlEncode(s);
             var sb = new StringBuilder(s.Length + 100);
@@ -507,14 +814,32 @@ namespace CoApp.Toolkit.Extensions {
             return sb.ToString();
         }
 
+        /// <summary>
+        /// decodes an HTML encoded string
+        /// </summary>
+        /// <param name="s">The string</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string HtmlDecode(this string s) {
             return WebUtility.HtmlDecode(s);
         }
 
+        /// <summary>
+        /// encodes the string as a url encoded string
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string UrlEncode(this string s) {
             return HttpUtility.UrlEncode(s);
         }
 
+        /// <summary>
+        /// decodes the URL encoded string
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string UrlDecode(this string s) {
             return HttpUtility.UrlDecode(s);
         }

@@ -21,7 +21,7 @@ namespace CoApp.Toolkit.DynamicXml {
         /// <summary>
         /// the backing field for the actual data row.
         /// </summary>
-        private DataRow _dataRow;
+        private readonly DataRow _dataRow;
 
         /// <summary>
         /// Creates an instance that wraps a data row.

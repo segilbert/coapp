@@ -8,15 +8,15 @@
 // </license>
 //-----------------------------------------------------------------------
 
+
+
 namespace CoApp.Toolkit.Engine.Feeds {
+    using System;
+
     internal class ArchivePackageFeed : PackageFeed {
         internal ArchivePackageFeed(string location)
             : base(location) {
+                throw new NotImplementedException();
         }
-
-        internal override bool DownloadPackage(Package package) {
-            return false;
-        }
-
     }
 }

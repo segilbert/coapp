@@ -11,7 +11,7 @@
 namespace CoApp.Toolkit.Win32 {
     using System;
     using System.Runtime.InteropServices;
-
+     
     /// <summary>
     /// Summary description for Win32.
     /// </summary>

@@ -24,8 +24,69 @@ namespace CoApp.Toolkit.Extensions {
     using System.Reflection;
     using Win32;
 
+    /// <summary>
+    /// Extension methods to work with Assemblies.
+    /// </summary>
+    /// <remarks></remarks>
     public static class AssemblyExtensions {
+        /// <summary>
+        /// a "logo" of an assembly
+        /// </summary>
         private static string logo;
+
+        /// <summary>
+        /// Geths the assembly for a given object.
+        /// </summary>
+        /// <param name="obj">The obj.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static Assembly Assembly(this object obj) {
+            return obj.GetType().Assembly;
+        }
+
+        /// <summary>
+        /// Extracts the title of an assembly (TitleAttribute)
+        /// </summary>
+        /// <param name="assembly">The assembly.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string Title(this Assembly assembly) {
+            try {
+                return ((AssemblyTitleAttribute) Attribute.GetCustomAttribute(assembly, typeof(AssemblyTitleAttribute))).Title;
+            }
+            catch {
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Extracts the Description of the assembly (DescriptionAttribute)
+        /// </summary>
+        /// <param name="assembly">The assembly.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static string Description(this Assembly assembly) {
+            try {
+                return ((AssemblyDescriptionAttribute) Attribute.GetCustomAttribute(assembly, typeof(AssemblyDescriptionAttribute))).Description;
+            }
+            catch {
+            }
+            return string.Empty;
+        }
+
+#if !COAPP_ENGINE_CORE
+
+        public static string ExtractFileResourceToPath(this Assembly assembly, string name, string filePath) {
+            var s = assembly.GetManifestResourceStream(name);
+            var buf = new byte[s.Length];
+
+            var targetFile = new FileStream(filePath, FileMode.Create);
+            var sz = s.Read(buf, 0, buf.Length);
+            targetFile.Write(buf, 0, sz);
+            s.Close();
+            targetFile.Close();
+            return filePath;
+        }
 
         // warning: case sensitive. 
         public static string ExtractFileResourceToTemp(this Assembly assembly, string name) {
@@ -44,48 +105,15 @@ namespace CoApp.Toolkit.Extensions {
             return ExtractFileResourceToPath(assembly, name, tempPath);
         }
 
-        public static string ExtractFileResourceToPath(this Assembly assembly, string name, string filePath) {
-            var s = assembly.GetManifestResourceStream(name);
-            var buf = new byte[s.Length];
 
-            var targetFile = new FileStream(filePath, FileMode.Create);
-            var sz = s.Read(buf, 0, buf.Length);
-            targetFile.Write(buf, 0, sz);
-            s.Close();
-            targetFile.Close();
-            return filePath;
-        }
 
-        public static Assembly Assembly(this object obj) {
-            return obj.GetType().Assembly;
-        }
-
-        public static string Title(this Assembly assembly) {
-            try {
-                return ((AssemblyTitleAttribute) Attribute.GetCustomAttribute(assembly, typeof(AssemblyTitleAttribute))).Title;
-            }
-            catch {
-            }
-            return "";
-        }
-
-        public static string Description(this Assembly assembly) {
-            try {
-                return ((AssemblyDescriptionAttribute) Attribute.GetCustomAttribute(assembly, typeof(AssemblyDescriptionAttribute))).Description;
-            }
-            catch {
-            }
-            return "";
-        }
-
-#if !COAPP_ENGINE_CORE
         public static string Copyright(this Assembly assembly) {
             try {
                 return PEInfo.Scan(assembly.Location).VersionInfo.LegalCopyright;
             }
             catch {
             }
-            return "";
+            return  string.Empty;
         }
 
         public static string Company(this Assembly assembly) {
@@ -94,7 +122,7 @@ namespace CoApp.Toolkit.Extensions {
             }
             catch {
             }
-            return "";
+            return  string.Empty;
         }
 
         public static string Version(this Assembly assembly) {
@@ -105,7 +133,7 @@ namespace CoApp.Toolkit.Extensions {
             }
             catch {
             }
-            return "";
+            return  string.Empty;
         }
 
         public static string Comments(this Assembly assembly) {
@@ -114,7 +142,7 @@ namespace CoApp.Toolkit.Extensions {
             }
             catch {
             }
-            return "";
+            return  string.Empty;
         }
 
         public static string Logo(this Assembly assembly) {

@@ -7,7 +7,11 @@ namespace CoApp.Toolkit.Engine {
 #if COAPP_ENGINE_CLIENT 
     using Client;
 #endif 
-
+    /// <summary>
+    /// interface for message delegates
+    /// 
+    /// Note: Probably being refactored.
+    /// </summary>
     public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
         public Action<string, IEnumerable<Package>> MultiplePackagesMatch;
         public Action<Package> PackageRemoveFailed;

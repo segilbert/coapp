@@ -15,6 +15,14 @@ namespace CoApp.Toolkit.Extensions {
     using System.Linq;
 
     public static class LinqExtensions {
+
+        /// <summary>
+        /// Traverses a recursive collection producing a flattened collection.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="recurseFunction"></param>
+        /// <returns></returns>
         public static IEnumerable<T> Traverse<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> recurseFunction) {
             foreach (var item in source) {
                 yield return item;
@@ -27,7 +35,14 @@ namespace CoApp.Toolkit.Extensions {
                 }
             }
         }
-
+        /// <summary>
+        /// Returns the element of a given collection which is highest value based on the function provided.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="selector"></param>
+        /// <returns></returns>
         public static T MaxElement<T, U>(this IEnumerable<T> source, Func<T, U> selector) where U : IComparable<U> {
             if (source == null)
                 throw new ArgumentNullException("source");
@@ -98,6 +113,12 @@ namespace CoApp.Toolkit.Extensions {
             return collection.Union(new[] { newItem });
         }
 
+
+#region Don't test this crap.
+
+        /// <summary>
+        /// Don
+        /// </summary>
         private class IndexedEnumerator : IEnumerator<int> {
             private int _max;
 
@@ -236,5 +257,8 @@ namespace CoApp.Toolkit.Extensions {
         }
         #endregion
     }
+
+#endregion
+    
 }
 

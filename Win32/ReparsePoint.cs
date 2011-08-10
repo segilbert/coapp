@@ -18,19 +18,44 @@ namespace CoApp.Toolkit.Win32 {
     using Extensions;
     using Microsoft.Win32.SafeHandles;
 
+    /// <summary>
+    /// A low-level interface to mucking with reparse points on NTFS
+    /// 
+    /// see: http://msdn.microsoft.com/en-us/library/cc232007(v=prot.10).aspx
+    /// </summary>
+    /// <remarks></remarks>
     public class ReparsePoint {
         /// <summary>
-        ///   This prefix indicates to NTFS that the path is to be treated as a non-interpreted
-        ///   path in the virtual file system.
+        /// This prefix indicates to NTFS that the path is to be treated as a non-interpreted
+        /// path in the virtual file system.
         /// </summary>
         private const string NonInterpretedPathPrefix = @"\??\";
 
+        /// <summary>
+        /// 
+        /// </summary>
         private static Regex UncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
+        /// <summary>
+        /// 
+        /// </summary>
         private static Regex DrivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
+        /// <summary>
+        /// 
+        /// </summary>
         private static Regex VolumePrefixRx = new Regex(@"\\\?\?\\Volume");
 
+        /// <summary>
+        /// 
+        /// </summary>
         private ReparseData _reparseDataData;
 
+        /// <summary>
+        /// Prevents a default instance of the <see cref="ReparsePoint"/> class from being created.
+        /// 
+        /// Populates the data from the buffer pointed to by the pointer.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <remarks></remarks>
         private ReparsePoint(IntPtr buffer) {
             if (buffer == IntPtr.Zero) {
                 throw new ArgumentNullException("buffer");
@@ -39,6 +64,13 @@ namespace CoApp.Toolkit.Win32 {
             _reparseDataData = (ReparseData) Marshal.PtrToStructure(buffer, typeof (ReparseData));
         }
 
+        /// <summary>
+        /// Gets the file handle to the reparse point.
+        /// </summary>
+        /// <param name="reparsePoint">The reparse point.</param>
+        /// <param name="accessMode">The access mode.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private static SafeFileHandle GetReparsePointHandle(string reparsePoint, NativeFileAccess accessMode) {
             var reparsePointHandle = Kernel32.CreateFile(reparsePoint, accessMode,
                 FileShare.Read | FileShare.Write | FileShare.Delete,
@@ -52,10 +84,20 @@ namespace CoApp.Toolkit.Win32 {
             return reparsePointHandle;
         }
 
+        /// <summary>
+        /// Determines whether a given path is a reparse point
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns><c>true</c> if [is reparse point] [the specified path]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsReparsePoint(string path) {
             return (File.GetAttributes(path) & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is symlink or junction.
+        /// </summary>
+        /// <remarks></remarks>
         public bool IsSymlinkOrJunction {
             get {
                 return (_reparseDataData.ReparseTag == IoReparseTag.MountPoint || _reparseDataData.ReparseTag == IoReparseTag.Symlink) &&
@@ -63,14 +105,26 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is relative symlink.
+        /// </summary>
+        /// <remarks></remarks>
         public bool IsRelativeSymlink {
-            get { return _reparseDataData.ReparseTag == IoReparseTag.Symlink ? (_reparseDataData.PathBuffer[0] & 1) == 1 : false; }
+            get { return _reparseDataData.ReparseTag == IoReparseTag.Symlink && (_reparseDataData.PathBuffer[0] & 1) == 1; }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is mount point.
+        /// </summary>
+        /// <remarks></remarks>
         public bool IsMountPoint {
             get { return VolumePrefixRx.Match(SubstituteName).Success; }
         }
 
+        /// <summary>
+        /// Gets the "print name" of the reparse point
+        /// </summary>
+        /// <remarks></remarks>
         public string PrintName {
             get {
                 var extraOffset = _reparseDataData.ReparseTag == IoReparseTag.Symlink ? 4 : 0;
@@ -81,6 +135,10 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Gets the "substitute name" of the reparse point.
+        /// </summary>
+        /// <remarks></remarks>
         public string SubstituteName {
             get {
                 var extraOffset = _reparseDataData.ReparseTag == IoReparseTag.Symlink ? 4 : 0;
@@ -91,6 +149,12 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Gets the actual path of a reparse point
+        /// </summary>
+        /// <param name="linkPath">The link path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string GetActualPath(string linkPath) {
             if (!IsReparsePoint(linkPath)) {
                 // if it's not a reparse point, return the path given.
@@ -108,6 +172,14 @@ namespace CoApp.Toolkit.Win32 {
             return target;
         }
 
+        /// <summary>
+        /// Opens the specified path as a reparse point.
+        /// 
+        /// throws if it's not a reparse point.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static ReparsePoint Open(string path) {
             if (!IsReparsePoint(path)) {
                 throw new IOException("Path is not reparse point");
@@ -144,6 +216,13 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Creates the junction.
+        /// </summary>
+        /// <param name="junctionPath">The junction path.</param>
+        /// <param name="targetDirectory">The target directory.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static ReparsePoint CreateJunction(string junctionPath, string targetDirectory) {
             junctionPath = junctionPath.GetFullPath();
             targetDirectory = targetDirectory.GetFullPath();
@@ -200,6 +279,13 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Creates the symlink.
+        /// </summary>
+        /// <param name="symlinkPath">The symlink path.</param>
+        /// <param name="linkTarget">The link target.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         [HandleProcessCorruptedStateExceptions]
         public static ReparsePoint CreateSymlink(string symlinkPath, string linkTarget) {
             symlinkPath = symlinkPath.GetFullPath();
@@ -280,6 +366,13 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Changes the reparse point target.
+        /// </summary>
+        /// <param name="reparsePointPath">The reparse point path.</param>
+        /// <param name="newReparsePointTarget">The new reparse point target.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         [HandleProcessCorruptedStateExceptions]
         public static ReparsePoint ChangeReparsePointTarget(string reparsePointPath, string newReparsePointTarget) {
             reparsePointPath = reparsePointPath.GetFullPath();

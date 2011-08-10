@@ -8,12 +8,10 @@
 // </license>
 //-----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CoApp.Toolkit.Engine.Exceptions {
+    using System;
+    using System.Collections.Generic;
+
     public class PackageHasPotentialUpgradesException : Exception {
         public Package UnsatisfiedPackage;
         public IEnumerable<Package> SatifactionOptions;

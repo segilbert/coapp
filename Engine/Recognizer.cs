@@ -20,6 +20,9 @@ namespace CoApp.Toolkit.Engine {
     using PackageFormatHandlers;
     using Tasks;
 
+    /// <summary>
+    /// NOTE: EXPLICITLY IGNORE, This is getting refactored 
+    /// </summary>
     internal class Recognizer {
         private static readonly TransferManager _transferManager =
             TransferManager.GetTransferManager(PackageManagerSettings.CoAppCacheDirectory);

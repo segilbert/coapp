@@ -24,34 +24,84 @@ namespace CoApp.Toolkit.Engine {
     using Tasks;
     using Win32;
 
+    /// <summary>
+    /// The Registrar is the "Keeper of all information about packages themselves", and is responsible for unifying the view of the known state of packages
+    /// 
+    /// </summary>
+    /// <remarks></remarks>
     internal class Registrar {
+        /// <summary>
+        /// contains a collection of hash values representing known installed MSI files that are not CoApp MSI files.
+        /// </summary>
         private static readonly HashSet<long> _nonCoAppMSIFiles = new HashSet<long>();
+        /// <summary>
+        /// A regular expression used to pattern match the canonical package name 
+        /// </summary>
         private static Regex _canonicalFilter = new Regex(@"^(\S*)-(\d*\.\d*\.\d*\.\d*)-(\S*)-([\dabcdef]{16})$");
+        /// <summary>
+        /// 
+        /// </summary>
         private static bool _readCache;
 
+        /// <summary>
+        /// the collection of all known packages
+        /// </summary>
         private static readonly ObservableCollection<Package> _packages = new ObservableCollection<Package>();
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly ObservableCollection<PackageFeed> _sessionFeedLocations = new SortedObservableCollection<PackageFeed>();
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly ObservableCollection<PackageFeed> _autoFeedLocations = new SortedObservableCollection<PackageFeed>();
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly ObservableCollection<PackageFeed> _systemFeedLocations = new SortedObservableCollection<PackageFeed>();
 
+        /// <summary>
+        /// 
+        /// </summary>
         internal static int StateCounter;
 
+        /// <summary>
+        /// 
+        /// </summary>
         internal static List<string> DoNotScanLocations = new List<string> {"c:\\windows\\*", PackageManagerSettings.CoAppPackageCache + "\\*"};
 
         #region FeedLocationAccessors
 
+        /// <summary>
+        /// Gets the system feed locations.
+        /// </summary>
+        /// <remarks></remarks>
         public static IEnumerable<string> SystemFeedLocations {
             get { return _systemFeedLocations.GetFeedLocations(); }
         }
 
+        /// <summary>
+        /// Gets the session feed locations.
+        /// </summary>
+        /// <remarks></remarks>
         public static IEnumerable<string> SessionFeedLocations {
             get { return _sessionFeedLocations.GetFeedLocations(); }
         }
 
+        /// <summary>
+        /// Gets the auto feed locations.
+        /// </summary>
+        /// <remarks></remarks>
         public static IEnumerable<string> AutoFeedLocations {
             get { return _autoFeedLocations.GetFeedLocations(); }
         }
 
+        /// <summary>
+        /// Adds the system feed locations.
+        /// </summary>
+        /// <param name="feedLocations">The feed locations.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Task AddSystemFeedLocations(IEnumerable<string> feedLocations) {
             return CoTask.Factory.StartNew(() => {
                 foreach (var location in feedLocations) {
@@ -60,6 +110,12 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
+        /// <summary>
+        /// Deletes the system feed locations.
+        /// </summary>
+        /// <param name="feedLocations">The feed locations.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Task DeleteSystemFeedLocations(IEnumerable<string> feedLocations) {
             return CoTask.Factory.StartNew(() => {
                 foreach (var location in feedLocations) {
@@ -68,10 +124,22 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
+        /// <summary>
+        /// Adds the system feed location.
+        /// </summary>
+        /// <param name="feedLocation">The feed location.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Task AddSystemFeedLocation(string feedLocation) {
             return _systemFeedLocations.AddFeedLocation(feedLocation);
         }
 
+        /// <summary>
+        /// Deletes the system feed location.
+        /// </summary>
+        /// <param name="feedLocation">The feed location.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Task DeleteSystemFeedLocation(string feedLocation) {
             return Recognizer.Recognize(feedLocation).ContinueWithParent(antecedent => {
                 var info = antecedent.Result;
@@ -104,22 +172,42 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
+        /// <summary>
+        /// Adds the session feed locations.
+        /// </summary>
+        /// <param name="feedLocations">The feed locations.</param>
+        /// <remarks></remarks>
         public static void AddSessionFeedLocations(IEnumerable<string> feedLocations) {
             foreach (var location in feedLocations) {
                 AddSessionFeedLocation(location);
             }
         }
 
+        /// <summary>
+        /// Adds the session feed location.
+        /// </summary>
+        /// <param name="feedLocation">The feed location.</param>
+        /// <remarks></remarks>
         public static void AddSessionFeedLocation(string feedLocation) {
             _sessionFeedLocations.AddFeedLocation(feedLocation);
         }
 
+        /// <summary>
+        /// Adds the auto feed locations.
+        /// </summary>
+        /// <param name="feedLocations">The feed locations.</param>
+        /// <remarks></remarks>
         public static void AddAutoFeedLocations(IEnumerable<string> feedLocations) {
             foreach (var location in feedLocations) {
                 AddAutoFeedLocation(location);
             }
         }
 
+        /// <summary>
+        /// Adds the auto feed location.
+        /// </summary>
+        /// <param name="feedLocation">The feed location.</param>
+        /// <remarks></remarks>
         public static void AddAutoFeedLocation(string feedLocation) {
             _autoFeedLocations.AddFeedLocation(feedLocation);
         }
@@ -128,6 +216,10 @@ namespace CoApp.Toolkit.Engine {
 
         #region Cache Management
 
+        /// <summary>
+        /// Flushes the cache.
+        /// </summary>
+        /// <remarks></remarks>
         public static void FlushCache() {
             PackageManagerSettings.CacheSettings["#nonCoAppPackageMap"].Value = null;
 
@@ -140,6 +232,10 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        /// <summary>
+        /// Saves the cache.
+        /// </summary>
+        /// <remarks></remarks>
         public static void SaveCache() {
             if (!_readCache) {
                 LoadCache();
@@ -160,6 +256,10 @@ namespace CoApp.Toolkit.Engine {
             PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = SystemFeedLocations;
         }
 
+        /// <summary>
+        /// Loads the cache.
+        /// </summary>
+        /// <remarks></remarks>
         public static void LoadCache() {
             if (!_readCache) {
                 _readCache = true;
@@ -182,10 +282,24 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        /// <summary>
+        /// Gets the cached strings.
+        /// </summary>
+        /// <param name="cachename">The cachename.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<string> GetCachedStrings(string cachename, params object[] args ) {
             return PackageManagerSettings.CacheSettings["#"+cachename.format(args)].StringsValue;
         }
 
+        /// <summary>
+        /// Sets the cached strings.
+        /// </summary>
+        /// <param name="values">The values.</param>
+        /// <param name="cachename">The cachename.</param>
+        /// <param name="args">The args.</param>
+        /// <remarks></remarks>
         public static void SetCachedStrings(IEnumerable<string> values, string cachename, params object[] args) {
             PackageManagerSettings.CacheSettings["#"+cachename.format(args)].StringsValue = values;
         } 
@@ -193,20 +307,37 @@ namespace CoApp.Toolkit.Engine {
 
         #endregion
 
+        /// <summary>
+        /// Gets the packages.
+        /// </summary>
+        /// <remarks></remarks>
         internal static IEnumerable<Package> Packages {
             get { return _packages; }
         }
 
+        /// <summary>
+        /// Adds the package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <remarks></remarks>
         private static void AddPackage( Package package) {
             lock( _packages ) {
                 _packages.Add(package);
             }
         }
 
+        /// <summary>
+        /// Gets the installed packages.
+        /// </summary>
+        /// <remarks></remarks>
         internal static IEnumerable<Package> InstalledPackages {
             get { lock (_packages) return _packages.Where(package => package.IsInstalled).ToList(); }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:System.Object"/> class.
+        /// </summary>
+        /// <remarks></remarks>
         static Registrar() {
             LoadCache();
             _packages.CollectionChanged += (x, y) => Updated();
@@ -216,10 +347,24 @@ namespace CoApp.Toolkit.Engine {
             _systemFeedLocations.CollectionChanged += (x, y) => SaveCache();
         }
 
+        /// <summary>
+        /// Updateds this instance.
+        /// </summary>
+        /// <remarks></remarks>
         internal static void Updated() {
             StateCounter++;
         }
 
+        /// <summary>
+        /// Gets the package.
+        /// </summary>
+        /// <param name="packageName">Name of the package.</param>
+        /// <param name="version">The version.</param>
+        /// <param name="architecture">The architecture.</param>
+        /// <param name="publicKeyToken">The public key token.</param>
+        /// <param name="packageId">The package id.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal static Package GetPackage(string packageName, UInt64 version,string architecture, string publicKeyToken, string packageId) {
             Package pkg;
 
@@ -257,6 +402,12 @@ namespace CoApp.Toolkit.Engine {
         }
 
 
+        /// <summary>
+        /// Gets the package.
+        /// </summary>
+        /// <param name="packagePath">The package path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal static Package GetPackage(string packagePath) {
             Package pkg;
             Guid pkgGuid;
@@ -391,12 +542,13 @@ namespace CoApp.Toolkit.Engine {
         }
 
         /// <summary>
-        ///   Returns a list of packages matching a given list of desired packages.
-        /// 
-        ///   This method should be aggressive in locating packages
+        /// Returns a list of packages matching a given list of desired packages.
+        /// This method should be aggressive in locating packages
         /// </summary>
-        /// <param name = "packageNames"></param>
+        /// <param name="packageNames">The package names.</param>
+        /// <param name="messageHandlers">The message handlers.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static Task<IEnumerable<Package>> GetPackagesByName(IEnumerable<string> packageNames, MessageHandlers messageHandlers = null) {
             return CoTask<IEnumerable<Package>>.Factory.StartNew(() => {
                 var packageFiles = new List<Package>();
@@ -473,10 +625,11 @@ namespace CoApp.Toolkit.Engine {
         }
 
         /// <summary>
-        ///   Returns a list of installed packages matching a given list of desired packages.
+        /// Returns a list of installed packages matching a given list of desired packages.
         /// </summary>
-        /// <param name = "packageNames"></param>
+        /// <param name="packageNames">The package names.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<Package> GetInstalledPackagesByName(IEnumerable<string> packageNames) {
             var packageFiles = new List<Package>();
             var unknownPackages = new List<string>();
@@ -538,15 +691,33 @@ namespace CoApp.Toolkit.Engine {
 
         // Scan Methods find what they can, empty results are OK.
 
+        /// <summary>
+        /// Scans for packages.
+        /// </summary>
+        /// <param name="packagesToScanFor">The packages to scan for.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal static IEnumerable<Package> ScanForPackages(IEnumerable<Package> packagesToScanFor) {
             return packagesToScanFor.Aggregate(Enumerable.Empty<Package>(),
                 (current, package) => current.Union(ScanForPackages(package)).Union(ScanForPackages(package.Dependencies)));
         }
 
+        /// <summary>
+        /// Scans for packages.
+        /// </summary>
+        /// <param name="packageFilters">The package filters.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal static IEnumerable<Package> ScanForPackages(IEnumerable<string> packageFilters) {
             return packageFilters.Aggregate(Enumerable.Empty<Package>(), (current, filter) => current.Union(ScanForPackages(filter)));
         }
 
+        /// <summary>
+        /// Scans for packages.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal static IEnumerable<Package> ScanForPackages(Package package) {
             var feeds = _autoFeedLocations.Union(_sessionFeedLocations).Union(_systemFeedLocations);
             feeds = DoNotScanLocations.Aggregate(feeds,
@@ -554,6 +725,12 @@ namespace CoApp.Toolkit.Engine {
             return feeds.Aggregate(Enumerable.Empty<Package>(), (current, feed) => current.Union(feed.FindPackages(package)));
         }
 
+        /// <summary>
+        /// Scans for packages.
+        /// </summary>
+        /// <param name="packageFilter">The package filter.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal static IEnumerable<Package> ScanForPackages(string packageFilter) {
             if (!packageFilter.Contains("*")) {
                 packageFilter += "*";
@@ -564,32 +741,6 @@ namespace CoApp.Toolkit.Engine {
                 (current, loc) => (from feed in current where !feed.Location.IsWildcardMatch(loc) select feed));
             return feeds.Aggregate(Enumerable.Empty<Package>(), (current, feed) => current.Union(feed.FindPackages(packageFilter)));
         }
-
-#if false
-        public static void DumpPackages(IEnumerable<Package> packages = null) {
-            if (packages == null)
-                packages = _packages;
-
-            if (packages.Count() > 0) {
-                Console.WriteLine("\rPackages:");
-                (from pkg in packages
-                 orderby pkg.IsInstalled descending, pkg.Name 
-                        select new {
-                            Name = pkg.Name,
-                            Version = pkg.Version.UInt64VersiontoString(),
-                            Arch = pkg.Architecture,
-                            Publisher = pkg.Publisher.Name,
-                            Local_Path = pkg.LocalPackagePath.Value ?? "(not local)",
-                            Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>",
-                            Installed = pkg.IsInstalled
-                     } ) .ToTable(Console.BufferWidth).ConsoleOut();
-            }
-            else {
-                Console.WriteLine("\rNo packages.");
-            }
-        }
-#endif 
-       
 
     }
 }

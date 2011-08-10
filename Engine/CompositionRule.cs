@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace CoApp.Toolkit.Engine {
     /// <summary>
@@ -21,13 +20,14 @@ namespace CoApp.Toolkit.Engine {
         /// Create a .lnk shortcut to a file
         /// </summary>
         Shortcut,
-        
     }
 
     /// <summary>
     /// A composition rule contains the data to perform package composition
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// Storage Only Class.
+    /// </remarks>
     public class CompositionRule {
         /// <summary>
         /// The package for which this rule is created
@@ -38,7 +38,7 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         private static readonly Lazy<IEnumerable<string>> _types = new Lazy<IEnumerable<string>>(() => Enum.GetNames(typeof(CompositionAction)));
         /// <summary>
-        /// Determines whether [is composition action] [the specified text].
+        /// Determines whether given text matches an enum value in CompositionAction.
         /// </summary>
         /// <param name="text">The text.</param>
         /// <returns><c>true</c> if [is composition action] [the specified text]; otherwise, <c>false</c>.</returns>

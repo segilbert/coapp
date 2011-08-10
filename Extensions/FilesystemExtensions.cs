@@ -28,39 +28,71 @@ namespace CoApp.Toolkit.Extensions {
 #endif
     using Win32;
 
+    /// <summary>
+    /// Functions related to handling things regarding files and filesystems.
+    /// </summary>
+    /// <remarks></remarks>
     public static class FilesystemExtensions {
+        /// <summary>
+        /// a running counter of for funtions wanting to number files with increasing numbers.
+        /// </summary>
         private static int _counter;
+        /// <summary>
+        /// A hashset of strings that has already been fullpath'd 
+        /// </summary>
         private static readonly HashSet<string> _fullPathCache = new HashSet<string>();
+        
+        /// <summary>
+        /// the Kernel filename prefix string for paths that should not be interpreted. 
+        /// Just nod, and keep goin'
+        /// </summary>
         private const string NonInterpretedPathPrefix = @"\??\";
 
+        /// <summary>
+        /// regular expression to identify a UNC path returned by the Kernel.
+        /// (needed for path normalization for reparse points)
+        /// </summary>
         private static readonly Regex _uncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
+        /// <summary>
+        /// regular expression to match a drive letter in a low level path
+        /// (needed for path normalization for reparse points)
+        /// </summary>
         private static readonly Regex _drivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
         
         #pragma warning disable 169
+        /// <summary>
+        /// regular expression to identify a volume mount point 
+        /// (needed for path normalization for reparse points)
+        /// </summary>
         private static readonly Regex _volumePrefixRx = new Regex(@"\\\?\?\\Volume");
         #pragma warning restore 169
 
+        /// <summary>
+        /// Apparently, Eric has gone insane?
+        /// NOTE: subject to cleanup.
+        /// </summary>
         private static readonly Regex _invalidDoubleWcRx = new Regex(@"\\.+\*\*|\*\*[^\\]+\\|\*\*\\\*\*");
 
 
         /// <summary>
-        ///   Determines if the childPath is a sub path of the rootPath
+        /// Determines if the childPath is a sub path of the rootPath
         /// </summary>
-        /// <param name = "rootPath"></param>
-        /// <param name = "childPath"></param>
-        /// <returns></returns>
+        /// <param name="rootPath">The root path.</param>
+        /// <param name="childPath">The child path.</param>
+        /// <returns><c>true</c> if [is sub path] [the specified root path]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsSubPath(this string rootPath, string childPath) {
             return Path.GetFullPath(childPath).StartsWith(Path.GetFullPath(rootPath), StringComparison.CurrentCultureIgnoreCase);
         }
 
-        ///<summary>
-        ///  Gets the portion of the childPath that is a sub path of the parentPath
-        ///
-        ///  Returns string.Empty if the childPath is not a sub path of the parent.
-        ///</summary>
-        ///<param name = "parentPath"></param>
-        ///<param name = "childPath"></param>
-        ///<returns></returns>
+        /// <summary>
+        /// Gets the portion of the childPath that is a sub path of the parentPath
+        /// Returns string.Empty if the childPath is not a sub path of the parent.
+        /// </summary>
+        /// <param name="parentPath">The parent path.</param>
+        /// <param name="childPath">The child path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string GetSubPath(this string parentPath, string childPath) {
             var parent = Path.GetFullPath(parentPath);
             var child = Path.GetFullPath(childPath);
@@ -70,36 +102,25 @@ namespace CoApp.Toolkit.Extensions {
             return string.Empty;
         }
 
-        /*
         /// <summary>
-        ///   Returns the relative path from the fixedPath for the desiredPath
+        /// Changes the file extension to another extension.
         /// </summary>
-        /// <param name = "fixedPath"></param>
-        /// <param name = "desiredPath"></param>
+        /// <param name="currentFilename">The current filename.</param>
+        /// <param name="newExtension">The new extension.</param>
         /// <returns></returns>
-        public static string GetRelativePath(this string fixedPath, string desiredPath) {
-            var parent = Path.GetFullPath(fixedPath);
-            var child = Path.GetFullPath(desiredPath);
-            return null;
-        }
-
-        /// <summary>
-        ///   Returns the absolute path of relative path, relative to assumedCurrentDirectory.
-        /// </summary>
-        /// <param name = "assumedCurrentDirectory"></param>
-        /// <param name = "relativePath"></param>
-        /// <returns></returns>
-        public static string ResolveRelativePath(this string assumedCurrentDirectory, string relativePath) {
-
-            return null;
-        }
-        */
-
+        /// <remarks></remarks>
         public static string ChangeFileExtensionTo(this string currentFilename, string newExtension) {
             return Path.Combine(Path.GetDirectoryName(currentFilename) ?? "",
                 Path.GetFileNameWithoutExtension(currentFilename) + "." + newExtension);
         }
 
+        /// <summary>
+        /// Gets the relative path between two paths.
+        /// </summary>
+        /// <param name="currentDirectory">The current directory.</param>
+        /// <param name="pathToMakeRelative">The path to make relative.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string RelativePathTo(this string currentDirectory, string pathToMakeRelative) {
             if (string.IsNullOrEmpty(currentDirectory)) {
                 throw new ArgumentNullException("currentDirectory");
@@ -142,24 +163,29 @@ namespace CoApp.Toolkit.Extensions {
             return string.Join(Path.DirectorySeparatorChar.ToString(), relativePath);
         }
 
+        /// <summary>
+        /// Generates a filename based of a template that can contain many different values 
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="filenameHint">The filename hint.</param>
+        /// <returns></returns>
+        /// <remarks> 
+        /// {filename}  - substitutes for the original
+        ///               filename, no extension
+        ///     {ext}         original extension
+        ///     {folder}    - original folder
+        ///     {subfolder} - original folder without leading /
+        ///     {count}     - a running count of the files
+        ///                   downloaded.
+        ///     {date}      - the current date (y-m-d)
+        ///     {date-long} - the date in long format
+        ///     {time}      - the current time (Hh:mm:ss)
+        ///     {time-long} - the current time in long fmt
+        ///     {ticks}     - the current timestamp as tics
+        /// </remarks>
         public static string CanonicalizePath(this string filename, string filenameHint) {
             var result = filename;
-            /*
-                {filename}  - substitutes for the original
-                              filename, no extension
-                {ext}         original extension
-                {folder}    - original folder
-                {subfolder} - original folder without leading /
-                {count}     - a running count of the files
-                              downloaded.
-                {date}      - the current date (y-m-d)
-                {date-long} - the date in long format
-                {time}      - the current time (Hh:mm:ss)
-                {time-long} - the current time in long fmt
-                {ticks}     - the current timestamp as tics
-
-             *
-            */
+            
             if (!filenameHint.StartsWith("\\\\")) {
                 if (filenameHint.StartsWith("/") || filenameHint.StartsWith("\\")) {
                     filenameHint = Environment.CurrentDirectory.Substring(0, 2) + filenameHint;
@@ -193,18 +219,22 @@ namespace CoApp.Toolkit.Extensions {
             return result;
         }
 
+        /// <summary>
+        /// Generates a filename on a somewhat different template.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="parameters">The parameters.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// {date}      - the current date (y-m-d)
+        /// {date-long} - the date in long format
+        /// {time}      - the current time (Hh:mm:ss)
+        /// {time-long} - the current time in long fmt
+        /// {ticks}     - the current timestamp as tics
+        /// {counter}   - a running counter
+        /// </remarks>
         public static string FormatFilename(this string filename, params string[] parameters) {
             var result = filename;
-            /*
-                {date}      - the current date (y-m-d)
-                {date-long} - the date in long format
-                {time}      - the current time (Hh:mm:ss)
-                {time-long} - the current time in long fmt
-                {ticks}     - the current timestamp as tics
-                {counter}   - a running counter
-             *
-            */
-
             result = result.Replace(@"{counter}", "" + _counter++);
             result = result.Replace(@"{date}", DateTime.Now.ToString("yyyy-MM-dd"));
             result = result.Replace(@"{date-long}", DateTime.Now.ToString("MMMM dd YYYY"));
@@ -216,6 +246,15 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
+        /// <summary>
+        /// Enumerates files in a directory, smarter than Direcotry.EnumerateFiles (ie, doesn't throw, when it can't access something)
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="searchPattern">The search pattern.</param>
+        /// <param name="searchOption">The search option.</param>
+        /// <param name="skipPathPatterns">The skip path patterns.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption,
             IEnumerable<string> skipPathPatterns = null) {
             var result = Enumerable.Empty<string>();
@@ -245,6 +284,13 @@ namespace CoApp.Toolkit.Extensions {
 
 
 
+        /// <summary>
+        /// A front end to DirectoryEnumerateFilesSmarter that allows for wildcards in the path (and expands it out to a full path first.)
+        /// </summary>
+        /// <param name="pathMask">The path mask.</param>
+        /// <param name="searchOption">The search option.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<string> FindFilesSmarter(this string pathMask, SearchOption searchOption = SearchOption.TopDirectoryOnly) {
             var path = (pathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$")).Replace("$$STAR$$", "*").Replace("$$QUERY$$", "?").GetFullPath();
             var mask = path.Substring(path.LastIndexOf("\\") + 1);
@@ -253,6 +299,12 @@ namespace CoApp.Toolkit.Extensions {
             return path.DirectoryEnumerateFilesSmarter(mask, searchOption);
         }
 
+        /// <summary>
+        /// finds matches for a collection of filenames using FindFilesSmarter (above)
+        /// </summary>
+        /// <param name="pathMasks">The path masks.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<string> FindFilesSmarter(this IEnumerable<string> pathMasks) {
             return pathMasks.Aggregate(Enumerable.Empty<string>(), (current, p) => current.Union(p.FindFilesSmarter()));
         }
@@ -338,14 +390,21 @@ namespace CoApp.Toolkit.Extensions {
 #endif
 
         /// <summary>
-        ///   Gets the name of a file minus it's extension, ie: if the file name is "test.exe", returns "test".
+        /// Gets the name of a file minus it's extension, ie: if the file name is "test.exe", returns "test".
         /// </summary>
-        /// <param name = "fi"></param>
+        /// <param name="fi">The fi.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static string NameWithoutExt(this FileInfo fi) {
             return fi.Name.Remove(fi.Name.Length - fi.Extension.Length);
         }
 
+        /// <summary>
+        /// Directories the exists and is accessible.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static bool DirectoryExistsAndIsAccessible(this string path) {
             try {
                 return Directory.Exists(path);
@@ -355,6 +414,12 @@ namespace CoApp.Toolkit.Extensions {
             return false;
         }
 
+        /// <summary>
+        /// Writes all bytes from the contents of a memorystream to file (as a binary file).
+        /// </summary>
+        /// <param name="ms">The ms.</param>
+        /// <param name="path">The path.</param>
+        /// <remarks></remarks>
         public static void WriteAllBytesToFile(this MemoryStream ms, string path) {
             if (string.IsNullOrEmpty(path)) {
                 throw new ArgumentNullException("path", "Invalid Path");
@@ -365,6 +430,12 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        /// <summary>
+        /// Reads the contents of a file into a memory stream.
+        /// </summary>
+        /// <param name="ms">The ms.</param>
+        /// <param name="path">The path.</param>
+        /// <remarks></remarks>
         public static void ReadAllBytesFromFile(this MemoryStream ms, string path) {
             if (string.IsNullOrEmpty(path)) {
                 throw new ArgumentNullException("path", "Invalid Path");
@@ -376,6 +447,14 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        /// <summary>
+        /// Tries the hard to delete file.
+        /// 
+        /// This will try to delete a file.
+        /// Failing that, it will move the file out to a temp location and mark it for deletion on reboot.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <remarks></remarks>
         public static void TryHardToDeleteFile(this string filename) {
             if (File.Exists(filename)) {
                 try {
@@ -402,6 +481,13 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        /// <summary>
+        /// Tries the hard to delete directory.
+        /// 
+        /// If it can't, it will move the folder and mark it for deletion on reboot.
+        /// </summary>
+        /// <param name="directoryName">Name of the directory.</param>
+        /// <remarks></remarks>
         public static void TryHardToDeleteDirectory(this string directoryName) {
             if (Directory.Exists(directoryName)) {
                 try {
@@ -428,17 +514,27 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        /// <summary>
+        /// Writes the whole byte array to a filestream. (lazy!)
+        /// </summary>
+        /// <param name="fileStream">The file stream.</param>
+        /// <param name="data">The data.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static int Write(this FileStream fileStream, byte[] data) {
             fileStream.Write(data, 0, data.Length);
             return data.Length;
         }
 
         /// <summary>
-        ///   Short circuts the process if the string is a known full path already. 
-        ///   (ie, the result of a preivious GetFullPath())
+        /// Returns the full path of a string.
+        /// 
+        /// Short circuts the process if the string is a known full path already.
+        /// (ie, the result of a preivious GetFullPath())
         /// </summary>
-        /// <param name = "path"></param>
+        /// <param name="path">The path.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static string GetFullPath(this string path) {
             if (_fullPathCache.Contains(path)) {
                 return path;
@@ -453,10 +549,11 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
-        ///   Translates paths starting with \??\ to regular paths.
+        /// Translates paths starting with \??\ to regular paths.
         /// </summary>
-        /// <param name = "path"></param>
+        /// <param name="path">The path.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static string NormalizePath(this string path) {
             if (path.StartsWith(NonInterpretedPathPrefix)) {
                 if (_uncPrefixRx.Match(path).Success) {
@@ -478,6 +575,14 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
+        /// <summary>
+        /// Gets the next part.
+        /// 
+        /// Note: Make Eric document this?
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private static Tuple<string, string> GetNextPart(this string path) {
             var indexOfSlash = path.IndexOf('\\');
             return indexOfSlash == -1 ? new Tuple<string, string>(path, "") : 
@@ -487,8 +592,9 @@ namespace CoApp.Toolkit.Extensions {
         /// <summary>
         /// Replaces Unix style file path separators (/) with Windows style (\).
         /// </summary>
-        /// <param name="filepath"></param>
+        /// <param name="filepath">The filepath.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static string FixFilepathSlashes(this string filepath)
         {
             return filepath.Replace(@"/", @"\");
@@ -497,7 +603,6 @@ namespace CoApp.Toolkit.Extensions {
 
         /// <summary>
         /// Tells whether a given path is a simple subpath.
-        /// 
         /// A simple subpath has the following characteristics:
         /// - No drive letter or colon
         /// - Does not start with a slash
@@ -506,6 +611,7 @@ namespace CoApp.Toolkit.Extensions {
         /// </summary>
         /// <param name="path">the path to check</param>
         /// <returns>True if it is a simple subpath, false otherwise.</returns>
+        /// <remarks></remarks>
         public static bool IsSimpleSubPath(this string path)
         {
             var temp = path.FixFilepathSlashes();

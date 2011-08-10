@@ -19,12 +19,29 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using Extensions;
     using Microsoft.Deployment.WindowsInstaller;
 
+    /// <summary>
+    /// A representation of an CoApp MSI file
+    /// </summary>
+    /// <remarks></remarks>
     internal class CoAppMSI : MSIBase {
+        /// <summary>
+        /// Determines whether a given file is a CoApp MSI
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns><c>true</c> if [is co app package file] [the specified path]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         internal static bool IsCoAppPackageFile(string path) {
             var packageData = GetMSIData(path);
             return packageData.Tables.Contains("CO_PACKAGE");
         }
 
+        /// <summary>
+        /// gets the URL from the CO_URLs table given the id.
+        /// </summary>
+        /// <param name="CO_URLS">The C o_ URLS.</param>
+        /// <param name="id">The id.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private static string GetURL(dynamic CO_URLS, string id ) {
             if (CO_URLS == null || string.IsNullOrEmpty(id))
                 return null;
@@ -32,6 +49,15 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return rec == null ? null : rec.url;
         }
 
+        /// <summary>
+        /// Given a package filename, loads the metadata from the MSI
+        /// 
+        /// NOTE: NEED SPEC FOR WHAT IS REQUIRED, OPTIONAL in a CoApp MSI file.
+        /// 
+        /// </summary>
+        /// <param name="localPackagePath">The local package path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal static dynamic GetCoAppPackageFileDetails(string localPackagePath) {
             dynamic packageData = GetDynamicMSIData(localPackagePath);
             
@@ -195,6 +221,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return result;
         }
 
+        /// <summary>
+        /// Installs the specified package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="progress">The progress.</param>
+        /// <remarks></remarks>
         public override void Install(Package package, Action<int> progress = null) {
             progress = progress ?? ((percent) => { });
 
@@ -250,6 +282,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             }
         }
 
+        /// <summary>
+        /// Removes the specified package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="progress">The progress.</param>
+        /// <remarks></remarks>
         public override void Remove(Package package, Action<int> progress = null) {
             progress = progress ?? ((percent) => { });
             int currentTotalTicks = -1;
@@ -303,6 +341,14 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             }
         }
 
+        /// <summary>
+        /// Gets the package composition rules for the given package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Note: Refactoring comming up soon.
+        /// </remarks>
         public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
             dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
 

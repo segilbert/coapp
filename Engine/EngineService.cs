@@ -25,22 +25,50 @@ namespace CoApp.Toolkit.Engine {
     using Tasks;
     using Win32;
 
+    /// <summary>
+    /// The actual service for CoApp.
+    /// 
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// NOTE: EXPLICITLY IGNORE, NOT READY FOR TESTING.
+    /// </remarks>
     public class UrlEncodedMessage : IEnumerable<string> {
+        /// <summary>
+        /// 
+        /// </summary>
         private static char[] query = new[] {
             '?'
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
         private static char[] separator = new[] {
             '&'
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
         private static char[] equals = new[] {
             '='
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
         internal string Command;
+        /// <summary>
+        /// 
+        /// </summary>
         internal IDictionary<string, string> Data;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UrlEncodedMessage"/> class.
+        /// </summary>
+        /// <param name="rawMessage">The raw message.</param>
+        /// <remarks></remarks>
         public UrlEncodedMessage(string rawMessage) {
             var parts = rawMessage.Split(query, StringSplitOptions.RemoveEmptyEntries);
             Command = parts.FirstOrDefault().UrlDecode().ToLower();
@@ -49,11 +77,21 @@ namespace CoApp.Toolkit.Engine {
                         s => s.Length > 1 ? s[1].UrlDecode() : String.Empty);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UrlEncodedMessage"/> class.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <param name="data">The data.</param>
+        /// <remarks></remarks>
         public UrlEncodedMessage( string command, IDictionary<string, string> data ) {
             Command = command;
             Data = data;
         }
 
+        /// <summary>
+        /// Gets or sets the <see cref="System.String"/> with the specified key.
+        /// </summary>
+        /// <remarks></remarks>
         public string this[string key] {
             get { return Data.ContainsKey(key) ? Data[key] : String.Empty; }
             set {
@@ -66,24 +104,51 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        /// <summary>
+        /// Returns a <see cref="System.String"/> that represents this instance.
+        /// </summary>
+        /// <returns>A <see cref="System.String"/> that represents this instance.</returns>
+        /// <remarks></remarks>
         public override string ToString() {
             return Data.Any()
                 ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (k.UrlEncode() + "=" + Data[k].UrlEncode()))
                 : Command.UrlEncode();
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through a collection.
+        /// </summary>
+        /// <returns>An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.</returns>
+        /// <remarks></remarks>
         IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }
 
+        /// <summary>
+        /// Adds the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        /// <remarks></remarks>
         public void Add(string key, string value) {
             this[key] = value;
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.</returns>
+        /// <remarks></remarks>
         public IEnumerator<string> GetEnumerator() {
             return Data.Keys.GetEnumerator();
         }
 
+        /// <summary>
+        /// Gets the collection.
+        /// </summary>
+        /// <param name="p">The p.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal IEnumerable<string> GetCollection(string p) {
             var rx = new Regex(@"${0}\[.\n]\]^".format(Regex.Escape(p)));
             foreach( var k in Data.Keys ) {
@@ -95,15 +160,20 @@ namespace CoApp.Toolkit.Engine {
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks></remarks>
     public static class AsyncPipeExtensions {
         /// <summary>
-        ///   Read from a stream asynchronously.
+        /// Read from a stream asynchronously.
         /// </summary>
-        /// <param name = "stream">The stream.</param>
-        /// <param name = "buffer">An array of bytes to be filled by the read operation.</param>
-        /// <param name = "offset">The offset at which data should be stored.</param>
-        /// <param name = "count">The number of bytes to be read.</param>
+        /// <param name="stream">The stream.</param>
+        /// <param name="buffer">An array of bytes to be filled by the read operation.</param>
+        /// <param name="offset">The offset at which data should be stored.</param>
+        /// <param name="count">The number of bytes to be read.</param>
         /// <returns>A Task containing the number of bytes read.</returns>
+        /// <remarks></remarks>
         public static Task<int> ReadAsync(this Stream stream, byte[] buffer, int offset, int count) {
             if (stream == null) {
                 throw new ArgumentNullException("stream");
@@ -112,13 +182,14 @@ namespace CoApp.Toolkit.Engine {
         }
 
         /// <summary>
-        ///   Write to a stream asynchronously.
+        /// Write to a stream asynchronously.
         /// </summary>
-        /// <param name = "stream">The stream.</param>
-        /// <param name = "buffer">An array of bytes to be written.</param>
-        /// <param name = "offset">The offset from which data should be read to be written.</param>
-        /// <param name = "count">The number of bytes to be written.</param>
+        /// <param name="stream">The stream.</param>
+        /// <param name="buffer">An array of bytes to be written.</param>
+        /// <param name="offset">The offset from which data should be read to be written.</param>
+        /// <param name="count">The number of bytes to be written.</param>
         /// <returns>A Task representing the completion of the asynchronous operation.</returns>
+        /// <remarks></remarks>
         public static Task WriteAsync(this Stream stream, byte[] buffer, int offset, int count) {
             if (stream == null) {
                 throw new ArgumentNullException("stream");
@@ -126,50 +197,123 @@ namespace CoApp.Toolkit.Engine {
             return CoTask.Factory.FromAsync(stream.BeginWrite, stream.EndWrite, buffer, offset, count, stream);
         }
 
+        /// <summary>
+        /// Writes the line async.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="objs">The objs.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Task WriteLineAsync(this Stream stream, string message, params object[] objs) {
             var bytes = (message.format(objs).Trim() + "\r\n").ToByteArray();
             return stream.WriteAsync(bytes, 0, bytes.Length);
         }
 
+        /// <summary>
+        /// Writes the async.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="request">The request.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Task WriteAsync(this Stream stream, UrlEncodedMessage request) {
             return stream.WriteLineAsync(request.ToString());
         }
 
+        /// <summary>
+        /// Writes the async.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="message">The message.</param>
+        /// <param name="parameters">The parameters.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Task WriteAsync( this Stream stream, string message, IDictionary<string,string> parameters) {
             return stream.WriteAsync(new UrlEncodedMessage(message, parameters));
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks></remarks>
     public class EngineService {
+        /// <summary>
+        /// 
+        /// </summary>
         private const string PipeName = @"CoAppInstaller";
+        /// <summary>
+        /// 
+        /// </summary>
         private const string OutputPipeName = @"CoAppInstaller-";
 
+        /// <summary>
+        /// 
+        /// </summary>
         private const int Instances = -1;
+        /// <summary>
+        /// 
+        /// </summary>
         internal const int BufferSize = 8192;
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly Lazy<EngineService> Instance = new Lazy<EngineService>(() => new EngineService());
 
+        /// <summary>
+        /// 
+        /// </summary>
         private bool _isRunning;
+        /// <summary>
+        /// 
+        /// </summary>
         private Task _engineTask;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        /// <summary>
+        /// 
+        /// </summary>
         private PipeSecurity _pipeSecurity;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private List<MessagePump> _activeMessagePumps = new List<MessagePump>();
 
+        /// <summary>
+        /// Stops this instance.
+        /// </summary>
+        /// <remarks></remarks>
         public static void Stop() {
             // this should stop the task
             Instance.Value._cancellationTokenSource.Cancel();
         }
 
+        /// <summary>
+        /// Starts this instance.
+        /// </summary>
+        /// <remarks></remarks>
         public static void Start() {
             // this should spin up a task and start listening for commands
             Instance.Value.Main();
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is running.
+        /// </summary>
+        /// <remarks></remarks>
         public static bool IsRunning {
             get { return Instance.Value._isRunning; }
         }
 
+        /// <summary>
+        /// Mains this instance.
+        /// </summary>
+        /// <remarks></remarks>
         private void Main() {
             if (_isRunning) {
                 return;
@@ -214,6 +358,10 @@ namespace CoApp.Toolkit.Engine {
         }
 
 
+        /// <summary>
+        /// Starts the listener.
+        /// </summary>
+        /// <remarks></remarks>
         private void StartListener() {
             try {
                 if (_isRunning) {
@@ -268,6 +416,13 @@ namespace CoApp.Toolkit.Engine {
         }
 
 
+        /// <summary>
+        /// Starts the response pipe and process mesages.
+        /// </summary>
+        /// <param name="clientId">The client id.</param>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="serverPipe">The server pipe.</param>
+        /// <remarks></remarks>
         private void StartResponsePipeAndProcessMesages(string clientId, string sessionId, NamedPipeServerStream serverPipe) {
             try {
                 var channelname = OutputPipeName + sessionId;
@@ -287,19 +442,57 @@ namespace CoApp.Toolkit.Engine {
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks></remarks>
     public class MessagePump {
+        /// <summary>
+        /// 
+        /// </summary>
         private string _clientId;
+        /// <summary>
+        /// 
+        /// </summary>
         private readonly string _sessionId;
+        /// <summary>
+        /// 
+        /// </summary>
         private readonly string _userId;
+        /// <summary>
+        /// 
+        /// </summary>
         private readonly NamedPipeServerStream _serverPipe;
+        /// <summary>
+        /// 
+        /// </summary>
         private readonly NamedPipeServerStream _responsePipe;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private readonly PackageManager _packageManager = new PackageManager();
 
+        /// <summary>
+        /// Starts the session.
+        /// </summary>
+        /// <param name="clientId">The client id.</param>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="serverPipe">The server pipe.</param>
+        /// <param name="responsePipe">The response pipe.</param>
+        /// <remarks></remarks>
         public void StartSession(string clientId, string sessionId, NamedPipeServerStream serverPipe, NamedPipeServerStream responsePipe ) {
             
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessagePump"/> class.
+        /// </summary>
+        /// <param name="clientId">The client id.</param>
+        /// <param name="sessionId">The session id.</param>
+        /// <param name="serverPipe">The server pipe.</param>
+        /// <param name="responsePipe">The response pipe.</param>
+        /// <remarks></remarks>
         protected MessagePump(string clientId, string sessionId, NamedPipeServerStream serverPipe, NamedPipeServerStream responsePipe ) {
             _clientId = clientId;
             _sessionId = sessionId;
@@ -314,6 +507,10 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
+        /// <summary>
+        /// Processes the mesages.
+        /// </summary>
+        /// <remarks></remarks>
         private void ProcessMesages() {
             using (_serverPipe) {
                 using (_responsePipe) {
@@ -379,6 +576,11 @@ namespace CoApp.Toolkit.Engine {
             Console.WriteLine("We're leaving ProcsssMessages");
         }
 
+        /// <summary>
+        /// Dispatches the specified request message.
+        /// </summary>
+        /// <param name="requestMessage">The request message.</param>
+        /// <remarks></remarks>
         private void Dispatch(UrlEncodedMessage requestMessage) {
             switch (requestMessage.Command) {
                 case "removepackages":
@@ -394,12 +596,22 @@ namespace CoApp.Toolkit.Engine {
         }
 
         // example of a function that we publicize
+        /// <summary>
+        /// Waits the specified duration.
+        /// </summary>
+        /// <param name="duration">The duration.</param>
+        /// <remarks></remarks>
         private void Wait(int duration) {
             Thread.Sleep(duration);
             _responsePipe.WriteAsync(new UrlEncodedMessage("Waited") {{ "duration", duration.ToString()}});
         }
 
         // example of a function that we publicize
+        /// <summary>
+        /// Removes the packages.
+        /// </summary>
+        /// <param name="packageNames">The package names.</param>
+        /// <remarks></remarks>
         private void RemovePackages(IEnumerable<string> packageNames) {
             _packageManager.RemovePackages(packageNames, new PackageManagerMessages {
                 RemovingPackage = (package) => {

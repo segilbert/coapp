@@ -11,29 +11,53 @@
 namespace CoApp.Toolkit.Win32 {
     using System;
 
+    /// <summary>
+    /// Wrapper class for accessing information about the current Windows environment
+    /// </summary>
+    /// <remarks></remarks>
     public static class WindowsVersionInfo {
+        /// <summary>
+        /// Gets a value indicating whether this instance is vista or beyond.
+        /// </summary>
+        /// <remarks></remarks>
         public static bool IsVistaOrBeyond {
             get { return Environment.OSVersion.Version.Major > 5; }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this process is running as a 32 bit process.
+        /// </summary>
+        /// <remarks></remarks>
         public static bool IsCurrentProcess32Bit {
             get {
                 return !Environment.Is64BitProcess;
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this process is running as a 64 bit process.
+        /// </summary>
+        /// <remarks></remarks>
         public static bool IsCurrentProcess64Bit {
             get {
                 return Environment.Is64BitProcess;
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the current OS is 32 bit
+        /// </summary>
+        /// <remarks></remarks>
         public static bool IsOS32Bit {
             get {
                 return !Environment.Is64BitOperatingSystem;
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the current OS is 64 bit
+        /// </summary>
+        /// <remarks></remarks>
         public static bool IsOS64Bit {
             get {
                 return Environment.Is64BitOperatingSystem;

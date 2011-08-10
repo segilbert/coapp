@@ -9,10 +9,29 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Engine {
+    /// <summary>
+    /// Different types of package roles
+    /// </summary>
+    /// <remarks></remarks>
     public enum PackageRole {
+        /// <summary>
+        /// Shared Library (.NET Assembly, or native DLL)
+        /// </summary>
         SharedLib,
+        
+        /// <summary>
+        /// Developer Library (.NET assembly or .lib/.h files)
+        /// </summary>
         DeveloperLib,
-        Source, 
+        
+        /// <summary>
+        /// Source Code MSI
+        /// </summary>
+        Source,
+        
+        /// <summary>
+        /// Application (binaries, etc)
+        /// </summary>
         Application
     }
 }

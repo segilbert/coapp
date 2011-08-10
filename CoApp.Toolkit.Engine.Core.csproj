@@ -74,11 +74,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\RegistryView.cs" />
-    <Compile Include="DynamicXml\DynamicAttributes.cs" />
     <Compile Include="DynamicXml\DynamicDataRow.cs" />
     <Compile Include="DynamicXml\DynamicDataSet.cs" />
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
-    <Compile Include="DynamicXml\DynamicNode.cs" />
     <Compile Include="Engine\CompositionRule.cs" />
     <Compile Include="Engine\EngineService.cs" />
     <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
@@ -99,11 +97,10 @@
     <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />
     <Compile Include="Engine\Feeds\PackageFeed.cs" />
     <Compile Include="Engine\MultiplexedProperty.cs" />
-    <Compile Include="Engine\NativeMethods.cs" />
     <Compile Include="Engine\Network\RemoteFile.cs" />
     <Compile Include="Engine\Network\TransferManager.cs" />
     <Compile Include="Engine\Package.cs" />
-    <Compile Include="Engine\PackageExtensions.cs" />
+    <Compile Include="Engine\PackageCollectionExtensions.cs" />
     <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
     <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
     <Compile Include="Engine\PackageManager.cs" />

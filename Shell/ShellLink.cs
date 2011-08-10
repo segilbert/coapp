@@ -14,6 +14,7 @@
 // (c) Author: Richard G Russell (Foredecker) 
 // This code is licensed under the MS-PL
 // http://www.opensource.org/licenses/ms-pl.html
+// Acquired from : http://foredecker.wordpress.com/2010/12/05/c-ishelllink-com-interop-example/
 // -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Shell {

@@ -15,69 +15,101 @@ namespace CoApp.Toolkit.Engine.Feeds {
     using System.Linq;
     using System.Net;
     using System.ServiceModel.Syndication;
-    using System.Threading.Tasks;
     using Atom;
     using Extensions;
     using Network;
     using Tasks;
 
+    /// <summary>
+    /// A package feed represented by a atom XML file
+    /// 
+    /// This may be a remote URL or a local xml file.
+    /// </summary>
+    /// <remarks></remarks>
     internal class AtomPackageFeed : PackageFeed {
+        /// <summary>
+        /// The transfer manager interface to files in the cache directory.
+        /// 
+        /// NOTE: this will be refactored shortly.
+        /// </summary>
         private static readonly TransferManager _transferManager = TransferManager.GetTransferManager(PackageManagerSettings.CoAppCacheDirectory);
+        
+        /// <summary>
+        /// the actual Atom/Rss feed object.
+        /// </summary>
         private AtomFeed _feed;
-        private Uri _remoteLocation;
+        /// <summary>
+        /// the remote location this feed is coming from. 
+        /// 
+        /// May be null if this file is local to start with
+        /// </summary>
+        private readonly Uri _remoteLocation;
 
+        /// <summary>
+        /// the collection of packages found in this feed.
+        /// </summary>
         private readonly List<Package> _packageList = new List<Package>();
-        internal AtomPackageFeed(string location)
-            : base(location) {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PackageFeed"/> class.
+        /// </summary>
+        /// <param name="location">The local file location of the package feed.
+        /// This must be a file. NOTE: Needs a check!
+        /// </param>
+        /// <remarks></remarks>
+        internal AtomPackageFeed(string location) : base(location) {
             _feed = AtomFeed.Load(location);
         }
-
-        internal AtomPackageFeed(Uri remoteLocation, string location)
-            : base(location) {
-            _remoteLocation = remoteLocation;
-            _feed = AtomFeed.Load(location);
-        }
-
-
-        internal AtomPackageFeed(Uri location)
-            : base(location.AbsoluteUri) {
-             _remoteLocation = location;
+  
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AtomPackageFeed"/> class.
+        /// 
+        /// From a remote URI location
+        /// </summary>
+        /// <param name="location">The URL of the remote package feed..</param>
+        /// <remarks>
+        /// Note: TransferManager is refactoring soon, I'm sure.
+        /// </remarks>
+        internal AtomPackageFeed(Uri location) : base(location.AbsoluteUri) {
+            _remoteLocation = location;
             var tsk = _transferManager[_remoteLocation].Get();
             tsk.ContinueWithParent(antecedent => {
-                if( _transferManager[_remoteLocation].LastStatus == HttpStatusCode.OK ) {
+                if (_transferManager[_remoteLocation].LastStatus == HttpStatusCode.OK) {
                     _feed = AtomFeed.Load(_transferManager[_remoteLocation].LocalFullPath);
                 }
             });
         }
 
 
+        /// <summary>
+        /// Iterates thru the list of atom feed items and creates package representations of each item.
+        /// </summary>
+        /// <remarks></remarks>
         protected void Scan() {
             if (!Scanned) {
                 Scanned = true;
-                foreach( var each in _feed.Items) {
-                    var item = each as Atom.AtomItem;
+                foreach (var each in _feed.Items) {
+                    var item = each as AtomItem;
                     var pkgElement = item.packageElement;
 
-                    var package = Registrar.GetPackage(pkgElement.Name,  pkgElement.Version,pkgElement.Architecture, pkgElement.PublicKeyToken,
-                        pkgElement.Id);
+                    var package = Registrar.GetPackage(pkgElement.Name, pkgElement.Version, pkgElement.Architecture, pkgElement.PublicKeyToken, pkgElement.Id);
 
 
                     package.SummaryDescription = item.Summary.Text;
                     package.PublishDate = item.PublishDate.Date;
 
-                     if (item.Authors.Count > 0 ) {
+                    if (item.Authors.Count > 0) {
                         var author = item.Authors[0];
                         package.Publisher.Name = author.Name;
                         package.Publisher.Email = author.Email;
                         package.Publisher.Url = author.Uri;
                     }
-                    
-                    package.Contributors =
-                        item.Contributors.Select(party => new Package.Party() {
-                            Name = party.Name, 
-                            Email = party.Email, 
-                            Url = party.Uri
-                        }).ToList();
+
+                    package.Contributors = item.Contributors.Select(party => new Package.Party {
+                        Name = party.Name,
+                        Email = party.Email,
+                        Url = party.Uri
+                    }).ToList();
 
                     if (item.Copyright != null) {
                         package.CopyrightStatement = item.Copyright.Text;
@@ -92,13 +124,14 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     package.PolicyMinimumVersion = pkgElement.BindingPolicyMinVersion;
                     package.Base64IconData = pkgElement.Icon;
 
-                    package.RemoteLocation.Add(item.Links.Where(link => link.RelationshipType != null && link.RelationshipType.Equals("enclosure")).Select(y => y.Uri));
-                    
-                    foreach(var dep in pkgElement.Dependencies) {
+                    package.RemoteLocation.Add(
+                        item.Links.Where(link => link.RelationshipType != null && link.RelationshipType.Equals("enclosure")).Select(y => y.Uri));
+
+                    foreach (var dep in pkgElement.Dependencies) {
                         package.Dependencies.Add(Registrar.GetPackage(dep));
                     }
 
-                    if( _remoteLocation == null ) {
+                    if (_remoteLocation == null) {
                         // relative links are local file links.
 
                         var localDir = Path.GetDirectoryName(Location);
@@ -133,37 +166,44 @@ namespace CoApp.Toolkit.Engine.Feeds {
                                     package.RemoteLocation.Add(new Uri(_remoteLocation, loc));
                                 }
                             }
-                            
                         }
                         package.RemoteLocation.Value = new Uri(_remoteLocation, pkgElement.RelativeLocation);
                         package.FeedLocation.Add(_remoteLocation.AbsoluteUri);
                     }
-                    
+
                     _packageList.Add(package);
                 }
             }
         }
 
-        internal override bool DownloadPackage(Package package) {
-            return false;
-        }
-
+        /// <summary>
+        /// Finds packages matching the same publisher, name, and publickeytoken
+        /// </summary>
+        /// <param name="packageFilter">The package filter.</param>
+        /// <returns>Returns a collection of packages that match</returns>
+        /// <remarks></remarks>
         internal override IEnumerable<Package> FindPackages(Package packageFilter) {
             Scan();
             // DebugMessage.Invoke.WriteLine(string.Format( "Scanning(pk) for package [{0}]-[{1}]-[{2}]", packageFilter.Name,packageFilter.Architecture, packageFilter.PublicKeyToken));
             return from package in _packageList
-                   where
-                       package.Name == packageFilter.Name &&
-                       package.Architecture == packageFilter.Architecture &&
-                       package.PublicKeyToken == packageFilter.PublicKeyToken
-                   select package;
+                where
+                    package.Name == packageFilter.Name && package.Architecture == packageFilter.Architecture &&
+                        package.PublicKeyToken == packageFilter.PublicKeyToken
+                select package;
         }
 
+        /// <summary>
+        /// Finds packages based on the cosmetic name of the package.
+        /// 
+        /// Supports wildcard in pattern match.
+        /// </summary>
+        /// <param name="packageFilter">The package filter.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         internal override IEnumerable<Package> FindPackages(string packageFilter) {
             Scan();
 
             return from package in _packageList where package.CosmeticName.IsWildcardMatch(packageFilter) select package;
         }
-
     }
 }

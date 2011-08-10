@@ -22,6 +22,9 @@ namespace CoApp.Toolkit.Engine {
     using Tasks;
     using Win32;
 
+    /// <summary>
+    /// NOTE: EXPLICITLY IGNORE, MAJOR REFACTORING AHEAD
+    /// </summary>
     public class Package {
         public class Party {
             public string Name { get; set; }

@@ -14,6 +14,8 @@ using CoApp.Toolkit.Extensions;
 
 namespace CoApp.Toolkit.Package
 {
+    // Eric?
+
 #if COAPP_ENGINE_CORE
     internal struct Huid
 #else

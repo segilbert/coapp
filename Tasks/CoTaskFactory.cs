@@ -14,6 +14,9 @@ namespace CoApp.Toolkit.Tasks {
     using System.Threading;
     using System.Threading.Tasks;
 
+    /// <summary>
+    /// CoApp enhanced TaskFactory class.
+    /// </summary>
     public class CoTaskFactory : TaskFactory {
         // Methods
         public CoTaskFactory() : this (CancellationToken.None ,TaskCreationOptions.AttachedToParent, TaskContinuationOptions.AttachedToParent, TaskScheduler.Default ) { }
@@ -22,6 +25,11 @@ namespace CoApp.Toolkit.Tasks {
         public CoTaskFactory(TaskCreationOptions creationOptions, TaskContinuationOptions continuationOptions) : this(CancellationToken.None, creationOptions, continuationOptions, TaskScheduler.Default) { }
         public CoTaskFactory(CancellationToken cancellationToken, TaskCreationOptions creationOptions, TaskContinuationOptions continuationOptions, TaskScheduler scheduler) : base(cancellationToken, creationOptions, continuationOptions, scheduler) { }
 
+        /// <summary>
+        /// Creates similar CreationOptions from ContinuationOptions
+        /// </summary>
+        /// <param name="continuationOptions"></param>
+        /// <returns></returns>
         internal static TaskCreationOptions CreationOptionsFromContinuationOptions(TaskContinuationOptions continuationOptions) {
             const TaskContinuationOptions notOnAnything = TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted | TaskContinuationOptions.NotOnRanToCompletion;
             const TaskContinuationOptions creationOptionsMask = TaskContinuationOptions.PreferFairness | TaskContinuationOptions.LongRunning | TaskContinuationOptions.AttachedToParent;
@@ -45,6 +53,7 @@ namespace CoApp.Toolkit.Tasks {
             return (TaskCreationOptions)(continuationOptions & creationOptionsMask);
         }
 
+        
         public new Task ContinueWhenAll(Task[] tasks, Action<Task[]> continuationAction) { return ContinueWhenAll(tasks, continuationAction, Tasklet.CurrentCancellationToken, ContinuationOptions, Scheduler, new MessageHandlers[] {} ); }
         public new Task ContinueWhenAll(Task[] Tasks, Action<Task[]> continuationAction, CancellationToken cancellationToken) { return ContinueWhenAll(Tasks, continuationAction, cancellationToken, ContinuationOptions, Scheduler, new MessageHandlers[] { }); }
         public new Task ContinueWhenAll(Task[] Tasks, Action<Task[]> continuationAction, TaskContinuationOptions continuationOptions) { return ContinueWhenAll(Tasks, continuationAction, Tasklet.CurrentCancellationToken, continuationOptions, Scheduler, new MessageHandlers[] { }); }

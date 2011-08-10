@@ -27,6 +27,9 @@ namespace CoApp.Toolkit.Engine {
     using OperationCompletedBeforeResultException = Tasks.OperationCompletedBeforeResultException;
 
 
+    /// <summary>
+    /// NOTE: EXPLICITLY IGNORE, MAJOR REFACTORING AHEAD
+    /// </summary>
     public class PackageManager {
         // private readonly List<Package> _acquirePackageQueue = new List<Package>();
         // private readonly List<Package> _installQueue = new List<Package>();
