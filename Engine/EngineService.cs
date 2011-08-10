@@ -290,12 +290,17 @@ namespace CoApp.Toolkit.Engine {
     public class MessagePump {
         private string _clientId;
         private readonly string _sessionId;
+        private readonly string _userId;
         private readonly NamedPipeServerStream _serverPipe;
         private readonly NamedPipeServerStream _responsePipe;
 
         private readonly PackageManager _packageManager = new PackageManager();
 
-        public MessagePump(string clientId, string sessionId, NamedPipeServerStream serverPipe, NamedPipeServerStream responsePipe ) {
+        public void StartSession(string clientId, string sessionId, NamedPipeServerStream serverPipe, NamedPipeServerStream responsePipe ) {
+            
+        }
+
+        protected MessagePump(string clientId, string sessionId, NamedPipeServerStream serverPipe, NamedPipeServerStream responsePipe ) {
             _clientId = clientId;
             _sessionId = sessionId;
             _serverPipe = serverPipe;

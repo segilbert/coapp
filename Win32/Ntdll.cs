@@ -12,6 +12,9 @@ namespace CoApp.Toolkit.Win32 {
     using System;
     using System.Runtime.InteropServices;
 
+    /// <summary>
+    /// Native function calls using NTDLL
+    /// </summary>
     public static class Ntdll {
         [DllImport("ntdll.dll", CallingConvention = CallingConvention.StdCall)]
         public static extern UInt32 RtlAcquirePrivilege(ref UInt32 Privilege, UInt32 NumPriv, UInt32 Flags, ref IntPtr ReturnedState);

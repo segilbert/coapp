@@ -14,8 +14,20 @@ using System.Linq;
 using System.Text;
 
 namespace CoApp.Toolkit.Engine.Exceptions {
+    /// <summary>
+    /// Exception thrown when the location of a feed isn't recognizable as a package feed.
+    /// </summary>
+    /// <remarks></remarks>
     public class InvaildFeedLocationException : Exception {
+        /// <summary>
+        /// The location attemped to use as a feed location
+        /// </summary>
         public string Location;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InvaildFeedLocationException"/> class.
+        /// </summary>
+        /// <param name="location">The location.</param>
+        /// <remarks></remarks>
         public InvaildFeedLocationException(string location) {
             Location = location;
         }
