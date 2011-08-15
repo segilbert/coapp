@@ -19,7 +19,7 @@ identity
 }
 
 dependencies {
-	add: "coapp.toolkit-1.1.2.160-any";
+	add: "coapp.toolkit-1.1.2.237-any";
 }
 
 
@@ -55,6 +55,83 @@ exe-file[trace-x64.exe]{
 app {
 	include: @"\"="detour*.dll";
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

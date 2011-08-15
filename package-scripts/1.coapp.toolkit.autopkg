@@ -13,7 +13,6 @@ package
 {
     name: CoApp.Toolkit;
     display-name: "CoApp Toolkit/Engine";
-    policy: 1.0;
     /*license: <path to license on disk> */
     orig-location: "http://coapp.org/repository/coapp.toolkit-1.0.6.131-any.msi";
     feed-location: "http://coapp.org/repository/packages.atom.xml";
@@ -33,6 +32,10 @@ identity
 
 exe-file[coapp.exe]{
 	global-bin: true;
+}
+
+sharedlib {
+	policy-file: 1.0;
 }
 
 assembly[CoApp.Toolkit.dll] {

@@ -22,7 +22,7 @@ package
 }
 
 dependencies {
-	add: "coapp.toolkit-1.1.2.160-any";
+	add: "coapp.toolkit-1.1.2.237-any";
 }
 
 identity
@@ -46,6 +46,83 @@ exe-file[dllexport.exe]{
 exe-file[QuickTool.exe]{
 	global-bin: true;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
