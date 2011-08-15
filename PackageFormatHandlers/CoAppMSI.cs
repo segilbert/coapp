@@ -148,7 +148,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     arch = pak.arch;
                     version = ((string)pak.version).VersionStringToUInt64();
                     pkt = pak.public_key_token;
-                    result.dependencies.Add(Registrar.GetPackage(name, version, arch, pkt, pkgid));
+                    result.dependencies.Add(NewPackageManager.Instance.GetPackageByDetails(name, version, arch, pkt, pkgid));
                 }
             }
 
@@ -274,8 +274,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             }), InstallLogModes.Progress);
 
             try {
-                Installer.InstallProduct(package.LocalPackagePath,
-                    @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory, package.UserSpecified ? "ADD_TO_ARP=1" : ""));
+                Installer.InstallProduct(package.InternalPackageData.LocalPackagePath,
+                    @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory, package.PackageSessionData.UserSpecified ? "ADD_TO_ARP=1" : ""));
             }
             finally {
                 SetUIHandlersToSilent();
@@ -334,7 +334,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             }), InstallLogModes.Progress);
 
             try {
-                Installer.InstallProduct(package.LocalPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+                Installer.InstallProduct(package.InternalPackageData.LocalPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
             }
             finally {
                 SetUIHandlersToSilent();
@@ -350,7 +350,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// Note: Refactoring comming up soon.
         /// </remarks>
         public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
-            dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
+            dynamic packageData = GetDynamicMSIData(package.InternalPackageData.LocalPackagePath);
 
             if (packageData.CO_INSTALL_PROPERTIES == null) {
                 return Enumerable.Empty<CompositionRule>();

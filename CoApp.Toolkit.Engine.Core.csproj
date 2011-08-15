@@ -93,8 +93,6 @@
     <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
     <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
     <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs" />
-    <Compile Include="Engine\Feeds\ArchivePackageFeed.cs" />
-    <Compile Include="Engine\Feeds\AtomPackageFeed.cs" />
     <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />
     <Compile Include="Engine\Feeds\PackageFeed.cs" />
     <Compile Include="Engine\MultiplexedProperty.cs" />
@@ -103,8 +101,6 @@
     <Compile Include="Engine\NewPackageManager.cs" />
     <Compile Include="Engine\Package.cs" />
     <Compile Include="Engine\PackageCollectionExtensions.cs" />
-    <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
-    <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
     <Compile Include="Engine\PackageManagerMessages.cs" />
     <Compile Include="Engine\PackageManagerSettings.cs" />
     <Compile Include="Engine\PackageRole.cs" />
@@ -169,6 +165,7 @@
     <Compile Include="Shell\ShellLink.cs" />
     <Compile Include="Shell\ShellLinkFlags.cs" />
     <Compile Include="Shell\ShowWindowCommand.cs" />
+    <Compile Include="Tasks\Cache.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
     <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Tasks\TriggeredProperty.cs" />

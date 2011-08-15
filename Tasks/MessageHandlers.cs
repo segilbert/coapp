@@ -256,7 +256,7 @@ namespace CoApp.Toolkit.Tasks {
                 _tasks[task.Id].TaskInstance= task;
             }
 
-            task.ContinueWith(OnTaskComplete);
+            task.ContinueWith(OnTaskComplete,TaskContinuationOptions.AttachedToParent);
             return task;
         }
 
@@ -273,7 +273,7 @@ namespace CoApp.Toolkit.Tasks {
                 _tasks[task.Id].TaskInstance= task;
             }
 
-            task.ContinueWith(OnTaskComplete);
+             task.ContinueWith(OnTaskComplete, TaskContinuationOptions.AttachedToParent);
             return task;
         }
 

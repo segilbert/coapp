@@ -61,15 +61,15 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// </remarks>
         protected void Scan() {
             if (!Scanned) {
-                var files = Location.DirectoryEnumerateFilesSmarter(_patternMatch, _recursive ? SearchOption.AllDirectories: SearchOption.TopDirectoryOnly, Registrar.DoNotScanLocations);
+                var files = Location.DirectoryEnumerateFilesSmarter(_patternMatch, _recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly, NewPackageManager.Instance.BlockedScanLocations);
                 files = from file in files
                     where Recognizer.Recognize(file).Result.IsPackageFile // Since we know this to be local, it'm ok with blocking on the result.
                     select file;
 
                 foreach (var p in files) {
                     try {
-                        var pkg = Registrar.GetPackage(p);
-                        pkg.FeedLocation.Add(Location);
+                        var pkg = NewPackageManager.Instance.GetPackageFromFilename(p);
+                        pkg.InternalPackageData.FeedLocation.Add(Location);
                         
                         if( !_packageList.Contains(pkg))
                             _packageList.Add(pkg);

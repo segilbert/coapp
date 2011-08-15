@@ -36,36 +36,6 @@ namespace CoApp.Toolkit.Engine {
                 return _value ?? string.Empty;
             }
 
-            /*
-            public bool? AsBool { get {
-                switch( _value.ToLower()) {
-                    case "true":
-                        return true;
-                        break;
-                    case "false":
-                        return false;
-                        break;
-                    default:
-                        return null;
-                }
-            }}
-
-            public int? AsInt {
-                get {
-                    int outVal;
-                    if( Int32.TryParse(_value, out outVal)) {
-                        return outVal;
-                    }
-                    return null;
-                }
-            }
-
-            public string AsString {
-                get {
-                    return _value;
-                }
-            }*/
-
             public static implicit operator string(UrlEncodedMessageValue value) {
                 return value._value ?? string.Empty;
             }
@@ -82,10 +52,10 @@ namespace CoApp.Toolkit.Engine {
                 switch (value._value.ToLower()) {
                     case "true":
                         return true;
-                        break;
+                        
                     case "false":
                         return false;
-                        break;
+                        
                     default:
                         return null;
                 }
@@ -147,23 +117,6 @@ namespace CoApp.Toolkit.Engine {
             Data = data;
         }
 
-        /*
-        /// <summary>
-        /// Gets or sets the <see cref="System.String"/> with the specified key.
-        /// </summary>
-        /// <remarks></remarks>
-        public string this[string key] {
-            get { return Data.ContainsKey(key) ? Data[key] : String.Empty; }
-            set {
-                if (Data.ContainsKey(key)) {
-                    Data[key] = value;
-                }
-                else {
-                    Data.Add(key, value);
-                }
-            }
-        }*/
-
         public UrlEncodedMessageValue this[string key] {
             get { return new UrlEncodedMessageValue( Data.ContainsKey(key) ? Data[key] : null ); }
         }
@@ -177,7 +130,7 @@ namespace CoApp.Toolkit.Engine {
         /// <remarks></remarks>
         public override string ToString() {
             return Data.Any()
-                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (k.UrlEncode() + "=" + Data[k].UrlEncode()))
+                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (k.UrlEncode() + "=" + Data[k].UrlEncode() + "&"))
                 : Command.UrlEncode();
         }
 

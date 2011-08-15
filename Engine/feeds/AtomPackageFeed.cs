@@ -81,6 +81,10 @@ namespace CoApp.Toolkit.Engine.Feeds {
             }, TaskContinuationOptions.AttachedToParent );
         }
 
+        internal static PackageDetails ReadPackageDetails(Uri remoteLocation, string localLocation, Package package) {
+            
+        }
+
 
         /// <summary>
         /// Iterates thru the list of atom feed items and creates package representations of each item.
@@ -93,8 +97,11 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     var item = each as AtomItem;
                     var pkgElement = item.packageElement;
 
-                    var package = Registrar.GetPackage(pkgElement.Name, pkgElement.Version, pkgElement.Architecture, pkgElement.PublicKeyToken, pkgElement.Id);
+                    var package = NewPackageManager.Instance.GetPackageByDetails(pkgElement.Name, pkgElement.Version, pkgElement.Architecture, pkgElement.PublicKeyToken, pkgElement.Id);
 
+                    // adds the lookup method to the session cache.
+                    SessionCache<PackageDetails>.Value.Add(package.CanonicalName, canonicalname => ReadPackageDetails(_remoteLocation, "", package));
+                 
 
                     package.SummaryDescription = item.Summary.Text;
                     package.PublishDate = item.PublishDate.Date;

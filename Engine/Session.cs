@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
+    using Tasks;
     using Win32;
 
     /// <summary>
@@ -28,7 +29,7 @@ namespace CoApp.Toolkit.Engine {
     public class Session {
 #if DEBUG
         // keep the reconnect window at 20 seconds for debugging
-        private static TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 0, 20);
+        private static TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 0, 10);
 #else 
     // fifteen minutes is good for the real world.
         private static TimeSpan _maxDisconenctedWait = new TimeSpan(0,0,15,00);
@@ -64,10 +65,6 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         private NamedPipeServerStream _responsePipe;
 
-        /// <summary>
-        /// </summary>
-        private readonly NewPackageManager _packageManager = new NewPackageManager();
-
         private bool _ended;
 
         private ManualResetEvent _resetEvent = new ManualResetEvent(true );
@@ -79,6 +76,7 @@ namespace CoApp.Toolkit.Engine {
 
         private readonly Dictionary<string, PackageSessionData> _sessionData = new Dictionary<string, PackageSessionData>();
         private PackageManagerSession _packageManagerSession;
+        private SessionCacheMessages _sessionCacheMessages;
 
         private bool Connected {
             get { return _resetEvent.WaitOne(0); }
@@ -178,6 +176,16 @@ namespace CoApp.Toolkit.Engine {
                 // end any outstanding tasks as gracefully as we can.
                 _cancellationTokenSource.Cancel();
 
+                // _task should wait here I think...
+                
+                while(!_task.IsCompleted && !_task.Wait(1000) ) {
+                    Console.WriteLine("Waiting for task to complete... You may want to expand the message here to see what its waiting on.");
+                }
+
+                // drop all our local session data.
+                _sessionCache.Clear();
+                _sessionCache = null;
+
                 // close and clean up the pipes. 
                 Disconnect();
 
@@ -228,8 +236,11 @@ namespace CoApp.Toolkit.Engine {
             _isAsychronous = serverPipe == responsePipe;
             Connected = true;
 
-            _task = Task.Factory.StartNew(ProcessMesages, _cancellationTokenSource.Token).ContinueWith((antecedent) => End(),
-                TaskContinuationOptions.AttachedToParent);
+            // this session task
+            _task = Task.Factory.StartNew(ProcessMesages, _cancellationTokenSource.Token).AutoManage();
+
+            // when the task is done, call end.
+            _task.ContinueWith((antecedent) => End());
         }
 
         protected void WriteAsync() {
@@ -290,6 +301,8 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        private Dictionary<Type, object> _sessionCache = new Dictionary<Type, object>();
+
         /// <summary>
         ///   Processes the mesages.
         /// </summary>
@@ -298,7 +311,9 @@ namespace CoApp.Toolkit.Engine {
         private void ProcessMesages() {
             // instantiate the Asynchronous Package Session object (ie, like thread-local-storage, but really, 
             // it's session-local-storage. So for this task and all its children, this will serve up data.
+
             _packageManagerSession = new PackageManagerSession {
+/*
                 GetPackageSessionData = (package) => {
                     lock (_sessionData) {
                         if (!_sessionData.ContainsKey(package.CanonicalName)) {
@@ -315,7 +330,7 @@ namespace CoApp.Toolkit.Engine {
                         }
                     }
                 },
-
+*/
                 CheckForPermission = (policy) => {
                     var result = false;
                     _serverPipe.RunAsClient(() => { result = policy.HasPermission; });
@@ -323,19 +338,30 @@ namespace CoApp.Toolkit.Engine {
                 }
             };
 
-            Task readTask = null;
-            WriteAsync(new UrlEncodedMessage("session-started") {
-                {
-                    "id", _sessionId
-                    }
-            });
+            _packageManagerSession.Register(); // visible to this task and all properly behaved children
 
+            _sessionCacheMessages = new SessionCacheMessages {
+                GetInstance = (type, constructor) => {
+                    lock (_sessionCache) {
+                        if (!_sessionCache.ContainsKey(type)) {
+                            _sessionCache.Add(type, constructor());
+                        }
+                        return _sessionCache[type];
+                    }
+                }
+            };
+
+            _sessionCacheMessages.Register(); // visible to this task and all properly behaved children
+
+
+            Task readTask = null;
+            SendSessionStarted(_sessionId);
+            
             while (EngineService.IsRunning) {
                 if (!Connected) {
                     readTask = null;
 
                     if (IsCancelled) {
-                        End();
                         return;
                     }
 
@@ -346,7 +372,7 @@ namespace CoApp.Toolkit.Engine {
                     if (IsCancelled || (_waitingForClientResponse && !Connected)) {
                         // we're disconnected, we've waited for the duration, 
                         // we're assuming the client isn't coming back.
-                        End();
+                        // End(); // get out of the function ... 
                         return;
                     }
                     continue;
@@ -356,7 +382,6 @@ namespace CoApp.Toolkit.Engine {
 
                 try {
                     if (IsCancelled) {
-                        End();
                         return;
                     }
 
@@ -373,6 +398,8 @@ namespace CoApp.Toolkit.Engine {
 
                                 Dispatch(new UrlEncodedMessage(rawMessage));
                             });
+
+                            readTask.AutoManage();
                         }
                         catch (Exception e) {
                             // if the pipe is broken, let's move to the disconnected state
@@ -383,7 +410,6 @@ namespace CoApp.Toolkit.Engine {
                     readTask.Wait(_isAsychronous ? -1 : (int) _synchronousClientHeartbeat.TotalMilliseconds, _cancellationTokenSource.Token);
 
                     if (IsCancelled) {
-                        End();
                         return;
                     }
 
@@ -421,7 +447,7 @@ namespace CoApp.Toolkit.Engine {
             switch (requestMessage.Command) {
                 case "find-packages":
                     // get the package names collection and run the command
-                    _packageManager.FindPackages(new NewPackageManagerMessages {
+                    NewPackageManager.Instance.FindPackages(new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         PackageInformation = (package) => SendFoundPackage(package.CanonicalName, package.InternalPackageData.LocalPackagePath, package.Name, package.Version.UInt64VersiontoString(), package.Architecture, package.PublicKeyToken, package.IsInstalled, package.InternalPackageData.RemoteLocation.Select( each => each.AbsoluteUri), Enumerable.Empty<string>(), Enumerable.Empty<string>() ),
                         NoPackagesFound = SendNoPackagesFound,
@@ -433,7 +459,7 @@ namespace CoApp.Toolkit.Engine {
 
 
                 case "get-package-details":
-                    _packageManager.GetPackageDetails(requestMessage["canonical-name"].ToString(), new NewPackageManagerMessages() {
+                    NewPackageManager.Instance.GetPackageDetails(requestMessage["canonical-name"].ToString(), new NewPackageManagerMessages() {
                         UnexpectedFailure = SendUnexpectedFailure,
                         PackageDetails = (package) => SendPackageDetails(package.CanonicalName, package.PackageDetails.FullDescription),
                         UnknownPackage = SendUnknownPackage,
@@ -442,7 +468,7 @@ namespace CoApp.Toolkit.Engine {
                     break;
 
                 case "install-package":
-                    _packageManager.InstallPackage(requestMessage["canonical-name"], requestMessage["auto-upgrade"], requestMessage["force"], new NewPackageManagerMessages {
+                    NewPackageManager.Instance.InstallPackage(requestMessage["canonical-name"], requestMessage["auto-upgrade"], requestMessage["force"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         UnknownPackage = SendUnknownPackage,
                         PermissionRequired = SendOperationRequiresPermission,
@@ -457,7 +483,7 @@ namespace CoApp.Toolkit.Engine {
                 break;
 
                 case "recognize-file":
-                    _packageManager.RecognizeFile(requestMessage["reference-id"], requestMessage["local-location"], requestMessage["remote-location"], new NewPackageManagerMessages {
+                    NewPackageManager.Instance.RecognizeFile(requestMessage["reference-id"], requestMessage["local-location"], requestMessage["remote-location"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         ArgumentError = SendMessageArgumentError,
                         FileNotRecognized = SendUnableToRecognizeFile
@@ -465,14 +491,14 @@ namespace CoApp.Toolkit.Engine {
                 break;
 
                 case "unable-to-acquire":
-                    _packageManager.UnableToAcquire(requestMessage["reference-id"], new NewPackageManagerMessages {
+                    NewPackageManager.Instance.UnableToAcquire(requestMessage["reference-id"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         ArgumentError = SendMessageArgumentError,
                     });
                 break;
 
                 case "remove-package":
-                    _packageManager.RemovePackage(requestMessage["canonical-name"], new NewPackageManagerMessages {
+                    NewPackageManager.Instance.RemovePackage(requestMessage["canonical-name"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         UnknownPackage = SendUnknownPackage,
                         PermissionRequired = SendOperationRequiresPermission,
@@ -483,7 +509,7 @@ namespace CoApp.Toolkit.Engine {
               break;
 
                 case "set-package":
-                    _packageManager.SetPackage(requestMessage["canonical-name"], requestMessage["active"], requestMessage["required"], requestMessage["blocked"], new NewPackageManagerMessages {
+                    NewPackageManager.Instance.SetPackage(requestMessage["canonical-name"], requestMessage["active"], requestMessage["required"], requestMessage["blocked"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         ArgumentError = SendMessageArgumentError,
                         PermissionRequired = SendOperationRequiresPermission,
@@ -492,7 +518,7 @@ namespace CoApp.Toolkit.Engine {
                 break;
 
                 case "verify-file-signature":
-                    _packageManager.VerifyFileSignature(requestMessage["filename"], new NewPackageManagerMessages {
+                    NewPackageManager.Instance.VerifyFileSignature(requestMessage["filename"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         ArgumentError = SendMessageArgumentError,
                         FileNotFound= SendFileNotFound,
@@ -501,7 +527,7 @@ namespace CoApp.Toolkit.Engine {
                 break;
 
                 case "add-feed":
-                    _packageManager.AddFeed(requestMessage["location"], requestMessage["session"] , new NewPackageManagerMessages {
+                    NewPackageManager.Instance.AddFeed(requestMessage["location"], requestMessage["session"] , new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         ArgumentError = SendMessageArgumentError,
                         PermissionRequired = SendOperationRequiresPermission,
@@ -510,7 +536,7 @@ namespace CoApp.Toolkit.Engine {
                 break;
 
                 case "remove-feed":
-                    _packageManager.RemoveFeed(requestMessage["location"], requestMessage["session"], new NewPackageManagerMessages {
+                    NewPackageManager.Instance.RemoveFeed(requestMessage["location"], requestMessage["session"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         ArgumentError = SendMessageArgumentError,
                         PermissionRequired = SendOperationRequiresPermission,
@@ -518,7 +544,7 @@ namespace CoApp.Toolkit.Engine {
                 break;
 
                 case "find-feeds":
-                    _packageManager.ListFeeds( new NewPackageManagerMessages {
+                    NewPackageManager.Instance.ListFeeds( new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
                         ArgumentError = SendMessageArgumentError,
                         FeedDetails = SendFoundFeed
@@ -527,7 +553,7 @@ namespace CoApp.Toolkit.Engine {
 
                 default:
                     // not recognized command, return error code.
-                    WriteAsync(new UrlEncodedMessage("unknowncommand") {
+                    WriteAsync(new UrlEncodedMessage("unknown-command") {
                         { "command", requestMessage.Command }
                     });
                     break;
@@ -637,7 +663,6 @@ namespace CoApp.Toolkit.Engine {
             };
 
             msg.AddCollection("remote-locations", remoteLocations);
-
             WriteAsync(msg);
         }
 
@@ -697,13 +722,11 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
-
         private void SendKeepAlive() {
             WriteAsync( new UrlEncodedMessage("keep-alive"));
         }
 
         #endregion
-
     }
 
 }

@@ -17,16 +17,20 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading.Tasks;
     using Tasks;
 
-    internal class NewPackageManager {
-        internal NewPackageManager() {
+    public class NewPackageManager {
+
+        public static NewPackageManager Instance = new NewPackageManager();
+
+        private NewPackageManager() {
             
         }
 
-        internal Task FindPackages( NewPackageManagerMessages messages ) {
+        public Task FindPackages( NewPackageManagerMessages messages ) {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
@@ -34,11 +38,12 @@ namespace CoApp.Toolkit.Engine {
             return t;
         }
 
-        internal Task GetPackageDetails( string canonicalName,  NewPackageManagerMessages messages ) {
+        public Task GetPackageDetails(string canonicalName, NewPackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
@@ -50,7 +55,8 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
@@ -61,6 +67,8 @@ namespace CoApp.Toolkit.Engine {
         public Task ListFeeds(NewPackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
+
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
 
                 // 
@@ -74,6 +82,7 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
@@ -86,6 +95,7 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
@@ -98,6 +108,7 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
@@ -110,6 +121,7 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
@@ -122,6 +134,7 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
@@ -134,6 +147,7 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
@@ -146,6 +160,7 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
+                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
                 // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
@@ -154,12 +169,30 @@ namespace CoApp.Toolkit.Engine {
             return t;
         }
 
-        public static void Updated() {
+        internal void Updated() {
             
+        }
+
+        internal IEnumerable<string> BlockedScanLocations {
+            get { return Enumerable.Empty<string>(); }
+        }
+
+        internal Package GetPackageFromFilename(string filename ) {
+            throw new NotImplementedException();
+        }
+
+        internal Package GetPackageByDetails(string name, ulong version, string architecture, string publicKeyToken, string id) {
+            throw new NotImplementedException();
+        }
+
+        internal IEnumerable<Package> InstalledPackages {
+            get {
+                throw new NotImplementedException();
+            }
         }
     }
 
-    internal class PackageManagerSessionData {
+    public class PackageManagerSessionData {
         
     }
     

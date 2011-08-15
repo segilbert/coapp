@@ -28,7 +28,7 @@ namespace CoApp.Toolkit.Engine {
     /// <remarks>
     /// Storage Only Class.
     /// </remarks>
-    internal class CompositionRule {
+    public class CompositionRule {
         /// <summary>
         /// The package for which this rule is created
         /// </summary>

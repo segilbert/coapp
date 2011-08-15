@@ -109,11 +109,12 @@ namespace CoApp.Toolkit.Engine {
                         StartListener();
                     }
                     finally {
-                        Console.WriteLine("[Done.========================]");
-                        _isRunning = false;
+                        
+                       
                     }
                 }, _cancellationTokenSource.Token).Wait(_cancellationTokenSource.Token);
-
+                Console.WriteLine("[Done.========================]");
+                _isRunning = false;
                 // ensure the sessions are all getting closed.
                 Session.CancelAll();
             }
@@ -168,8 +169,9 @@ namespace CoApp.Toolkit.Engine {
                                 if (string.IsNullOrEmpty(requestMessage["id"]) || string.IsNullOrEmpty(requestMessage.Data["client"])) {
                                     return;
                                 }
-
-                                if (requestMessage["async"].Equals("false", StringComparison.CurrentCultureIgnoreCase)) {
+                                var async = (bool?) requestMessage["async"];
+                                
+                                if (async.HasValue && async.Value == false) {
                                     Console.WriteLine("Using Two-Pipe Client");
                                     StartResponsePipeAndProcessMesages(requestMessage.Data["client"], requestMessage["id"], serverPipe);
                                 }

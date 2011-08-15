@@ -55,12 +55,12 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// </summary>
         /// <value><c>true</c> if scanned; otherwise, <c>false</c>.</value>
         /// <remarks></remarks>
-        internal bool Scanned {
+        internal bool Scanned { 
             get { return _scanned; }
             set {
                 if (_scanned != value) {
                     _scanned = value;
-                    Registrar.Updated();
+                    NewPackageManager.Instance.Updated();
                 }
             }
         }
@@ -132,13 +132,14 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         if (_allFeeds.ContainsKey(info.FullPath)) {
                             return _allFeeds[info.FullPath];
                         }
-
+                        /*
                         if (info.IsAtom) {
                             result = new AtomPackageFeed(info.FullPath);
                         }
                         if (info.IsArchive) {
                             result = new ArchivePackageFeed(info.FullPath);
                         }
+                         * */
                     }
                         // TODO: URL based feeds
                     else if (info.IsURL) {
@@ -146,9 +147,11 @@ namespace CoApp.Toolkit.Engine.Feeds {
                             return _allFeeds[info.FullUrl.AbsoluteUri];
                         }
 
+                        /*
                         if (info.IsAtom) {
                             result = new AtomPackageFeed(info.FullUrl);
                         }
+                         */
                     }
                 }
 

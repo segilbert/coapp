@@ -104,6 +104,7 @@ namespace CoApp.Toolkit.Engine {
         /// <returns></returns>
         /// <remarks></remarks>
         internal static IEnumerable<Package> SupercedentPackages(this IEnumerable<Package> packageSet, Package package) {
+            /*
             // DebugMessage.Invoke.WriteLine(string.Format( "Scanning for package [{0}]", package.Name.SingleItemAsEnumerable()));
             // anything superceedent in the list of known packages?
             Registrar.ScanForPackages(package);
@@ -113,6 +114,9 @@ namespace CoApp.Toolkit.Engine {
                 p.Name.Equals(package.Name, StringComparison.CurrentCultureIgnoreCase) &&
                 p.PolicyMinimumVersion <= package.Version &&
                 p.PolicyMaximumVersion >= package.Version).OrderByDescending(p => p.Version);
+             * */
+
+            return Enumerable.Empty<Package>();
         }
     }
 }

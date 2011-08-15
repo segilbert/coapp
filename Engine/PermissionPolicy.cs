@@ -42,7 +42,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                 }
                 var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
-                return (from g in groups where g.Equals("administrators", StringComparison.CurrentCultureIgnoreCase) select g).Any(principal.IsInRole);
+                return (from g in groups where !g.Equals("administrators", StringComparison.CurrentCultureIgnoreCase) select g).Any(principal.IsInRole);
             }
         }
 

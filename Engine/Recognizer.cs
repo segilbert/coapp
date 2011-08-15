@@ -15,7 +15,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Net;
     using System.Threading.Tasks;
     using Extensions;
-    using Feeds.Atom;
+    
     using Network;
     using PackageFormatHandlers;
     using Tasks;
@@ -275,6 +275,7 @@ namespace CoApp.Toolkit.Engine {
                                 break;
 
                             default:
+                                /*
                                 if (result.FullPath.IsXmlFile()) {
                                     try {
                                         var feed = AtomFeed.Load(result.FullPath);
@@ -286,6 +287,7 @@ namespace CoApp.Toolkit.Engine {
                                     catch {
                                     }
                                 }
+                                 * */
                                 break;
                         }
                     }
