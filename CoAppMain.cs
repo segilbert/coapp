@@ -15,10 +15,12 @@ namespace CoApp.CLI {
     using System.Linq;
     using System.Resources;
     using System.Threading;
+    using System.Threading.Tasks;
     using Properties;
     using Toolkit.Console;
     using Toolkit.Crypto;
     using Toolkit.Engine;
+    using Toolkit.Engine.Client;
     using Toolkit.Exceptions;
     using Toolkit.Extensions;
     using Toolkit.Network;
@@ -26,45 +28,68 @@ namespace CoApp.CLI {
     using Toolkit.Win32;
 
     /// <summary>
-    ///   Main Program for command line coapp tool
+    /// Main Program for command line coapp tool
     /// </summary>
+    /// <remarks></remarks>
     public class CoAppMain : AsyncConsoleProgram {
+        /// <summary>
+        /// 
+        /// </summary>
         private string _feedOutputFile;
+        /// <summary>
+        /// 
+        /// </summary>
         private string _feedRootUrl;
+        /// <summary>
+        /// 
+        /// </summary>
         private string _feedActualUrl;
+        /// <summary>
+        /// 
+        /// </summary>
         private string _feedPackageSource;
+        /// <summary>
+        /// 
+        /// </summary>
         private bool _feedRecursive;
+        /// <summary>
+        /// 
+        /// </summary>
         private string _feedPackageUrl;
+        /// <summary>
+        /// 
+        /// </summary>
         private string _feedTitle;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private PackageManager _pkgManager;
 
+        /// <summary>
+        /// Gets the res.
+        /// </summary>
+        /// <remarks></remarks>
         protected override ResourceManager Res {
             get { return Resources.ResourceManager; }
         }
 
         /// <summary>
-        ///   Main entrypoint for CLI.
+        /// Main entrypoint for CLI.
         /// </summary>
-        /// <param name = "args">
-        ///   The command line arguments
-        /// </param>
-        /// <returns>
-        ///   int value representing the ERRORLEVEL.
-        /// </returns>
+        /// <param name="args">The command line arguments</param>
+        /// <returns>int value representing the ERRORLEVEL.</returns>
+        /// <remarks></remarks>
         private static int Main(string[] args) {
             return new CoAppMain().Startup(args);
         }
 
         /// <summary>
-        ///   The (non-static) startup method
+        /// The (non-static) startup method
         /// </summary>
-        /// <param name = "args">
-        ///   The command line arguments.
-        /// </param>
-        /// <returns>
-        ///   Process return code.
-        /// </returns>
+        /// <param name="args">The command line arguments.</param>
+        /// <returns>Process return code.</returns>
+        /// <remarks></remarks>
         protected override int Main(IEnumerable<string> args) {
             try {
                 _pkgManager = new PackageManager();
@@ -74,7 +99,7 @@ namespace CoApp.CLI {
                 #region commane line parsing
 
                 // default:
-                _pkgManager.SessionFeedLocations = new[] {Environment.CurrentDirectory};
+                // _pkgManager.SessionFeedLocations = new[] {Environment.CurrentDirectory};
 
                 var options = args.Switches();
                 var parameters = args.Parameters();
@@ -122,7 +147,7 @@ namespace CoApp.CLI {
                             if (string.IsNullOrEmpty(argumentParameters.FirstOrDefault())) {
                                 throw new ConsoleException(Resources.OptionRequiresLocation.format("--scan"));
                             }
-                            _pkgManager.SessionFeedLocations = argumentParameters;
+                            // _pkgManager.SessionFeedLocations = argumentParameters;
                             break;
 
                         case "flush-cache":
@@ -178,7 +203,7 @@ namespace CoApp.CLI {
 
                 // GS01: I'm putting this in here so that feed resoltion happens before we actually get around to doing something. 
                 // Look into the necessity later.
-                Tasklet.WaitforCurrentChildTasks();
+                // Tasklet.WaitforCurrentChildTasks();
 
                 var command = parameters.FirstOrDefault().ToLower();
                 parameters = parameters.Skip(1);
@@ -205,10 +230,10 @@ namespace CoApp.CLI {
                             };
 
                             // when it's done, do this:
-                            getTask.ContinueWithParent(t => {
+                            getTask.ContinueWith(t => {
                                 // this executes when the Get() operation completes.
                                 Console.WriteLine("File {0} has finished downloading", remoteFile.LocalFullPath);
-                            });
+                            },TaskContinuationOptions.AttachedToParent);
                             break;
 
                         case "verify-package":
@@ -222,7 +247,7 @@ namespace CoApp.CLI {
                                 throw new ConsoleException(Resources.InstallRequiresPackageName);
                             }
 
-                            Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
+                            /// Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
 
                             Install(parameters);
                             break;
@@ -267,14 +292,14 @@ namespace CoApp.CLI {
                             if (parameters.Count() < 1) {
                                 throw new ConsoleException(Resources.AddFeedRequiresLocation);
                             }
-                            CoTask.Factory.StartNew(() => AddFeed(parameters));
+                            Task.Factory.StartNew(() => AddFeed(parameters));
                             break;
 
                         case "delete":
                             if (parameters.Count() < 1) {
                                 throw new ConsoleException(Resources.DeleteFeedRequiresLocation);
                             }
-                            CoTask.Factory.StartNew(() => DeleteFeed(parameters));
+                            Task.Factory.StartNew(() => DeleteFeed(parameters));
                             break;
 
                         case "trim":
@@ -282,11 +307,11 @@ namespace CoApp.CLI {
                                 throw new ConsoleException(Resources.TrimErrorMessage);
                             }
 
-                            CoTask.Factory.StartNew(() => Trim(parameters));
+                            Task.Factory.StartNew(() => Trim(parameters));
                             break;
 
                         case "generate-feed":
-                            CoTask.Factory.StartNew(() => GenerateFeed(parameters));
+                            Task.Factory.StartNew(() => GenerateFeed(parameters));
                             break;
 
                         case "set-active":
@@ -310,6 +335,11 @@ namespace CoApp.CLI {
             return 0;
         }
 
+        /// <summary>
+        /// Dumps the packages.
+        /// </summary>
+        /// <param name="packages">The packages.</param>
+        /// <remarks></remarks>
         private void DumpPackages(IEnumerable<Package> packages) {
             if (packages.Count() > 0) {
                     (from pkg in packages orderby pkg.Name
@@ -327,10 +357,16 @@ namespace CoApp.CLI {
             }
         }
 
+        /// <summary>
+        /// Lists the packages.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void ListPackages(IEnumerable<string> parameters) {
+            /*
             var tsk = _pkgManager.GetInstalledPackages(new PackageManagerMessages {
                 PackageScanning = (progress) => { "Scanning: ".PrintProgressBar(progress); }
-            }).ContinueWithParent((antecedent) => {
+            }).ContinueWith((antecedent) => {
                 var pkgsInstalled = antecedent.Result;
 
                 " ".PrintProgressBar(-1);
@@ -343,12 +379,19 @@ namespace CoApp.CLI {
                 else {
                     Console.WriteLine("\rThere are no packages currently installed.");
                 }
-            });
+            },TaskContinuationOptions.AttachedToParent);
 
             tsk.Wait();
+             * */
         }
 
+        /// <summary>
+        /// Removes the specified parameters.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void Remove(IEnumerable<string> parameters) {
+            /*
             if (!AdminPrivilege.IsRunAsAdmin) {
                 throw new ConsoleException(
                     "Admin privilege is required to remove packages. \r\nPlease run as an elevated administrator.");
@@ -386,10 +429,17 @@ namespace CoApp.CLI {
             }
             catch (AggregateException ae) {
                 ae.Ignore(typeof (OperationCompletedBeforeResultException), () => { Console.WriteLine("operation not complete!"); });
-            }
+            }*/
+
         }
 
+        /// <summary>
+        /// Installs the specified parameters.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void Install(IEnumerable<string> parameters) {
+            /*
             if (!AdminPrivilege.IsRunAsAdmin) {
                 throw new ConsoleException(
                     "Admin privilege is required to install packages. \r\nPlease run as an elevated administrator.");
@@ -432,8 +482,15 @@ namespace CoApp.CLI {
             catch (AggregateException ae) {
                 ae.Ignore(typeof (OperationCompletedBeforeResultException), () => { Console.WriteLine("(Operation not complete)."); });
             }
+             * */
         }
 
+        /// <summary>
+        /// Called when [multiple packages match].
+        /// </summary>
+        /// <param name="packageMask">The package mask.</param>
+        /// <param name="packages">The packages.</param>
+        /// <remarks></remarks>
         private void OnMultiplePackagesMatch(string packageMask, IEnumerable<Package> packages) {
             Console.WriteLine(Resources.PackageHasMultipleMatches, packageMask);
             foreach (var pkg in packages) {
@@ -444,6 +501,11 @@ namespace CoApp.CLI {
             }
         }
 
+        /// <summary>
+        /// Called when [package not satisfied].
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <remarks></remarks>
         private void OnPackageNotSatisfied(Package package) {
             Console.WriteLine(Resources.PackageDependenciesCantInstall, package.CosmeticName);
 
@@ -473,6 +535,12 @@ namespace CoApp.CLI {
             printDepMap(package);
         }
 
+        /// <summary>
+        /// Called when [package has potential upgrades].
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="supercedents">The supercedents.</param>
+        /// <remarks></remarks>
         private void OnPackageHasPotentialUpgrades(Package package, IEnumerable<Package> supercedents) {
             // the user hasn't specifically asked us to supercede, yet we know of 
             // potential supercedents. Let's force the user to make a decision.
@@ -489,16 +557,32 @@ namespace CoApp.CLI {
             Console.WriteLine(Resources.AsSpecifiedHint, package.CosmeticName);
         }
 
+        /// <summary>
+        /// Called when [package not found].
+        /// </summary>
+        /// <param name="packageMask">The package mask.</param>
+        /// <remarks></remarks>
         private void OnPackageNotFound(string packageMask) {
             Console.WriteLine(Resources.PackageNotFound, packageMask);
         }
 
+        /// <summary>
+        /// Called when [failed dependent package install].
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <remarks></remarks>
         private void OnFailedDependentPackageInstall(Package package) {
             // dependent package failed installation.
             Console.WriteLine(Resources.PackageFailedInstall, package.CosmeticName);
         }
 
+        /// <summary>
+        /// Upgrades the specified parameters.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void Upgrade(IEnumerable<string> parameters) {
+            /*
             try {
                 var maxPercent = 0L;
                 _pkgManager.Upgrade(parameters, new PackageManagerMessages {
@@ -536,8 +620,14 @@ namespace CoApp.CLI {
             }
             catch {
             }
+             * */
         }
 
+        /// <summary>
+        /// Trims the specified parameters.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void Trim(IEnumerable<string> parameters) {
             try {
             }
@@ -545,6 +635,11 @@ namespace CoApp.CLI {
             }
         }
 
+        /// <summary>
+        /// Generates the feed.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void GenerateFeed(IEnumerable<string> parameters) {
             try {
                 Console.WriteLine("...");
@@ -559,6 +654,11 @@ namespace CoApp.CLI {
             }
         }
 
+        /// <summary>
+        /// Lists the feeds.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void ListFeeds(IEnumerable<string> parameters) {
             try {
                 var feeds = _pkgManager.SystemFeedLocations;
@@ -580,6 +680,11 @@ namespace CoApp.CLI {
             }
         }
 
+        /// <summary>
+        /// Adds the feed.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void AddFeed(IEnumerable<string> parameters) {
             try {
                 if (!AdminPrivilege.IsRunAsAdmin) {
@@ -599,6 +704,11 @@ namespace CoApp.CLI {
             
         }
 
+        /// <summary>
+        /// Deletes the feed.
+        /// </summary>
+        /// <param name="parameters">The parameters.</param>
+        /// <remarks></remarks>
         private void DeleteFeed(IEnumerable<string> parameters) {
             try {
                 if (!AdminPrivilege.IsRunAsAdmin) {
