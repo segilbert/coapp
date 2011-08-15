@@ -8,6 +8,7 @@ namespace CoApp.Toolkit.Engine.Client {
     using Tasks;
 
     public class PackageManager {
+        /*
         internal Task<IEnumerable<Package>> GetInstalledPackages(PackageManagerMessages packageManagerMessages) {
             throw new NotImplementedException();
         }
@@ -20,7 +21,7 @@ namespace CoApp.Toolkit.Engine.Client {
         internal Task<IEnumerable<Package>> GetPackagesInScanLocations(PackageManagerMessages packageManagerMessages) {
             throw new NotImplementedException();
         }
-
+        */
         public bool Pretend {
             get;
             set;
