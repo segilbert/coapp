@@ -12,7 +12,7 @@ namespace CoApp.Toolkit.Engine {
     /// 
     /// Note: Probably being refactored.
     /// </summary>
-    public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
+    internal class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
         public Action<string, IEnumerable<Package>> MultiplePackagesMatch;
         public Action<Package> PackageRemoveFailed;
         public Action<string> PackageNotFound;
@@ -32,4 +32,42 @@ namespace CoApp.Toolkit.Engine {
         public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
         public Action<IEnumerable<Package>> UpgradingPackage;
     }
+
+#if COAPP_ENGINE_CORE
+
+    internal class NewPackageManagerMessages : MessageHandlers<NewPackageManagerMessages> {
+        public Action<Package> PackageInformation;
+        public Action<Package> PackageDetails;
+        public Action NoPackagesFound;
+        public Action<string, DateTime, bool> FeedDetails;
+        public Action<string, int> ScanningPackagesProgress;
+        public Action<string, int> InstallingPackageProgress;
+        public Action<string, int> RemovingPackageProgress;
+        public Action<string> InstalledPackage;
+        public Action<string> RemovedPackage;
+
+        public Action<string,string,string> FailedPackageInstall;
+        public Action<string,string> FailedPackageRemoval;
+        
+        public Action<IEnumerable<string>, string, bool> RequireRemoteFile;
+        public Action<string, bool, string> SignatureValidation;
+        public Action<string, string> PermissionRequired;
+        public Action<string, string,string > ArgumentError;
+
+        public Action<string> FileNotFound;
+        public Action<string> UnknownPackage;
+        public Action<string> PackageBlocked;
+        
+        public Action<string,string> FileNotRecognized;
+
+        public Action<Exception> UnexpectedFailure;
+    }
+
+    internal class PackageManagerSession : MessageHandlers<PackageManagerSession> {
+        public Func<Package, PackageSessionData> GetPackageSessionData;
+        public Func<Package, PackageManagerSessionData> GetPackageManagerSessionData;
+        public Action<Package> DropPackageSessionData;
+        public Func<PermissionPolicy, bool> CheckForPermission;
+    }
+#endif
 }

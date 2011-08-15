@@ -1,0 +1,235 @@
+//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2010 Garrett Serack . All rights reserved.
+// </copyright>
+// <license>
+//     The software is licensed under the Apache 2.0 License (the "License")
+//     You may not use the software except in compliance with the License. 
+// </license>
+//-----------------------------------------------------------------------
+
+namespace CoApp.Toolkit.Engine {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using Extensions;
+
+    /// <summary>
+    /// Helper class to create/read UrlEncodedMessages
+    /// 
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// NOTE: EXPLICITLY IGNORE, NOT READY FOR TESTING.
+    /// </remarks>
+    public class UrlEncodedMessage : IEnumerable<string> {
+
+        public class UrlEncodedMessageValue {
+            private readonly string _value;
+            public UrlEncodedMessageValue(string value) {
+                _value = value;
+            }
+
+            public override string ToString() {
+                return _value ?? string.Empty;
+            }
+
+            /*
+            public bool? AsBool { get {
+                switch( _value.ToLower()) {
+                    case "true":
+                        return true;
+                        break;
+                    case "false":
+                        return false;
+                        break;
+                    default:
+                        return null;
+                }
+            }}
+
+            public int? AsInt {
+                get {
+                    int outVal;
+                    if( Int32.TryParse(_value, out outVal)) {
+                        return outVal;
+                    }
+                    return null;
+                }
+            }
+
+            public string AsString {
+                get {
+                    return _value;
+                }
+            }*/
+
+            public static implicit operator string(UrlEncodedMessageValue value) {
+                return value._value ?? string.Empty;
+            }
+
+            public static implicit operator int?(UrlEncodedMessageValue value) {
+                int outVal;
+                if (Int32.TryParse(value._value, out outVal)) {
+                    return outVal;
+                }
+                return null;
+            }
+
+            public static implicit operator bool?(UrlEncodedMessageValue value) {
+                switch (value._value.ToLower()) {
+                    case "true":
+                        return true;
+                        break;
+                    case "false":
+                        return false;
+                        break;
+                    default:
+                        return null;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static char[] query = new[] {
+            '?'
+        };
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static char[] separator = new[] {
+            '&'
+        };
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static char[] equals = new[] {
+            '='
+        };
+
+        /// <summary>
+        /// 
+        /// </summary>
+        internal string Command;
+        /// <summary>
+        /// 
+        /// </summary>
+        internal IDictionary<string, string> Data;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UrlEncodedMessage"/> class.
+        /// </summary>
+        /// <param name="rawMessage">The raw message.</param>
+        /// <remarks></remarks>
+        public UrlEncodedMessage(string rawMessage) {
+            var parts = rawMessage.Split(query, StringSplitOptions.RemoveEmptyEntries);
+            Command = parts.FirstOrDefault().UrlDecode().ToLower();
+            Data = (parts.Skip(1).FirstOrDefault() ?? "").Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(
+                p => p.Split(@equals, StringSplitOptions.RemoveEmptyEntries)).ToDictionary(s => s[0].UrlDecode(),
+                    s => s.Length > 1 ? s[1].UrlDecode() : String.Empty);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UrlEncodedMessage"/> class.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <param name="data">The data.</param>
+        /// <remarks></remarks>
+        public UrlEncodedMessage( string command, IDictionary<string, string> data ) {
+            Command = command;
+            Data = data;
+        }
+
+        /*
+        /// <summary>
+        /// Gets or sets the <see cref="System.String"/> with the specified key.
+        /// </summary>
+        /// <remarks></remarks>
+        public string this[string key] {
+            get { return Data.ContainsKey(key) ? Data[key] : String.Empty; }
+            set {
+                if (Data.ContainsKey(key)) {
+                    Data[key] = value;
+                }
+                else {
+                    Data.Add(key, value);
+                }
+            }
+        }*/
+
+        public UrlEncodedMessageValue this[string key] {
+            get { return new UrlEncodedMessageValue( Data.ContainsKey(key) ? Data[key] : null ); }
+        }
+
+
+
+        /// <summary>
+        /// Returns a <see cref="System.String"/> that represents this instance.
+        /// </summary>
+        /// <returns>A <see cref="System.String"/> that represents this instance.</returns>
+        /// <remarks></remarks>
+        public override string ToString() {
+            return Data.Any()
+                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (k.UrlEncode() + "=" + Data[k].UrlEncode()))
+                : Command.UrlEncode();
+        }
+
+        /// <summary>
+        /// Returns an enumerator that iterates through a collection.
+        /// </summary>
+        /// <returns>An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.</returns>
+        /// <remarks></remarks>
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
+        }
+
+        /// <summary>
+        /// Adds the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        /// <remarks></remarks>
+        public void Add(string key, string value) {
+            if (Data.ContainsKey(key)) {
+                Data[key] = value;
+            }
+            else {
+                Data.Add(key, value);
+            }
+        }
+
+        public void AddCollection( string key, IEnumerable<string>  values ) {
+            var index = 0;
+            foreach( var s in values) {
+                Add( "{0}[{1}]".format(  key, index++), s );
+            }
+        }
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.</returns>
+        /// <remarks></remarks>
+        public IEnumerator<string> GetEnumerator() {
+            return Data.Keys.GetEnumerator();
+        }
+
+        /// <summary>
+        /// Gets the collection.
+        /// </summary>
+        /// <param name="p">The p.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        internal IEnumerable<string> GetCollection(string p) {
+            var rx = new Regex(@"^{0}\[.\n]\]$".format(Regex.Escape(p)));
+            return from k in Data.Keys where rx.IsMatch(k) select Data[k];
+        }
+    }
+}

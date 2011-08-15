@@ -100,7 +100,7 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
         }
 
 
-        public void Populate(Package package, string relativeLocation, string packageUrlPrefix) {
+        internal void Populate(Package package, string relativeLocation, string packageUrlPrefix) {
             Id = package.ProductCode;
             Title = new TextSyndicationContent(package.CosmeticName);
             Summary = new TextSyndicationContent(package.SummaryDescription);

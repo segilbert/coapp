@@ -31,7 +31,7 @@ namespace CoApp.Toolkit.Engine {
 
         internal static Task<RecognitionInfo> Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal = false) {
             if (_cache.ContainsKey(item)) {
-                return CoTaskFactory<RecognitionInfo>.AsTaskResult(_cache[item]);
+                return Task<RecognitionInfo>.Factory.StartNew(() => _cache[item]);
             }
 
             baseDirectory = baseDirectory ?? Environment.CurrentDirectory;
@@ -79,7 +79,7 @@ namespace CoApp.Toolkit.Engine {
                     // for now, we've got a full URL and it looks like it point somewhere.
                     // until we attempt to retrieve the URL we really can't bank on knowing what it is.
                     if (result.IsURL) {
-                        return CoTask<RecognitionInfo>.Factory.StartNew(() => {
+                        return Task<RecognitionInfo>.Factory.StartNew(() => {
                             result.RemoteFile.Preview().Wait();
 
                             if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
@@ -302,7 +302,7 @@ namespace CoApp.Toolkit.Engine {
             lock (_cache) {
                 _cache.Add(item, result);
             }
-            return CoTaskFactory<RecognitionInfo>.AsTaskResult(result);
+            return Task<RecognitionInfo>.Factory.StartNew(() => result);
         }
 
         #region Nested type: RecognitionInfo

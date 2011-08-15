@@ -137,9 +137,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 var p = product;
 
                 try {
-                    if (Tasklet.IsCancellationRequested) {
+                    /* if (Tasklet.IsCancellationRequested) {
                         return;
-                    }
+                    }*/
+
                     int percent = ((n++)*100)/total;
                     PackageManagerMessages.Invoke.PackageScanning(percent);
                     Registrar.GetPackage(p.LocalPackage); // let the registrar figure out if this is a package we care about.

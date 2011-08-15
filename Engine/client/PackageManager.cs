@@ -8,7 +8,7 @@ namespace CoApp.Toolkit.Engine.Client {
     using Tasks;
 
     public class PackageManager {
-        public Task<IEnumerable<Package>> GetInstalledPackages(PackageManagerMessages packageManagerMessages) {
+        internal Task<IEnumerable<Package>> GetInstalledPackages(PackageManagerMessages packageManagerMessages) {
             throw new NotImplementedException();
         }
 
@@ -17,7 +17,7 @@ namespace CoApp.Toolkit.Engine.Client {
             set;
         }
 
-        public Task<IEnumerable<Package>> GetPackagesInScanLocations(PackageManagerMessages packageManagerMessages) {
+        internal Task<IEnumerable<Package>> GetPackagesInScanLocations(PackageManagerMessages packageManagerMessages) {
             throw new NotImplementedException();
         }
 
@@ -58,7 +58,7 @@ namespace CoApp.Toolkit.Engine.Client {
             throw new NotImplementedException();
         }
 
-        public Task  RemovePackages(IEnumerable<string> parameters, PackageManagerMessages packageManagerMessages) {
+        public Task  RemovePackages(IEnumerable<string> parameters, object packageManagerMessages) {
             throw new NotImplementedException();
         }
 

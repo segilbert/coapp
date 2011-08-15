@@ -103,7 +103,7 @@ namespace CoApp.Toolkit.Engine {
         /// <returns></returns>
         /// <remarks></remarks>
         public static Task AddSystemFeedLocations(IEnumerable<string> feedLocations) {
-            return CoTask.Factory.StartNew(() => {
+            return Task.Factory.StartNew(() => {
                 foreach (var location in feedLocations) {
                     AddSystemFeedLocation(location);
                 }
@@ -117,7 +117,7 @@ namespace CoApp.Toolkit.Engine {
         /// <returns></returns>
         /// <remarks></remarks>
         public static Task DeleteSystemFeedLocations(IEnumerable<string> feedLocations) {
-            return CoTask.Factory.StartNew(() => {
+            return Task.Factory.StartNew(() => {
                 foreach (var location in feedLocations) {
                     DeleteSystemFeedLocation(location);
                 }
@@ -141,7 +141,7 @@ namespace CoApp.Toolkit.Engine {
         /// <returns></returns>
         /// <remarks></remarks>
         public static Task DeleteSystemFeedLocation(string feedLocation) {
-            return Recognizer.Recognize(feedLocation).ContinueWithParent(antecedent => {
+            return Recognizer.Recognize(feedLocation).ContinueWith(antecedent => {
                 var info = antecedent.Result;
 
                 if (info.IsWildcard) {
@@ -169,7 +169,7 @@ namespace CoApp.Toolkit.Engine {
                         _systemFeedLocations.Remove(feed);
                     }
                 }
-            });
+            }, TaskContinuationOptions.AttachedToParent );
         }
 
         /// <summary>
@@ -550,13 +550,14 @@ namespace CoApp.Toolkit.Engine {
         /// <returns></returns>
         /// <remarks></remarks>
         public static Task<IEnumerable<Package>> GetPackagesByName(IEnumerable<string> packageNames, MessageHandlers messageHandlers = null) {
-            return CoTask<IEnumerable<Package>>.Factory.StartNew(() => {
+            return Task<IEnumerable<Package>>.Factory.StartNew(() => {
+                messageHandlers.Register();
                 var packageFiles = new List<Package>();
                 var unknownPackages = new List<string>();
 
                 foreach (var item in packageNames) {
                     var currentItem = item;
-                    Recognizer.Recognize(currentItem, ensureLocal: true).ContinueWithParent(antecedent0 => {
+                    Recognizer.Recognize(currentItem, ensureLocal: true).ContinueWith(antecedent0 => {
                         try {
                             var info = antecedent0.Result;
 
@@ -569,9 +570,9 @@ namespace CoApp.Toolkit.Engine {
                                 info.Recognized.Notification += v => {
                                     if (info.IsPackageFeed) {
                                         // we have been given a package feed, and asked to return all the packages from it
-                                        PackageFeed.GetPackageFeedFromLocation(currentItem).ContinueWithParent(antecedent => {
+                                        PackageFeed.GetPackageFeedFromLocation(currentItem).ContinueWith(antecedent => {
                                             packageFiles.AddRange(antecedent.Result.FindPackages("*"));
-                                        }).Wait();
+                                        }, TaskContinuationOptions.AttachedToParent ).Wait();
                                     }
                                     else if (info.IsPackageFile) {
                                         packageFiles.Add(GetPackage(info.FullPath));
@@ -591,10 +592,10 @@ namespace CoApp.Toolkit.Engine {
                         catch (PackageNotFoundException) {
                             unknownPackages.Add(item);
                         }
-                    });
+                    }, TaskContinuationOptions.AttachedToParent );
                 }
 
-                Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
+                //Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
 
                 if (unknownPackages.Count > 0) {
                     ScanForPackages(unknownPackages);
@@ -621,7 +622,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                 }
                 return packageFiles;
-            }, messageHandlers);
+            });
         }
 
         /// <summary>
@@ -642,10 +643,10 @@ namespace CoApp.Toolkit.Engine {
                         // this lets you ask to uninstall a whole feed (and the only way to get multiple matches 
                         // from a single parameter.)
 
-                        PackageFeed.GetPackageFeedFromLocation(item).ContinueWithParent(antecedent => {
+                        PackageFeed.GetPackageFeedFromLocation(item).ContinueWith(antecedent => {
                             var feed = antecedent.Result;
                             packageFiles.AddRange(feed.FindPackages("*").Where(each => each.IsInstalled));
-                        }).Wait();
+                        }, TaskContinuationOptions.AttachedToParent ).Wait();
                     }
                     else if (info.IsPackageFile) {
                         var pkg = GetPackage(item);

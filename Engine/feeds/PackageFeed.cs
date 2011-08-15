@@ -112,7 +112,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// <returns>A Task with a return value of the PackageFeed. May be null if invalid.</returns>
         /// <remarks></remarks>
         internal static Task<PackageFeed> GetPackageFeedFromLocation(string location, bool recursive = false) {
-            return Recognizer.Recognize(location, ensureLocal: true).ContinueWithParent(antecedent => {
+            return Recognizer.Recognize(location, ensureLocal: true).ContinueWith(antecedent => {
                 var info = antecedent.Result;
                 PackageFeed result = null;
 
@@ -166,7 +166,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 }
 
                 return result;
-            });
+            }, TaskContinuationOptions.AttachedToParent );
         }
 
         /// <summary>

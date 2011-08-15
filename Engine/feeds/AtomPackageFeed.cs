@@ -15,6 +15,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
     using System.Linq;
     using System.Net;
     using System.ServiceModel.Syndication;
+    using System.Threading.Tasks;
     using Atom;
     using Extensions;
     using Network;
@@ -73,11 +74,11 @@ namespace CoApp.Toolkit.Engine.Feeds {
         internal AtomPackageFeed(Uri location) : base(location.AbsoluteUri) {
             _remoteLocation = location;
             var tsk = _transferManager[_remoteLocation].Get();
-            tsk.ContinueWithParent(antecedent => {
+            tsk.ContinueWith(antecedent => {
                 if (_transferManager[_remoteLocation].LastStatus == HttpStatusCode.OK) {
                     _feed = AtomFeed.Load(_transferManager[_remoteLocation].LocalFullPath);
                 }
-            });
+            }, TaskContinuationOptions.AttachedToParent );
         }
 
 

@@ -93,7 +93,7 @@ namespace CoApp.Toolkit.Network {
         public void Start() {
             _listener.Start();
 
-            CoTask.Factory.FromAsync<HttpListenerContext>(_listener.BeginGetContext, _listener.EndGetContext, _listener).ContinueWithParent(
+            Task.Factory.FromAsync<HttpListenerContext>(_listener.BeginGetContext, _listener.EndGetContext, _listener).ContinueWith(
                 (antecedent) => {
                     Start(); // start a new listener.
 
@@ -146,7 +146,7 @@ namespace CoApp.Toolkit.Network {
                     catch( Exception e) {
                         Console.WriteLine("HTTP Server Error: {0}",e.Message);
                     }
-                });
+                }, TaskContinuationOptions.AttachedToParent);
         }
 
         public void Stop() {

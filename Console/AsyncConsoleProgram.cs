@@ -26,11 +26,15 @@ namespace CoApp.Toolkit.Console {
         protected CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 
         protected virtual int Startup(IEnumerable<string> args) {
-            var task = CoTask.Factory.StartNew(() => { Main(args); }, CancellationTokenSource.Token, new DebugMessage {
-                WriteLine = (text) => {
-                   Console.WriteLine("[DEBUG][{0}] {1}", ++Counter,text);
-               }
-            });
+            var task = Task.Factory.StartNew(() => {
+                new DebugMessage {
+                    WriteLine = (text) => {
+                        Console.WriteLine("[DEBUG][{0}] {1}", ++Counter,text);
+                    }
+                }.Register();
+                
+                Main(args);
+            }, CancellationTokenSource.Token);
             try {
                 Console.CancelKeyPress += (x, y) => {
                     if (!CancellationTokenSource.IsCancellationRequested) {

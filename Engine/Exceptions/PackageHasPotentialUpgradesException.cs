@@ -12,11 +12,11 @@ namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
     using System.Collections.Generic;
 
-    public class PackageHasPotentialUpgradesException : Exception {
-        public Package UnsatisfiedPackage;
-        public IEnumerable<Package> SatifactionOptions;
+    internal class PackageHasPotentialUpgradesException : Exception {
+        internal Package UnsatisfiedPackage;
+        internal IEnumerable<Package> SatifactionOptions;
 
-        public PackageHasPotentialUpgradesException(Package unsatisfiedPackage, IEnumerable<Package> satisfactionOptions) {
+        internal PackageHasPotentialUpgradesException(Package unsatisfiedPackage, IEnumerable<Package> satisfactionOptions) {
             UnsatisfiedPackage = unsatisfiedPackage;
             SatifactionOptions = satisfactionOptions;
         }

@@ -333,21 +333,104 @@ namespace CoApp.Toolkit.Tasks {
             return actualTask;
         }
 
+         internal static void CheckFromAsyncOptions(TaskCreationOptions creationOptions, bool hasBeginMethod)
+        {
+            if (hasBeginMethod)
+            { 
+                // Options detected here cause exceptions in FromAsync methods that take beginMethod as a parameter
+                if ((creationOptions & TaskCreationOptions.LongRunning) != 0) 
+                    throw new ArgumentOutOfRangeException("creationOptions", "Task_FromAsync_LongRunning"); 
+                if ((creationOptions & TaskCreationOptions.PreferFairness) != 0)
+                    throw new ArgumentOutOfRangeException("creationOptions", "Task_FromAsync_PreferFairness"); 
+            }
+
+            // Check for general validity of options
+            if ((creationOptions & 
+                    ~(TaskCreationOptions.AttachedToParent |
+                      TaskCreationOptions.PreferFairness | 
+                      TaskCreationOptions.LongRunning)) != 0) 
+            {
+                throw new ArgumentOutOfRangeException("creationOptions"); 
+            }
+        }
+
+        private static void FromAsyncCoreLogic(IAsyncResult iar, Action<IAsyncResult> endMethod, TaskCompletionSource<object> tcs)
+        { 
+            Exception ex = null;
+            OperationCanceledException oce = null;
+
+            try { endMethod(iar); } 
+            catch (OperationCanceledException _oce) { oce = _oce; }
+            catch (Exception e) { ex = e; } 
+            finally 
+            {
+                if (oce != null) tcs.TrySetCanceled(); 
+                else if (ex != null)
+                {
+                    bool bWonSetException = tcs.TrySetException(ex);
+                    if (bWonSetException && ex is ThreadAbortException) 
+                    {
+                       //  tcs.Task.m_contingentProperties.m_exceptionsHolder.MarkAsHandled(false); 
+                    } 
+                }
+                else tcs.TrySetResult(null); 
+            }
+        }
+
         public new Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, object, IAsyncResult> beginMethod, Action<IAsyncResult> endMethod, TArg1 arg1, TArg2 arg2, TArg3 arg3, object state) { return FromAsync(beginMethod, endMethod, arg1, arg2, arg3, state,CreationOptions, new MessageHandlers[] { }); }
         public new Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, object, IAsyncResult> beginMethod, Action<IAsyncResult> endMethod, TArg1 arg1, TArg2 arg2, TArg3 arg3, object state, TaskCreationOptions creationOptions) { return FromAsync(beginMethod, endMethod, arg1, arg2, arg3, state, creationOptions, new MessageHandlers[] { }); }
         public Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, object, IAsyncResult> beginMethod, Action<IAsyncResult> endMethod, TArg1 arg1, TArg2 arg2, TArg3 arg3, object state, MessageHandlers messageHandlers) { return FromAsync(beginMethod, endMethod, arg1, arg2, arg3, state,CreationOptions, new[] { messageHandlers }); }
         public Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, object, IAsyncResult> beginMethod, Action<IAsyncResult> endMethod, TArg1 arg1, TArg2 arg2, TArg3 arg3, object state, TaskCreationOptions creationOptions, MessageHandlers messageHandlers) { return FromAsync(beginMethod, endMethod, arg1, arg2, arg3, state, creationOptions, new[] { messageHandlers }); }
         public Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, object, IAsyncResult> beginMethod, Action<IAsyncResult> endMethod, TArg1 arg1, TArg2 arg2, TArg3 arg3, object state, IEnumerable<MessageHandlers> messageHandlers) { return FromAsync(beginMethod, endMethod, arg1, arg2, arg3, state,CreationOptions, messageHandlers); }
         public Task FromAsync<TArg1, TArg2, TArg3>(Func<TArg1, TArg2, TArg3, AsyncCallback, object, IAsyncResult> beginMethod, Action<IAsyncResult> endMethod, TArg1 arg1, TArg2 arg2, TArg3 arg3, object state, TaskCreationOptions creationOptions, IEnumerable<MessageHandlers> messageHandlers) {
+            if (beginMethod == null)
+                throw new ArgumentNullException("beginMethod"); 
+            if (endMethod == null)
+                throw new ArgumentNullException("endMethod");
+
             creationOptions |= TaskCreationOptions.AttachedToParent;
-            var tcs = new TaskCompletionSource<IAsyncResult>(creationOptions);
-            
+            // CheckFromAsyncOptions(creationOptions, true);
+            var tcs = new TaskCompletionSource<IAsyncResult>(state, creationOptions);
             ((Tasklet)tcs.Task).CancellationToken = Tasklet.CurrentCancellationToken;
-            var actualTask = tcs.Task.ContinueWith(antecedent => { endMethod(antecedent.Result); });
+
+            var actualTask = tcs.Task.ContinueWith(antecedent => {
+                try {
+                    endMethod(antecedent.Result);
+                } catch( Exception e ) {
+                    Console.WriteLine("Actual Task Failing...");
+                    tcs.TrySetException(e);
+            }
+            });
             ((Tasklet)actualTask).AddMessageHandlers(messageHandlers);
             ((Tasklet)actualTask).CancellationToken = Tasklet.CurrentCancellationToken;
-            base.FromAsync(beginMethod, antecedent => { tcs.SetResult(antecedent); }, arg1, arg2, arg3, state, creationOptions);
+            try {
+                base.FromAsync(beginMethod, antecedent => { tcs.SetResult(antecedent); }, arg1, arg2, arg3, state, creationOptions);
+            } catch(Exception e) {
+                Console.WriteLine("TCS failing...");
+                tcs.TrySetException(e);
+            }
             return actualTask;
+            
+
+            /*
+
+            CheckFromAsyncOptions(creationOptions, true);
+            // TaskCompletionSource<object> tcs = new TaskCompletionSource<object>(state, creationOptions); 
+
+            try 
+            { 
+                beginMethod(arg1, arg2, arg3, iar => FromAsyncCoreLogic(iar, endMethod, tcs), state);
+            }
+            catch 
+            {
+                // Make sure we don't leave tcs "dangling". 
+                tcs.TrySetResult(null); 
+                throw;
+            } 
+            */
+
+
+
         }
 
         public new Task<TResult> FromAsync<TResult>(IAsyncResult asyncResult, Func<IAsyncResult, TResult> endMethod) { return FromAsync<TResult>(asyncResult, endMethod, CreationOptions, Scheduler, new MessageHandlers[] { }); }

@@ -12,11 +12,11 @@ namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
     using System.Collections.Generic;
 
-    public class MultiplePackagesMatchException : Exception {
-        public string PackageMask;
-        public IEnumerable<Package> PackageMatches;
+    internal class MultiplePackagesMatchException : Exception {
+        internal string PackageMask;
+        internal IEnumerable<Package> PackageMatches;
 
-        public MultiplePackagesMatchException(string packageMask, IEnumerable<Package> packageMatch) {
+        internal MultiplePackagesMatchException(string packageMask, IEnumerable<Package> packageMatch) {
             PackageMask = packageMask;
             PackageMatches = packageMatch;
         }

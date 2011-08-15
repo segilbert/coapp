@@ -11,10 +11,10 @@
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
 
-    public class PackageNotSatisfiedException : Exception {
-        public Package packageNotSatified;
+    internal class PackageNotSatisfiedException : Exception {
+        internal Package packageNotSatified;
 
-        public PackageNotSatisfiedException(Package p) {
+        internal PackageNotSatisfiedException(Package p) {
             packageNotSatified = p;
         }
     }

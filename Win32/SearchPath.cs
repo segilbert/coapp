@@ -11,9 +11,9 @@ namespace CoApp.Toolkit.Win32 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using Configuration;
     using Extensions;
-    using Tasks;
 
     public static class SearchPath {
         private static readonly RegistryView _systemEnvironment = RegistryView.System[@"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"];
@@ -24,7 +24,7 @@ namespace CoApp.Toolkit.Win32 {
         private const Int32 SMTO_ABORTIFHUNG = 0x0002;
 
         private static void BroadcastChange() {
-            CoTask.Factory.StartNew(() => { User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero); });
+            Task.Factory.StartNew(() => { User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero); });
         }
 
         public static IEnumerable<string> SystemPath {

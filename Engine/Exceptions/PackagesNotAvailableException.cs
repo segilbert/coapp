@@ -12,10 +12,10 @@ namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
     using System.Collections.Generic;
 
-    public class PackagesNotAvailableException : Exception {
-        public IEnumerable<Package> Packages;
+    internal class PackagesNotAvailableException : Exception {
+        internal IEnumerable<Package> Packages;
 
-        public PackagesNotAvailableException(IEnumerable<Package> pkgs) {
+        internal PackagesNotAvailableException(IEnumerable<Package> pkgs) {
             Packages = pkgs;
         }
     }

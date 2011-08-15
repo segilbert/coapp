@@ -167,7 +167,7 @@ namespace CoApp.Toolkit.Network {
         }
 
         private Task CancelledTask() {
-            return CoTask.Factory.StartNew(Cancel);
+            return Task.Factory.StartNew(Cancel);
         }
 
         internal void Serialize(Stream outputStream) {
@@ -204,7 +204,7 @@ namespace CoApp.Toolkit.Network {
                 }
 
                 if (_currentTaskType != TaskType.None) {
-                    return _currentTask.ContinueWithParent(antecedent => publicOperation().Wait());
+                    return _currentTask.ContinueWith(antecedent => publicOperation().Wait(), TaskContinuationOptions.AttachedToParent);
                 }
                 _currentTaskType = type;
                 return _currentTask = privateOperation();
@@ -235,7 +235,7 @@ namespace CoApp.Toolkit.Network {
                 return CancelledTask();
             }
 
-            return CoTask.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWithParent(
+            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(
                     asyncResult => {
                         try {
 
@@ -310,7 +310,7 @@ namespace CoApp.Toolkit.Network {
                             }
                         }
                         Complete();
-                    });
+                    }, TaskContinuationOptions.AttachedToParent);
         }
 
         private Task PreviewImplFtp() {
@@ -341,7 +341,7 @@ namespace CoApp.Toolkit.Network {
                 return CancelledTask();
             }
 
-            return CoTask.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWithParent(
+            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(
                     asyncResult => {
                         try {
                             var v = webRequest;
@@ -381,7 +381,7 @@ namespace CoApp.Toolkit.Network {
                                     }
 
                                     var tcs = new TaskCompletionSource<HttpWebResponse>(TaskCreationOptions.AttachedToParent);
-                                    ((Tasklet) tcs.Task).CancellationToken = Tasklet.CurrentCancellationToken;
+                                    // GS01: ((Tasklet) tcs.Task).CancellationToken = Tasklet.CurrentCancellationToken;
 
                                     tcs.Iterate(AsyncReadImpl(tcs, httpWebResponse));
                                     return;
@@ -431,7 +431,7 @@ namespace CoApp.Toolkit.Network {
                         }
                         Console.WriteLine("Really? It gets here?");
                         Complete();
-                    });
+                    }, TaskContinuationOptions.AttachedToParent);
         }
 
         private IEnumerable<Task> AsyncReadImpl(TaskCompletionSource<HttpWebResponse> tcs, HttpWebResponse httpWebResponse) {
@@ -445,7 +445,7 @@ namespace CoApp.Toolkit.Network {
                         break;
                     }
 
-                    var read = CoTask<int>.Factory.FromAsync(responseStream.BeginRead, responseStream.EndRead, buffer, 0,
+                    var read = Task<int>.Factory.FromAsync(responseStream.BeginRead, responseStream.EndRead, buffer, 0,
                         buffer.Length, this);
 
                     yield return read;

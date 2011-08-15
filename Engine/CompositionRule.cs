@@ -7,7 +7,7 @@ namespace CoApp.Toolkit.Engine {
     /// The type of action for this composition rule
     /// </summary>
     /// <remarks></remarks>
-    public enum CompositionAction {
+    internal enum CompositionAction {
         /// <summary>
         /// Create a symlink to a file
         /// </summary>
@@ -28,7 +28,7 @@ namespace CoApp.Toolkit.Engine {
     /// <remarks>
     /// Storage Only Class.
     /// </remarks>
-    public class CompositionRule {
+    internal class CompositionRule {
         /// <summary>
         /// The package for which this rule is created
         /// </summary>
@@ -51,7 +51,7 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <param name="package">The package.</param>
         /// <remarks></remarks>
-        public CompositionRule(Package package) {
+        internal CompositionRule(Package package) {
             _package = package;
         }
 
@@ -60,7 +60,7 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <value>The action.</value>
         /// <remarks></remarks>
-        public CompositionAction Action { set; get; }
+        internal CompositionAction Action { set; get; }
 
         /// <summary>
         /// 
