@@ -107,7 +107,6 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-
                 // Note: This may need better lookup/matching for the location
                 // as location can be a fuzzy match.
 
@@ -302,8 +301,8 @@ namespace CoApp.Toolkit.Engine {
             
         }
 
-        internal IEnumerable<string> BlockedScanLocations {
-            get { return Enumerable.Empty<string>(); }
+        internal List<string> BlockedScanLocations {
+            get { return SessionCache<List<string>>.Value["suppressed-feeds"] ?? new List<string>(); }
         }
 
         internal Package GetPackageFromFilename(string filename ) {
@@ -319,12 +318,5 @@ namespace CoApp.Toolkit.Engine {
                 throw new NotImplementedException();
             }
         }
-
-        
     }
-
-    public class PackageManagerSessionData {
-        
-    }
-    
 }
