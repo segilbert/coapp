@@ -118,7 +118,7 @@ namespace CoApp.Toolkit.Tasks {
     }
 
     public class SessionCache<T> : Cache<T> where T : class  {
-        public new static Cache<T> Value { get {
+        public new static SessionCache<T> Value { get {
             return (SessionCacheMessages.Invoke.GetInstance(typeof(T), () => new SessionCache<T>())) as SessionCache<T>;
         }}
 

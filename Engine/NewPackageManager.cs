@@ -107,15 +107,46 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditFeeds) ) {
-                    NewPackageManagerMessages.Invoke.PermissionRequired("EditFeeds");
-                    return;
+
+                // Note: This may need better lookup/matching for the location
+                // as location can be a fuzzy match.
+
+                if (session ?? false) {
+                    // session feed specfied
+                    if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds) ) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("EditSessionFeeds");
+                        return;
+                    }
+
+                    if( (from feed in SessionCache<PackageFeed>.Value.SessionValues where feed.Location == location select feed).Any() ) {
+                        SessionCache<PackageFeed>.Value.Clear(location);
+                        NewPackageManagerMessages.Invoke.FeedRemoved(location);
+                        return;
+                    }
+
+                    NewPackageManagerMessages.Invoke.Warning("remove-feed", "location", "feed '{0}' not a session feed".format(location));
+
+                } else {
+                    // system feed specified
+                    if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds) ) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("EditSystemFeeds");
+                        return;
+                    }
+
+                    if( (from feed in Cache<PackageFeed>.Value.Values where feed.Location == location select feed).Any() ) {
+                        Cache<PackageFeed>.Value.Clear(location);
+                        NewPackageManagerMessages.Invoke.FeedRemoved(location);
+                        return;
+                    }
+
+                    lock (this) {
+                        var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue;
+                        systemFeeds = from feed in systemFeeds where !feed.Equals(location, StringComparison.CurrentCultureIgnoreCase) select feed;
+                        PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds;
+                    }
+
+                    NewPackageManagerMessages.Invoke.Warning("remove-feed", "location", "feed '{0}' not a system feed".format(location));
                 }
-
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
-
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
             }).AutoManage();
             return t;
@@ -125,21 +156,13 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditFeeds) ) {
-                    NewPackageManagerMessages.Invoke.PermissionRequired("EditFeeds");
-                    return;
-                }
-
-                /*
-                if( !location.IsPathOrUrl()  ) {
-                    NewPackageManagerMessages.Invoke.Error("add-feed", "location", "location '{0}' does not appear to be path or URL".format(location));
-                    return;
-                }
-                */
-
-
                 if( session ?? false ) {
                     // new feed is a session feed
+                      // session feed specfied
+                    if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds) ) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("EditSessionFeeds");
+                        return;
+                    }
 
                     // check if it is already a system feed
                     if (PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.Contains(location)) {
@@ -166,6 +189,12 @@ namespace CoApp.Toolkit.Engine {
 
                 }else {
                     // new feed is a system feed
+                    if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds) ) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("EditSystemFeeds");
+                        return;
+                    }
+
+
                     if( PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.Contains(location) ) {
                         NewPackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a system feed".format(location));
                         return;
@@ -223,8 +252,6 @@ namespace CoApp.Toolkit.Engine {
 
                 NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
             }).AutoManage();
             return t;
@@ -236,8 +263,6 @@ namespace CoApp.Toolkit.Engine {
 
                 NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
             }).AutoManage();
             return t;
@@ -249,12 +274,29 @@ namespace CoApp.Toolkit.Engine {
 
                 NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
+            }).AutoManage();
+            return t;
+        }
+
+        public Task SuppressFeed(string location, NewPackageManagerMessages messages) {
+            var t = Task.Factory.StartNew(() => {
+                messages.Register();
+
+                var suppressedFeeds = SessionCache<List<string>>.Value["suppressed-feeds"] ?? new List<string>();
+
+                lock (suppressedFeeds) {
+                    if (!suppressedFeeds.Contains(location)) {
+                        suppressedFeeds.Add(location);
+                        SessionCache<List<string>>.Value["suppressed-feeds"] = suppressedFeeds;
+                    }
+                }
+
+                NewPackageManagerMessages.Invoke.FeedSuppressed(location);
 
             }).AutoManage();
             return t;
         }
+
 
         internal void Updated() {
             
@@ -277,6 +319,8 @@ namespace CoApp.Toolkit.Engine {
                 throw new NotImplementedException();
             }
         }
+
+        
     }
 
     public class PackageManagerSessionData {

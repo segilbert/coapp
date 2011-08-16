@@ -32,6 +32,7 @@ namespace CoApp.Toolkit.Engine {
         public Action<string, string, string> Warning;
         public Action<string> FeedAdded;
         public Action<string> FeedRemoved;
+        public Action<string> FeedSuppressed;
         public Action NoFeedsFound;
         
         public Action<string> FileNotFound;

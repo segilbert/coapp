@@ -99,14 +99,11 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-
-
         private static void Add(Session session) {
             lock (_activeSessions) {
                 _activeSessions.Add(session);
             }
         }
-
 
         /// <summary>
         ///   Starts the session.
@@ -353,7 +350,6 @@ namespace CoApp.Toolkit.Engine {
 
             _sessionCacheMessages.Register(); // visible to this task and all properly behaved children
 
-
             Task readTask = null;
             SendSessionStarted(_sessionId);
             
@@ -556,6 +552,14 @@ namespace CoApp.Toolkit.Engine {
                     });
                 break;
 
+                case "suppress-feed":
+                    NewPackageManager.Instance.SuppressFeed(requestMessage["location"], new NewPackageManagerMessages {
+                        UnexpectedFailure = SendUnexpectedFailure,
+                        Error = SendMessageArgumentError,
+                        FeedSuppressed = SendFeedSuppressed
+                    });
+                break;
+
                 default:
                     // not recognized command, return error code.
                     WriteAsync(new UrlEncodedMessage("unknown-command") {
@@ -601,7 +605,6 @@ namespace CoApp.Toolkit.Engine {
                 { "canonical-name", canonicalName },
                 { "description", description },
             };
-
             WriteAsync(msg);
         }
 
@@ -751,6 +754,12 @@ namespace CoApp.Toolkit.Engine {
                 {"type", failure.GetType().ToString()},
                 {"message", failure.Message},
                 {"stacktrace", failure.StackTrace},
+            });
+        }
+
+        private void SendFeedSuppressed(string location) {
+            WriteAsync(new UrlEncodedMessage("feed-suppressed") {
+                {"location", location},
             });
         }
 

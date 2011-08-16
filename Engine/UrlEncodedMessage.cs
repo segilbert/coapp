@@ -122,8 +122,6 @@ namespace CoApp.Toolkit.Engine {
             get { return new UrlEncodedMessageValue( Data.ContainsKey(key) ? Data[key] : null ); }
         }
 
-
-
         /// <summary>
         /// Returns a <see cref="System.String"/> that represents this instance.
         /// </summary>

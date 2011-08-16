@@ -27,7 +27,8 @@ namespace CoApp.Toolkit.Engine {
         internal static PermissionPolicy ChangeActivePackage = new PermissionPolicy( "ChangeActivePackage", "Allows a user to change which version of a package is the active (default) one", new[] { "Administrators" });
         internal static PermissionPolicy ChangeRequiredState = new PermissionPolicy( "ChangeRequiredState", "Allows a user to change whether a given package is required (user requested)", new[] { "Administrators" });
         internal static PermissionPolicy ChangeBlockedState = new PermissionPolicy( "ChangeBlockedState", "Allows a user to change whether a given package is blocked from being upgraded", new[] { "Administrators" });
-        internal static PermissionPolicy EditFeeds = new PermissionPolicy( "EditFeeds", "Allows users to edit remembered feeds", new[] { "Administrators" });
+        internal static PermissionPolicy EditSystemFeeds = new PermissionPolicy( "EditSystemFeeds", "Allows users to edit remembered feeds for the system", new[] { "Administrators" });
+        internal static PermissionPolicy EditSessionFeeds = new PermissionPolicy( "EditSessionFeeds", "Allows users to edit remembered feeds for the session", new[] { "Everyone" });
 
         /// <summary>
         /// Determines whether the user has access to the policy.
