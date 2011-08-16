@@ -169,7 +169,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 }
 
                 return result;
-            }, TaskContinuationOptions.AttachedToParent );
+            }, TaskContinuationOptions.AttachedToParent ).AutoManage();
         }
 
         /// <summary>
@@ -197,5 +197,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         package.PublicKeyToken == packageFilter.PublicKeyToken
                 select package;
         }
+
+        internal DateTime LastScanned = DateTime.FromFileTime(0);
     }
 }

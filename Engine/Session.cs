@@ -452,7 +452,7 @@ namespace CoApp.Toolkit.Engine {
                         PackageInformation = (package) => SendFoundPackage(package.CanonicalName, package.InternalPackageData.LocalPackagePath, package.Name, package.Version.UInt64VersiontoString(), package.Architecture, package.PublicKeyToken, package.IsInstalled, package.InternalPackageData.RemoteLocation.Select( each => each.AbsoluteUri), Enumerable.Empty<string>(), Enumerable.Empty<string>() ),
                         NoPackagesFound = SendNoPackagesFound,
                         PermissionRequired = SendOperationRequiresPermission,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
                         RequireRemoteFile = SendRequireRemoteFile
                     });
                     break;
@@ -463,7 +463,7 @@ namespace CoApp.Toolkit.Engine {
                         UnexpectedFailure = SendUnexpectedFailure,
                         PackageDetails = (package) => SendPackageDetails(package.CanonicalName, package.PackageDetails.FullDescription),
                         UnknownPackage = SendUnknownPackage,
-                        ArgumentError = SendMessageArgumentError
+                        Error = SendMessageArgumentError
                     });
                     break;
 
@@ -472,7 +472,7 @@ namespace CoApp.Toolkit.Engine {
                         UnexpectedFailure = SendUnexpectedFailure,
                         UnknownPackage = SendUnknownPackage,
                         PermissionRequired = SendOperationRequiresPermission,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
                         InstallingPackageProgress = SendInstallingPackage,
                         InstalledPackage = SendInstalledPackage,
                         FailedPackageInstall = SendFailedPackageInstall,
@@ -485,7 +485,7 @@ namespace CoApp.Toolkit.Engine {
                 case "recognize-file":
                     NewPackageManager.Instance.RecognizeFile(requestMessage["reference-id"], requestMessage["local-location"], requestMessage["remote-location"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
                         FileNotRecognized = SendUnableToRecognizeFile
                     });
                 break;
@@ -493,7 +493,7 @@ namespace CoApp.Toolkit.Engine {
                 case "unable-to-acquire":
                     NewPackageManager.Instance.UnableToAcquire(requestMessage["reference-id"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
                     });
                 break;
 
@@ -503,7 +503,7 @@ namespace CoApp.Toolkit.Engine {
                         UnknownPackage = SendUnknownPackage,
                         PermissionRequired = SendOperationRequiresPermission,
                         FailedPackageRemoval = SendFailedRemovePackage,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
                         PackageBlocked = SendPackageIsBlocked
                     });
               break;
@@ -511,7 +511,7 @@ namespace CoApp.Toolkit.Engine {
                 case "set-package":
                     NewPackageManager.Instance.SetPackage(requestMessage["canonical-name"], requestMessage["active"], requestMessage["required"], requestMessage["blocked"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
                         PermissionRequired = SendOperationRequiresPermission,
                         UnknownPackage = SendUnknownPackage,
                     });
@@ -520,7 +520,7 @@ namespace CoApp.Toolkit.Engine {
                 case "verify-file-signature":
                     NewPackageManager.Instance.VerifyFileSignature(requestMessage["filename"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
                         FileNotFound= SendFileNotFound,
                         SignatureValidation= SendSignatureValidation,
                     });
@@ -529,7 +529,9 @@ namespace CoApp.Toolkit.Engine {
                 case "add-feed":
                     NewPackageManager.Instance.AddFeed(requestMessage["location"], requestMessage["session"] , new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
+                        Warning = SendMessageWarning,
+                        FeedAdded = SendFeedAdded,
                         PermissionRequired = SendOperationRequiresPermission,
                         RequireRemoteFile = SendRequireRemoteFile,
                     });
@@ -538,7 +540,9 @@ namespace CoApp.Toolkit.Engine {
                 case "remove-feed":
                     NewPackageManager.Instance.RemoveFeed(requestMessage["location"], requestMessage["session"], new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
-                        ArgumentError = SendMessageArgumentError,
+                        Error = SendMessageArgumentError,
+                        Warning = SendMessageWarning,
+                        FeedRemoved = SendFeedRemoved,
                         PermissionRequired = SendOperationRequiresPermission,
                     });
                 break;
@@ -546,8 +550,9 @@ namespace CoApp.Toolkit.Engine {
                 case "find-feeds":
                     NewPackageManager.Instance.ListFeeds( new NewPackageManagerMessages {
                         UnexpectedFailure = SendUnexpectedFailure,
-                        ArgumentError = SendMessageArgumentError,
-                        FeedDetails = SendFoundFeed
+                        Error = SendMessageArgumentError,
+                        FeedDetails = SendFoundFeed,
+                        NoFeedsFound = SendNoFeedsFound
                     });
                 break;
 
@@ -674,18 +679,45 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
-        private void SendOperationRequiresPermission(string currentUserName, string policyRequired) {
+        private void SendOperationRequiresPermission(string policyRequired) {
             WriteAsync( new UrlEncodedMessage("operation-requires-permission") {
-                {"current-user-name", currentUserName},
+                {"current-user-name", _userId},
                 {"policyRequired", policyRequired},
             });
         }
 
         private void SendMessageArgumentError(string messageName, string argumentName, string problem) {
-            WriteAsync( new UrlEncodedMessage("message-argument-error") {
+            WriteAsync(new UrlEncodedMessage("message-argument-error") {
                 {"message-name", messageName},
                 {"argument-name", argumentName},
-                {"problem", problem},
+                {"error", problem},
+            });
+        }
+
+        private void SendMessageWarning(string messageName, string argumentName, string problem) {
+            WriteAsync(new UrlEncodedMessage("message-warning") {
+                {"message-name", messageName},
+                {"argument-name", argumentName},
+                {"warning", problem},
+            });
+        }
+
+        private void SendFeedAdded( string location ) {
+            WriteAsync(new UrlEncodedMessage("feed-added") {
+                {"location", location },
+            });
+        }
+
+        private void SendFeedRemoved( string location ) {
+            WriteAsync(new UrlEncodedMessage("feed-removed") {
+                {"location", location },
+            });
+        }
+
+        private void SendMessage(string messageName, string message ) {
+            WriteAsync(new UrlEncodedMessage("message") {
+                {"message-name", messageName},
+                {"message", message},
             });
         }
 
@@ -726,6 +758,9 @@ namespace CoApp.Toolkit.Engine {
             WriteAsync( new UrlEncodedMessage("keep-alive"));
         }
 
+        private void SendNoFeedsFound() {
+            WriteAsync( new UrlEncodedMessage("no-feeds-found"));
+        }
         #endregion
     }
 

@@ -31,7 +31,7 @@ namespace CoApp.Toolkit.Engine {
 
         internal static Task<RecognitionInfo> Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal = false) {
             if (_cache.ContainsKey(item)) {
-                return Task<RecognitionInfo>.Factory.StartNew(() => _cache[item]);
+                return Task<RecognitionInfo>.Factory.StartNew(() => _cache[item]).AutoManage();
             }
 
             baseDirectory = baseDirectory ?? Environment.CurrentDirectory;
@@ -132,7 +132,7 @@ namespace CoApp.Toolkit.Engine {
                                 _cache.Add(item, result);
                             }
                             return result;
-                        }); // GS01: TODO : This is bad mojo--replace with better use of returning the child task 
+                        }).AutoManage(); // GS01: TODO : This is bad mojo--replace with better use of returning the child task 
                         /*
                         result.RemoteFile.Preview().ContinueWithParent(antecedent => {
                             if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
@@ -304,7 +304,7 @@ namespace CoApp.Toolkit.Engine {
             lock (_cache) {
                 _cache.Add(item, result);
             }
-            return Task<RecognitionInfo>.Factory.StartNew(() => result);
+            return Task<RecognitionInfo>.Factory.StartNew(() => result).AutoManage();
         }
 
         #region Nested type: RecognitionInfo

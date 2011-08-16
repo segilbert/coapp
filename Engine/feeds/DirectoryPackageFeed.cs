@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Engine.Feeds {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -61,6 +62,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// </remarks>
         protected void Scan() {
             if (!Scanned) {
+                LastScanned = DateTime.Now;
                 var files = Location.DirectoryEnumerateFilesSmarter(_patternMatch, _recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly, NewPackageManager.Instance.BlockedScanLocations);
                 files = from file in files
                     where Recognizer.Recognize(file).Result.IsPackageFile // Since we know this to be local, it'm ok with blocking on the result.

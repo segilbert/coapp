@@ -112,6 +112,9 @@ namespace CoApp.Toolkit.Tasks {
                 }
             }
         }
+
+        public virtual IEnumerable<string> Keys { get { return _cache.Keys; } }
+        public virtual IEnumerable<T> Values { get { return _cache.Values.AsEnumerable(); } }
     }
 
     public class SessionCache<T> : Cache<T> where T : class  {
@@ -135,6 +138,13 @@ namespace CoApp.Toolkit.Tasks {
                 }
             }
         }
+
+        public override IEnumerable<string> Keys { get { return _cache.Keys.Union(Cache<T>.Value.Keys); } }
+        public override IEnumerable<T> Values { get { return _cache.Values.AsEnumerable().Union(Cache<T>.Value.Values); } }
+
+        public IEnumerable<string> SessionKeys { get { return _cache.Keys; } }
+        public IEnumerable<T> SessionValues { get { return _cache.Values.AsEnumerable(); } }
+
     }
 
     /*

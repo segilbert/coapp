@@ -27,9 +27,13 @@ namespace CoApp.Toolkit.Engine {
         
         public Action<IEnumerable<string>, string, bool> RequireRemoteFile;
         public Action<string, bool, string> SignatureValidation;
-        public Action<string, string> PermissionRequired;
-        public Action<string, string,string > ArgumentError;
-
+        public Action<string> PermissionRequired;
+        public Action<string, string, string > Error;
+        public Action<string, string, string> Warning;
+        public Action<string> FeedAdded;
+        public Action<string> FeedRemoved;
+        public Action NoFeedsFound;
+        
         public Action<string> FileNotFound;
         public Action<string> UnknownPackage;
         public Action<string> PackageBlocked;

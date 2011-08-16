@@ -87,7 +87,8 @@ namespace CoApp.Toolkit.Engine {
         /// <summary>
         /// 
         /// </summary>
-        internal string Command;
+        public string Command;
+
         /// <summary>
         /// 
         /// </summary>

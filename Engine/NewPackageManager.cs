@@ -15,6 +15,8 @@ namespace CoApp.Toolkit.Engine {
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Extensions;
+    using Feeds;
     using Tasks;
 
     public class NewPackageManager {
@@ -22,7 +24,25 @@ namespace CoApp.Toolkit.Engine {
         public static NewPackageManager Instance = new NewPackageManager();
 
         private NewPackageManager() {
-            
+            // load system feeds
+            var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue;
+            foreach( var f in systemFeeds ) {
+                var feedLocation = f;
+                PackageFeed.GetPackageFeedFromLocation(feedLocation, false).ContinueWith(antecedent => {
+                    if (antecedent.Result != null) {
+                        Cache<PackageFeed>.Value[feedLocation] = antecedent.Result;
+                    }
+                    else {
+                        LogMessage("Feed {0} was unable to load.", feedLocation);
+                    }
+                });
+            }
+        }
+
+
+        private void LogMessage(string message, params object[] objs) {
+            string msg = message.format(objs);
+            // do something with the message?
         }
 
         public Task FindPackages( NewPackageManagerMessages messages ) {
@@ -31,7 +51,6 @@ namespace CoApp.Toolkit.Engine {
 
                 NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
-                // 
                 // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
             }).AutoManage();
@@ -68,11 +87,17 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                if (Cache<PackageFeed>.Value.Values.Any() || SessionCache<PackageFeed>.Value.Values.Any()) {
+                    foreach (var feed in SessionCache<PackageFeed>.Value.Values) {
+                        NewPackageManagerMessages.Invoke.FeedDetails(feed.Location, feed.LastScanned, true);
+                    }
 
-
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
+                    foreach (var feed in Cache<PackageFeed>.Value.Values) {
+                        NewPackageManagerMessages.Invoke.FeedDetails(feed.Location, feed.LastScanned, false);
+                    }
+                } else {
+                    NewPackageManagerMessages.Invoke.NoFeedsFound();
+                }
 
             }).AutoManage();
             return t;
@@ -81,6 +106,11 @@ namespace CoApp.Toolkit.Engine {
         public Task RemoveFeed(string location, bool? session, NewPackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
+
+                if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditFeeds) ) {
+                    NewPackageManagerMessages.Invoke.PermissionRequired("EditFeeds");
+                    return;
+                }
 
                 NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
 
@@ -95,10 +125,67 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditFeeds) ) {
+                    NewPackageManagerMessages.Invoke.PermissionRequired("EditFeeds");
+                    return;
+                }
 
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
+                /*
+                if( !location.IsPathOrUrl()  ) {
+                    NewPackageManagerMessages.Invoke.Error("add-feed", "location", "location '{0}' does not appear to be path or URL".format(location));
+                    return;
+                }
+                */
+
+
+                if( session ?? false ) {
+                    // new feed is a session feed
+
+                    // check if it is already a system feed
+                    if (PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.Contains(location)) {
+                        NewPackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a system feed".format(location));
+                        return;
+                    }
+
+                    if( (from feed in SessionCache<PackageFeed>.Value.Values where feed.Location == location select feed).Any() ) {
+                        NewPackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a session feed".format(location));
+                        return;
+                    }
+
+                    // add feed to the session feeds.
+                    PackageFeed.GetPackageFeedFromLocation(location).ContinueWith(antecedent => {
+                        if (antecedent.Result != null) {
+                            SessionCache<PackageFeed>.Value[location] = antecedent.Result;
+                            NewPackageManagerMessages.Invoke.FeedAdded(location);
+                        }
+                        else {
+                            NewPackageManagerMessages.Invoke.Error("add-feed", "location", "failed to recognize location '{0}' as a valid package feed".format(location));
+                            LogMessage("Feed {0} was unable to load.", location);
+                        }
+                    }, TaskContinuationOptions.AttachedToParent);
+
+                }else {
+                    // new feed is a system feed
+                    if( PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.Contains(location) ) {
+                        NewPackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a system feed".format(location));
+                        return;
+                    }
+                    // add feed to the system feeds.
+                    PackageFeed.GetPackageFeedFromLocation(location).ContinueWith(antecedent => {
+                        if (antecedent.Result != null) {
+                            lock(this) {
+                                var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.UnionSingleItem(location);
+                                PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds;
+                            }
+                            Cache<PackageFeed>.Value[location] = antecedent.Result;
+                            NewPackageManagerMessages.Invoke.FeedAdded(location);
+                        }
+                        else {
+                            NewPackageManagerMessages.Invoke.Error("add-feed", "location", "failed to recognize location '{0}' as a valid package feed".format(location));
+                            LogMessage("Feed {0} was unable to load.", location);
+                        }
+                    }, TaskContinuationOptions.AttachedToParent);
+                }
 
             }).AutoManage();
             return t;
