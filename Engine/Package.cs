@@ -23,21 +23,32 @@ namespace CoApp.Toolkit.Engine {
     using Win32;
 
     public class Package : NotifiesPackageManager {
-        private readonly Lazy<string> _canonicalName;
+        private string _canonicalName;
         private bool? _isInstalled;
         private PackageDetails _packageDetails;
         private InternalPackageData _internalPackageData;
         internal IPackageFormatHandler PackageHandler;
 
-        public string CanonicalName { get { return _canonicalName.Value; } }
-        public string Name { get; private set; }
-        public UInt64 Version { get; private set; }
-        public string Architecture { get; private set; }
-        public string PublicKeyToken { get; private set; }
+        public string CanonicalName { get {
+            if( _canonicalName == null && Version > 0 ) {
+                _canonicalName = "{0}-{1}-{2}-{3}".format(Name, Version.UInt64VersiontoString(), Architecture, PublicKeyToken).ToLowerInvariant();
+            }
+            return _canonicalName;
+        } }
+        public string Name { get; internal set; }
+        public UInt64 Version { get; internal set; }
+        public string Architecture { get; internal set; }
+        public string PublicKeyToken { get; internal  set; }
         public string ProductCode { get; internal set; }
         
+
+        /// <summary>
+        /// Gets the package details object.
+        /// 
+        /// if _packageDetails is null, it tries to get the data from the system cache (probably by use of a delegate)
+        /// </summary>
         internal PackageDetails PackageDetails { 
-            get { return _packageDetails ?? (_packageDetails = SessionCache<PackageDetails>.Value[CanonicalName]); }
+            get { return _packageDetails ?? (_packageDetails = Cache<PackageDetails>.Value[CanonicalName] ); }
         }
 
         internal InternalPackageData InternalPackageData {
@@ -65,6 +76,12 @@ namespace CoApp.Toolkit.Engine {
             set { _isInstalled = value; }
         }
 
+        public bool IsActive {
+            get { 
+                return GetCurrentPackage(Name, PublicKeyToken) == Version;
+            }
+        }
+
         public string GeneralName {
             get { return "{0}-{1}".format(Name, PublicKeyToken).ToLowerInvariant(); }
         }
@@ -78,9 +95,6 @@ namespace CoApp.Toolkit.Engine {
             Version = 0;
             Architecture = string.Empty;
             PublicKeyToken = string.Empty;
-            _canonicalName =
-                new Lazy<string>(() => "{0}-{1}-{2}-{3}".format(Name, Version.UInt64VersiontoString(), Architecture, PublicKeyToken).ToLowerInvariant());
-            DropDetails();
         }
 
         internal Package(string productCode) : this() {
@@ -99,10 +113,11 @@ namespace CoApp.Toolkit.Engine {
         /// the smooth running of the package manager.
         /// </summary>
         internal void DropDetails() {
-            _packageDetails = null;
-            SessionCache<PackageDetails>.Value.Clear(CanonicalName);
-            // PackageManagerSession.Invoke.DropPackageSessionData(this);
 
+            // drop the package details. If it's needed again, there should be a delegate to grab it 
+            // from the MSI or Feed.
+            _packageDetails = null;
+            Cache<PackageDetails>.Value.Clear(CanonicalName);
         }
 
         #region Install/Remove
@@ -330,6 +345,20 @@ namespace CoApp.Toolkit.Engine {
             return ver;
         }
 
+        public bool Required { 
+            get {
+                return PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue || PackageSessionData.IsDependency;
+            } 
+            set { PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue = value; }
+        }
+
+        public bool IsBlocked { 
+            get { return PackageManagerSettings.PerPackageSettings[CanonicalName, "Blocked"].BoolValue; } 
+            set { PackageManagerSettings.PerPackageSettings[CanonicalName, "Blocked"].BoolValue = value; }
+        }
+
+       
+
         public void SetPackageCurrent() {
             if (!IsInstalled) {
                 throw new PackageNotInstalledException(this);
@@ -354,7 +383,7 @@ namespace CoApp.Toolkit.Engine {
         private string _canonicalPackageLocation;
         private string _canonicalFeedLocation;
         private Package _package;
-         
+
         // set once only:
         internal UInt64 PolicyMinimumVersion { get; set; }
         internal UInt64 PolicyMaximumVersion { get; set; }
@@ -369,7 +398,6 @@ namespace CoApp.Toolkit.Engine {
         public readonly MultiplexedProperty<Uri> RemoteLocation = new MultiplexedProperty<Uri>((x, y) => Changed());
         public readonly MultiplexedProperty<string> LocalPackagePath = new MultiplexedProperty<string>((x, y) => Changed(), false);
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
-
 
         public string CanonicalPackageLocation {
             get { return _canonicalPackageLocation; }
@@ -402,8 +430,6 @@ namespace CoApp.Toolkit.Engine {
             get { return _package.IsInstalled || !string.IsNullOrEmpty(LocalPackagePath) && RemoteLocation != null && _package.PackageSessionData.Supercedent != null; }
         }
 
-        
-        public bool CanSatisfy { get; set; }
 
         public bool HasLocalFile {
             get {
@@ -418,8 +444,6 @@ namespace CoApp.Toolkit.Engine {
             get { return RemoteLocation.Value != null; }
         }
 
-
-        internal List<Func<Package, bool>> RetrievePackageDetails = new List<Func<Package, bool>>();
     }
 
     internal class PackageDetails : NotifiesPackageManager {
@@ -438,7 +462,7 @@ namespace CoApp.Toolkit.Engine {
         public string SummaryDescription { get; set; }
         public DateTime PublishDate { get; set; }
 
-        public Party Publisher { get; set; }
+        public Party Publisher = new Party();
         public IEnumerable<Party> Contributors { get; set; }
 
         public string CopyrightStatement { get; set; }
@@ -447,6 +471,11 @@ namespace CoApp.Toolkit.Engine {
         public IEnumerable<string> Tags { get; set; }
         public string FullDescription { get; set; }
         public string Base64IconData { get; set; }
+
+        public string License { get; set; }
+        public string LicenseUrl { get; set; }
+
+        public string DisplayName { get; set; }
 
     }
 
@@ -461,6 +490,9 @@ namespace CoApp.Toolkit.Engine {
         internal bool DoNotSupercede; // TODO: it's possible these could be contradictory
         internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
         internal bool UserSpecified;
+        internal bool RequestedDownload;
+
+        internal bool IsDependency;
 
         private bool _couldNotDownload;
         private Package _supercedent;
@@ -502,17 +534,17 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public bool AllowedToSupercede {
-            get { return UpgradeAsNeeded || (!UserSpecified && !DoNotSupercede); }
+            get { return UpgradeAsNeeded || (!UserSpecified && !DoNotSupercede) && PotentiallyInstallable; }
         }
 
         public bool PotentiallyInstallable {
             get {
-                if (CouldNotDownload || PackageFailedInstall) {
-                    return false;
-                }
-                return (!string.IsNullOrEmpty(_package.InternalPackageData.LocalPackagePath) || _package.InternalPackageData.RemoteLocation != null);
+                return !PackageFailedInstall && (_package.InternalPackageData.HasLocalFile || !CouldNotDownload && _package.InternalPackageData.HasRemoteLocation);
             }
         }
+
+        public bool CanSatisfy { get; set; }
+
     }
 
     public class NotifiesPackageManager {

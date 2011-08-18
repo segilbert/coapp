@@ -74,6 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\RegistryView.cs" />
+    <Compile Include="Crypto\Verifier.cs" />
     <Compile Include="DynamicXml\DynamicDataRow.cs" />
     <Compile Include="DynamicXml\DynamicDataSet.cs" />
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
@@ -93,8 +94,11 @@
     <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
     <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
     <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs" />
+    <Compile Include="Exceptions\PathIsNotFileUriException.cs" />
     <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />
+    <Compile Include="Engine\Feeds\InstalledPackageFeed.cs" />
     <Compile Include="Engine\Feeds\PackageFeed.cs" />
+    <Compile Include="Engine\Feeds\SessionPackageFeed.cs" />
     <Compile Include="Engine\MultiplexedProperty.cs" />
     <Compile Include="Engine\Network\RemoteFile.cs" />
     <Compile Include="Engine\Network\TransferManager.cs" />
@@ -184,6 +188,7 @@
     <Compile Include="Win32\LegacySymlink.cs" />
     <Compile Include="Win32\ModernSymlink.cs" />
     <Compile Include="Win32\MoveFileFlags.cs" />
+    <Compile Include="Win32\MPR.cs" />
     <Compile Include="Win32\NativeFileAccess.cs" />
     <Compile Include="Win32\NativeFileAttributesAndFlags.cs" />
     <Compile Include="Win32\Ntdll.cs" />
@@ -205,6 +210,7 @@
     <Compile Include="Win32\User32.cs" />
     <Compile Include="Win32\Win32StreamId.cs" />
     <Compile Include="Win32\WindowsVersionInfo.cs" />
+    <Compile Include="Win32\WinTrust.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Engine\Properties\Resources.resx">

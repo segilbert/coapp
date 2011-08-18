@@ -1,6 +1,7 @@
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
     using Network;
     using Tasks;
 
@@ -12,7 +13,7 @@ namespace CoApp.Toolkit.Engine {
 #if COAPP_ENGINE_CORE
 
     public class NewPackageManagerMessages : MessageHandlers<NewPackageManagerMessages> {
-        public Action<Package> PackageInformation;
+        public Action<Package, IEnumerable<Package>> PackageInformation;
         public Action<Package> PackageDetails;
         public Action NoPackagesFound;
         public Action<string, DateTime, bool> FeedDetails;
@@ -21,11 +22,9 @@ namespace CoApp.Toolkit.Engine {
         public Action<string, int> RemovingPackageProgress;
         public Action<string> InstalledPackage;
         public Action<string> RemovedPackage;
-
         public Action<string,string,string> FailedPackageInstall;
         public Action<string,string> FailedPackageRemoval;
-        
-        public Action<IEnumerable<string>, string, bool> RequireRemoteFile;
+        public Action<string, IEnumerable<string>, string, bool> RequireRemoteFile;
         public Action<string, bool, string> SignatureValidation;
         public Action<string> PermissionRequired;
         public Action<string, string, string > Error;
@@ -34,14 +33,17 @@ namespace CoApp.Toolkit.Engine {
         public Action<string> FeedRemoved;
         public Action<string> FeedSuppressed;
         public Action NoFeedsFound;
-        
         public Action<string> FileNotFound;
         public Action<string> UnknownPackage;
         public Action<string> PackageBlocked;
-        
         public Action<string,string> FileNotRecognized;
-
+        public Action<string> Recognized;
+        public Action<string> OperationCancelled;
         public Action<Exception> UnexpectedFailure;
+        public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
+        public Action<Package> UnableToDownloadPackage;
+        public Action<Package> UnableToInstallPackage;
+        public Action<Package, IEnumerable<Package>> UnableToResolveDependencies;
     }
 
     internal class PackageManagerSession : MessageHandlers<PackageManagerSession> {
@@ -49,6 +51,8 @@ namespace CoApp.Toolkit.Engine {
         // public Func<Package, PackageManagerSessionData> GetPackageManagerSessionData;
         // public Action<Package> DropPackageSessionData;
         public Func<PermissionPolicy, bool> CheckForPermission;
+        public Func<bool> CancellationRequested;
+        public Func<string, string> GetCanonicalizedPath;
     }
 #endif
 }

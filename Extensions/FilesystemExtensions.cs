@@ -22,10 +22,12 @@ namespace CoApp.Toolkit.Extensions {
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Text.RegularExpressions;
 #if ! COAPP_ENGINE_CORE 
     using Properties;
 #endif
+    using Exceptions;
     using Win32;
 
     /// <summary>
@@ -183,7 +185,7 @@ namespace CoApp.Toolkit.Extensions {
         ///     {time-long} - the current time in long fmt
         ///     {ticks}     - the current timestamp as tics
         /// </remarks>
-        public static string CanonicalizePath(this string filename, string filenameHint) {
+        public static string GenerateTemplatedFilename(this string filename, string filenameHint) {
             var result = filename;
             
             if (!filenameHint.StartsWith("\\\\")) {
@@ -574,6 +576,50 @@ namespace CoApp.Toolkit.Extensions {
             return path;
         }
 
+        /// <summary>
+        /// This takes a string that is representative of a filename 
+        /// and tries to create a path that can be considered the 'canonical' path.
+        /// 
+        /// path on drives that are mapped as remote shares are rewritten as their \\server\share\path 
+        /// </summary>
+        /// <returns></returns>
+        public static string CanonicalizePath(this string path, bool IsPotentiallyRelativePath = true) {
+            Uri pathUri = null;
+            try {
+                pathUri = new Uri(path);
+                if( !pathUri.IsFile ) {
+                    throw new PathIsNotFileUriException(path, pathUri);
+                }
+                
+                // is this a unc path?
+                if( string.IsNullOrEmpty(pathUri.Host)) {
+                    // no, this is a drive:\path path
+                    // use API to resolve out the drive letter to see if it is a remote 
+                    var drive = pathUri.Segments[1].Replace('/','\\'); // the zero segment is always just '/' 
+
+                    var sb = new StringBuilder(512);
+                    var size = sb.Capacity;
+
+                    var error = MPR.WNetGetConnection(drive, sb, ref size);
+                    if (error == 0) {
+                        if( pathUri.Segments.Length > 2 ) {
+                            return pathUri.Segments.Skip(2).Aggregate(sb.ToString().Trim(), (current, item) => current + item);
+                        }
+                    }
+                }
+                // not a remote (or resovably-remote) path or 
+                // it is already a path that is in it's correct form (via localpath)
+                return pathUri.LocalPath;
+            }
+            catch(UriFormatException) {
+                // we could try to see if it is a relative path...
+                if( IsPotentiallyRelativePath) {
+                    return CanonicalizePath(path.GetFullPath(), false);
+                }
+                throw new ArgumentException("specified path can not be resolved as a file name or path (unc, url, localpath)", path);
+            }
+
+        }
 
         /// <summary>
         /// Gets the next part.

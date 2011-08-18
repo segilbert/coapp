@@ -32,7 +32,7 @@ namespace CoApp.Toolkit.Engine {
                 _value = value;
             }
 
-            public override string ToString() {
+            public override string  ToString() {
                 return _value ?? string.Empty;
             }
 
@@ -41,6 +41,9 @@ namespace CoApp.Toolkit.Engine {
             }
 
             public static implicit operator int?(UrlEncodedMessageValue value) {
+                if (value._value == null)
+                    return null;
+
                 int outVal;
                 if (Int32.TryParse(value._value, out outVal)) {
                     return outVal;
@@ -49,6 +52,9 @@ namespace CoApp.Toolkit.Engine {
             }
 
             public static implicit operator bool?(UrlEncodedMessageValue value) {
+                if (value._value == null)
+                    return null;
+
                 switch (value._value.ToLower()) {
                     case "true":
                         return true;
@@ -158,9 +164,11 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public void AddCollection( string key, IEnumerable<string>  values ) {
-            var index = 0;
-            foreach( var s in values) {
-                Add( "{0}[{1}]".format(  key, index++), s );
+            if (!values.IsNullOrEmpty()) {
+                var index = 0;
+                foreach (var s in values) {
+                    Add("{0}[{1}]".format(key, index++), s);
+                }
             }
         }
 

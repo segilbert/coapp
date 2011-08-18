@@ -85,6 +85,7 @@
     <Compile Include="Exceptions\ConflictingFileOrFolderException.cs" />
     <Compile Include="Exceptions\EndUserException.cs" />
     <Compile Include="Exceptions\EndUserRuleException.cs" />
+    <Compile Include="Exceptions\PathIsNotFileUriException.cs" />
     <Compile Include="Exceptions\PathIsNotSymlinkException.cs" />
     <Compile Include="Exceptions\EndUserPropertyException.cs" />
     <Compile Include="Exceptions\EndUserParseException.cs" />
@@ -253,6 +254,7 @@
     <Compile Include="Win32\Miim.cs" />
     <Compile Include="Win32\ModernSymlink.cs" />
     <Compile Include="Win32\MoveFileFlags.cs" />
+    <Compile Include="Win32\MPR.cs" />
     <Compile Include="Win32\NativeFileAccess.cs" />
     <Compile Include="Win32\NativeFileAttributesAndFlags.cs" />
     <Compile Include="Win32\NativeWindowWithEvent.cs" />

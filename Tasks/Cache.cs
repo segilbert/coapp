@@ -10,7 +10,7 @@ namespace CoApp.Toolkit.Tasks {
     }
 
     public class Cache<T> where T : class {
-        public static Cache<T> Value;
+        public static Cache<T> Value = new Cache<T>();
 
         protected Dictionary<string, T> _cache = new Dictionary<string,T>();
         protected Dictionary<string, List<Func<string, T>>> _delegateCache = new Dictionary<string, List<Func<string, T>>>();
@@ -147,20 +147,5 @@ namespace CoApp.Toolkit.Tasks {
 
     }
 
-    /*
-    public class test {
-        public test() {
-
-            // gets from session cache first
-            // then checks system cache
-            var x = Cache<string>.Value["name"];
-
-            // gets only from session cache.
-            var y = SessionCache<string>.Value["name"];
-
-            SessionCache<string>.Value.Add("foo", (packageName) => { return "hello"; });
-
-        }
-    }*/
-
+   
 }

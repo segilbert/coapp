@@ -208,16 +208,22 @@ namespace CoApp.Toolkit.Win32 {
         /// </remarks>
         public static bool IsProcessElevated() {
             bool fIsElevated = false;
-            SafeTokenHandle hToken = null;
+            IntPtr hToken = IntPtr.Zero;
             int cbTokenElevation = 0;
             IntPtr pTokenElevation = IntPtr.Zero;
 
             try {
+                /*
                 // Open the access token of the current process with TOKEN_QUERY.
                 if (!Advapi32.OpenProcessToken(Process.GetCurrentProcess().Handle,
                     Advapi32.TOKEN_QUERY, out hToken)) {
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 }
+                */
+
+                // instead of using a the process' token, get it from the 
+                // current user. Dumbass.
+                hToken = WindowsIdentity.GetCurrent().Token;
 
                 // Allocate a buffer for the elevation information.
                 cbTokenElevation = Marshal.SizeOf(typeof(TokenElevation));
@@ -250,10 +256,11 @@ namespace CoApp.Toolkit.Win32 {
                 }
             finally {
                 // Centralized cleanup for all allocated resources. 
-                if (hToken != null) {
+                /* if (hToken != null) {
                     hToken.Close();
                     hToken = null;
                 }
+                 * */
                 if (pTokenElevation != IntPtr.Zero) {
                     Marshal.FreeHGlobal(pTokenElevation);
                     pTokenElevation = IntPtr.Zero;

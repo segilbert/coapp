@@ -243,6 +243,12 @@ namespace CoApp.Toolkit.Tasks {
             }
         }
 
+        internal static Task<T> AsResultTask<T>( this T result) {
+            var x = new TaskCompletionSource<T>(TaskCreationOptions.AttachedToParent);
+            x.SetResult(result);
+            return x.Task.AutoManage();
+        }
+
         internal static Task AutoManage(this Task task) {
             if( !_tasks.ContainsKey(task.Id)) {
                 lock (_tasks) {
@@ -273,7 +279,7 @@ namespace CoApp.Toolkit.Tasks {
                 _tasks[task.Id].TaskInstance= task;
             }
 
-             task.ContinueWith(OnTaskComplete, TaskContinuationOptions.AttachedToParent);
+            task.ContinueWith(OnTaskComplete, TaskContinuationOptions.AttachedToParent);
             return task;
         }
 

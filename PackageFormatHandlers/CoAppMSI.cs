@@ -24,6 +24,13 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     /// </summary>
     /// <remarks></remarks>
     internal class CoAppMSI : MSIBase {
+
+        internal static CoAppMSI Instance  = new CoAppMSI();
+
+        private CoAppMSI() {
+            
+        }
+
         /// <summary>
         /// Determines whether a given file is a CoApp MSI
         /// </summary>
@@ -58,7 +65,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <param name="localPackagePath">The local package path.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        internal static dynamic GetCoAppPackageFileDetails(string localPackagePath) {
+        internal static dynamic GetCoAppPackageFileInformation(string localPackagePath) {
             dynamic packageData = GetDynamicMSIData(localPackagePath);
             
             if (packageData.CO_PACKAGE == null) {
@@ -78,7 +85,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             UInt64 version = ((string)newrecord.version).VersionStringToUInt64();
             string pkt = newrecord.public_key_token;
 
-
             UInt64 minPolicy = 0;
             UInt64 maxPolicy = 0;
             
@@ -89,19 +95,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 minPolicy = ((string)policy.minimum_version).VersionStringToUInt64();
                 maxPolicy = ((string)policy.maximum_version).VersionStringToUInt64();
             }
-
-            string licenseText = null;
-            string licenseUrl = null;
-
-            if (packageData.CO_LICENSE != null)
-            {
-                var license = packageData.CO_LICENSE[0];
-                licenseText = license.license_text;
-                licenseUrl = license.license_url;
-            }
-
-            var properties = packageData.CO_PACKAGE_PROPERTIES[pkgid];
-            var publisher = packageData.CO_PUBLISHER[pkt];
 
             dynamic result =
                 new {
@@ -117,20 +110,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     roles = new List<Tuple<PackageRole, string>>(),
                     assemblies = new Dictionary<string, PackageAssemblyInfo>(),
 
-                    // new cosmetic metadata fields
-                    displayName = properties.display_name,
-                    description = StringExtensions.GunzipFromBase64(properties.description),
-                    publishDate = properties.publish_date,
-                    authorVersion = properties.author_version,
                     originalLocation = GetURL(packageData.CO_URLS, newrecord.original ),
                     feedLocation = GetURL(packageData.CO_URLS, newrecord.feed),
-                    icon = properties.icon,
-                    summary = properties.short_description,
-                    publisherName = publisher.name,
-                    publisherUrl = GetURL(packageData.CO_URLS,publisher.location),
-                    publisherEmail = publisher.email,
-                    license = StringExtensions.GunzipFromBase64(licenseText),
-                    licenseUrl = GetURL(packageData.CO_URLS, licenseUrl)
                 };
 
             if (packageData.CO_DEPENDENCY != null) {
@@ -148,7 +129,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     arch = pak.arch;
                     version = ((string)pak.version).VersionStringToUInt64();
                     pkt = pak.public_key_token;
-                    result.dependencies.Add(NewPackageManager.Instance.GetPackageByDetails(name, version, arch, pkt, pkgid));
+                    result.dependencies.Add(NewPackageManager.Instance.GetPackage(name, version, arch, pkt, pkgid));
                 }
             }
 
@@ -366,5 +347,49 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                         };
         }
 
+
+        /// <summary>
+        /// Loads the cosmetic package details when actually required.
+        /// 
+        /// Generally, this should be called as a delegate from the cache somewhere.
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        internal static PackageDetails GetPackageDetails(Package pkg, string filename) {
+            dynamic packageData = GetDynamicMSIData(filename);
+            var properties = packageData.CO_PACKAGE_PROPERTIES[pkg.ProductCode];
+            var publisher = packageData.CO_PUBLISHER[pkg.PublicKeyToken];
+
+            long publishDateTicks;
+            Int64.TryParse(properties.publish_date, out publishDateTicks);
+
+            string licenseText = null;
+            string licenseUrl = null;
+
+            if (packageData.CO_LICENSE != null)
+            {
+                var license = packageData.CO_LICENSE[0];
+                licenseText = license.license_text;
+                licenseUrl = license.license_url;
+            }
+
+            return new PackageDetails(pkg) {
+                DisplayName = properties.display_name,
+                FullDescription = StringExtensions.GunzipFromBase64(properties.description),
+                PublishDate = new DateTime(publishDateTicks),
+                AuthorVersion = properties.author_version,
+                Base64IconData = properties.icon,
+                SummaryDescription = properties.short_description,
+                Publisher = new PackageDetails.Party() {
+                    Name = publisher.Name,
+                    Url = GetURL(packageData.CO_URLS, publisher.location),
+                    Email = publisher.email
+                },
+                License = licenseText.GunzipFromBase64(),
+                LicenseUrl = GetURL(packageData.CO_URLS, licenseUrl),
+            };
+
+            
+        }
     }
 }

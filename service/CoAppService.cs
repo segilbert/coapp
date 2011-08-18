@@ -32,6 +32,7 @@ namespace CoApp.Service {
 
             if (Controller.Value.Status == ServiceControllerStatus.Stopped) {
                 Controller.Value.Start();
+                
             }
         }
 

@@ -16,8 +16,16 @@ namespace CoApp.Toolkit.Win32 {
     ///   Represents a wrapper class for a token handle.
     /// </summary>
     public class SafeTokenHandle : SafeHandleZeroOrMinusOneIsInvalid {
+
+        private SafeTokenHandle() : base (true) {}
+
+
         public SafeTokenHandle(IntPtr handle) : base(true) {
             SetHandle(handle);
+        }
+
+        internal static SafeTokenHandle InvalidHandle {
+            get { return new SafeTokenHandle(IntPtr.Zero); }
         }
 
         protected override bool ReleaseHandle() {

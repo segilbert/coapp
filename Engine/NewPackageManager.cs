@@ -12,23 +12,52 @@
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Crypto;
+    using Exceptions;
     using Extensions;
     using Feeds;
+    using PackageFormatHandlers;
     using Tasks;
 
     public class NewPackageManager {
 
         public static NewPackageManager Instance = new NewPackageManager();
+        private static Regex _canonicalNameParser = new Regex(@"^(.*)-(\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5})-(any|x86|x64|arm)-([0-9a-f]{16})$",RegexOptions.IgnoreCase);
+
+        private List<ManualResetEvent> manualResetEvents = new List<ManualResetEvent>();
+
+        /// <summary>
+        /// the collection of all known packages
+        /// </summary>
+        private static readonly ObservableCollection<Package> _packages = new ObservableCollection<Package>();
+
+        private bool CancellationRequested {
+            get { return PackageManagerSession.Invoke.CancellationRequested(); }
+        }
 
         private NewPackageManager() {
             // load system feeds
-            var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue;
+            IEnumerable<string> systemFeeds;
+            if( PackageManagerSettings.CoAppSettings["#feedLocations"].HasValue ) {
+                systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue;    
+            } else {
+                // defaults to the installed packages feed 
+                // and the default coapp feed.
+                systemFeeds = "http://coapp.org/feed".SingleItemAsEnumerable();
+            }
+
+            // always load the Installed Package Feed.
+            PackageFeed.GetPackageFeedFromLocation(InstalledPackageFeed.CanonicalLocation).AutoManage();
+
             foreach( var f in systemFeeds ) {
                 var feedLocation = f;
-                PackageFeed.GetPackageFeedFromLocation(feedLocation, false).ContinueWith(antecedent => {
+                PackageFeed.GetPackageFeedFromLocation(feedLocation).ContinueWith(antecedent => {
                     if (antecedent.Result != null) {
                         Cache<PackageFeed>.Value[feedLocation] = antecedent.Result;
                     }
@@ -39,19 +68,85 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-
         private void LogMessage(string message, params object[] objs) {
             string msg = message.format(objs);
             // do something with the message?
         }
 
-        public Task FindPackages( NewPackageManagerMessages messages ) {
+        public Task FindPackages( string canonicalName, string name, string version, string arch, string publicKeyToken,
+            bool? dependencies, bool? installed, bool? active, bool? required, bool? blocked, bool? latest, 
+            int? index, int? maxResults, string location, bool? forceScan, NewPackageManagerMessages messages ) {
+            
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EnumeratePackages) ) {
+                    NewPackageManagerMessages.Invoke.PermissionRequired("EnumeratePackages");
+                    return;
+                }
 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
+                // get basic list of packages based on primary characteristics
+                if( !string.IsNullOrEmpty(canonicalName)) {
+                    // if canonical name is passed, override name,version,pkt,arch with the parsed canonicalname.
+                    var match = _canonicalNameParser.Match(canonicalName.ToLower());
+                    if( !match.Success ) {
+                        NewPackageManagerMessages.Invoke.Error("find-packages", "canonical-name",
+                            "Canonical name '{0}' does not appear to be a valid canonical name".format(canonicalName));
+                        return;
+                    }
+
+                    name = match.Groups[1].Captures[0].Value;
+                    version = match.Groups[2].Captures[0].Value;
+                    arch = match.Groups[3].Captures[0].Value;
+                    publicKeyToken = match.Groups[4].Captures[0].Value;
+                }
+
+                var results = SearchForPackages(name, version, arch, publicKeyToken);
+
+                // filter results of list based on secondary filters
+
+                results = from package in results
+                    where 
+                        (installed == null || package.IsInstalled == installed) &&
+                        (active == null || package.IsActive == active) && 
+                        (required == null || package.Required == required) && 
+                        (blocked == null || package.IsBlocked == blocked)
+
+                    select package;
+
+                // only the latest?
+                if( latest.HasValue && latest == true) {
+                    results = results.HighestPackages();
+                }
+
+                // paginate the results
+                if( index.HasValue ) {
+                    results = results.Skip(index.Value);
+                }
+
+                if( maxResults.HasValue  ) {
+                    results = results.Take(maxResults.Value);
+                }
+
+                if (results.Any()) {
+                    UpdateIsRequestedFlags();
+
+                    foreach (var package in results) {
+                        if( CancellationRequested ) {
+                            NewPackageManagerMessages.Invoke.OperationCancelled("find-packages");
+                            return;
+                        }
+
+                        // otherwise, we're installing a dependency, and we need something compatable.
+                        var supercedents =  (from p in SearchForPackages(package.Name, null, package.Architecture, package.PublicKeyToken) 
+                                where p.InternalPackageData.PolicyMinimumVersion <= package.Version &&
+                                      p.InternalPackageData.PolicyMaximumVersion >= package.Version select p).OrderByDescending(p => p.Version).ToArray();
+                
+                        NewPackageManagerMessages.Invoke.PackageInformation(package, supercedents);
+                    }
+                } else {
+                    NewPackageManagerMessages.Invoke.NoPackagesFound();
+                }
 
             }).AutoManage();
             return t;
@@ -61,11 +156,12 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                var package = GetSinglePackage(canonicalName, "get-package-details");
+                if( package == null ) {
+                    return;
+                }
 
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
-
+                NewPackageManagerMessages.Invoke.PackageDetails(package);
             }).AutoManage();
             return t;
         }
@@ -74,26 +170,204 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                using (var manualResetEvent = new ManualResetEvent(true)) {
+                    try {
+                        lock (manualResetEvents) {
+                            manualResetEvents.Add(manualResetEvent);
+                        }
 
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
+                        var package = GetSinglePackage(canonicalName, "install-package");
+                        if (package == null) {
+                            return;
+                        }
 
+                        // is the user authorized to install this?
+                        var highestInstalledPackage =
+                            SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken).HighestPackages();
+                        if (highestInstalledPackage.Any() && highestInstalledPackage.FirstOrDefault().Version < package.Version) {
+                            if( !package.IsBlocked ) {
+                                NewPackageManagerMessages.Invoke.PackageBlocked(canonicalName);
+                                return;
+                            }
+
+                            if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.UpdatePackage)) {
+                                NewPackageManagerMessages.Invoke.PermissionRequired("UpdatePackage");
+                                return;
+                            }
+                        }
+                        else {
+                            if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.InstallPackage)) {
+                                NewPackageManagerMessages.Invoke.PermissionRequired("InstallPackage");
+                                return;
+                            }
+                        }
+
+                        // mark the package as the client requested.
+                        package.PackageSessionData.DoNotSupercede = (false == autoUpgrade);
+                        package.PackageSessionData.UpgradeAsNeeded = (true == autoUpgrade);
+                        package.PackageSessionData.UserSpecified = true;
+
+                        // the resolve-acquire-install-loop
+                        do {
+                            // if the world changes, this will get set somewhere between here and the 
+                            // other end of the do-loop.
+                            manualResetEvent.Reset();
+
+                            if (CancellationRequested) {
+                                NewPackageManagerMessages.Invoke.OperationCancelled("install-package");
+                                return;
+                            }
+
+                            IEnumerable<Package> installGraph = null;
+                            try {
+                                installGraph = GenerateInstallGraph(package).ToArray();
+                            } catch(OperationCompletedBeforeResultException) {
+                                // we encountered an unresolvable condition in the install graph.
+                                // messages should have already been sent.
+                                NewPackageManagerMessages.Invoke.FailedPackageInstall(canonicalName, package.InternalPackageData.LocalPackagePath,
+                                    "One or more dependencies are unable to be resolved.");
+                                return;
+                            }
+                            
+                            // seems like a good time to check if we're supposed to bail...
+                            if (CancellationRequested) {
+                                NewPackageManagerMessages.Invoke.OperationCancelled("install-package");
+                                return;
+                            }
+
+                            // we've got an install graph.
+                            // let's see if we've got all the files
+                            var missingFiles = from p in installGraph where !p.InternalPackageData.HasLocalFile select p;
+                            if( missingFiles.Any() ) {
+                                // we've got some that don't have files.
+                                foreach (var p in missingFiles.Where(p => !p.PackageSessionData.RequestedDownload)) {
+                                    NewPackageManagerMessages.Invoke.RequireRemoteFile(p.CanonicalName,p.InternalPackageData.RemoteLocation.Select(each => each.AbsoluteUri),
+                                        PackageManagerSettings.CoAppCacheDirectory, false);
+
+                                    p.PackageSessionData.RequestedDownload = true;
+                                }
+                            } else {
+                                var failed = false;
+                                // no missing files? Check
+                                // complete install graph? Check
+                                foreach (var p in installGraph ) {
+                                    var pkg = p;
+                                    // seems like a good time to check if we're supposed to bail...
+                                    if (CancellationRequested) {
+                                        NewPackageManagerMessages.Invoke.OperationCancelled("install-package");
+                                        return;
+                                    }
+                                    try {
+                                        if (!pkg.IsInstalled) {
+                                            var isValid = false; 
+                                            foreach( var location in pkg.InternalPackageData.LocalPackagePath.Value.SingleItemAsEnumerable().Union(pkg.InternalPackageData.LocalPackagePath.OtherValues )) {
+                                              isValid = Verifier.HasValidSignature(location);
+                                              NewPackageManagerMessages.Invoke.SignatureValidation(location, isValid , Verifier.GetPublisherInformation(location)["PublisherName"]);
+                                              if(isValid) {
+                                                  pkg.InternalPackageData.LocalPackagePath.Value = location;
+                                                  break;
+                                              }
+                                            }
+
+                                            if(!isValid) {
+                                                NewPackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, pkg.InternalPackageData.LocalPackagePath,
+                                                    "Package failed to install due to not being signed with a valid certificate.");
+                                                pkg.PackageSessionData.PackageFailedInstall = true;
+                                            }
+
+                                            // GS01: We should put a softer lock here to keep the client aware that packages 
+                                            // are being installed on other threads...
+                                            lock (typeof(MSIBase)) {
+                                                pkg.Install(
+                                                    percentage => NewPackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, percentage));
+                                            }
+                                            NewPackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, 100);
+                                            NewPackageManagerMessages.Invoke.InstalledPackage(pkg.CanonicalName);
+                                        }
+                                    } catch(PackageInstallFailedException pife) {
+                                        NewPackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, pkg.InternalPackageData.LocalPackagePath,
+                                            "Package failed to install.");
+                                        pkg.PackageSessionData.PackageFailedInstall = true;
+
+                                        if (!pkg.PackageSessionData.AllowedToSupercede) {
+                                            throw new OperationCompletedBeforeResultException(); // user specified packge as critical.
+                                        }
+                                        failed = true;
+                                        break;
+                                    }
+                                }
+                                if( !failed ) {
+                                    // W00T ... We did it!
+                                    return;
+                                }
+                                
+                                // otherwise, let's run it thru again. maybe it'll come together.
+                            }
+
+                            //----------------------------------------------------------------------------
+                            // wait until either the manualResetEvent is set, but check every second or so
+                            // to see if the client has cancelled the operation.
+                            while (!manualResetEvent.WaitOne(1000)) {
+                                if (CancellationRequested) {
+                                    NewPackageManagerMessages.Invoke.OperationCancelled("install-package");
+                                    return;
+                                }
+                            }
+                        } while (true);
+
+                    } 
+                    catch(OperationCompletedBeforeResultException) {
+                        // can't continue with options given.
+                        return;
+                    }
+                    finally {
+                        // remove manualResetEvent from the mre list
+                        lock (manualResetEvents) {
+                            manualResetEvents.Remove(manualResetEvent);
+                        }
+                    }
+                }
+               
             }).AutoManage();
             return t;
         }
 
-        public Task ListFeeds(NewPackageManagerMessages messages) {
+        public Task ListFeeds(int? index, int? maxResults, NewPackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                if (Cache<PackageFeed>.Value.Values.Any() || SessionCache<PackageFeed>.Value.Values.Any()) {
-                    foreach (var feed in SessionCache<PackageFeed>.Value.Values) {
-                        NewPackageManagerMessages.Invoke.FeedDetails(feed.Location, feed.LastScanned, true);
-                    }
+                var found = false;
+                var feedFilters = BlockedScanLocations;
+                var canFilterSession = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds);
+                var canFilterSystem = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds);
 
-                    foreach (var feed in Cache<PackageFeed>.Value.Values) {
-                        NewPackageManagerMessages.Invoke.FeedDetails(feed.Location, feed.LastScanned, false);
+                var results = (from feed in SessionCache<PackageFeed>.Value.Values
+                    where !canFilterSession || feed.IsLocationMatch(BlockedScanLocations)
+                    select new {
+                        feed,
+                        feed.LastScanned,
+                        session = true
+                    }).Union(from feed in Cache<PackageFeed>.Value.Values 
+                    where !canFilterSystem || feed.IsLocationMatch(BlockedScanLocations) 
+                    select new {
+                        feed,
+                        feed.LastScanned, 
+                        session = false
+                    });
+
+                // paginate the results
+                if( index.HasValue ) {
+                    results = results.Skip(index.Value);
+                }
+
+                if( maxResults.HasValue  ) {
+                    results = results.Take(maxResults.Value);
+                }
+
+
+                if( results.Any()) {
+                    foreach( var f in results ) {
+                        NewPackageManagerMessages.Invoke.FeedDetails(f.feed.Location, f.LastScanned, f.session);
                     }
                 } else {
                     NewPackageManagerMessages.Invoke.NoFeedsFound();
@@ -212,7 +486,7 @@ namespace CoApp.Toolkit.Engine {
                             NewPackageManagerMessages.Invoke.Error("add-feed", "location", "failed to recognize location '{0}' as a valid package feed".format(location));
                             LogMessage("Feed {0} was unable to load.", location);
                         }
-                    }, TaskContinuationOptions.AttachedToParent);
+                    }, TaskContinuationOptions.AttachedToParent).AutoManage();
                 }
 
             }).AutoManage();
@@ -223,10 +497,21 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                if( string.IsNullOrEmpty(filename)) {
+                    NewPackageManagerMessages.Invoke.Error("verify-signature", "filename", "parameter 'filename' is required to verify a file");
+                    return;
+                }
 
-                // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
+                var location = PackageManagerSession.Invoke.GetCanonicalizedPath(filename);
+                
+                if(!File.Exists(location)) {
+                    NewPackageManagerMessages.Invoke.FileNotFound(location);
+                    return;
+                }
+
+                var r = Verifier.HasValidSignature(location);
+                NewPackageManagerMessages.Invoke.SignatureValidation(location, Verifier.HasValidSignature(location),
+                    Verifier.GetPublisherInformation(location)["PublisherName"]);
 
             }).AutoManage();
             return t;
@@ -236,43 +521,232 @@ namespace CoApp.Toolkit.Engine {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                var package = GetSinglePackage(canonicalName, "set-package");
+                
+                if (package == null) {
+                    NewPackageManagerMessages.Invoke.UnknownPackage(canonicalName);
+                    return;
+                }
 
+                if( !package.IsInstalled ) {
+                    NewPackageManagerMessages.Invoke.Error("set-package", "canonical-name", "package '{0}' is not installed.".format(canonicalName));
+                    return;
+                }
+
+                // seems like a good time to check if we're supposed to bail...
+                if (CancellationRequested) {
+                    NewPackageManagerMessages.Invoke.OperationCancelled("remove-package");
+                    return;
+                }
+
+                if( true == active ) {
+                    if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.ChangeActivePackage)) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("ChangeActivePackage");
+                    }
+                    else {
+                        package.SetPackageCurrent();
+                    }
+                }
+
+                if( false == active ) {
+                    if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.ChangeActivePackage)) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("ChangeActivePackage");
+                    }
+                    else {
+                        SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken).HighestPackages().FirstOrDefault().SetPackageCurrent();
+                    }
+                }
+
+                if( true == required ) {
+                    if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.ChangeRequiredState)) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("ChangeRequiredState");
+                    }
+                    else {
+                        package.Required = true;
+                    }
+                }
+
+                if( false == required ) {
+                    if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.ChangeRequiredState)) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("ChangeRequiredState");
+                    }
+                    else {
+                        package.Required = false;
+                    }
+                }
+
+                if( true == blocked ) {
+                    if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.ChangeBlockedState)) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("ChangeBlockedState");
+                    }
+                    else {
+                        package.IsBlocked = true;
+                    }
+                }
+
+                if( false == blocked ) {
+                    if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.ChangeBlockedState)) {
+                        NewPackageManagerMessages.Invoke.PermissionRequired("ChangeBlockedState");
+                    }
+                    else {
+                        package.IsBlocked = true;
+                    }
+                }
+
+                NewPackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
+
+            }).AutoManage();
+            return t;
+        }
+
+        public Task RemovePackage(string canonicalName, bool? force ,NewPackageManagerMessages messages) {
+            var t = Task.Factory.StartNew(() => {
+                messages.Register();
+
+                if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.RemovePackage)) {
+                    NewPackageManagerMessages.Invoke.PermissionRequired("RemovePackage");
+                    return;
+                }
+
+                var package = GetSinglePackage(canonicalName, "remove-package");
+                if (package == null) {
+                    NewPackageManagerMessages.Invoke.UnknownPackage(canonicalName);
+                    return;
+                }
+
+                if( !package.IsInstalled ) {
+                    NewPackageManagerMessages.Invoke.Error("remove-package", "canonical-name", "package '{0}' is not installed.".format(canonicalName));
+                    return;
+                }
+
+                if( !package.IsBlocked ) {
+                    NewPackageManagerMessages.Invoke.PackageBlocked(canonicalName);
+                    return;
+                }
+                if( true != force ) {
+                    UpdateIsRequestedFlags();
+                    if( package.PackageSessionData.IsDependency) {
+                        NewPackageManagerMessages.Invoke.FailedPackageRemoval(canonicalName, "Package '{0}' is a required dependency of another package.".format(canonicalName));
+                        return;
+                    }
+
+                }
+                // seems like a good time to check if we're supposed to bail...
+                if (CancellationRequested) {
+                    NewPackageManagerMessages.Invoke.OperationCancelled("remove-package");
+                    return;
+                }
+
+                try {
+                    package.Remove((percentage) => NewPackageManagerMessages.Invoke.RemovingPackageProgress(package.CanonicalName, percentage));
+
+                    NewPackageManagerMessages.Invoke.RemovingPackageProgress(canonicalName, 100);
+                    NewPackageManagerMessages.Invoke.RemovedPackage(canonicalName);
+                } catch(OperationCompletedBeforeResultException e) {
+                    NewPackageManagerMessages.Invoke.FailedPackageRemoval(canonicalName, e.Message);
+                    return;
+                }
+
+            }).AutoManage();
+            return t;
+        }
+
+        public Task UnableToAcquire(string canonicalName, NewPackageManagerMessages messages) {
+            var t = Task.Factory.StartNew(() => {
+                messages.Register();
+
+                if (canonicalName.IsNullOrEmpty()) {
+                    NewPackageManagerMessages.Invoke.Error("unable-to-acquire", "canonical-name", "canonical-name is required.");
+                    return;
+                }
+
+                // if there is a continuation task for the canonical name that goes along with this, 
+                // we should continue with that task, and get the heck out of here.
                 // 
-                // NewPackageManagerMessages.Invoke.PackageInformation(package);
 
+                var package = GetSinglePackage(canonicalName, null);
+                if( package != null ) {
+                    package.PackageSessionData.CouldNotDownload = true;
+                }
+
+                var continuationTask = SessionCache<Task<Recognizer.RecognitionInfo>>.Value[canonicalName];
+                SessionCache<Task<Recognizer.RecognitionInfo>>.Value.Clear(canonicalName);
+                Updated(); // notify threads that we're not going to be able to get that file.
+
+                if (continuationTask != null) {
+                    continuationTask.Dispose();
+                    var state = continuationTask.AsyncState as Recognizer.RecognizerState;
+                    if (state != null) {
+                        state.LocalLocation = null;
+                    }
+
+                    // the task can run, 
+                    continuationTask.Start();
+                    return;
+                }
             }).AutoManage();
             return t;
         }
 
-        public Task RemovePackage(string canonicalName, NewPackageManagerMessages messages) {
+        public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, NewPackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
                 messages.Register();
+                if( string.IsNullOrEmpty(localLocation)) {
+                    NewPackageManagerMessages.Invoke.Error("recognize-file", "local-location", "parameter 'local-location' is required to recognize a file");
+                    return;
+                }
 
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
+                var location = PackageManagerSession.Invoke.GetCanonicalizedPath(localLocation);
+                if( location.StartsWith(@"\\") ) {
+                    // a local unc path was passed. This isn't allowed--we need a file on a local volume that
+                    // the user has access to.
+                    NewPackageManagerMessages.Invoke.Error("recognize-file", "local-location",
+                        "local-location '{0}' appears to be a file on a remote server('{1}') . Recognized files must be local".format(localLocation, location));
+                    return;
+                }
 
+                if(!File.Exists(location)) {
+                    NewPackageManagerMessages.Invoke.FileNotFound(location);
+                    return;
+                }
+                
+                // if there is a continuation task for the canonical name that goes along with this, 
+                // we should continue with that task, and get the heck out of here.
+                // 
+                if (!canonicalName.IsNullOrEmpty()) {
+                    var continuationTask = SessionCache<Task<Recognizer.RecognitionInfo>>.Value[canonicalName];
+                    SessionCache<Task<Recognizer.RecognitionInfo>>.Value.Clear(canonicalName);
+                    if (continuationTask != null) {
+                        var state = continuationTask.AsyncState as Recognizer.RecognizerState;
+                        if (state != null) {
+                            state.LocalLocation = localLocation;
+                        }
+                        continuationTask.Start();
+                        return;
+                    }
+                }
+                
+                // otherwise, we'll call the recognizer 
+                Recognizer.Recognize(location).ContinueWith(antecedent => {
+                    if (antecedent.IsFaulted) {
+                        NewPackageManagerMessages.Invoke.FileNotRecognized(location, "Unexpected error recognizing file.");
+                        return;
+                    }
 
-            }).AutoManage();
-            return t;
-        }
+                    if (antecedent.Result.IsPackageFile) {
+                        var package = GetPackageFromFilename(location);
+                        SessionPackageFeed.Instance.Add(package);
+                        NewPackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
+                        NewPackageManagerMessages.Invoke.Recognized(localLocation);
+                        return;
+                    }
 
-        public Task UnableToAcquire(string referenceId, NewPackageManagerMessages messages) {
-            var t = Task.Factory.StartNew(() => {
-                messages.Register();
-
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
-
-
-            }).AutoManage();
-            return t;
-        }
-
-        public Task RecognizeFile(string referenceId, string localLocation, string remoteLocation, NewPackageManagerMessages messages) {
-            var t = Task.Factory.StartNew(() => {
-                messages.Register();
-
-                NewPackageManagerMessages.Invoke.UnexpectedFailure(new NotImplementedException());
-
+                    // if this isn't a package file, then there is something odd going on here.
+                    // we don't accept non-package files willy-nilly. 
+                    NewPackageManagerMessages.Invoke.FileNotRecognized(location, "File isn't a package, and doesn't appear to have been requested. ");
+                    return;
+                }, TaskContinuationOptions.AttachedToParent).AutoManage();
+                
             }).AutoManage();
             return t;
         }
@@ -291,14 +765,56 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 NewPackageManagerMessages.Invoke.FeedSuppressed(location);
-
             }).AutoManage();
             return t;
         }
 
 
         internal void Updated() {
-            
+            foreach (var mre in manualResetEvents) {
+                mre.Set();
+            }
+        }
+
+        private Package GetSinglePackage(string canonicalName, string messageName) {
+            // name != null?
+            if( string.IsNullOrEmpty(canonicalName)) {
+                if (messageName != null) {
+                    NewPackageManagerMessages.Invoke.Error(messageName, "canonical-name",
+                        "Canonical name '{0}' does not appear to be a valid canonical name".format(canonicalName));
+                }
+                return null;
+            }
+
+            // if canonical name is passed, override name,version,pkt,arch with the parsed canonicalname.
+            var match = _canonicalNameParser.Match(canonicalName.ToLower());
+            if( !match.Success ) {
+                if (messageName != null) {
+                    NewPackageManagerMessages.Invoke.Error(messageName, "canonical-name",
+                        "Canonical name '{0}' does not appear to be a valid canonical name".format(canonicalName));
+                }
+                return null;
+            }
+
+            var pkg = SearchForPackages(match.Groups[1].Captures[0].Value, match.Groups[2].Captures[0].Value, match.Groups[3].Captures[0].Value,
+                match.Groups[4].Captures[0].Value);
+
+            if( !pkg.Any()) {
+                if (messageName != null) {
+                    NewPackageManagerMessages.Invoke.UnknownPackage(canonicalName);
+                }
+                return null;
+            }
+
+            if( pkg.Count() > 1 ) {
+                if (messageName != null) {
+                    NewPackageManagerMessages.Invoke.Error(messageName, "canonical-name",
+                        "Canonical name '{0}' matches more than one package.".format(canonicalName));
+                }
+                return null; 
+            }
+
+            return pkg.FirstOrDefault();
         }
 
         internal List<string> BlockedScanLocations {
@@ -306,16 +822,307 @@ namespace CoApp.Toolkit.Engine {
         }
 
         internal Package GetPackageFromFilename(string filename ) {
-            throw new NotImplementedException();
+            if (!File.Exists(filename)) {
+                NewPackageManagerMessages.Invoke.FileNotFound(filename);
+                return null;
+            }
+
+            Package pkg;
+
+            filename = filename.GetFullPath();
+
+            lock (_packages) {
+                pkg = (_packages.Where(
+                    package =>
+                        package.InternalPackageData.HasLocalFile && package.InternalPackageData.LocalPackagePath.ContainsValue(filename))).
+                    FirstOrDefault();
+            }
+
+            if (pkg != null) {
+                return pkg;
+            }
+
+            var packageFileInformation = CoAppMSI.GetCoAppPackageFileInformation(filename);
+
+            // try via just the package id
+            if (!string.IsNullOrEmpty(packageFileInformation.packageId)) {
+                lock (_packages) {
+                    pkg = _packages.Where(package => package.ProductCode == packageFileInformation.packageId).FirstOrDefault();
+                }
+            }
+
+            // try via the cosmetic name fields
+            if (pkg == null) {
+                lock (_packages) {
+                    pkg = (_packages.Where(package =>
+                        package.Architecture == packageFileInformation.Architecture &&
+                        package.Version == packageFileInformation.Version &&
+                        package.PublicKeyToken == packageFileInformation.PublicKeyToken &&
+                        package.Name.Equals(packageFileInformation.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+                }
+            }
+
+            if (pkg == null) {
+                pkg = new Package(packageFileInformation.Name, packageFileInformation.Architecture, packageFileInformation.Version, packageFileInformation.PublicKeyToken, packageFileInformation.packageId);
+
+                lock( _packages ) {
+                    _packages.Add(pkg);
+                }
+            }
+
+            if (string.IsNullOrEmpty(pkg.ProductCode)) {
+                pkg.ProductCode = packageFileInformation.packageId;
+            }
+
+            if (pkg.InternalPackageData.Dependencies.Count == 0) {
+                pkg.InternalPackageData.Dependencies.AddRange((IEnumerable<Package>) packageFileInformation.dependencies);
+            }
+
+            pkg.InternalPackageData.LocalPackagePath.Value = filename;
+
+            pkg.InternalPackageData.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) packageFileInformation.assemblies.Values);
+            pkg.InternalPackageData.Roles.AddRange((IEnumerable<Tuple<PackageRole, string>>) packageFileInformation.roles);
+
+            pkg.InternalPackageData.PolicyMinimumVersion = packageFileInformation.policy_min_version;
+            pkg.InternalPackageData.PolicyMaximumVersion = packageFileInformation.policy_max_version;
+
+            pkg.PackageHandler = CoAppMSI.Instance;
+
+            pkg.InternalPackageData.CanonicalFeedLocation = packageFileInformation.feedLocation;
+            pkg.InternalPackageData.CanonicalPackageLocation = packageFileInformation.originalLocation;
+
+            // set the delegate to get the package details if it is really needed.
+            Cache<PackageDetails>.Value.Insert(pkg.CanonicalName, (unusedCanonicalFileName) => CoAppMSI.GetPackageDetails(pkg, filename));
+
+            return pkg;
         }
 
-        internal Package GetPackageByDetails(string name, ulong version, string architecture, string publicKeyToken, string id) {
-            throw new NotImplementedException();
+        internal Package GetPackage(string packageName, ulong version, string architecture, string publicKeyToken, string packageId) {
+            Package pkg;
+
+            // try via just the package id
+            if (!string.IsNullOrEmpty(packageId)) {
+                lock (_packages) {
+                    pkg = _packages.Where(package => package.ProductCode == packageId).FirstOrDefault();
+                }
+
+                if (pkg != null && string.IsNullOrEmpty(pkg.Name)) {
+                    pkg.Name = packageName;
+                    pkg.Architecture = architecture;
+                    pkg.Version = version;
+                    pkg.PublicKeyToken = publicKeyToken;
+                }
+
+                if (pkg != null)
+                    return pkg;
+            }
+
+            lock (_packages) {
+                pkg = (_packages.Where(package =>
+                    package.Architecture == architecture &&
+                    package.Version == version &&
+                    package.PublicKeyToken == publicKeyToken &&
+                    package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+            }
+            
+            if (pkg == null) {
+                pkg = new Package(packageName, architecture, version, publicKeyToken, packageId);
+                lock(_packages) {
+                    _packages.Add(pkg);
+                }
+            }
+
+            if( !string.IsNullOrEmpty(packageId) && string.IsNullOrEmpty(pkg.ProductCode) ) {
+                pkg.ProductCode = packageId;
+            }
+
+            return pkg;
+        }
+       
+        internal IEnumerable<PackageFeed> Feeds { get {
+            var canFilterSession = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds);
+            var canFilterSystem = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds);
+            var feedFilters = BlockedScanLocations;
+
+            return new PackageFeed[] { SessionPackageFeed.Instance,InstalledPackageFeed.Instance }.Union(
+                from feed in Cache<PackageFeed>.Value.Values where !canFilterSystem || !feed.IsLocationMatch(feedFilters) select feed).Union(
+                from feed in SessionCache<PackageFeed>.Value.SessionValues where !canFilterSession || !feed.IsLocationMatch(feedFilters) select feed);
+        }}
+
+
+#region package scanning
+        /// <summary>
+        /// Gets packages from all visible feeds based on criteria
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="version"></param>
+        /// <param name="arch"></param>
+        /// <param name="publicKeyToken"></param>
+        /// <returns></returns>
+        internal IEnumerable<Package> SearchForPackages(string name, string version, string arch, string publicKeyToken) {
+            return Feeds.SelectMany(each => each.FindPackages(name, version, arch, publicKeyToken)).ToArray();
+        }
+
+        /// <summary>
+        /// Gets just installed packages based on criteria
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="version"></param>
+        /// <param name="arch"></param>
+        /// <param name="publicKeyToken"></param>
+        /// <returns></returns>
+        internal IEnumerable<Package> SearchForInstalledPackages(string name, string version, string arch, string publicKeyToken) {
+            return InstalledPackageFeed.Instance.FindPackages(name, version, arch, publicKeyToken);
         }
 
         internal IEnumerable<Package> InstalledPackages {
-            get {
-                throw new NotImplementedException();
+            get { return InstalledPackageFeed.Instance.FindPackages(null, null, null, null); }
+        }
+
+        internal IEnumerable<Package> AllPackages {
+            get { return SearchForPackages(null, null, null, null); }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// This generates a list of files that need to be installed to sastisy a given package.
+        /// </summary>
+        /// <param name="package"></param>
+        /// <returns></returns>
+        private IEnumerable<Package> GenerateInstallGraph(Package package, bool hypothetical = false) {
+            if (package.IsInstalled)
+                yield break;
+
+            var packageData = package.PackageSessionData;
+
+            if( !package.PackageSessionData.PotentiallyInstallable)
+                yield break;
+
+            if (!packageData.DoNotSupercede) {
+
+                var installedSupercedents = SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken);
+
+                if( package.PackageSessionData.UserSpecified || hypothetical )  {
+                    // this means that we're talking about a requested package
+                    // and not a dependent package and we can liberally construe supercedent 
+                    // as anything with a highger version number
+                    installedSupercedents =  (from p in installedSupercedents where p.Version > package.Version select p).OrderByDescending(p => p.Version).ToArray();
+
+                } else {
+                    // otherwise, we're installing a dependency, and we need something compatable.
+                    installedSupercedents =  (from p in installedSupercedents 
+                                where p.InternalPackageData.PolicyMinimumVersion <= package.Version &&
+                                      p.InternalPackageData.PolicyMaximumVersion >= package.Version select p).OrderByDescending(p => p.Version).ToArray();
+                }
+
+                if (installedSupercedents.Any()) {
+                    yield break; // a supercedent package is already installed.
+                }
+
+                // if told not to supercede, we won't even perform this check 
+                packageData.Supercedent = null;
+                
+                var supercedents = SearchForPackages(package.Name, null, package.Architecture, package.PublicKeyToken).ToArray();
+
+                if( package.PackageSessionData.UserSpecified || hypothetical )  {
+                    // this means that we're talking about a requested package
+                    // and not a dependent package and we can liberally construe supercedent 
+                    // as anything with a highger version number
+                    supercedents =  (from p in supercedents where p.Version > package.Version select p).OrderByDescending(p => p.Version).ToArray();
+
+                } else {
+                    // otherwise, we're installing a dependency, and we need something compatable.
+                    supercedents =  (from p in supercedents 
+                                where p.InternalPackageData.PolicyMinimumVersion <= package.Version &&
+                                      p.InternalPackageData.PolicyMaximumVersion >= package.Version select p).OrderByDescending(p => p.Version).ToArray();
+                }
+
+                if (supercedents.Any()) {
+                    if (packageData.AllowedToSupercede) {
+                        foreach (var supercedent in supercedents) {
+                            IEnumerable<Package> children;
+                            try {
+                                children = GenerateInstallGraph(supercedent, true);
+                            }
+                            catch {
+                                // can't be satisfied with that supercedent.
+                                // we can quietly move along here.
+                                continue;
+                            }
+
+                            supercedent.PackageSessionData.UserSpecified = true;
+                            // since we got to this spot, we can assume that we can 
+                            // supercede this package with the results of the successful
+                            // GIG call.
+                            foreach (var child in children) {
+                                yield return child;
+                            }
+
+                            // if we have a supercedent, then this package's dependents are moot.)
+                            yield break;
+                        }
+                    }
+                    else {
+                        // the user hasn't specifically asked us to supercede, yet we know of 
+                        // potential supercedents. Let's force the user to make a decision.
+                        // throw new PackageHasPotentialUpgradesException(packageToSatisfy, supercedents);
+                        NewPackageManagerMessages.Invoke.PackageHasPotentialUpgrades(package, supercedents);
+                        throw new OperationCompletedBeforeResultException();
+                    }
+                }
+            }
+
+            if (packageData.CouldNotDownload) {
+                if (!hypothetical) {
+                    NewPackageManagerMessages.Invoke.UnableToDownloadPackage(package);
+                }
+                throw new OperationCompletedBeforeResultException();
+            }
+
+            if (packageData.PackageFailedInstall) {
+                if (!hypothetical) {
+                    NewPackageManagerMessages.Invoke.UnableToInstallPackage(package);
+                }
+                throw new OperationCompletedBeforeResultException();
+            }
+
+            var childrenFailed = false;
+            foreach( var d in package.InternalPackageData.Dependencies ) {
+                IEnumerable<Package> children;
+                try {
+                    children = GenerateInstallGraph(d);
+                }
+                catch {
+                    childrenFailed = true;
+                    continue;
+                }
+
+                foreach (var child in children)
+                    yield return child;
+            }
+
+            if(childrenFailed) {
+                throw new OperationCompletedBeforeResultException();
+            }
+            
+            yield return package;
+        }
+ 
+        private void UpdateIsRequestedFlags() {
+            lock (this) {
+                var installedPackages = InstalledPackages.ToArray();
+
+                foreach (var p in installedPackages) {
+                    p.PackageSessionData.IsDependency = false;
+                }
+
+                foreach (var dep in installedPackages.SelectMany(package => package.InternalPackageData.Dependencies).Distinct()) {
+                    // find each dependency that is the policy-preferred version, and mark it as currentlyrequested.
+                    (from supercedent in SearchForInstalledPackages(dep.Name, null, dep.Architecture, dep.PublicKeyToken)
+                        where dep.InternalPackageData.PolicyMinimumVersion <= dep.Version && dep.InternalPackageData.PolicyMaximumVersion >= dep.Version
+                        select dep).OrderByDescending(p => p.Version).FirstOrDefault().PackageSessionData.IsDependency = true;
+                }
             }
         }
     }

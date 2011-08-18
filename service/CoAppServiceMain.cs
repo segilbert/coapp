@@ -164,17 +164,21 @@ CoApp.Service [options]
                     throw new ConsoleException("The CoApp Service can not be running.\r\nYou must stop it with --stop before using the service interactively.");
                 }
                 Console.WriteLine("Launching CoApp Service interactively.\r\nUse ctrl-c to stop.");
-                EngineService.Start();
+
+                var task = EngineService.Start();
 
                 Console.WriteLine("[CoApp Interactive -- Press X to stop.]");
-                while( EngineService.IsRunning ) {
+                
+                // wait for user to cancel task, or when it's actually closed
+                while(!task.Wait( 1000 ) ) {
+                    Console.Write(".");
                     while (Console.KeyAvailable) {
                         if (Console.ReadKey(true).Key == ConsoleKey.X) {
                             EngineService.Stop();
                         }
                     }
-                    Thread.Sleep(500);
                 }
+                return 0;
             }
 
             if(stop) {

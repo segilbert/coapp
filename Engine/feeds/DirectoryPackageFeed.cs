@@ -29,13 +29,8 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// <summary>
         /// the wildcard patter for matching files in this feed.
         /// </summary>
-        private readonly string _patternMatch;
+        private readonly string _filter;
         
-        /// <summary>
-        /// flag to see if this feed should recursively scan child folders.
-        /// </summary>
-        private readonly bool _recursive;
-
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectoryPackageFeed"/> class.
@@ -44,9 +39,8 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// <param name="patternMatch">The wildcard pattern match files agains.</param>
         /// <param name="recursive">if set to <c>true</c> if we should recursively scan folders..</param>
         /// <remarks></remarks>
-        internal DirectoryPackageFeed(string location, string patternMatch, bool recursive = false) : base(location) {
-            _patternMatch = patternMatch ?? "*";
-            _recursive = recursive;
+        internal DirectoryPackageFeed(string location, string patternMatch ) : base(location) {
+            _filter = patternMatch ?? "*";
         }
 
 
@@ -63,7 +57,9 @@ namespace CoApp.Toolkit.Engine.Feeds {
         protected void Scan() {
             if (!Scanned) {
                 LastScanned = DateTime.Now;
-                var files = Location.DirectoryEnumerateFilesSmarter(_patternMatch, _recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly, NewPackageManager.Instance.BlockedScanLocations);
+
+                // GS01: BUG: recursive now should use ** in pattern match.
+                var files = Location.DirectoryEnumerateFilesSmarter(_filter, false ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly, NewPackageManager.Instance.BlockedScanLocations);
                 files = from file in files
                     where Recognizer.Recognize(file).Result.IsPackageFile // Since we know this to be local, it'm ok with blocking on the result.
                     select file;
@@ -98,25 +94,13 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// <param name="packageFilter">The package filter.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        internal override IEnumerable<Package> FindPackages(string packageFilter) {
+        internal override IEnumerable<Package> FindPackages(string name, string version, string arch, string publicKeyToken) { 
             Scan();
-            return from package in _packageList where package.CosmeticName.IsWildcardMatch(packageFilter) select package;
-        }
-
-        /// <summary>
-        /// Finds packages matching the same publisher, name, and publickeytoken
-        /// </summary>
-        /// <param name="packageFilter">The package filter.</param>
-        /// <returns>Returns a collection of packages that match</returns>
-        /// <remarks></remarks>
-        internal override IEnumerable<Package> FindPackages(Package packageFilter) {
-            Scan();
-            return from package in _packageList
-                   where
-                       package.Name == packageFilter.Name &&
-                       package.Architecture == packageFilter.Architecture &&
-                       package.PublicKeyToken == packageFilter.PublicKeyToken
-                   select package;
+            return from p in _packageList where 
+                ( string.IsNullOrEmpty(name) || name.IsWildcardMatch(p.Name) )  && 
+                ( string.IsNullOrEmpty(version) || version.IsWildcardMatch(p.Version.UInt64VersiontoString()) )  && 
+                ( string.IsNullOrEmpty(arch) || arch.IsWildcardMatch(p.Architecture) )  && 
+                ( string.IsNullOrEmpty(publicKeyToken) || publicKeyToken.IsWildcardMatch(p.PublicKeyToken) )  select p;
         }
     }
 }

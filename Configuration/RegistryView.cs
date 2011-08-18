@@ -472,6 +472,12 @@ namespace CoApp.Toolkit.Configuration {
             }
         }
 
+        public bool HasValue { get {
+          using (var key = ReadableKey) {
+                    return key != null && key.GetValue(_valueName, null) != null;
+                }  
+        }}
+
         /// <summary>
         /// Attempts to deletes the subkey. Silently fails without warning.
         /// </summary>

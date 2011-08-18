@@ -108,11 +108,18 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// If it cannot identify or read the target, the task will return null.
         /// </summary>
         /// <param name="location">The feed location (url, file, directory).</param>
-        /// <param name="recursive">if set to <c>true</c> the subclass can be told to recursively scan (ie, in a directory feed).</param>
         /// <returns>A Task with a return value of the PackageFeed. May be null if invalid.</returns>
         /// <remarks></remarks>
-        internal static Task<PackageFeed> GetPackageFeedFromLocation(string location, bool recursive = false) {
-            return Recognizer.Recognize(location, ensureLocal: true).ContinueWith(antecedent => {
+        internal static Task<PackageFeed> GetPackageFeedFromLocation(string location) {
+            if( InstalledPackageFeed.CanonicalLocation.Equals(location, StringComparison.CurrentCultureIgnoreCase)) {
+                return Task<PackageFeed>.Factory.StartNew(() => InstalledPackageFeed.Instance).AutoManage();
+            }
+
+            if( SessionPackageFeed.CanonicalLocation.Equals(location, StringComparison.CurrentCultureIgnoreCase)) {
+                return Task<PackageFeed>.Factory.StartNew(() => SessionPackageFeed.Instance).AutoManage();
+            }
+
+            return Recognizer.Recognize(location).ContinueWith(antecedent => {
                 var info = antecedent.Result;
                 PackageFeed result = null;
 
@@ -120,13 +127,13 @@ namespace CoApp.Toolkit.Engine.Feeds {
 
                 if (info.IsPackageFeed) {
                     if (info.IsFolder) {
-                        locationKey = Path.Combine(info.FullPath, info.Wildcard ?? "*");
+                        locationKey = Path.Combine(info.FullPath, info.Filter );
 
                         if (_allFeeds.ContainsKey(locationKey)) {
                             return _allFeeds[locationKey];
                         }
 
-                        result = new DirectoryPackageFeed(info.FullPath, info.Wildcard, recursive);
+                        result = new DirectoryPackageFeed(info.FullPath, info.Filter);
                     }
                     else if (info.IsFile) {
                         if (_allFeeds.ContainsKey(info.FullPath)) {
@@ -172,30 +179,22 @@ namespace CoApp.Toolkit.Engine.Feeds {
             }, TaskContinuationOptions.AttachedToParent ).AutoManage();
         }
 
+        internal bool IsLocationMatch( IEnumerable<string> locations ) {
+            return locations.Any(IsLocationMatch);
+        }
+
+        internal bool IsLocationMatch(string location) {
+            return location.Equals(Location, StringComparison.CurrentCultureIgnoreCase);
+        }
+
         /// <summary>
         /// Finds the packages.
         /// </summary>
         /// <param name="packageFilter">The package filter.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        internal virtual IEnumerable<Package> FindPackages(string packageFilter) {
+        internal virtual IEnumerable<Package> FindPackages(string name, string version, string arch, string publicKeyToken) {
             throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Finds packages matching the same publisher, name, and publickeytoken
-        /// </summary>
-        /// <param name="packageFilter">The package filter.</param>
-        /// <returns>Returns a collection of packages that match </returns>
-        /// <remarks>
-        /// This is a tad lazy. Really should do a better job in the subclass.
-        /// </remarks>
-        internal virtual IEnumerable<Package> FindPackages(Package packageFilter) {
-            return from package in FindPackages(packageFilter.Name + "*")
-                where
-                    package.Name == packageFilter.Name && package.Architecture == packageFilter.Architecture &&
-                        package.PublicKeyToken == packageFilter.PublicKeyToken
-                select package;
         }
 
         internal DateTime LastScanned = DateTime.FromFileTime(0);

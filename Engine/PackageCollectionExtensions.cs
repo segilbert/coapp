@@ -93,30 +93,5 @@ namespace CoApp.Toolkit.Engine {
             }
             return packageSet;
         }
-
-        /// <summary>
-        /// Given a collection of packages, determines if there is a new version that supercedes the given version of a package.
-        /// 
-        /// A supercedent package must have a policy that declares that it supercedes and earlier one.
-        /// </summary>
-        /// <param name="packageSet">The package set to search thur.</param>
-        /// <param name="package">The package to find a supercendet for.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        internal static IEnumerable<Package> SupercedentPackages(this IEnumerable<Package> packageSet, Package package) {
-            /*
-            // DebugMessage.Invoke.WriteLine(string.Format( "Scanning for package [{0}]", package.Name.SingleItemAsEnumerable()));
-            // anything superceedent in the list of known packages?
-            Registrar.ScanForPackages(package);
-
-            return packageSet.Where(p => p.Architecture == package.Architecture &&
-                p.PublicKeyToken == package.PublicKeyToken &&
-                p.Name.Equals(package.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                p.PolicyMinimumVersion <= package.Version &&
-                p.PolicyMaximumVersion >= package.Version).OrderByDescending(p => p.Version);
-             * */
-
-            return Enumerable.Empty<Package>();
-        }
     }
 }

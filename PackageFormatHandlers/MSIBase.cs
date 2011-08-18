@@ -64,7 +64,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <summary>
         /// cache for filenames with the MSI dataset for each file.
         /// </summary>
-        private static readonly Dictionary<string, DataSet> MSIData = new Dictionary<string, DataSet>();
+        // private static readonly Dictionary<string, DataSet> MSIData = new Dictionary<string, DataSet>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="T:System.Object"/> class.
@@ -124,12 +124,18 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return false;
         }
 
+        public static IEnumerable<string> InstalledMSIFilenames {
+            get { 
+                return ProductInstallation.AllProducts.Select(each => each.LocalPackage);
+            }
+        }
+
         /// <summary>
         /// Scans Windows for all the installed MSIs.
         /// </summary>
         /// <remarks></remarks>
         public static void ScanInstalledMSIs() {
-            var products = ProductInstallation.AllProducts.ToList();
+            var products = ProductInstallation.AllProducts.ToArray();
             var n = 0;
             var total = products.Count();
 
@@ -143,7 +149,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                     int percent = ((n++)*100)/total;
                     NewPackageManagerMessages.Invoke.ScanningPackagesProgress(p.LocalPackage,percent);
-                    NewPackageManager.Instance.GetPackageFromFilename(p.LocalPackage); // let the registrar figure out if this is a package we care about.
+                    NewPackageManager.Instance.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
                 }
                 catch {
                 }
@@ -169,8 +175,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         public static DataSet GetMSIData(string localPackagePath) {
             localPackagePath = localPackagePath.ToLower();
 
-            if (MSIData.ContainsKey(localPackagePath)) {
-                return MSIData[localPackagePath];
+            var result = SessionCache<DataSet>.Value[localPackagePath];
+
+            if (result != null) {
+                return result;
             }
 
             try {
@@ -193,11 +201,11 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     }
 
                     //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
-                    if (MSIData.ContainsKey(localPackagePath)) {
-                        return MSIData[localPackagePath];
+                    if ( SessionCache<DataSet>.Value[localPackagePath] != null) {
+                        return SessionCache<DataSet>.Value[localPackagePath];
                     }
 
-                    MSIData.Add(localPackagePath, dataSet);
+                    SessionCache<DataSet>.Value[localPackagePath] = dataSet;
                     return dataSet;
                 }
             }

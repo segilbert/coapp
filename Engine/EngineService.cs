@@ -42,7 +42,7 @@ namespace CoApp.Toolkit.Engine {
         /// <summary>
         /// 
         /// </summary>
-        private static readonly Lazy<EngineService> Instance = new Lazy<EngineService>(() => new EngineService());
+        private static readonly Lazy<EngineService> _instance = new Lazy<EngineService>(() => new EngineService());
 
         /// <summary>
         /// 
@@ -58,23 +58,23 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         private PipeSecurity _pipeSecurity;
 
-
+        private Task _engineService;
         /// <summary>
         /// Stops this instance.
         /// </summary>
         /// <remarks></remarks>
         public static void Stop() {
             // this should stop the task
-            Instance.Value._cancellationTokenSource.Cancel();
+            _instance.Value._cancellationTokenSource.Cancel();
         }
 
         /// <summary>
         /// Starts this instance.
         /// </summary>
         /// <remarks></remarks>
-        public static void Start() {
+        public static Task Start() {
             // this should spin up a task and start listening for commands
-            Instance.Value.Main();
+            return _instance.Value.Main();
         }
 
         /// <summary>
@@ -82,47 +82,39 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <remarks></remarks>
         public static bool IsRunning {
-            get { return Instance.Value._isRunning; }
+            get { return _instance.Value._isRunning; }
         }
 
         /// <summary>
         /// Mains this instance.
         /// </summary>
         /// <remarks></remarks>
-        private void Main() {
+        private Task Main() {
             if (_isRunning) {
-                return;
+                return _engineService;
             }
 
-             _cancellationTokenSource = new CancellationTokenSource();
+            _cancellationTokenSource = new CancellationTokenSource();
             _isRunning = true;
 
-            try {
-                Task.Factory.StartNew(() => {
-                    try {
-                        _pipeSecurity = new PipeSecurity();
-                        _pipeSecurity.AddAccessRule(new PipeAccessRule("Everyone", PipeAccessRights.ReadWrite, AccessControlType.Allow));
-                        _pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().Owner, PipeAccessRights.FullControl, AccessControlType.Allow));
+            _engineService = Task.Factory.StartNew(() => {
+                _pipeSecurity = new PipeSecurity();
+                _pipeSecurity.AddAccessRule(new PipeAccessRule("Everyone", PipeAccessRights.ReadWrite, AccessControlType.Allow));
+                _pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().Owner, PipeAccessRights.FullControl, AccessControlType.Allow));
 
-                        // start two listeners by default--each listener will also spawn a new empty one.
-                        StartListener();
-                        StartListener();
-                    }
-                    finally {
-                        
-                       
-                    }
-                }, _cancellationTokenSource.Token).Wait(_cancellationTokenSource.Token);
-                Console.WriteLine("[Done.========================]");
+                // start two listeners by default--each listener will also spawn a new empty one.
+                StartListener();
+                StartListener();
+                   
+            }, _cancellationTokenSource.Token);
+
+            _engineService = _engineService.ContinueWith(antecedent => {
                 _isRunning = false;
                 // ensure the sessions are all getting closed.
                 Session.CancelAll();
-            }
-            catch (Exception ex) {
-                Console.Write(ex.GetType());
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
-            }
+                _engineService = null;
+            }, TaskContinuationOptions.AttachedToParent);
+            return _engineService;
         }
 
 
@@ -135,7 +127,12 @@ namespace CoApp.Toolkit.Engine {
                 if (_isRunning) {
                     var serverPipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, Instances, PipeTransmissionMode.Message, PipeOptions.Asynchronous,
                         BufferSize, BufferSize, _pipeSecurity);
-                    Task.Factory.FromAsync(serverPipe.BeginWaitForConnection, serverPipe.EndWaitForConnection, serverPipe).ContinueWith(t => {
+                    var listenTask = Task.Factory.FromAsync(serverPipe.BeginWaitForConnection, serverPipe.EndWaitForConnection, serverPipe);
+                       
+                    listenTask.ContinueWith(t => {
+                        if (t.IsCanceled || _cancellationTokenSource.Token.IsCancellationRequested ) {
+                            return;
+                        }
                         StartListener(); // start next one!
 
                         if (serverPipe.IsConnected) {
@@ -183,7 +180,8 @@ namespace CoApp.Toolkit.Engine {
                         }
 
                        
-                    }, TaskContinuationOptions.AttachedToParent );
+                    }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current );
+                    
                 }
             }
             catch (Exception e) {
