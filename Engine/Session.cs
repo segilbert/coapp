@@ -606,7 +606,7 @@ namespace CoApp.Toolkit.Engine {
         #region Response Messages
               
         private void SendSessionStarted(string sessionId) {
-            WriteAsync(new UrlEncodedMessage("start-session") {{
+            WriteAsync(new UrlEncodedMessage("session-started") {{
                 "session-id", sessionId
             }});
         }
