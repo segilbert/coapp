@@ -4,7 +4,7 @@ with(new ActiveXObject("Scripting.FileSystemObject"))for(var x in p=(".;..\..\sc
 $MAJOR = $Globals.$MAJOR || 3;
 $MINOR = $Globals.$MINOR || 5;
 $BUILD = $Globals.$BUILD || 2519;
-$REVISION = $Globals.$REVISION || 74;
+$REVISION = $Globals.$REVISION || 76;
 
 var $ASSEMBLYVER = "{$MAJOR}.{$MINOR}.{$BUILD}.{$REVISION}";
 var $MSIFILE = "DeploymentToolsFoundation-{$ASSEMBLYVER}-any.msi";
@@ -13,8 +13,8 @@ var $ILMERGE = Assert.Executable("ilmerge.exe");
 var $RESHACK = Assert.Executable("reshacker.exe");
 var $RC = Assert.Executable("rc.exe");
 var $AL = Assert.Executable("al.exe");
-var $SIMPLESIGNER = Assert.Executable("..\\..\\..\\output\\any\\release\\bin\\simplesigner.exe")
-var $AUTOPACKAGE= Assert.Executable("..\\..\\..\\output\\any\\release\\bin\\AUTOPACKAGE.exe")
+var $SIMPLESIGNER = Assert.Executable("..\\..\\tools\\simplesigner\\simplesigner.exe")
+// var $AUTOPACKAGE= Assert.Executable("..\\..\\..\\output\\any\\release\\bin\\AUTOPACKAGE.exe")
 
 var $COAPP = "..\\..\\..\\";
 var $COAPP_SIGNING = "{$COAPP}signing\\";
@@ -123,4 +123,5 @@ for(each in dlls) {
     erase( "{targDLL}.res" );
     erase( "{targDLL}.rc" );
     rename( "{targDLL}.new", targDLL);
+    // $$("{$SIMPLESIGNER} {0}", targDLL);
 }

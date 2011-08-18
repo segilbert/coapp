@@ -7,7 +7,7 @@ package
     orig-location: "http://coapp.org/repository/";
     feed-location: "http://coapp.org/feed";
     binding-min: "3.5.0.0";
-    binding-max: "3.5.2519.72";
+    binding-max: "3.5.2519.74";
 }
 
 identity
