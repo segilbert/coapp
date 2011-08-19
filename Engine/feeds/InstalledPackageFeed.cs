@@ -32,7 +32,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 for (var i = 0; i < installedFiles.Length;i++ ) {
                     var packageFilename = installedFiles[i];
 
-                    NewPackageManagerMessages.Invoke.ScanningPackagesProgress(packageFilename,  ((i) * 100) / installedFiles.Length);
+                    PackageManagerMessages.Invoke.ScanningPackagesProgress(packageFilename,  ((i) * 100) / installedFiles.Length);
 
                     var lookup = File.GetCreationTime(packageFilename).Ticks + packageFilename.GetHashCode();
 

@@ -8,7 +8,7 @@
 // </license>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Engine {
+namespace CoApp.Toolkit.Pipes {
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -83,21 +83,21 @@ namespace CoApp.Toolkit.Engine {
         /// <summary>
         /// 
         /// </summary>
-        private static char[] query = new[] {
+        private static readonly char[] _query = new[] {
             '?'
         };
 
         /// <summary>
         /// 
         /// </summary>
-        private static char[] separator = new[] {
+        private static readonly char[] _separator = new[] {
             '&'
         };
 
         /// <summary>
         /// 
         /// </summary>
-        private static char[] equals = new[] {
+        private static readonly char[] _equals = new[] {
             '='
         };
 
@@ -117,10 +117,10 @@ namespace CoApp.Toolkit.Engine {
         /// <param name="rawMessage">The raw message.</param>
         /// <remarks></remarks>
         public UrlEncodedMessage(string rawMessage) {
-            var parts = rawMessage.Split(query, StringSplitOptions.RemoveEmptyEntries);
+            var parts = rawMessage.Split(_query, StringSplitOptions.RemoveEmptyEntries);
             Command = parts.FirstOrDefault().UrlDecode().ToLower();
-            Data = (parts.Skip(1).FirstOrDefault() ?? "").Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(
-                p => p.Split(@equals, StringSplitOptions.RemoveEmptyEntries)).ToDictionary(s => s[0].UrlDecode(),
+            Data = (parts.Skip(1).FirstOrDefault() ?? "").Split(_separator, StringSplitOptions.RemoveEmptyEntries).Select(
+                p => p.Split(_equals, StringSplitOptions.RemoveEmptyEntries)).ToDictionary(s => s[0].UrlDecode(),
                     s => s.Length > 1 ? s[1].UrlDecode() : String.Empty);
         }
 
@@ -146,7 +146,7 @@ namespace CoApp.Toolkit.Engine {
         /// <remarks></remarks>
         public override string ToString() {
             return Data.Any()
-                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (k.UrlEncode() + "=" + Data[k].UrlEncode() + "&"))
+                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (string.IsNullOrEmpty(Data[k]) ? (k.UrlEncode() + "=" + Data[k].UrlEncode() + "&") : string.Empty))
                 : Command.UrlEncode();
         }
 
@@ -177,7 +177,7 @@ namespace CoApp.Toolkit.Engine {
         public void AddCollection( string key, IEnumerable<string>  values ) {
             if (!values.IsNullOrEmpty()) {
                 var index = 0;
-                foreach (var s in values) {
+                foreach (var s in values.Where(s => !string.IsNullOrEmpty(s))) {
                     Add("{0}[{1}]".format(key, index++), s);
                 }
             }
@@ -198,7 +198,7 @@ namespace CoApp.Toolkit.Engine {
         /// <param name="p">The p.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        internal IEnumerable<string> GetCollection(string p) {
+        public IEnumerable<string> GetCollection(string p) {
             var rx = new Regex(@"^{0}\[.\n]\]$".format(Regex.Escape(p)));
             return from k in Data.Keys where rx.IsMatch(k) select Data[k];
         }

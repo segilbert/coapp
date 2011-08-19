@@ -72,11 +72,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Engine\AsyncPipeExtensions.cs" />
     <Compile Include="Engine\Client\PackageManager.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Engine\UrlEncodedMessage.cs" />
+    <Compile Include="Engine\PackageManagerMessages.cs" />
     <Compile Include="Properties\Engine.Core.AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
   </ItemGroup>

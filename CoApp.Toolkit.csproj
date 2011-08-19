@@ -116,6 +116,8 @@
     <Compile Include="Network\TransferManager.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\PackageType.cs" />
+    <Compile Include="Pipes\AsyncPipeExtensions.cs" />
+    <Compile Include="Pipes\UrlEncodedMessage.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -199,6 +201,7 @@
     <Compile Include="Spec\Properties\ResourceCompileProcessProperties.cs" />
     <Compile Include="Spec\SpecFile.cs" />
     <Compile Include="Scripting\Languages\PropertySheet\PropertySheetItem.cs" />
+    <Compile Include="Tasks\CoTask.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
     <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Tasks\TriggeredProperty.cs" />

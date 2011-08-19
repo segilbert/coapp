@@ -8,7 +8,7 @@
 // </license>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Engine {
+namespace CoApp.Toolkit.Pipes {
     using System;
     using System.IO;
     using System.Threading.Tasks;
@@ -18,7 +18,7 @@ namespace CoApp.Toolkit.Engine {
     /// 
     /// </summary>
     /// <remarks></remarks>
-    internal static class AsyncPipeExtensions {
+    public static class AsyncPipeExtensions {
         /// <summary>
         /// Read from a stream asynchronously.
         /// </summary>

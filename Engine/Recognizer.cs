@@ -57,7 +57,7 @@ namespace CoApp.Toolkit.Engine {
                         var state = recognizerState as RecognizerState;
                         if( state == null || string.IsNullOrEmpty(state.LocalLocation) ) {
                             // didn't fill in the local location? -- this happens when the client can't download.
-                            // NewPackageManagerMessages.Invoke.FileNotRecognized() ?
+                            // PackageManagerMessages.Invoke.FileNotRecognized() ?
                             return new RecognitionInfo {
                                 FullPath = location.AbsoluteUri,
                                 IsInvalid = true,
@@ -90,7 +90,7 @@ namespace CoApp.Toolkit.Engine {
 
                     // GS01: Should we make a deeper path in the cache directory?
                     // perhaps that would let us use a cached version of the file we're looking for.
-                    NewPackageManagerMessages.Invoke.RequireRemoteFile(item, location.AbsoluteUri.SingleItemAsEnumerable(), PackageManagerSettings.CoAppCacheDirectory,false);
+                    PackageManagerMessages.Invoke.RequireRemoteFile(item, location.AbsoluteUri.SingleItemAsEnumerable(), PackageManagerSettings.CoAppCacheDirectory,false);
 
                     // return the completion task, as whatever is waiting for this 
                     // needs to continue on that.

@@ -157,7 +157,7 @@ namespace CoApp.Toolkit.Engine {
                 GetCurrentPackage(Name, PublicKeyToken);
             }
             catch (Exception) {
-                NewPackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
+                PackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
                 throw new OperationCompletedBeforeResultException();
             }
         }

@@ -1,18 +1,23 @@
+//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2010 Garrett Serack . All rights reserved.
+// </copyright>
+// <license>
+//     The software is licensed under the Apache 2.0 License (the "License")
+//     You may not use the software except in compliance with the License. 
+// </license>
+//-----------------------------------------------------------------------
+
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
-    using Network;
     using Tasks;
 
 #if COAPP_ENGINE_CLIENT 
     using Client;
 #endif 
 
-
-#if COAPP_ENGINE_CORE
-
-    public class NewPackageManagerMessages : MessageHandlers<NewPackageManagerMessages> {
+    public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
         public Action<Package, IEnumerable<Package>> PackageInformation;
         public Action<Package> PackageDetails;
         public Action NoPackagesFound;
@@ -44,15 +49,7 @@ namespace CoApp.Toolkit.Engine {
         public Action<Package> UnableToDownloadPackage;
         public Action<Package> UnableToInstallPackage;
         public Action<Package, IEnumerable<Package>> UnableToResolveDependencies;
-    }
 
-    internal class PackageManagerSession : MessageHandlers<PackageManagerSession> {
-        // public Func<Package, PackageSessionData> GetPackageSessionData;
-        // public Func<Package, PackageManagerSessionData> GetPackageManagerSessionData;
-        // public Action<Package> DropPackageSessionData;
-        public Func<PermissionPolicy, bool> CheckForPermission;
-        public Func<bool> CancellationRequested;
-        public Func<string, string> GetCanonicalizedPath;
+        public string RequestId;
     }
-#endif
 }

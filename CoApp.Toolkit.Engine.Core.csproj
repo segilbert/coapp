@@ -78,7 +78,7 @@
     <Compile Include="DynamicXml\DynamicDataRow.cs" />
     <Compile Include="DynamicXml\DynamicDataSet.cs" />
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
-    <Compile Include="Engine\AsyncPipeExtensions.cs" />
+    <Compile Include="Pipes\AsyncPipeExtensions.cs" />
     <Compile Include="Engine\CompositionRule.cs" />
     <Compile Include="Engine\EngineService.cs" />
     <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
@@ -94,6 +94,7 @@
     <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
     <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
     <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs" />
+    <Compile Include="Engine\PackageManagerSession.cs" />
     <Compile Include="Exceptions\PathIsNotFileUriException.cs" />
     <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />
     <Compile Include="Engine\Feeds\InstalledPackageFeed.cs" />
@@ -112,7 +113,7 @@
     <Compile Include="Engine\Recognizer.cs" />
     <Compile Include="Engine\PackageAssemblyInfo.cs" />
     <Compile Include="Engine\Session.cs" />
-    <Compile Include="Engine\UrlEncodedMessage.cs" />
+    <Compile Include="Pipes\UrlEncodedMessage.cs" />
     <Compile Include="Exceptions\ConflictingFileOrFolderException.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -171,6 +172,7 @@
     <Compile Include="Shell\ShowWindowCommand.cs" />
     <Compile Include="Tasks\Cache.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
+    <Compile Include="Tasks\CoTask.cs" />
     <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Tasks\TriggeredProperty.cs" />
     <Compile Include="Text\HttpUtility.cs" />

@@ -17,6 +17,8 @@ namespace CoApp.Toolkit.Engine.Client {
     using System.IO.Pipes;
     using System.Security.Principal;
     using System.Threading.Tasks;
+    using Pipes;
+    using Tasks;
     using Console = System.Console;
 
     public class Package {
@@ -80,6 +82,19 @@ namespace CoApp.Toolkit.Engine.Client {
             pipe.Dispose();
         }
 
+        public Task FindPackages(string canonicalName, string name, string version, string arch, string publicKeyToken,
+            bool? dependencies, bool? installed, bool? active, bool? required, bool? blocked, bool? latest,
+            int? index, int? maxResults, string location, bool? forceScan, PackageManagerMessages messages) {
+
+            var t = Task.Factory.StartNew(() => {
+                messages.Register();
+
+            });
+
+            t.AutoManage();
+            
+            return t;
+        }
 
         private void Dispatch(UrlEncodedMessage responseMessage) {
             Console.WriteLine("Response: {0}", responseMessage.Command);
@@ -219,7 +234,7 @@ namespace CoApp.Toolkit.Engine.Client {
         
         public event Action NoPackagesFound;
         public event Action<string , DateTime, bool> FeedDetails;
-        public event Action<string, int> ScanningPackagesProgress;
+        
         public event Action<string, int> InstallingPackageProgress;
         public event Action<string, int> RemovingPackageProgress;
         public event Action<string> InstalledPackage;
@@ -239,15 +254,18 @@ namespace CoApp.Toolkit.Engine.Client {
         public event Action<string> UnknownPackage;
         public event Action<string> PackageBlocked;
         public event Action<string,string> FileNotRecognized;
-        public event Action<string> Recognized;
         public event Action<string> OperationCancelled;
         public event Action<string, string, string> UnexpectedFailure;
 
         public event Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
+        public event Action<Package, IEnumerable<Package>> PackageInformation;
+        public event Action<Package> PackageDetails;
+
+        // not currently used?
+        public event Action<string> Recognized;
         public event Action<Package> UnableToDownloadPackage;
         public event Action<Package> UnableToInstallPackage;
         public event Action<Package, IEnumerable<Package>> UnableToResolveDependencies;
-        public event Action<Package, IEnumerable<Package>> PackageInformation;
-        public event Action<Package> PackageDetails;
+
     }
 }
