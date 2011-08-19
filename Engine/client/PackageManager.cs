@@ -17,6 +17,7 @@ namespace CoApp.Toolkit.Engine.Client {
     using System.IO.Pipes;
     using System.Security.Principal;
     using System.Threading.Tasks;
+    using Console = System.Console;
 
     public class Package {
 
@@ -55,11 +56,21 @@ namespace CoApp.Toolkit.Engine.Client {
                 _pipe = null;
                 throw new Exception("Unable to connect to CoApp Service");
             }
-            var incomingMessage = new byte[BufferSize];
-            Task.Factory.StartNew(() => { _pipe.ReadAsync(incomingMessage, 0, BufferSize); });
             
-            
+            Task.Factory.StartNew(() => {
+                while( IsConnected  ) {
+                    var incomingMessage = new byte[BufferSize];
+                    _pipe.ReadAsync(incomingMessage, 0, BufferSize).ContinueWith(antecedent => {
+                        var rawMessage = Encoding.UTF8.GetString(incomingMessage, 0, antecedent.Result);
 
+                        if (string.IsNullOrEmpty(rawMessage)) {
+                            return;
+                        }
+
+                        Dispatch(new UrlEncodedMessage(rawMessage));
+                    } );
+                }
+            });
         }
 
         private void Disconnect() {
@@ -69,7 +80,118 @@ namespace CoApp.Toolkit.Engine.Client {
             pipe.Dispose();
         }
 
-         /// <summary>
+
+        private void Dispatch(UrlEncodedMessage responseMessage) {
+            Console.WriteLine("Response: {0}", responseMessage.Command);
+
+            switch (responseMessage.Command) {
+                case "failed-package-install":
+                    FailedPackageInstall(responseMessage["canonical-name"], responseMessage["filename"], responseMessage["reason"]);
+                    break;
+
+                case "failed-package-remove":
+                    FailedPackageRemoval(responseMessage["canonical-name"], responseMessage["reason"]);
+                    break;
+
+                case "feed-added":
+                    FeedAdded(responseMessage["location"]);
+                    break;
+
+                case "feed-removed":
+                    FeedRemoved(responseMessage["location"]);
+                    break;
+
+                case "feed-suppressed":
+                    FeedSuppressed(responseMessage["location"]);
+                    break;
+
+                case "file-not-found":
+                    FileNotFound(responseMessage["filename"]);
+                    break;
+
+                case "found-feed":
+                    FeedDetails(responseMessage["location"], DateTime.FromFileTime((long?) responseMessage["last-scanned"] ?? 0 ), (bool?)responseMessage["session"] ?? false);
+                    break;
+
+                case "found-package":
+                    PackageInformation(new Package(), Enumerable.Empty<Package>());
+                    break;
+
+                case "installed-package":
+                    InstalledPackage(responseMessage["canonical-name"]);
+                    break;
+
+                case "installing-package":
+                    InstallingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0);
+                    break;
+
+                case "message-argument-error":
+                    Error(responseMessage["message"], responseMessage["parameter"], responseMessage["reason"]);
+                    break;
+
+                case "message-warning":
+                    Warning(responseMessage["message"], responseMessage["parameter"], responseMessage["reason"]);
+                    break;
+
+                case "no-feeds-found":
+                    NoFeedsFound();
+                    break;
+
+                case "no-packages-found":
+                    NoPackagesFound();
+                    break;
+
+                case "operation-cancelled":
+                    OperationCancelled(responseMessage["message"]);
+                    break;
+
+                case "operation-requires-permission":
+                    PermissionRequired(responseMessage["policy-required"]);
+                    break;
+
+                case "package-details":
+                    PackageDetails(new Package());
+                    break;
+
+                case "package-has-potential-upgrades":
+                    PackageHasPotentialUpgrades(new Package(), Enumerable.Empty<Package>());
+                    break;
+
+                case "package-is-blocked":
+                    PackageBlocked(responseMessage["canonical-name"]);
+                    break;
+                case "removed-package":
+                    RemovedPackage(responseMessage["canonical-name"]);
+                    break;
+                case "removing-package":
+                    RemovingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0);
+                    break;
+                case "require-remote-file":
+                    RequireRemoteFile(responseMessage["canonical-name"], responseMessage.GetCollection("remote-locations"), responseMessage["destination"],
+                        (bool?) responseMessage["force"] ?? false);
+                    break;
+
+                case "signature-validation":
+                    SignatureValidation(responseMessage["filename"], (bool?) responseMessage["is-valid"] ?? false, responseMessage["certificate-subject-name"]);
+                    break;
+
+                case "unable-to-recognize-file":
+                    FileNotRecognized(responseMessage["filename"], responseMessage["reason"]);
+                    break;
+
+                case "unexpected-failure":
+                    UnexpectedFailure(responseMessage["type"], responseMessage["message"], responseMessage["stacktrace"]);
+                    break;
+                case "unknown-command":
+                    Console.WriteLine("Unknown command!");
+                    break;
+                case "unknown-package":
+                    UnknownPackage(responseMessage["canonical-name"]);
+                    break;
+            }
+        }
+
+        /// <summary>
         ///   Writes the message to the stream asyncly.
         /// </summary>
         /// <param name = "message">The request.</param>

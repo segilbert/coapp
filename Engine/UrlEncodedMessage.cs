@@ -51,6 +51,17 @@ namespace CoApp.Toolkit.Engine {
                 return null;
             }
 
+             public static implicit operator long?(UrlEncodedMessageValue value) {
+                if (value._value == null)
+                    return null;
+
+                long outVal;
+                if (Int64.TryParse(value._value, out outVal)) {
+                    return outVal;
+                }
+                return null;
+            }
+
             public static implicit operator bool?(UrlEncodedMessageValue value) {
                 if (value._value == null)
                     return null;

@@ -409,9 +409,7 @@ namespace CoApp.Toolkit.Engine {
                                 readTask = null;
                             });
 
-                            readTask.AutoManage();
-
-                            readTask.ContinueWith(antecedent => {
+                            readTask.AutoManage().ContinueWith(antecedent => {
                                 if (antecedent.Exception != null) {
                                     foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof(AggregateException) )) {
                                         WriteAsync(new UrlEncodedMessage("unexpected-failure") {
@@ -671,13 +669,6 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
-        private void SendScanningPackages(string currentItem, int percentComplete) {
-            WriteAsync( new UrlEncodedMessage("scanning-packages") {
-                {"current-item", currentItem},
-                {"percent-complete", percentComplete.ToString()},
-            });
-        }
-
         private void SendInstallingPackage(string canonicalName, int percentComplete) {
             WriteAsync( new UrlEncodedMessage("installing-package") {
                 {"canonical-name", canonicalName},
@@ -713,7 +704,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         private void SendFailedRemovePackage(string canonicalName, string reason) {
-            WriteAsync( new UrlEncodedMessage("failed-remove-package") {
+            WriteAsync( new UrlEncodedMessage("failed-package-remove") {
                 {"canonical-name", canonicalName},
                 {"reason", reason},
             });
@@ -741,7 +732,7 @@ namespace CoApp.Toolkit.Engine {
         private void SendOperationRequiresPermission(string policyRequired) {
             WriteAsync( new UrlEncodedMessage("operation-requires-permission") {
                 {"current-user-name", _userId},
-                {"policyRequired", policyRequired},
+                {"policy-required", policyRequired},
             });
         }
 
@@ -770,13 +761,6 @@ namespace CoApp.Toolkit.Engine {
         private void SendFeedRemoved( string location ) {
             WriteAsync(new UrlEncodedMessage("feed-removed") {
                 {"location", location },
-            });
-        }
-
-        private void SendMessage(string messageName, string message ) {
-            WriteAsync(new UrlEncodedMessage("message") {
-                {"message-name", messageName},
-                {"message", message},
             });
         }
 
