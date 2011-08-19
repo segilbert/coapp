@@ -30,4 +30,4 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("5648abc3-656a-401d-88d5-c3a639955632")]
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Test.CoApp.Toolkit.Engine")]
+// [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Test.CoApp.Toolkit.Engine")]
