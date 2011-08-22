@@ -30,16 +30,23 @@ namespace CoApp.Toolkit.Tasks {
             return x.Task.AutoManage();
         }
 
+        private static bool IsTaskReallyCompleted(Task task) {
+            if( !task.IsCompleted )
+                return false;
+
+            return !(from child in _parentTasks.Keys where _parentTasks[child] == task && !IsTaskReallyCompleted(child) select child).Any();
+        }
+
         public static void Collect() {
             lock (_tasks) {
-                var completedTasks = (from t in _tasks.Keys where t.IsCompleted select t).ToArray();
+                var completedTasks = (from t in _tasks.Keys where IsTaskReallyCompleted(t) select t).ToArray();
                 foreach (var t in completedTasks) {
                     _tasks.Remove(t);
                 }
             }
 
             lock (_parentTasks) {
-                var completedTasks = (from t in _parentTasks.Keys where t.IsCompleted select t).ToArray();
+                var completedTasks = (from t in _parentTasks.Keys where IsTaskReallyCompleted(t) select t).ToArray();
                 foreach (var t in completedTasks) {
                     _parentTasks.Remove(t);
                 }
