@@ -221,6 +221,7 @@
     </Compile>
     <Compile Include="Trace\Variable.cs" />
     <Compile Include="Utility\DependencyInformation.cs" />
+    <Compile Include="Utility\DirectedGraph.cs" />
     <Compile Include="Utility\ExecutableInfo.cs" />
     <Compile Include="Utility\PathEqualityComparer.cs" />
     <Compile Include="Utility\ProcessUtility.cs" />

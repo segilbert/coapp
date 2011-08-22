@@ -11,19 +11,15 @@
 // autopackage file for CoApp (coapp.toolkit, coapp.toolkit.engine, and coapp cli)
 package
 {
-    name: CoApp.Toolkit;
+    name: Python;
     display-name: "CoApp Toolkit/Engine";
     policy: 1.0;
     /*license: <path to license on disk> */
-    orig-location: "http://coapp.org/repository/coapp.toolkit-1.0.6.230-any.msi";
+    orig-location: "http://coapp.org/repository/$OUTPUT";
     feed-location: "http://coapp.org/repository/packages.atom.xml";
-    binding-min: "1.0.6.0";
-    binding-max: ($CURRENT-1);
 }
 
-dependencies {
-	add: "deploymenttoolsfoundation-3.5.2519.73-any";
-}
+
 
 identity
 {
@@ -31,14 +27,102 @@ identity
     website: "http://coapp.org";
 }
 
+app
+{
+    include: ""="C:\
+}
+
 exe-file[coapp.exe]{
 	global-bin: true;
 }
 
-assembly[CoApp.Toolkit.dll] {
-}
-assembly[CoApp.Toolkit.Engine.dll] {
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
