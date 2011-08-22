@@ -53,10 +53,15 @@ namespace CoApp.Toolkit.Utility {
                 @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\system32;%SystemRoot%\Microsoft.NET");
 
             var sdkFolder = RegistryView.System[@"SOFTWARE\Microsoft\Microsoft SDKs\Windows", "CurrentInstallFolder"].Value as string;
+            var wdkFolder = RegistryView.System[@"SOFTWARE\Wow6432Node\Microsoft\WDKDocumentation\7600.091201\Setup", "Build"].Value as string;
+            
+            if (string.IsNullOrEmpty(wdkFolder)) {
+                wdkFolder = RegistryView.System[@"SOFTWARE\Microsoft\WDKDocumentation\7600.091201\Setup", "Build"].Value as string;
+            }
 
             ProgramFilesAndDotNetAndSdk = string.IsNullOrEmpty(sdkFolder)
                 ? ProgramFilesAndDotNet
-                : new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET;" + sdkFolder);
+                : new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET;" + sdkFolder + ";" + wdkFolder);
         }
 
         public ProgramFinder(string searchPath) {
@@ -97,15 +102,23 @@ namespace CoApp.Toolkit.Utility {
         }
 
         public string ScanForFile(string filename, ExecutableInfo executableType = ExecutableInfo.none, string minimumVersion = "0.0",
-            IEnumerable<string> filters = null) {
+            IEnumerable<string> excludeFilters = null, IEnumerable<string> includeFilters= null, bool rememberMissingFile = false, string tagWithCosmeticVersion = null ) {
             if (!IgnoreCache) {
-                var result = GetCachedPath(filename, executableType, minimumVersion);
+                var result = GetCachedPath(filename, executableType, tagWithCosmeticVersion ?? minimumVersion);
+
+                if ("NOT-FOUND".Equals(result)) {
+                    if (rememberMissingFile) {
+                        return null; // we've asked to remember that we haven't found this
+                    }
+                    result = null; // we've not asked to remember that, so we'll let it try to find it again.
+                }
+
                 if (!string.IsNullOrEmpty(result)) {
                     return result;
                 }
             }
 
-            Notify("[One moment.. Scanning for utility({0}/{1}/{2})]", filename, executableType.ToString(), minimumVersion);
+            Notify("[One moment.. Scanning for utility({0}/{1}/{2})]", filename, executableType.ToString(), tagWithCosmeticVersion ?? minimumVersion);
 
             var ver = minimumVersion.VersionStringToUInt64();
 
@@ -115,7 +128,7 @@ namespace CoApp.Toolkit.Utility {
                     _recursiveSearchLocations.AsParallel().SelectMany(
                         directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.AllDirectories)));
 
-            if (executableType != ExecutableInfo.none || ver != 0.0) {
+            if (executableType != ExecutableInfo.none || ver != 0) {
                 files =
                     files.Where(
                         file =>
@@ -123,18 +136,28 @@ namespace CoApp.Toolkit.Utility {
                                 PEInfo.Scan(file).FileVersionLong >= ver);
             }
 
-            if (filters != null) {
-                files = filters.Aggregate(files, (current, filter) => (from eachFile in current
-                    where !eachFile.IsWildcardMatch(filter)
-                    select eachFile));
+            if (includeFilters != null) {
+                files = includeFilters.Aggregate(files, (current, filter) => (from eachFile in current
+                                                                              where eachFile.IsWildcardMatch(filter)
+                                                                              select eachFile));
             }
 
+            if (excludeFilters != null) {
+                files = excludeFilters.Aggregate(files, (current, filter) => (from eachFile in current
+                    where !eachFile.IsWildcardMatch(filter)
+                                                                              select eachFile));
+            }
 
             var filePath = files.MaxElement(each => PEInfo.Scan(each).FileVersionLong);
 
-            if (!string.IsNullOrEmpty(filePath)) {
-                SetCachedPath(filename, filePath, executableType, minimumVersion);
-                SetCachedPath(filename, filePath, executableType, PEInfo.Scan(filePath).FileVersion);
+            if (!string.IsNullOrEmpty(filePath) || rememberMissingFile) {
+                SetCachedPath(filename, string.IsNullOrEmpty(filePath) ? "NOT-FOUND" : filePath , executableType, tagWithCosmeticVersion ?? minimumVersion);
+                try {
+                    SetCachedPath(filename, string.IsNullOrEmpty(filePath) ? "NOT-FOUND" : filePath, executableType,
+                        PEInfo.Scan(filePath).FileVersion);
+                } catch {
+                    
+                }
             }
 
             return filePath;
@@ -157,7 +180,12 @@ namespace CoApp.Toolkit.Utility {
 
             var result = view.StringValue;
 
-            if (null != result && !File.Exists(result)) {
+            // if we've remembered that we've not found something...
+            if( "NOT-FOUND".Equals( result, StringComparison.CurrentCultureIgnoreCase ) ) {
+                return result;
+            }
+
+            if (null != result && !File.Exists(result) ) {
                 view.StringValue = null;
             }
 

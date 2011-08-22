@@ -15,7 +15,8 @@ package
     display-name: "CoApp Toolkit/Engine";
     policy: 1.0;
     /*license: <path to license on disk> */
-    orig-location: "http://coapp.org/repository/$OUTPUT";
+    orig-location: "http://coapp.org/repository/{$OUTPUT}";
+
     feed-location: "http://coapp.org/repository/packages.atom.xml";
 }
 
@@ -35,6 +36,26 @@ app
 exe-file[coapp.exe]{
 	global-bin: true;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
