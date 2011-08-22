@@ -336,7 +336,8 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns><c>true</c> if the specified text is true; otherwise, <c>false</c>.</returns>
         /// <remarks></remarks>
         public static bool IsTrue(this string text) {
-            return text.Equals("true", StringComparison.CurrentCultureIgnoreCase);
+            
+            return text != null && text.Equals("true", StringComparison.CurrentCultureIgnoreCase);
         }
 
         /// <summary>
@@ -346,7 +347,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns><c>true</c> if the specified text is false; otherwise, <c>false</c>.</returns>
         /// <remarks></remarks>
         public static bool IsFalse(this string text) {
-            return text.Equals("false", StringComparison.CurrentCultureIgnoreCase);
+            return text != null && text.Equals("false", StringComparison.CurrentCultureIgnoreCase);
         }
 
         /// <summary>

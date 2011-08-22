@@ -42,22 +42,41 @@ namespace CoApp.Toolkit.Engine {
         }
 
         private NewPackageManager() {
-            // load system feeds
-            IEnumerable<string> systemFeeds;
-            if( PackageManagerSettings.CoAppSettings["#feedLocations"].HasValue ) {
-                systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue;    
-            } else {
-                // defaults to the installed packages feed 
-                // and the default coapp feed.
-                systemFeeds = "http://coapp.org/feed".SingleItemAsEnumerable();
-            }
-
             // always load the Installed Package Feed.
             PackageFeed.GetPackageFeedFromLocation(InstalledPackageFeed.CanonicalLocation);
+        }
 
-            foreach( var f in systemFeeds ) {
+        /// <summary>
+        /// feeds that we should try to load as system feeds
+        /// </summary>
+        private IEnumerable<string> SystemFeedLocations {
+            get {
+                if (PackageManagerSettings.CoAppSettings["#feedLocations"].HasValue) {
+                    return PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue;
+                }
+                // defaults to the installed packages feed 
+                // and the default coapp feed.
+                return "http://coapp.org/feed".SingleItemAsEnumerable();
+            }
+
+            set {
+                
+            }
+        }
+
+        internal IEnumerable<Task> LoadSystemFeeds() {
+            // load system feeds
+
+            var systemCacheLoaded = SessionCache<string>.Value["system-cache-loaded"];
+            if (systemCacheLoaded.IsTrue()) {
+                yield break;
+            }
+
+            SessionCache<string>.Value["system-cache-loaded"] = "true";
+            
+            foreach (var f in SystemFeedLocations) {
                 var feedLocation = f;
-                PackageFeed.GetPackageFeedFromLocation(feedLocation).ContinueWith(antecedent => {
+                yield return PackageFeed.GetPackageFeedFromLocation(feedLocation).ContinueWith(antecedent => {
                     if (antecedent.Result != null) {
                         Cache<PackageFeed>.Value[feedLocation] = antecedent.Result;
                     }
@@ -472,13 +491,15 @@ namespace CoApp.Toolkit.Engine {
                         PackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a system feed".format(location));
                         return;
                     }
+                    // add it to the system feed list.
+                    lock (this) {
+                        var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.UnionSingleItem(location);
+                        PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds;
+                    }
+
                     // add feed to the system feeds.
                     PackageFeed.GetPackageFeedFromLocation(location).ContinueWith(antecedent => {
                         if (antecedent.Result != null) {
-                            lock(this) {
-                                var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.UnionSingleItem(location);
-                                PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds;
-                            }
                             Cache<PackageFeed>.Value[location] = antecedent.Result;
                             PackageManagerMessages.Invoke.FeedAdded(location);
                         }
@@ -486,7 +507,7 @@ namespace CoApp.Toolkit.Engine {
                             PackageManagerMessages.Invoke.Error("add-feed", "location", "failed to recognize location '{0}' as a valid package feed".format(location));
                             LogMessage("Feed {0} was unable to load.", location);
                         }
-                    }, TaskContinuationOptions.AttachedToParent).AutoManage();
+                    }, TaskContinuationOptions.AttachedToParent);
                 }
 
             }).AutoManage();
@@ -674,7 +695,6 @@ namespace CoApp.Toolkit.Engine {
                 Updated(); // notify threads that we're not going to be able to get that file.
 
                 if (continuationTask != null) {
-                    continuationTask.Dispose();
                     var state = continuationTask.AsyncState as Recognizer.RecognizerState;
                     if (state != null) {
                         state.LocalLocation = null;
@@ -940,6 +960,9 @@ namespace CoApp.Toolkit.Engine {
         }
        
         internal IEnumerable<PackageFeed> Feeds { get {
+            // ensure that the system feeds actually get loaded.
+            Task.WaitAll(LoadSystemFeeds().ToArray());
+
             var canFilterSession = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds);
             var canFilterSystem = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds);
             var feedFilters = BlockedScanLocations;

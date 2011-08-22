@@ -209,57 +209,60 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <param name="progress">The progress.</param>
         /// <remarks></remarks>
         public override void Install(Package package, Action<int> progress = null) {
-            progress = progress ?? ((percent) => { });
+            lock (typeof(MSIBase)) {
+                progress = progress ?? ((percent) => { });
 
-            int currentTotalTicks = -1;
-            int currentProgress = 0;
-            int progressDirection = 1;
+                int currentTotalTicks = -1;
+                int currentProgress = 0;
+                int progressDirection = 1;
 
-            Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
-                switch (messageType) {
-                    case InstallMessage.Progress:
-                        if (message.Length >= 2) {
-                            var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).ToArray();
+                Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
+                    switch (messageType) {
+                        case InstallMessage.Progress:
+                            if (message.Length >= 2) {
+                                var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).ToArray();
 
-                            switch (msg[1]) {
-                                // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
-                                case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
-                                    currentTotalTicks = msg[3];
-                                    currentProgress = 0;
-                                    if (msg.Length >= 6) {
-                                        progressDirection = msg[5] == 0 ? 1 : -1;
-                                    }
-                                    break;
-                                case 1:
-                                    //Provides information related to progress messages to be sent by the current action.
-                                    break;
-                                case 2: //Increments the progress bar.
-                                    if (currentTotalTicks == -1) {
+                                switch (msg[1]) {
+                                        // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
+                                    case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
+                                        currentTotalTicks = msg[3];
+                                        currentProgress = 0;
+                                        if (msg.Length >= 6) {
+                                            progressDirection = msg[5] == 0 ? 1 : -1;
+                                        }
                                         break;
-                                    }
-                                    currentProgress += msg[3] * progressDirection;
-                                    break;
-                                case 3:
-                                    //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
-                                    break;
+                                    case 1:
+                                        //Provides information related to progress messages to be sent by the current action.
+                                        break;
+                                    case 2: //Increments the progress bar.
+                                        if (currentTotalTicks == -1) {
+                                            break;
+                                        }
+                                        currentProgress += msg[3]*progressDirection;
+                                        break;
+                                    case 3:
+                                        //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
+                                        break;
+                                }
                             }
-                        }
 
-                        if (currentTotalTicks > 0) {
-                            progress(currentProgress * 100 / currentTotalTicks);
-                        }
-                        break;
+                            if (currentTotalTicks > 0) {
+                                progress(currentProgress*100/currentTotalTicks);
+                            }
+                            break;
+                    }
+                    // capture installer messages to play back to status listener
+                    return MessageResult.OK;
+                }), InstallLogModes.Progress);
+
+                try {
+                    Installer.InstallProduct(package.InternalPackageData.LocalPackagePath,
+                        @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
+                            package.PackageSessionData.UserSpecified ? "ADD_TO_ARP=1" : ""));
                 }
-                // capture installer messages to play back to status listener
-                return MessageResult.OK;
-            }), InstallLogModes.Progress);
-
-            try {
-                Installer.InstallProduct(package.InternalPackageData.LocalPackagePath,
-                    @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory, package.PackageSessionData.UserSpecified ? "ADD_TO_ARP=1" : ""));
-            }
-            finally {
-                SetUIHandlersToSilent();
+                finally {
+                    SetUIHandlersToSilent();
+                }
             }
         }
 
@@ -270,55 +273,55 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <param name="progress">The progress.</param>
         /// <remarks></remarks>
         public override void Remove(Package package, Action<int> progress = null) {
-            progress = progress ?? ((percent) => { });
-            int currentTotalTicks = -1;
-            int currentProgress = 0;
-            int progressDirection = 1;
+            lock (typeof(MSIBase)) {
+                progress = progress ?? ((percent) => { });
+                int currentTotalTicks = -1;
+                int currentProgress = 0;
+                int progressDirection = 1;
 
-            Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
-                switch (messageType) {
-                    case InstallMessage.Progress:
-                        if (message.Length >= 2) {
-                            var msg =
-                                message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).
-                                    ToArray();
+                Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
+                    switch (messageType) {
+                        case InstallMessage.Progress:
+                            if (message.Length >= 2) {
+                                var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).ToArray();
 
-                            switch (msg[1]) {
-                                // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
-                                case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
-                                    currentTotalTicks = msg[3];
-                                    currentProgress = 0;
-                                    if (msg.Length >= 6) {
-                                        progressDirection = msg[5] == 0 ? 1 : -1;
-                                    }
-                                    break;
-                                case 1: //Provides information related to progress messages to be sent by the current action.
-                                    break;
-                                case 2: //Increments the progress bar.
-                                    if (currentTotalTicks == -1) {
+                                switch (msg[1]) {
+                                        // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
+                                    case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
+                                        currentTotalTicks = msg[3];
+                                        currentProgress = 0;
+                                        if (msg.Length >= 6) {
+                                            progressDirection = msg[5] == 0 ? 1 : -1;
+                                        }
                                         break;
-                                    }
-                                    currentProgress += msg[3] * progressDirection;
-                                    break;
-                                case 3:
-                                    //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
-                                    break;
+                                    case 1: //Provides information related to progress messages to be sent by the current action.
+                                        break;
+                                    case 2: //Increments the progress bar.
+                                        if (currentTotalTicks == -1) {
+                                            break;
+                                        }
+                                        currentProgress += msg[3]*progressDirection;
+                                        break;
+                                    case 3:
+                                        //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
+                                        break;
+                                }
+                                if (currentTotalTicks > 0) {
+                                    progress(currentProgress*100/currentTotalTicks);
+                                }
                             }
-                            if (currentTotalTicks > 0) {
-                                progress(currentProgress * 100 / currentTotalTicks);
-                            }
-                        }
-                        break;
-                }
-                // capture installer messages to play back to status listener
-                return MessageResult.OK;
-            }), InstallLogModes.Progress);
+                            break;
+                    }
+                    // capture installer messages to play back to status listener
+                    return MessageResult.OK;
+                }), InstallLogModes.Progress);
 
-            try {
-                Installer.InstallProduct(package.InternalPackageData.LocalPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
-            }
-            finally {
-                SetUIHandlersToSilent();
+                try {
+                    Installer.InstallProduct(package.InternalPackageData.LocalPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+                }
+                finally {
+                    SetUIHandlersToSilent();
+                }
             }
         }
 

@@ -116,8 +116,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <remarks></remarks>
         public bool IsInstalled(string productCode) {
             try {
-                Installer.OpenProduct(productCode).Close();
-                return true;
+                lock (typeof(MSIBase)) {
+                    Installer.OpenProduct(productCode).Close();
+                    return true;
+                }
             }
             catch {
             }
@@ -173,44 +175,48 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <returns></returns>
         /// <remarks></remarks>
         public static DataSet GetMSIData(string localPackagePath) {
-            localPackagePath = localPackagePath.ToLower();
+            lock (typeof(MSIBase)) {
+                localPackagePath = localPackagePath.ToLower();
 
-            var result = SessionCache<DataSet>.Value[localPackagePath];
+                var result = SessionCache<DataSet>.Value[localPackagePath];
 
-            if (result != null) {
-                return result;
-            }
+                if (result != null) {
+                    return result;
+                }
 
-            try {
-                using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
-                    var dataSet = new DataSet(localPackagePath) {EnforceConstraints = false};
+                try {
+                    using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
+                        var dataSet = new DataSet(localPackagePath) {
+                            EnforceConstraints = false
+                        };
 
-                    foreach (var t in database.Tables) {
-                        try {
-                            if (!t.Columns[0].IsTemporary) {
-                                if (SignificantTables.Any(tn => t.Name.IsWildcardMatch(tn))) {
-                                    using (var dr = new MSIDataReader(database, t)) {
-                                        dataSet.Tables.Add(t.Name).Load(dr);
+                        foreach (var t in database.Tables) {
+                            try {
+                                if (!t.Columns[0].IsTemporary) {
+                                    if (SignificantTables.Any(tn => t.Name.IsWildcardMatch(tn))) {
+                                        using (var dr = new MSIDataReader(database, t)) {
+                                            dataSet.Tables.Add(t.Name).Load(dr);
+                                        }
                                     }
                                 }
                             }
+                            catch (Exception) {
+                                // some tables not play nice.
+                            }
                         }
-                        catch (Exception) {
-                            // some tables not play nice.
+
+                        //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
+                        if (SessionCache<DataSet>.Value[localPackagePath] != null) {
+                            return SessionCache<DataSet>.Value[localPackagePath];
                         }
-                    }
 
-                    //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
-                    if ( SessionCache<DataSet>.Value[localPackagePath] != null) {
-                        return SessionCache<DataSet>.Value[localPackagePath];
+                        SessionCache<DataSet>.Value[localPackagePath] = dataSet;
+                        return dataSet;
                     }
-
-                    SessionCache<DataSet>.Value[localPackagePath] = dataSet;
-                    return dataSet;
                 }
-            }
-            catch (InstallerException) {
-                throw new InvalidPackageException(InvalidReason.NotValidMSI, localPackagePath);
+                catch (InstallerException) {
+                    throw new InvalidPackageException(InvalidReason.NotValidMSI, localPackagePath);
+                }
             }
         }
 
