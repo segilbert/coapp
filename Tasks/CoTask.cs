@@ -12,6 +12,7 @@ namespace CoApp.Toolkit.Tasks {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
     using Exceptions;
@@ -52,6 +53,7 @@ namespace CoApp.Toolkit.Tasks {
             var tid = Task.CurrentId ?? 0;
 
             if( _tasks.ContainsKey(tid)) {
+                Console.WriteLine("Cleaning Up Task #{0}", tid);
                 var tsk = _tasks[tid];
                 // see if there are any outstanding child tasks
                 foreach (var child in tsk.Children.ToList().Where(child => !child.IsStillActive)) {
@@ -73,8 +75,23 @@ namespace CoApp.Toolkit.Tasks {
             return x.Task.AutoManage();
         }
 
+
+        private static Task GetTaskParentIdTheHardWay(Task obj) {
+            var parentField = typeof (Task).GetField("m_parent",
+                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance);
+            var result = parentField.GetValue(obj);
+            return result as Task;
+        }
+
         public static Task AutoManage(this Task task) {
             lock (_tasks) {
+                Console.WriteLine("Automanaging Task #{0}, parent task id = {1} ", task.Id, Task.CurrentId);
+                var parentTask = GetTaskParentIdTheHardWay(task);
+
+                if( task.Id <= Task.CurrentId ) {
+                    
+                    Console.WriteLine("Not Funny! Task has out of order parent id! Task #{0}, parent task id = {1} ", task.Id, Task.CurrentId);
+                }
                 if (!_tasks.ContainsKey(task.Id)) {
                     _tasks.Add(task.Id, new InternalTaskData {
                         TaskInstance = task,
@@ -84,28 +101,15 @@ namespace CoApp.Toolkit.Tasks {
                 else if (!_tasks[task.Id].AutoManaged.WaitOne(0)) {
                     _tasks[task.Id].ParentTaskId = Task.CurrentId;
                     _tasks[task.Id].TaskInstance = task;
-                    task.ContinueWith(OnTaskComplete, TaskContinuationOptions.AttachedToParent);
-                    _tasks[task.Id].AutoManaged.Set();
                 }
+                task.ContinueWith(OnTaskComplete, TaskContinuationOptions.AttachedToParent);
+                _tasks[task.Id].AutoManaged.Set();
             }
             return task;
         }
 
         public static Task<T> AutoManage<T>(this Task<T> task) {
-            lock (_tasks) {
-                if (!_tasks.ContainsKey(task.Id)) {
-                    _tasks.Add(task.Id, new InternalTaskData {
-                        TaskInstance = task,
-                        ParentTaskId = Task.CurrentId
-                    });
-                }
-                else if (!_tasks[task.Id].AutoManaged.WaitOne(0)) {
-                    _tasks[task.Id].ParentTaskId = Task.CurrentId;
-                    _tasks[task.Id].TaskInstance = task;
-                    task.ContinueWith(OnTaskComplete, TaskContinuationOptions.AttachedToParent);
-                    _tasks[task.Id].AutoManaged.Set();
-                }
-            }
+            AutoManage((Task) task);
             return task;
         }
 

@@ -146,7 +146,7 @@ namespace CoApp.Toolkit.Pipes {
         /// <remarks></remarks>
         public override string ToString() {
             return Data.Any()
-                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (string.IsNullOrEmpty(Data[k]) ? (k.UrlEncode() + "=" + Data[k].UrlEncode() + "&") : string.Empty))
+                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (!string.IsNullOrEmpty(Data[k]) ? (k.UrlEncode() + "=" + Data[k].UrlEncode() + "&") : string.Empty))
                 : Command.UrlEncode();
         }
 
@@ -166,11 +166,47 @@ namespace CoApp.Toolkit.Pipes {
         /// <param name="value">The value.</param>
         /// <remarks></remarks>
         public void Add(string key, string value) {
-            if (Data.ContainsKey(key)) {
-                Data[key] = value;
+            if (value != null) {
+                if (Data.ContainsKey(key)) {
+                    Data[key] = value;
+                }
+                else {
+                    Data.Add(key, value);
+                }
             }
-            else {
-                Data.Add(key, value);
+        }
+
+        /// <summary>
+        /// Adds the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        /// <remarks></remarks>
+        public void Add(string key, bool? value) {
+            if (value != null) {
+                if (Data.ContainsKey(key)) {
+                    Data[key] = value.ToString();
+                }
+                else {
+                    Data.Add(key, value.ToString());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        /// <remarks></remarks>
+        public void Add(string key, int? value) {
+            if (value != null) {
+                if (Data.ContainsKey(key)) {
+                    Data[key] = value.ToString();
+                }
+                else {
+                    Data.Add(key, value.ToString());
+                }
             }
         }
 

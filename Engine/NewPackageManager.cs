@@ -53,7 +53,7 @@ namespace CoApp.Toolkit.Engine {
             }
 
             // always load the Installed Package Feed.
-            PackageFeed.GetPackageFeedFromLocation(InstalledPackageFeed.CanonicalLocation).AutoManage();
+            PackageFeed.GetPackageFeedFromLocation(InstalledPackageFeed.CanonicalLocation);
 
             foreach( var f in systemFeeds ) {
                 var feedLocation = f;

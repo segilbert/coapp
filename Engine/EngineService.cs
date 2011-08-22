@@ -17,6 +17,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading;
     using System.Threading.Tasks;
     using Pipes;
+    using Tasks;
 
     /// <summary>
     /// 
@@ -94,6 +95,7 @@ namespace CoApp.Toolkit.Engine {
             if (_isRunning) {
                 return _engineService;
             }
+            var npmi = NewPackageManager.Instance;
 
             _cancellationTokenSource = new CancellationTokenSource();
             _isRunning = true;
@@ -107,14 +109,14 @@ namespace CoApp.Toolkit.Engine {
                 StartListener();
                 StartListener();
                    
-            }, _cancellationTokenSource.Token);
+            }, _cancellationTokenSource.Token).AutoManage();
 
             _engineService = _engineService.ContinueWith(antecedent => {
                 _isRunning = false;
                 // ensure the sessions are all getting closed.
                 Session.CancelAll();
                 _engineService = null;
-            }, TaskContinuationOptions.AttachedToParent);
+            }, TaskContinuationOptions.AttachedToParent).AutoManage();
             return _engineService;
         }
 
@@ -128,7 +130,7 @@ namespace CoApp.Toolkit.Engine {
                 if (_isRunning) {
                     var serverPipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, Instances, PipeTransmissionMode.Message, PipeOptions.Asynchronous,
                         BufferSize, BufferSize, _pipeSecurity);
-                    var listenTask = Task.Factory.FromAsync(serverPipe.BeginWaitForConnection, serverPipe.EndWaitForConnection, serverPipe);
+                    var listenTask = Task.Factory.FromAsync(serverPipe.BeginWaitForConnection, serverPipe.EndWaitForConnection, serverPipe).AutoManage();
                        
                     listenTask.ContinueWith(t => {
                         if (t.IsCanceled || _cancellationTokenSource.Token.IsCancellationRequested ) {
@@ -139,7 +141,7 @@ namespace CoApp.Toolkit.Engine {
                         if (serverPipe.IsConnected) {
                             var serverInput = new byte[BufferSize];
 
-                            serverPipe.ReadAsync(serverInput, 0, serverInput.Length).ContinueWith(antecedent => {
+                            serverPipe.ReadAsync(serverInput, 0, serverInput.Length).AutoManage().ContinueWith(antecedent => {
                                 var rawMessage = Encoding.UTF8.GetString(serverInput, 0, antecedent.Result);
                                 if (string.IsNullOrEmpty(rawMessage)) {
                                     return;
@@ -181,7 +183,7 @@ namespace CoApp.Toolkit.Engine {
                         }
 
                        
-                    }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current );
+                    }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current ).AutoManage();
                     
                 }
             }
@@ -203,11 +205,11 @@ namespace CoApp.Toolkit.Engine {
                 var channelname = OutputPipeName + sessionId;
                 var responsePipe = new NamedPipeServerStream(channelname, PipeDirection.Out, Instances, PipeTransmissionMode.Message, PipeOptions.Asynchronous,
                     BufferSize, BufferSize, _pipeSecurity);
-                Task.Factory.FromAsync(responsePipe.BeginWaitForConnection, responsePipe.EndWaitForConnection, responsePipe).ContinueWith(t => {
+                Task.Factory.FromAsync(responsePipe.BeginWaitForConnection, responsePipe.EndWaitForConnection, responsePipe).AutoManage().ContinueWith(t => {
                     if (responsePipe.IsConnected) {
                         Session.Start(clientId, sessionId, serverPipe, responsePipe);
                     }
-                }, TaskContinuationOptions.AttachedToParent );
+                }, TaskContinuationOptions.AttachedToParent ).AutoManage();
             }
             catch (Exception e) {
                 Console.Write(e.GetType());

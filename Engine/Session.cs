@@ -236,8 +236,9 @@ namespace CoApp.Toolkit.Engine {
             Connected = true;
 
             // this session task
-            _task = Task.Factory.StartNew(ProcessMesages, _cancellationTokenSource.Token).AutoManage();
+            _task = Task.Factory.StartNew(ProcessMesages, _cancellationTokenSource.Token);
 
+            _task.AutoManage();
             // when the task is done, call end.
             _task.ContinueWith((antecedent) => End());
         }
@@ -406,28 +407,25 @@ namespace CoApp.Toolkit.Engine {
                     if ((readTask == null || readTask.IsCompleted) && Connected) {
                         var serverInput = new byte[EngineService.BufferSize];
                         try {
-                            readTask = _serverPipe.ReadAsync(serverInput, 0, serverInput.Length).ContinueWith(antecedent => {
+                            readTask = _serverPipe.ReadAsync(serverInput, 0, serverInput.Length).AutoManage().ContinueWith(antecedent => {
                                 var rawMessage = Encoding.UTF8.GetString(serverInput, 0, antecedent.Result);
 
                                 if (string.IsNullOrEmpty(rawMessage)) {
                                     return;
                                 }
+                                var requestMessage = new UrlEncodedMessage(rawMessage);
+                                var rqid = requestMessage["rqid"].ToString();
+                                var dispatchTask = Dispatch(requestMessage);
 
-                                Dispatch(new UrlEncodedMessage(rawMessage));
-                                readTask = null;
-                            });
-
-                            readTask.AutoManage().ContinueWith(antecedent => {
-                                if (antecedent.Exception != null) {
-                                    foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof(AggregateException) )) {
-                                        WriteAsync(new UrlEncodedMessage("unexpected-failure") {
-                                            {"type", failure.GetType().ToString()},
-                                            {"message", failure.Message},
-                                            {"stacktrace", failure.StackTrace},
-                                        });
-                                    }
+                                if (!string.IsNullOrEmpty(rqid)) {
+                                    dispatchTask.ContinueWith(dispatchAntecedent => WriteAsync(new UrlEncodedMessage("task-complete") { { "rqid", rqid } })).AutoManage();
                                 }
-                            },_cancellationTokenSource.Token ,TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.OnlyOnFaulted ,TaskScheduler.Current).AutoManage();
+
+                                WriteErrorsOnException(dispatchTask);
+                                readTask = null;
+                            }).AutoManage();
+
+                            WriteErrorsOnException(readTask);
                         }
                         catch (Exception e) {
                             // if the pipe is broken, let's move to the disconnected state
@@ -462,6 +460,24 @@ namespace CoApp.Toolkit.Engine {
                     Console.WriteLine(e.StackTrace);
                 }
             }
+        }
+
+        private void WriteErrorsOnException(Task task) {
+            task.ContinueWith(antecedent => {
+                if (antecedent.Exception != null) {
+                    foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof(AggregateException) )) {
+                        Console.Write(failure.GetType());
+                        Console.WriteLine(failure.Message);
+                        Console.WriteLine(failure.StackTrace);
+                        WriteAsync(new UrlEncodedMessage("unexpected-failure") {
+                            {"type", failure.GetType().ToString()},
+                            {"message", failure.Message},
+                            {"stacktrace", failure.StackTrace},
+                        });
+                    }
+                }
+            },_cancellationTokenSource.Token ,TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.OnlyOnFaulted ,TaskScheduler.Current).AutoManage();
+            
         }
 
         /// <summary>
@@ -810,11 +826,13 @@ namespace CoApp.Toolkit.Engine {
         }
 
         private void SendUnexpectedFailure(Exception failure) {
-            WriteAsync(new UrlEncodedMessage("unexpected-failure") {
-                {"type", failure.GetType().ToString()},
-                {"message", failure.Message},
-                {"stacktrace", failure.StackTrace},
-            });
+            if( failure != null ) {
+                WriteAsync(new UrlEncodedMessage("unexpected-failure") {
+                    {"type", failure.GetType().ToString()},
+                    {"message", failure.Message},
+                    {"stacktrace", failure.StackTrace},
+                });
+            }
         }
 
         private void SendFeedSuppressed(string location) {

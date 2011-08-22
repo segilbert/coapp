@@ -16,6 +16,7 @@ using System.Text;
 namespace CoApp.Toolkit.Engine.Client {
     using System.IO.Pipes;
     using System.Security.Principal;
+    using System.Threading;
     using System.Threading.Tasks;
     using Pipes;
     using Tasks;
@@ -25,7 +26,44 @@ namespace CoApp.Toolkit.Engine.Client {
 
     };
 
+    
+
     public class PackageManager {
+        private class ManualEventQueue : Queue<UrlEncodedMessage>, IDisposable {
+            private static readonly Dictionary<int, ManualEventQueue> _eventQueues = new Dictionary<int, ManualEventQueue>();
+            public readonly ManualResetEvent ManualResetEvent = new ManualResetEvent(true);
+
+            public ManualEventQueue() {
+                var tid = Task.CurrentId.GetValueOrDefault();
+                if (tid == 0) {
+                    throw new Exception("Cannot create a ManualEventQueue outside of a task.");
+                }
+                lock (_eventQueues) {
+                    _eventQueues.Add(tid, this);
+                }
+            }
+
+            public void Dispose() {
+                lock (_eventQueues) {
+                    _eventQueues.Remove(Task.CurrentId.GetValueOrDefault());
+                }
+            }
+
+            public static ManualEventQueue GetQueueForTaskId(int taskId) {
+                return _eventQueues[taskId];
+            }
+
+            internal void DispatchResponses() {
+                var continueHandlingMessages = true;
+
+                while (continueHandlingMessages && ManualResetEvent.WaitOne()) {
+                    ManualResetEvent.Reset();
+                    while (Count > 0 && continueHandlingMessages) {
+                        continueHandlingMessages = Dispatch(Dequeue());
+                    }
+                }
+            }
+        }
 
         public static PackageManager Instance = new PackageManager();
         private NamedPipeClientStream _pipe;
@@ -36,20 +74,18 @@ namespace CoApp.Toolkit.Engine.Client {
                 return _pipe != null ? _pipe.IsConnected : false;
             }
         }
-        
 
         private PackageManager() {
                
         }
 
-        private void Connect(string clientName, string sessionId = null ) {
+        public void Connect(string clientName, string sessionId = null ) {
             if (IsConnected)
                 return;
 
             sessionId = sessionId ?? DateTime.Now.Ticks.ToString();
             
             _pipe = new NamedPipeClientStream(".", "CoAppInstaller" , PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation );
-
             
             try {
                 _pipe.Connect();
@@ -60,8 +96,11 @@ namespace CoApp.Toolkit.Engine.Client {
             }
             
             Task.Factory.StartNew(() => {
+                StartSession(clientName, sessionId);
+
                 while( IsConnected  ) {
                     var incomingMessage = new byte[BufferSize];
+
                     _pipe.ReadAsync(incomingMessage, 0, BufferSize).ContinueWith(antecedent => {
                         var rawMessage = Encoding.UTF8.GetString(incomingMessage, 0, antecedent.Result);
 
@@ -69,8 +108,20 @@ namespace CoApp.Toolkit.Engine.Client {
                             return;
                         }
 
-                        Dispatch(new UrlEncodedMessage(rawMessage));
-                    } );
+                        var responseMessage = new UrlEncodedMessage(rawMessage);
+
+                        Console.WriteLine("Response: {0}", responseMessage.Command);
+                        int? rqid = responseMessage["rqid"];
+
+                        try {
+                            var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
+                            mreq.Enqueue(responseMessage);
+                            mreq.ManualResetEvent.Set();
+                        } catch {
+                            Console.WriteLine("Unable to queue the response to the right queue.");
+                            // not able to queue up the response to the right task?
+                        }
+                    });
                 }
             });
         }
@@ -86,124 +137,338 @@ namespace CoApp.Toolkit.Engine.Client {
             bool? dependencies, bool? installed, bool? active, bool? required, bool? blocked, bool? latest,
             int? index, int? maxResults, string location, bool? forceScan, PackageManagerMessages messages) {
 
-            var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                return Task.Factory.StartNew(() => {
+                    messages.Register();
+                    using( var eventQueue = new ManualEventQueue() ) { 
+                        WriteAsync(new UrlEncodedMessage("find-packages") {
+                            {"canonical-name" , canonicalName },
+                            {"name", name},
+                            {"version", version },
+                            {"arch", arch },
+                            {"public-key-token", publicKeyToken },
+                            {"dependencies", dependencies  },
+                            {"installed", installed },
+                            {"active", active },
+                            {"required", required },
+                            {"blocked", blocked },
+                            {"latest", latest },
+                            {"index", index },
+                            {"max-results", maxResults },
+                            {"location", location },
+                            {"force-scan", forceScan },
 
-            });
+                            {"rqid",  Task.CurrentId},
+                        });
 
-            t.AutoManage();
-            
-            return t;
+                        // will return when the final message comes thru.
+                        eventQueue.DispatchResponses();
+                    }
+                }).AutoManage();
         }
 
-        private void Dispatch(UrlEncodedMessage responseMessage) {
-            Console.WriteLine("Response: {0}", responseMessage.Command);
+        public Task GetPackageDetails(string canonicalName, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("get-package-details") {
+                            {"canonical-name" , canonicalName },
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
 
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task InstallPackage(string canonicalName, bool? autoUpgrade, bool? force, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("install-package") {
+                            {"canonical-name" , canonicalName },
+                            {"auto-upgrade" , autoUpgrade},
+                            {"force" , force},
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task ListFeeds(int? index, int? maxResults, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("find-feeds") {
+                            {"index" , index },
+                            {"max-results" , maxResults },
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task RemoveFeed(string location, bool? session, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("remove-feed") {
+                            {"location" , location},
+                            {"session" , session},
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task AddFeed(string location, bool? session, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("add-feed") {
+                            {"location" , location },
+                            {"session" , session},
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task VerifyFileSignature(string filename, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("verify-file-signature") {
+                            {"filename" , filename },
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task SetPackage(string canonicalName, bool? active, bool? required, bool? blocked, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("set-package") {
+                            {"canonical-name" , canonicalName },
+                            {"active" , active},
+                            {"required" , required},
+                            {"blocked" , blocked},
+
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task RemovePackage(string canonicalName, bool? force, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("remove-package") {
+                            {"canonical-name" , canonicalName },
+                            {"force" , force},
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task UnableToAcquire(string canonicalName, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("unable-to-acquire") {
+                            {"canonical-name" , canonicalName },
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("recongnize-file") {
+                            {"canonical-name" , canonicalName },
+                            {"local-location" , localLocation},
+                            {"remote-location" , remoteLocation},
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task SuppressFeed(string location, PackageManagerMessages messages) {
+            return Task.Factory.StartNew(() => {
+                messages.Register();
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("suppress-feed") {
+                            {"location" , location },
+                            
+                            {"rqid",  Task.CurrentId},
+                        });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        internal static bool Dispatch(UrlEncodedMessage responseMessage) {
             switch (responseMessage.Command) {
                 case "failed-package-install":
-                    FailedPackageInstall(responseMessage["canonical-name"], responseMessage["filename"], responseMessage["reason"]);
+                    PackageManagerMessages.Invoke.FailedPackageInstall(responseMessage["canonical-name"], responseMessage["filename"], responseMessage["reason"]);
                     break;
 
                 case "failed-package-remove":
-                    FailedPackageRemoval(responseMessage["canonical-name"], responseMessage["reason"]);
+                    PackageManagerMessages.Invoke.FailedPackageRemoval(responseMessage["canonical-name"], responseMessage["reason"]);
                     break;
 
                 case "feed-added":
-                    FeedAdded(responseMessage["location"]);
+                    PackageManagerMessages.Invoke.FeedAdded(responseMessage["location"]);
                     break;
 
                 case "feed-removed":
-                    FeedRemoved(responseMessage["location"]);
+                    PackageManagerMessages.Invoke.FeedRemoved(responseMessage["location"]);
                     break;
 
                 case "feed-suppressed":
-                    FeedSuppressed(responseMessage["location"]);
+                    PackageManagerMessages.Invoke.FeedSuppressed(responseMessage["location"]);
                     break;
 
                 case "file-not-found":
-                    FileNotFound(responseMessage["filename"]);
+                    PackageManagerMessages.Invoke.FileNotFound(responseMessage["filename"]);
                     break;
 
                 case "found-feed":
-                    FeedDetails(responseMessage["location"], DateTime.FromFileTime((long?) responseMessage["last-scanned"] ?? 0 ), (bool?)responseMessage["session"] ?? false);
+                    PackageManagerMessages.Invoke.FeedDetails(responseMessage["location"], DateTime.FromFileTime((long?)responseMessage["last-scanned"] ?? 0), (bool?)responseMessage["session"] ?? false);
                     break;
 
                 case "found-package":
-                    PackageInformation(new Package(), Enumerable.Empty<Package>());
+                    PackageManagerMessages.Invoke.PackageInformation(new Package(), Enumerable.Empty<Package>());
                     break;
 
                 case "installed-package":
-                    InstalledPackage(responseMessage["canonical-name"]);
+                    PackageManagerMessages.Invoke.InstalledPackage(responseMessage["canonical-name"]);
                     break;
 
                 case "installing-package":
-                    InstallingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0);
+                    PackageManagerMessages.Invoke.InstallingPackageProgress(responseMessage["canonical-name"], (int?)responseMessage["percent-complete"] ?? 0);
                     break;
 
                 case "message-argument-error":
-                    Error(responseMessage["message"], responseMessage["parameter"], responseMessage["reason"]);
+                    PackageManagerMessages.Invoke.Error(responseMessage["message"], responseMessage["parameter"], responseMessage["reason"]);
                     break;
 
                 case "message-warning":
-                    Warning(responseMessage["message"], responseMessage["parameter"], responseMessage["reason"]);
+                    PackageManagerMessages.Invoke.Warning(responseMessage["message"], responseMessage["parameter"], responseMessage["reason"]);
                     break;
 
                 case "no-feeds-found":
-                    NoFeedsFound();
+                    PackageManagerMessages.Invoke.NoFeedsFound();
                     break;
 
                 case "no-packages-found":
-                    NoPackagesFound();
+                    PackageManagerMessages.Invoke.NoPackagesFound();
                     break;
 
                 case "operation-cancelled":
-                    OperationCancelled(responseMessage["message"]);
+                    PackageManagerMessages.Invoke.OperationCancelled(responseMessage["message"]);
                     break;
 
                 case "operation-requires-permission":
-                    PermissionRequired(responseMessage["policy-required"]);
+                    PackageManagerMessages.Invoke.PermissionRequired(responseMessage["policy-required"]);
                     break;
 
                 case "package-details":
-                    PackageDetails(new Package());
+                    PackageManagerMessages.Invoke.PackageDetails(new Package());
                     break;
 
                 case "package-has-potential-upgrades":
-                    PackageHasPotentialUpgrades(new Package(), Enumerable.Empty<Package>());
+                    PackageManagerMessages.Invoke.PackageHasPotentialUpgrades(new Package(), Enumerable.Empty<Package>());
                     break;
 
                 case "package-is-blocked":
-                    PackageBlocked(responseMessage["canonical-name"]);
+                    PackageManagerMessages.Invoke.PackageBlocked(responseMessage["canonical-name"]);
                     break;
+
                 case "removed-package":
-                    RemovedPackage(responseMessage["canonical-name"]);
+                    PackageManagerMessages.Invoke.RemovedPackage(responseMessage["canonical-name"]);
                     break;
+
                 case "removing-package":
-                    RemovingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0);
+                    PackageManagerMessages.Invoke.RemovingPackageProgress(responseMessage["canonical-name"], (int?)responseMessage["percent-complete"] ?? 0);
                     break;
+
                 case "require-remote-file":
-                    RequireRemoteFile(responseMessage["canonical-name"], responseMessage.GetCollection("remote-locations"), responseMessage["destination"],
+                    PackageManagerMessages.Invoke.RequireRemoteFile(responseMessage["canonical-name"], responseMessage.GetCollection("remote-locations"), responseMessage["destination"],
                         (bool?) responseMessage["force"] ?? false);
                     break;
 
                 case "signature-validation":
-                    SignatureValidation(responseMessage["filename"], (bool?) responseMessage["is-valid"] ?? false, responseMessage["certificate-subject-name"]);
+                    PackageManagerMessages.Invoke.SignatureValidation(responseMessage["filename"], (bool?)responseMessage["is-valid"] ?? false, responseMessage["certificate-subject-name"]);
                     break;
 
                 case "unable-to-recognize-file":
-                    FileNotRecognized(responseMessage["filename"], responseMessage["reason"]);
+                    PackageManagerMessages.Invoke.FileNotRecognized(responseMessage["filename"], responseMessage["reason"]);
                     break;
 
                 case "unexpected-failure":
-                    UnexpectedFailure(responseMessage["type"], responseMessage["message"], responseMessage["stacktrace"]);
+                    // PackageManagerMessages.Invoke.UnexpectedFailure( responseMessage["type"], responseMessage["message"], responseMessage["stacktrace"]);
                     break;
+
+                case "unknown-package":
+                    PackageManagerMessages.Invoke.UnknownPackage(responseMessage["canonical-name"]);
+                    break;
+
                 case "unknown-command":
                     Console.WriteLine("Unknown command!");
                     break;
-                case "unknown-package":
-                    UnknownPackage(responseMessage["canonical-name"]);
-                    break;
+
+                case "task-complete":
+                    return false;
             }
+
+            return true;
         }
 
         /// <summary>
@@ -225,47 +490,11 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         private void StartSession(string clientId, string sessionId ) {
-
             WriteAsync(new UrlEncodedMessage("start-session") {
                 {"client" , clientId },
                 {"id"  , sessionId },
+                {"rqid"  , sessionId },
             });
         }
-        
-        public event Action NoPackagesFound;
-        public event Action<string , DateTime, bool> FeedDetails;
-        
-        public event Action<string, int> InstallingPackageProgress;
-        public event Action<string, int> RemovingPackageProgress;
-        public event Action<string> InstalledPackage;
-        public event Action<string> RemovedPackage;
-        public event Action<string,string,string> FailedPackageInstall;
-        public event Action<string,string> FailedPackageRemoval;
-        public event Action<string, IEnumerable<string>, string, bool> RequireRemoteFile;
-        public event Action<string, bool, string> SignatureValidation;
-        public event Action<string> PermissionRequired;
-        public event Action<string, string, string > Error;
-        public event Action<string, string, string> Warning;
-        public event Action<string> FeedAdded;
-        public event Action<string> FeedRemoved;
-        public event Action<string> FeedSuppressed;
-        public event Action NoFeedsFound;
-        public event Action<string> FileNotFound;
-        public event Action<string> UnknownPackage;
-        public event Action<string> PackageBlocked;
-        public event Action<string,string> FileNotRecognized;
-        public event Action<string> OperationCancelled;
-        public event Action<string, string, string> UnexpectedFailure;
-
-        public event Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
-        public event Action<Package, IEnumerable<Package>> PackageInformation;
-        public event Action<Package> PackageDetails;
-
-        // not currently used?
-        public event Action<string> Recognized;
-        public event Action<Package> UnableToDownloadPackage;
-        public event Action<Package> UnableToInstallPackage;
-        public event Action<Package, IEnumerable<Package>> UnableToResolveDependencies;
-
     }
 }
