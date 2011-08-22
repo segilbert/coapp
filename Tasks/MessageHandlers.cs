@@ -88,7 +88,7 @@ namespace CoApp.Toolkit.Tasks {
         }
 
         public void Register() {
-            CoTask.AddMessageHandler(Task.CurrentId, this);
+            CoTask.CurrentTask.AddMessageHandler(this);
         }
     }
 

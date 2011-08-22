@@ -11,6 +11,7 @@
 namespace CoApp.Toolkit.Tasks {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
     using System.Threading;
@@ -18,56 +19,10 @@ namespace CoApp.Toolkit.Tasks {
     using Exceptions;
 
     public static class CoTask {
-        private class InternalTaskData {
-            /// <summary>
-            /// The collection of message handler objects listening to thie task
-            /// </summary>
-            private readonly Lazy<List<MessageHandlers>> _messageHandlerList = new Lazy<List<MessageHandlers>>(() => new List<MessageHandlers>());
-
-            internal int? ParentTaskId;
-            internal Task TaskInstance;
-            internal ManualResetEvent AutoManaged = new ManualResetEvent(false);
-
-            internal bool IsStillActive {
-                get { return  (! (TaskInstance != null && TaskInstance.IsCompleted)) | (ActiveChildren.Any()); }
-            }
-
-            internal IEnumerable<InternalTaskData> ActiveChildren {
-                get { return from child in Children where child.IsStillActive select child; }
-            }
-
-            internal IEnumerable<InternalTaskData> Children { get {
-                return from tsk in _tasks.Values where tsk.ParentTaskId == TaskInstance.Id select tsk; }
-            }
-           
-            /// <summary>
-            /// Gets the message handler list.
-            /// </summary>
-            /// <remarks></remarks>
-            internal List<MessageHandlers> MessageHandlerList { get { return _messageHandlerList.Value; } }
-        }
-
-        private static readonly Dictionary<int,InternalTaskData> _tasks  = new Dictionary<int, InternalTaskData>();
-
-        private static void OnTaskComplete(Task task) {
-            var tid = Task.CurrentId ?? 0;
-
-            if( _tasks.ContainsKey(tid)) {
-                Console.WriteLine("Cleaning Up Task #{0}", tid);
-                var tsk = _tasks[tid];
-                // see if there are any outstanding child tasks
-                foreach (var child in tsk.Children.ToList().Where(child => !child.IsStillActive)) {
-                    OnTaskComplete(child.TaskInstance);
-                }
-
-                lock (_tasks) {
-                    if (!tsk.IsStillActive) {
-                        tsk.MessageHandlerList.Clear();
-                        _tasks.Remove(tid);
-                    }
-                }
-            }
-        }
+        private static readonly FieldInfo _parentTaskField = typeof (Task).GetField("m_parent", BindingFlags.NonPublic | BindingFlags.DeclaredOnly | BindingFlags.Instance);
+        private static readonly PropertyInfo _currentTaskProperty = typeof(Task).GetProperty("InternalCurrent", BindingFlags.NonPublic | BindingFlags.DeclaredOnly | BindingFlags.Static);
+        private static readonly Dictionary<Task, List<MessageHandlers>> _tasks = new Dictionary<Task, List<MessageHandlers>>();
+        private static readonly Dictionary<Task, Task> _parentTasks = new Dictionary<Task, Task>();
 
         public static Task<T> AsResultTask<T>(this T result) {
             var x = new TaskCompletionSource<T>(TaskCreationOptions.AttachedToParent);
@@ -75,35 +30,60 @@ namespace CoApp.Toolkit.Tasks {
             return x.Task.AutoManage();
         }
 
+        public static void Collect() {
+            lock (_tasks) {
+                var completedTasks = (from t in _tasks.Keys where t.IsCompleted select t).ToArray();
+                foreach (var t in completedTasks) {
+                    _tasks.Remove(t);
+                }
+            }
 
-        private static Task GetTaskParentIdTheHardWay(Task obj) {
-            var parentField = typeof (Task).GetField("m_parent",
-                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance);
-            var result = parentField.GetValue(obj);
-            return result as Task;
+            lock (_parentTasks) {
+                var completedTasks = (from t in _parentTasks.Keys where t.IsCompleted select t).ToArray();
+                foreach (var t in completedTasks) {
+                    _parentTasks.Remove(t);
+                }
+            }
         }
 
+        /// <summary>
+        /// This associates a child task with the parent task.
+        /// 
+        /// This isn't necessary (and will have no effect) when the child task is created with AttachToParent in the creation/continuation options,
+        /// but it does take a few cycles to validate that there is actually a parent, so don't call this when not needed. 
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public static Task AutoManage(this Task task) {
-            lock (_tasks) {
-                Console.WriteLine("Automanaging Task #{0}, parent task id = {1} ", task.Id, Task.CurrentId);
-                var parentTask = GetTaskParentIdTheHardWay(task);
 
-                if( task.Id <= Task.CurrentId ) {
-                    
-                    Console.WriteLine("Not Funny! Task has out of order parent id! Task #{0}, parent task id = {1} ", task.Id, Task.CurrentId);
+#if DEBUG
+            if( task.GetParentTask() != null ) {
+                var stackTrace = new StackTrace(true);
+                var frames = stackTrace.GetFrames();
+                foreach (var frame in frames) {
+                    if (frame != null) {
+                        var method = frame.GetMethod();
+                        var fnName = method.Name;
+                        var cls = method.DeclaringType;
+                        if (cls.Namespace.Contains("Tasks")) {
+                            continue;
+                        }
+                        Console.WriteLine("Unneccesary Automanage() in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
+                        break;
+                    }
                 }
-                if (!_tasks.ContainsKey(task.Id)) {
-                    _tasks.Add(task.Id, new InternalTaskData {
-                        TaskInstance = task,
-                        ParentTaskId = Task.CurrentId
-                    });
+            }
+#endif
+
+            if ( task.GetParentTask() == null ) {
+                lock( _parentTasks ) {
+                    var currentTask = CurrentTask;
+                    if (currentTask != null) {
+                        // the given task isn't attached to the parent.
+                        // we can fake out attachment, by using the current task
+                        _parentTasks.Add(task, currentTask);
+                    }
                 }
-                else if (!_tasks[task.Id].AutoManaged.WaitOne(0)) {
-                    _tasks[task.Id].ParentTaskId = Task.CurrentId;
-                    _tasks[task.Id].TaskInstance = task;
-                }
-                task.ContinueWith(OnTaskComplete, TaskContinuationOptions.AttachedToParent);
-                _tasks[task.Id].AutoManaged.Set();
             }
             return task;
         }
@@ -113,36 +93,17 @@ namespace CoApp.Toolkit.Tasks {
             return task;
         }
 
-        private static InternalTaskData Instance(this Task task) {
-            return _tasks.ContainsKey(task.Id) ? _tasks[task.Id] : null;
+        internal static Task CurrentTask { get {
+            return _currentTaskProperty.GetValue(null, null) as Task;
+        }}
+
+        private static Task GetParentTask( this Task task ) {
+            return _parentTaskField.GetValue(task) as Task ?? (_parentTasks.ContainsKey(task) ? _parentTasks[task] : null);
         }
 
-        internal static Task CurrentTask { get {
-            var tid = Task.CurrentId ?? 0;
-            return _tasks.ContainsKey(tid) ? _tasks[tid].TaskInstance : null;
-        }}
-
-
-        public static Task ParentTask {
-            get {
-            var tid = Task.CurrentId ?? 0;
-            if( _tasks.ContainsKey(tid) ) {
-                var ptid = _tasks[tid].ParentTaskId ?? 0;
-                return _tasks.ContainsKey(ptid) ? _tasks[ptid].TaskInstance : null;
-            }
-            return null;
-        }}
-
-        /// <summary>
-        /// Gets the message handler.
-        /// </summary>
-        /// <param name="task">The task to get the message handler for.</param>
-        /// <param name="messageHandlerType">the message handler class</param>
-        /// <returns>A message handler; null if there isn't one. </returns>
-        /// <remarks></remarks>
-        internal static MessageHandlers GetMessageHandler(this Task task, Type messageHandlerType) {
-            return GetMessageHandler(task.Id, messageHandlerType);
-        }      
+        internal static Task ParentTask {
+            get { return CurrentTask.GetParentTask(); }
+        }
   
         /// <summary>
         /// Gets the message handler.
@@ -151,16 +112,18 @@ namespace CoApp.Toolkit.Tasks {
         /// <param name="messageHandlerType">the message handler class</param>
         /// <returns>A message handler; null if there isn't one. </returns>
         /// <remarks></remarks>
-        internal static MessageHandlers GetMessageHandler(int? taskId, Type messageHandlerType) {
-            var tid = taskId ?? 0;
+        internal static MessageHandlers GetMessageHandler(this Task task, Type messageHandlerType) {
+            if( task == null )
+                return null;
 
-            if( _tasks.ContainsKey(tid)) {
-                var inst = _tasks[tid];
-                return (from handler in inst.MessageHandlerList where handler.GetType() == messageHandlerType select handler).FirstOrDefault() ??
-                    GetMessageHandler(inst.ParentTaskId ?? 0, messageHandlerType);
+            // if the current task has an entry.
+            if( _tasks.ContainsKey(task)) {
+                return (from handler in _tasks[task] where handler.GetType() == messageHandlerType select handler).FirstOrDefault() ??
+                    GetMessageHandler(task.GetParentTask(), messageHandlerType);
             }
-            
-            return null;
+
+            // otherwise, check with the parent.
+            return GetMessageHandler(task.GetParentTask(), messageHandlerType);
         }  
 
 
@@ -171,17 +134,7 @@ namespace CoApp.Toolkit.Tasks {
         /// <remarks></remarks>
         internal static void AddMessageHandlers(this Task task, IEnumerable<MessageHandlers> handlers) {
             foreach (var handler in handlers)
-                AddMessageHandler(task.Id, handler);
-        }
-
-        /// <summary>
-        /// Adds a collection of message handlers to a task.
-        /// </summary>
-        /// <param name="handlers">The handlers.</param>
-        /// <remarks></remarks>
-        internal  static void AddMessageHandlers(int? taskId, IEnumerable<MessageHandlers> handlers) {
-            foreach (var handler in handlers)
-                AddMessageHandler(taskId, handler);
+                AddMessageHandler(task, handler);
         }
 
         /// <summary>
@@ -191,35 +144,43 @@ namespace CoApp.Toolkit.Tasks {
         /// <returns></returns>
         /// <remarks></remarks>
         internal static MessageHandlers AddMessageHandler(this Task task, MessageHandlers handler) {
-            return AddMessageHandler(task.Id, handler);
-        }
+            if (task == null)
+                return null;
 
-        /// <summary>
-        /// Adds the message handler to the given task.
-        /// </summary>
-        /// <param name="handler">The handler.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        internal static MessageHandlers AddMessageHandler(int? taskId, MessageHandlers handler) {
-            if (handler != null) {
-                handler.SetMissingDelegates();
+            if (handler == null) {
+                return null;
+            }
 
-                var tid = taskId ?? 0;
+            for (var count = 10; count > 0 && task.GetParentTask() == null; count--) {
+                Thread.Sleep(10); // yeild for a bit
+            }
 
-                lock (_tasks) {
-                    if (!_tasks.ContainsKey(tid)) {
-                        _tasks.Add(tid, new InternalTaskData());
+#if DEBUG
+            if (task.GetParentTask() == null) {
+                var stackTrace = new StackTrace(true);
+                var frames = stackTrace.GetFrames();
+                foreach (var frame in frames) {
+                    if (frame != null) {
+                        var method = frame.GetMethod();
+                        var fnName = method.Name;
+                        var cls = method.DeclaringType;
+                        if (cls.Namespace.Contains("Tasks")) {
+                            continue;
+                        }
+                        Console.WriteLine("Info: Registering a MessageHandler where no parent task exists in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
+                        break;
                     }
                 }
-                // wait until the task is AutoManage'd 
-                int count = 0;
-                while(! _tasks[tid].AutoManaged.WaitOne(1000) ) {
-                    Console.WriteLine("Waiting for task '{0}' to get AutoManage'd for MessageHandler Registration on type '{1}'", tid, handler.GetType());
-                    if( count++ > 15 ) {
-                        throw new Exception("I WAITED LIKE, FOREVER, AND YOU NEVER AUTOMANAGED THE TASK MAN!");
-                    }
+            }
+#endif
+
+            handler.SetMissingDelegates();
+
+            lock (_tasks) {
+                if (!_tasks.ContainsKey(task)) {
+                    _tasks.Add(task, new List<MessageHandlers>());
                 }
-                _tasks[tid].MessageHandlerList.Add(handler);
+                _tasks[task].Add(handler);
             }
             return handler;
         }

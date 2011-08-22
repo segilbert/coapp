@@ -238,7 +238,9 @@ namespace CoApp.Toolkit.Engine {
             // this session task
             _task = Task.Factory.StartNew(ProcessMesages, _cancellationTokenSource.Token);
 
+            // this task is not attached to a parent anywhere.
             _task.AutoManage();
+
             // when the task is done, call end.
             _task.ContinueWith((antecedent) => End());
         }
@@ -465,7 +467,7 @@ namespace CoApp.Toolkit.Engine {
         private void WriteErrorsOnException(Task task) {
             task.ContinueWith(antecedent => {
                 if (antecedent.Exception != null) {
-                    foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof(AggregateException) )) {
+                    foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof(AggregateException))) {
                         Console.Write(failure.GetType());
                         Console.WriteLine(failure.Message);
                         Console.WriteLine(failure.StackTrace);
@@ -476,7 +478,7 @@ namespace CoApp.Toolkit.Engine {
                         });
                     }
                 }
-            },_cancellationTokenSource.Token ,TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.OnlyOnFaulted ,TaskScheduler.Current).AutoManage();
+            }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current);
             
         }
 

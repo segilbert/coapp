@@ -130,10 +130,10 @@ namespace CoApp.Toolkit.Engine {
                 if (_isRunning) {
                     var serverPipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, Instances, PipeTransmissionMode.Message, PipeOptions.Asynchronous,
                         BufferSize, BufferSize, _pipeSecurity);
-                    var listenTask = Task.Factory.FromAsync(serverPipe.BeginWaitForConnection, serverPipe.EndWaitForConnection, serverPipe).AutoManage();
-                       
+                    var listenTask = Task.Factory.FromAsync(serverPipe.BeginWaitForConnection, serverPipe.EndWaitForConnection, serverPipe);
+
                     listenTask.ContinueWith(t => {
-                        if (t.IsCanceled || _cancellationTokenSource.Token.IsCancellationRequested ) {
+                        if (t.IsCanceled || _cancellationTokenSource.Token.IsCancellationRequested) {
                             return;
                         }
                         StartListener(); // start next one!
@@ -157,10 +157,11 @@ namespace CoApp.Toolkit.Engine {
                                 // verify that user is allowed to connect.
                                 try {
                                     var hasAccess = false;
-                                    serverPipe.RunAsClient(()=> { hasAccess = PermissionPolicy.Connect.HasPermission; });
-                                    if( !hasAccess )
+                                    serverPipe.RunAsClient(() => { hasAccess = PermissionPolicy.Connect.HasPermission; });
+                                    if (!hasAccess)
                                         return;
-                                } catch {
+                                }
+                                catch {
                                     return;
                                 }
 
@@ -170,7 +171,7 @@ namespace CoApp.Toolkit.Engine {
                                     return;
                                 }
                                 var async = (bool?) requestMessage["async"];
-                                
+
                                 if (async.HasValue && async.Value == false) {
                                     Console.WriteLine("Using Two-Pipe Client");
                                     StartResponsePipeAndProcessMesages(requestMessage.Data["client"], requestMessage["id"], serverPipe);
@@ -182,9 +183,9 @@ namespace CoApp.Toolkit.Engine {
                             }).Wait();
                         }
 
-                       
-                    }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current ).AutoManage();
-                    
+
+                    }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent, TaskScheduler.Current);
+
                 }
             }
             catch (Exception e) {
@@ -205,11 +206,12 @@ namespace CoApp.Toolkit.Engine {
                 var channelname = OutputPipeName + sessionId;
                 var responsePipe = new NamedPipeServerStream(channelname, PipeDirection.Out, Instances, PipeTransmissionMode.Message, PipeOptions.Asynchronous,
                     BufferSize, BufferSize, _pipeSecurity);
-                Task.Factory.FromAsync(responsePipe.BeginWaitForConnection, responsePipe.EndWaitForConnection, responsePipe).AutoManage().ContinueWith(t => {
-                    if (responsePipe.IsConnected) {
-                        Session.Start(clientId, sessionId, serverPipe, responsePipe);
-                    }
-                }, TaskContinuationOptions.AttachedToParent ).AutoManage();
+                Task.Factory.FromAsync(responsePipe.BeginWaitForConnection, responsePipe.EndWaitForConnection, responsePipe,
+                    TaskCreationOptions.AttachedToParent).ContinueWith(t => {
+                        if (responsePipe.IsConnected) {
+                            Session.Start(clientId, sessionId, serverPipe, responsePipe);
+                        }
+                    }, TaskContinuationOptions.AttachedToParent);
             }
             catch (Exception e) {
                 Console.Write(e.GetType());

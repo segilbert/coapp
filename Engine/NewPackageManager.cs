@@ -1119,9 +1119,13 @@ namespace CoApp.Toolkit.Engine {
 
                 foreach (var dep in installedPackages.SelectMany(package => package.InternalPackageData.Dependencies).Distinct()) {
                     // find each dependency that is the policy-preferred version, and mark it as currentlyrequested.
-                    (from supercedent in SearchForInstalledPackages(dep.Name, null, dep.Architecture, dep.PublicKeyToken)
+                    var sup = (from supercedent in SearchForInstalledPackages(dep.Name, null, dep.Architecture, dep.PublicKeyToken)
                         where dep.InternalPackageData.PolicyMinimumVersion <= dep.Version && dep.InternalPackageData.PolicyMaximumVersion >= dep.Version
-                        select dep).OrderByDescending(p => p.Version).FirstOrDefault().PackageSessionData.IsDependency = true;
+                        select dep).OrderByDescending(p => p.Version).FirstOrDefault();
+
+                    if( sup != null ) {
+                        sup.PackageSessionData.IsDependency = true;
+                    }
                 }
             }
         }
