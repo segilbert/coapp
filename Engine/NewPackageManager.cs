@@ -58,12 +58,50 @@ namespace CoApp.Toolkit.Engine {
                 // and the default coapp feed.
                 return "http://coapp.org/feed".SingleItemAsEnumerable();
             }
+        }
 
-            set {
-                
+        private IEnumerable<string> SessionFeedLocations {
+            get { 
+                var result = SessionCache<IEnumerable<string>>.Value["session-feeds"];
+                return result.IsNullOrEmpty() ? Enumerable.Empty<string>() : result;
             }
         }
 
+        private void AddSessionFeed( string feedLocation ) {
+            lock (this) {
+                var sessionFeeds = SessionFeedLocations.Union(feedLocation.SingleItemAsEnumerable()).Distinct();
+                SessionCache<IEnumerable<string>>.Value["session-feeds"] = sessionFeeds.ToArray();
+            }
+        }
+
+        private void AddSystemFeed(string feedLocation) {
+            lock (this) {
+                var systemFeeds = SystemFeedLocations.Union(feedLocation.SingleItemAsEnumerable()).Distinct();
+                PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds.ToArray();
+            }
+        }
+
+        private void RemoveSessionFeed(string feedLocation) {
+            lock (this) {
+                var sessionFeeds = from feed in SessionFeedLocations where !feed.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase) select feed;
+                SessionCache<IEnumerable<string>>.Value["session-feeds"] = sessionFeeds.ToArray();
+                
+                // remove it from the cached feeds
+                SessionCache<PackageFeed>.Value.Clear(feedLocation);
+            }
+        }
+
+        private void RemoveSystemFeed(string feedLocation) {
+            lock (this) {
+                var systemFeeds = from feed in SystemFeedLocations where !feed.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase) select feed;
+                PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds.ToArray();
+
+                // remove it from the cached feeds
+                SessionCache<PackageFeed>.Value.Clear(feedLocation);
+            }
+
+        }
+        
         internal IEnumerable<Task> LoadSystemFeeds() {
             // load system feeds
 
@@ -360,19 +398,33 @@ namespace CoApp.Toolkit.Engine {
                 var canFilterSession = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds);
                 var canFilterSystem = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds);
 
-                var results = (from feed in SessionCache<PackageFeed>.Value.Values
-                    where !canFilterSession || feed.IsLocationMatch(BlockedScanLocations)
-                    select new {
-                        feed,
-                        feed.LastScanned,
-                        session = true
-                    }).Union(from feed in Cache<PackageFeed>.Value.Values 
-                    where !canFilterSystem || feed.IsLocationMatch(BlockedScanLocations) 
-                    select new {
-                        feed,
-                        feed.LastScanned, 
-                        session = false
-                    });
+                var activeSessionFeeds = SessionCache<PackageFeed>.Value.SessionValues;
+                var activeSystemFeeds = Cache<PackageFeed>.Value.Values;
+
+                var x = from feedLocation in SystemFeedLocations
+                let theFeed = activeSystemFeeds.Where(each => each.IsLocationMatch(feedLocation)).FirstOrDefault()
+                let validated = theFeed != null
+                select new {
+                    feed = feedLocation,
+                    LastScanned = validated ? theFeed.LastScanned : DateTime.FromFileTime(0), 
+                    session = false,
+                    suppressed = canFilterSystem && BlockedScanLocations.Contains(feedLocation) ,
+                    validated,
+                };
+
+                var y = from feedLocation in SessionFeedLocations
+                        let theFeed = activeSessionFeeds.Where(each => each.IsLocationMatch(feedLocation)).FirstOrDefault()
+                        let validated = theFeed != null
+                        select new {
+                            feed = feedLocation,
+                            LastScanned = validated ? theFeed.LastScanned : DateTime.FromFileTime(0),
+                            session = true,
+                            suppressed = canFilterSession && BlockedScanLocations.Contains(feedLocation),
+                            validated,
+                        };
+               
+
+                var results = x.Union(y);
 
                 // paginate the results
                 if( index.HasValue ) {
@@ -383,15 +435,17 @@ namespace CoApp.Toolkit.Engine {
                     results = results.Take(maxResults.Value);
                 }
 
+                
 
                 if( results.Any()) {
                     foreach( var f in results ) {
-                        PackageManagerMessages.Invoke.FeedDetails(f.feed.Location, f.LastScanned, f.session);
+                        PackageManagerMessages.Invoke.FeedDetails(f.feed, f.LastScanned, f.session, f.suppressed, f.validated);
                     }
                 } else {
                     PackageManagerMessages.Invoke.NoFeedsFound();
                 }
 
+                
             }).AutoManage();
             return t;
         }
@@ -410,14 +464,8 @@ namespace CoApp.Toolkit.Engine {
                         return;
                     }
 
-                    if( (from feed in SessionCache<PackageFeed>.Value.SessionValues where feed.Location == location select feed).Any() ) {
-                        SessionCache<PackageFeed>.Value.Clear(location);
-                        PackageManagerMessages.Invoke.FeedRemoved(location);
-                        return;
-                    }
-
-                    PackageManagerMessages.Invoke.Warning("remove-feed", "location", "feed '{0}' not a session feed".format(location));
-
+                    RemoveSessionFeed(location);
+                    PackageManagerMessages.Invoke.FeedRemoved(location);
                 } else {
                     // system feed specified
                     if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds) ) {
@@ -425,21 +473,9 @@ namespace CoApp.Toolkit.Engine {
                         return;
                     }
 
-                    if( (from feed in Cache<PackageFeed>.Value.Values where feed.Location == location select feed).Any() ) {
-                        Cache<PackageFeed>.Value.Clear(location);
-                        PackageManagerMessages.Invoke.FeedRemoved(location);
-                        return;
-                    }
-
-                    lock (this) {
-                        var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue;
-                        systemFeeds = from feed in systemFeeds where !feed.Equals(location, StringComparison.CurrentCultureIgnoreCase) select feed;
-                        PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds;
-                    }
-
-                    PackageManagerMessages.Invoke.Warning("remove-feed", "location", "feed '{0}' not a system feed".format(location));
+                    RemoveSystemFeed(location);
+                    PackageManagerMessages.Invoke.FeedRemoved(location);
                 }
-
             }).AutoManage();
             return t;
         }
@@ -457,21 +493,23 @@ namespace CoApp.Toolkit.Engine {
                     }
 
                     // check if it is already a system feed
-                    if (PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.Contains(location)) {
+                    if (SystemFeedLocations.Contains(location)) {
                         PackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a system feed".format(location));
                         return;
                     }
 
-                    if( (from feed in SessionCache<PackageFeed>.Value.Values where feed.Location == location select feed).Any() ) {
+                    if (SessionFeedLocations.Contains(location)) {
                         PackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a session feed".format(location));
                         return;
                     }
+
+                    AddSessionFeed(location);
+                    PackageManagerMessages.Invoke.FeedAdded(location);
 
                     // add feed to the session feeds.
                     PackageFeed.GetPackageFeedFromLocation(location).ContinueWith(antecedent => {
                         if (antecedent.Result != null) {
                             SessionCache<PackageFeed>.Value[location] = antecedent.Result;
-                            PackageManagerMessages.Invoke.FeedAdded(location);
                         }
                         else {
                             PackageManagerMessages.Invoke.Error("add-feed", "location", "failed to recognize location '{0}' as a valid package feed".format(location));
@@ -486,22 +524,18 @@ namespace CoApp.Toolkit.Engine {
                         return;
                     }
 
-
-                    if( PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.Contains(location) ) {
+                    if( SystemFeedLocations.Contains(location) ) {
                         PackageManagerMessages.Invoke.Warning("add-feed", "location", "location '{0}' is already a system feed".format(location));
                         return;
                     }
-                    // add it to the system feed list.
-                    lock (this) {
-                        var systemFeeds = PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue.UnionSingleItem(location);
-                        PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds;
-                    }
+
+                    AddSystemFeed(location);
+                    PackageManagerMessages.Invoke.FeedAdded(location);
 
                     // add feed to the system feeds.
                     PackageFeed.GetPackageFeedFromLocation(location).ContinueWith(antecedent => {
                         if (antecedent.Result != null) {
                             Cache<PackageFeed>.Value[location] = antecedent.Result;
-                            PackageManagerMessages.Invoke.FeedAdded(location);
                         }
                         else {
                             PackageManagerMessages.Invoke.Error("add-feed", "location", "failed to recognize location '{0}' as a valid package feed".format(location));

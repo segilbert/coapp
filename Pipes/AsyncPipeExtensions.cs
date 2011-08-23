@@ -48,7 +48,7 @@ namespace CoApp.Toolkit.Pipes {
             if (stream == null) {
                 throw new ArgumentNullException("stream");
             }
-            return Task.Factory.FromAsync(stream.BeginWrite, stream.EndWrite, buffer, offset, count, stream);
+            return Task.Factory.FromAsync(stream.BeginWrite, stream.EndWrite, buffer, offset, count, stream,TaskCreationOptions.AttachedToParent);
         }
 
         /// <summary>

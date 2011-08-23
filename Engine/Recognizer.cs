@@ -81,12 +81,10 @@ namespace CoApp.Toolkit.Engine {
                             FullPath = location.AbsoluteUri,
                             IsInvalid = true,
                         } ;
-                    }, new RecognizerState { OriginalUrl = location.AbsoluteUri } , TaskCreationOptions.AttachedToParent).AutoManage();
+                    }, new RecognizerState { OriginalUrl = location.AbsoluteUri } , TaskCreationOptions.AttachedToParent);
 
                     // store the task until the client tells us that it has the file.
                     SessionCache<Task<RecognitionInfo>>.Value[item] = completion;
-
-                    
 
                     // GS01: Should we make a deeper path in the cache directory?
                     // perhaps that would let us use a cached version of the file we're looking for.

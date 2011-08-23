@@ -141,6 +141,7 @@ namespace CoApp.Toolkit.Engine {
                     session._serverPipe = serverPipe;
                     session._responsePipe = responsePipe;
                     Console.WriteLine("Rejoining existing session...");
+                    session.SendSessionStarted(sessionId);
                     session.SendQueuedMessages();
                     session.Connected = true;
                     return;
@@ -243,9 +244,6 @@ namespace CoApp.Toolkit.Engine {
 
             // when the task is done, call end.
             _task.ContinueWith((antecedent) => End());
-        }
-
-        protected void WriteAsync() {
         }
 
         private bool IsCancelled {
@@ -410,6 +408,11 @@ namespace CoApp.Toolkit.Engine {
                         var serverInput = new byte[EngineService.BufferSize];
                         try {
                             readTask = _serverPipe.ReadAsync(serverInput, 0, serverInput.Length).AutoManage().ContinueWith(antecedent => {
+                                if (antecedent.IsFaulted || antecedent.IsCanceled || !_serverPipe.IsConnected) {
+                                    Disconnect();
+                                    return;
+                                }
+
                                 var rawMessage = Encoding.UTF8.GetString(serverInput, 0, antecedent.Result);
 
                                 if (string.IsNullOrEmpty(rawMessage)) {
@@ -420,11 +423,22 @@ namespace CoApp.Toolkit.Engine {
                                 var dispatchTask = Dispatch(requestMessage);
 
                                 if (!string.IsNullOrEmpty(rqid)) {
-                                    dispatchTask.ContinueWith(dispatchAntecedent => WriteAsync(new UrlEncodedMessage("task-complete") { { "rqid", rqid } })).AutoManage();
+                                    dispatchTask.ContinueWith(dispatchAntecedent => {
+                                        // had to force this to ensure that async writes are at least in the pipe 
+                                        // before waiting on the pipe drain.
+                                        // without this, it is possible that the async writes are still 'getting to the pipe' 
+                                        // and not actually in the pipe, **even though the async write is complete**
+                                        Thread.Sleep(50); 
+                                        
+                                        _responsePipe.WaitForPipeDrain();
+                                        WriteAsync(new UrlEncodedMessage("task-complete") {
+                                            { "rqid", rqid }
+                                        });
+                                    });
                                 }
 
                                 WriteErrorsOnException(dispatchTask);
-                                readTask = null;
+                                // readTask = null;
                             }).AutoManage();
 
                             WriteErrorsOnException(readTask);
@@ -434,8 +448,12 @@ namespace CoApp.Toolkit.Engine {
                             Disconnect();
                         }
                     }
-
-                    readTask.Wait(_isAsychronous ? -1 : (int) _synchronousClientHeartbeat.TotalMilliseconds, _cancellationTokenSource.Token);
+                    if( _isAsychronous) {
+                        readTask.Wait(_cancellationTokenSource.Token);
+                    } else {
+                        readTask.Wait((int)_synchronousClientHeartbeat.TotalMilliseconds, _cancellationTokenSource.Token);
+                    }
+                    // readTask.Wait(_isAsychronous ? 6000 : (int) _synchronousClientHeartbeat.TotalMilliseconds, _cancellationTokenSource.Token);
 
                     if (IsCancelled) {
                         return;
@@ -699,11 +717,13 @@ namespace CoApp.Toolkit.Engine {
             WriteAsync(msg);
         }
 
-        private void SendFoundFeed(string location, DateTime lastScanned, bool session) {
+        private void SendFoundFeed(string location, DateTime lastScanned, bool session, bool suppressed, bool validated) {
             WriteAsync( new UrlEncodedMessage("found-feed") {
                 {"location", location},
                 {"last-scanned", lastScanned.ToFileTime().ToString()},
-                {"session", session.ToString()},
+                {"session", session},
+                {"suppressed", suppressed},
+                {"validated", validated},
             });
         }
 

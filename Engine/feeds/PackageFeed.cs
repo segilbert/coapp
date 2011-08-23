@@ -176,7 +176,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 }
 
                 return result;
-            }, TaskContinuationOptions.AttachedToParent ).AutoManage();
+            }, TaskContinuationOptions.AttachedToParent );
         }
 
         internal bool IsLocationMatch( IEnumerable<string> locations ) {
