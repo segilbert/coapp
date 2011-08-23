@@ -23,7 +23,53 @@ namespace CoApp.Toolkit.Engine.Client {
     using Console = System.Console;
 
     public class Package {
+        private static Dictionary<string, Package> AllPackages = new Dictionary<string, Package>();
+        public static Package GetPackage(string canonicalName ) {
+            lock( AllPackages ) {
+                if( AllPackages.ContainsKey(canonicalName)) {
+                    return AllPackages[canonicalName];
+                }
 
+                var result = new Package {
+                    CanonicalName = canonicalName
+                };
+
+                AllPackages.Add(canonicalName,result);
+                return result;
+            }
+        }
+
+        protected Package() {
+            
+        }
+        public string CanonicalName;
+        public string LocalPackagePath;
+        public string Name;
+        public string Version;
+        public string Architecture;
+        public string PublicKeyToken;
+        public bool IsInstalled;
+        public bool IsBlocked;
+        public bool Required;
+        public bool IsActive;
+        public bool IsDependency;
+        public string Description;
+        public string Summary;
+        public string DisplayName;
+        public string Copyright;
+        public string AuthorVersion;
+        public string Icon;
+        public string License;
+        public string LicenseUrl;
+        public string PublishDate;
+        public string PublisherName;
+        public string PublisherUrl;
+        public string PublisherEmail;
+
+        public IEnumerable<string> Tags;
+        public IEnumerable<string> RemoteLocations;
+        public IEnumerable<string> Dependencies;
+        public IEnumerable<string> SupercedentPackages;
     };
 
     
@@ -131,7 +177,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                         var responseMessage = new UrlEncodedMessage(rawMessage);
                         int? rqid = responseMessage["rqid"];
-                        Console.WriteLine("    Response:{0}", responseMessage.Command);
+                        // Console.WriteLine("    Response:{0}", responseMessage.Command);
 
                         try {
                             var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -423,7 +469,24 @@ namespace CoApp.Toolkit.Engine.Client {
                     break;
 
                 case "found-package":
-                    PackageManagerMessages.Invoke.PackageInformation(new Package(), Enumerable.Empty<Package>());
+                    var result = Package.GetPackage(responseMessage["canonical-name"]);
+
+                    result.LocalPackagePath = responseMessage["local-location"];
+                    result.Name = responseMessage["name"];
+                    result.Version = responseMessage["version"];
+                    result.Architecture = responseMessage["arch"];
+                    result.PublicKeyToken = responseMessage["public-key-token"];
+                    result.IsInstalled = (bool?) responseMessage["installed"] ?? false;
+                    result.IsBlocked = (bool?) responseMessage["blocked"] ?? false;
+                    result.Required = (bool?) responseMessage["required"] ?? false;
+                    result.IsActive = (bool?) responseMessage["active"] ?? false;
+                    result.IsDependency = (bool?) responseMessage["dependent"] ?? false;
+                    result.RemoteLocations = responseMessage.GetCollection("remote-locations");
+                    result.Dependencies = responseMessage.GetCollection("dependencies");
+                    result.SupercedentPackages = responseMessage.GetCollection("supercedent-packages");
+                    
+
+                    PackageManagerMessages.Invoke.PackageInformation(result);
                     break;
 
                 case "installed-package":
@@ -459,11 +522,34 @@ namespace CoApp.Toolkit.Engine.Client {
                     break;
 
                 case "package-details":
-                    PackageManagerMessages.Invoke.PackageDetails(new Package());
+                    var details = Package.GetPackage(responseMessage["canonical-name"]);
+                    details.Description = responseMessage["description"];
+                    
+                details.Summary = responseMessage["summary"];
+                details.DisplayName  = responseMessage["display-name"];
+                details.Copyright = responseMessage["copyright"];
+                details.AuthorVersion = responseMessage["author-version"];
+                details.Icon = responseMessage[ "icon"];
+                details.License  = responseMessage["license"];
+                details.LicenseUrl = responseMessage["license-url"];
+                details.PublishDate = responseMessage["publish-date"]; 
+                details.PublisherName = responseMessage["publisher-name"];
+                details.PublisherUrl = responseMessage["publisher-url"];
+                details.PublisherEmail = responseMessage["publisher-email"];
+                    details.Tags = responseMessage.GetCollection("tags");
+
+                    /*
+                    if (!package.PackageDetails.Contributors.IsNullOrEmpty()) {
+                        msg.AddCollection("contributor-name", package.PackageDetails.Contributors.Select(each => each.Name));
+                        msg.AddCollection("contributor-url", package.PackageDetails.Contributors.Select(each => each.Url));
+                        msg.AddCollection("contributor-email", package.PackageDetails.Contributors.Select(each => each.Email));
+                    }
+                     * */
+                    PackageManagerMessages.Invoke.PackageDetails(details);
                     break;
 
                 case "package-has-potential-upgrades":
-                    PackageManagerMessages.Invoke.PackageHasPotentialUpgrades(new Package(), Enumerable.Empty<Package>());
+                    // PackageManagerMessages.Invoke.PackageHasPotentialUpgrades(new Package(), Enumerable.Empty<Package>());
                     break;
 
                 case "package-is-blocked":

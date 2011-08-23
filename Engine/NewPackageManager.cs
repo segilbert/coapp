@@ -565,8 +565,12 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 var r = Verifier.HasValidSignature(location);
-                PackageManagerMessages.Invoke.SignatureValidation(location, Verifier.HasValidSignature(location),
-                    Verifier.GetPublisherInformation(location)["PublisherName"]);
+                if( r ) {
+                    PackageManagerMessages.Invoke.SignatureValidation(location, r, Verifier.GetPublisherInformation(location)["PublisherName"]);
+                }
+                else {
+                    PackageManagerMessages.Invoke.SignatureValidation(location, false, null);
+                }
 
             }).AutoManage();
             return t;

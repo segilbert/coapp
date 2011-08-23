@@ -412,6 +412,10 @@ namespace CoApp.Toolkit.Engine {
                                     Disconnect();
                                     return;
                                 }
+                                if( antecedent.Result >= EngineService.BufferSize ) {
+                                    SendUnexpectedFailure(new Exception("Message size exceeds maximum size allowed."));
+                                    return;
+                                }
 
                                 var rawMessage = Encoding.UTF8.GetString(serverInput, 0, antecedent.Result);
 

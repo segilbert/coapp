@@ -27,7 +27,7 @@ namespace CoApp.Toolkit.Tasks {
         public static Task<T> AsResultTask<T>(this T result) {
             var x = new TaskCompletionSource<T>(TaskCreationOptions.AttachedToParent);
             x.SetResult(result);
-            return x.Task.AutoManage();
+            return x.Task;
         }
 
         private static bool IsTaskReallyCompleted(Task task) {

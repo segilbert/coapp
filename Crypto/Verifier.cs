@@ -136,7 +136,8 @@ namespace CoApp.Toolkit.Crypto {
         public static Dictionary<string, string> GetPublisherInformation(string filename) {
             var cert = new X509Certificate2(filename);
             var fields= cert.Subject.Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
-            var result = fields.Select(f => f.Split('=')).Where(s => s.Length > 1).ToDictionary(s => s[0], s => s[1]);
+            // var result = fields.Select(f => f.Split('=')).Where(s => s.Length > 1).ToDictionary(s => s[0], s => s[1]);
+            var result = new Dictionary<string, string>();
             result.Add("PublisherName", fields[0].Split('=')[1]);
             return result;
         }
