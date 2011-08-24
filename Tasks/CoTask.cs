@@ -104,7 +104,7 @@ namespace CoApp.Toolkit.Tasks {
             return _currentTaskProperty.GetValue(null, null) as Task;
         }}
 
-        private static Task GetParentTask( this Task task ) {
+        internal static Task GetParentTask( this Task task ) {
             return _parentTaskField.GetValue(task) as Task ?? (_parentTasks.ContainsKey(task) ? _parentTasks[task] : null);
         }
 

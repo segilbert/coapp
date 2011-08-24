@@ -14,13 +14,90 @@ using System.Linq;
 using System.Text;
 
 namespace CoApp.Toolkit.Engine.Client {
+    using System.IO;
     using System.IO.Pipes;
     using System.Security.Principal;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Extensions;
     using Pipes;
     using Tasks;
     using Console = System.Console;
+
+
+    public class PackageName {
+        private static char[] _slashes = new [] {'\\', '/' };
+        private static Regex _canonicalName = new Regex(@"^(.*)-(\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5})-(any|x86|x64|arm)-([0-9a-f]{16})$", RegexOptions.IgnoreCase);
+        private static Regex[] _partialName = new[] {
+            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)-([0-9a-f]{16}|\*)$", RegexOptions.IgnoreCase),
+            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)$", RegexOptions.IgnoreCase),
+            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
+            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
+            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
+            new Regex(@"^(.*)-(\d{1,5}|\*)$", RegexOptions.IgnoreCase),
+        };
+
+        public string CanonicalName { get; private set; }
+        public string Name { get; private set; }
+        public string Version { get; private set; }
+        public string Version1 { get; private set; }
+        public string Version2 { get; private set; }
+        public string Version3 { get; private set; }
+        public string Version4 { get; private set; }
+        public string Arch { get; private set; }
+        public string PublicKeyToken { get; private set; }
+
+        public bool IsPartialMatch { get { return !IsFullMatch && !Name.IsNullOrEmpty(); }}
+        public bool IsFullMatch { get { return (!string.IsNullOrEmpty(CanonicalName)); } }
+
+        private void SetFieldsFromMatch( Match match ) {
+            var c = match.Groups.Count;
+
+            if( c <= 1) {
+                return;
+            }
+
+            Name = c <= 1 ? string.Empty : match.Groups[1].Captures[0].Value;
+            Version1 = c <= 2 ? string.Empty : match.Groups[2].Captures[0].Value;
+            Version2 = c <= 3 ? string.Empty : match.Groups[3].Captures[0].Value;
+            Version3 = c <= 4 ? string.Empty : match.Groups[4].Captures[0].Value;
+            Version4 = c <= 5 ? string.Empty : match.Groups[5].Captures[0].Value;
+            Arch = c <= 6 ? string.Empty : match.Groups[6].Captures[0].Value;
+            PublicKeyToken = c <= 7 ? string.Empty : match.Groups[7].Captures[0].Value;
+
+            Version = Version1 + Version2 + Version3 + Version4;
+        }
+
+        private PackageName(string potentialPartialPackageName) {
+            if (potentialPartialPackageName.IndexOfAny(_slashes) > -1) {
+                return;
+            }
+                
+            var match = _canonicalName.Match(potentialPartialPackageName.ToLower());
+            if (match.Success) {
+                // perfect canonical match for a name
+                CanonicalName = potentialPartialPackageName;
+                SetFieldsFromMatch(match);
+                return;
+            }
+
+            foreach( var rx in _partialName ) {
+                match = rx.Match(potentialPartialPackageName);
+                if( match.Success ) {
+                    SetFieldsFromMatch(match);
+                    return;
+                }
+            }
+
+            Name = potentialPartialPackageName;
+            return;
+        }
+
+        public static PackageName Parse(string potentialPartialPackageName) {
+            return new PackageName(potentialPartialPackageName);
+        }
+    }
 
     public class Package {
         private static Dictionary<string, Package> AllPackages = new Dictionary<string, Package>();
@@ -162,37 +239,41 @@ namespace CoApp.Toolkit.Engine.Client {
                 while( IsConnected  ) {
                     var incomingMessage =
                         new byte[BufferSize];
-
-                    _pipe.ReadAsync(incomingMessage, 0, BufferSize).ContinueWith(antecedent => {
-                        if (antecedent.IsCanceled || antecedent.IsFaulted || !IsConnected ) {
-                            Disconnect();
-                            return;
-                        }
-
-                        var rawMessage = Encoding.UTF8.GetString(incomingMessage, 0, antecedent.Result);
-
-                        if (string.IsNullOrEmpty(rawMessage)) {
-                            return;
-                        }
-
-                        var responseMessage = new UrlEncodedMessage(rawMessage);
-                        int? rqid = responseMessage["rqid"];
-                        // Console.WriteLine("    Response:{0}", responseMessage.Command);
-
-                        try {
-                            var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
-                            mreq.Enqueue(responseMessage);
-                            mreq.ManualResetEvent.Set();
-                        } catch {
-                            if( responseMessage.Command.Equals("session-started") ) {
-                                IsReady.Set();
+                    try {
+                        _pipe.ReadAsync(incomingMessage, 0, BufferSize).ContinueWith(antecedent => {
+                            if (antecedent.IsCanceled || antecedent.IsFaulted || !IsConnected) {
+                                Disconnect();
                                 return;
                             }
-                            Console.WriteLine("Unable to queue the response to the right request event queue!");
+
+                            var rawMessage = Encoding.UTF8.GetString(incomingMessage, 0, antecedent.Result);
+
+                            if (string.IsNullOrEmpty(rawMessage)) {
+                                return;
+                            }
+
+                            var responseMessage = new UrlEncodedMessage(rawMessage);
+                            int? rqid = responseMessage["rqid"];
                             Console.WriteLine("    Response:{0}", responseMessage.Command);
-                            // not able to queue up the response to the right task?
-                        }
-                    });
+
+                            try {
+                                var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
+                                mreq.Enqueue(responseMessage);
+                                mreq.ManualResetEvent.Set();
+                            }
+                            catch {
+                                if (responseMessage.Command.Equals("session-started")) {
+                                    IsReady.Set();
+                                    return;
+                                }
+                                Console.WriteLine("Unable to queue the response to the right request event queue!");
+                                Console.WriteLine("    Response:{0}", responseMessage.Command);
+                                // not able to queue up the response to the right task?
+                            }
+                        });
+                    } catch {
+                        Disconnect();
+                    }
                 }
 
                 Disconnect();
@@ -200,12 +281,83 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         public void Disconnect() {
-            var pipe = _pipe;
-            _pipe = null; 
-            pipe.Close();
-            pipe.Dispose();
-            IsDisconnected.Set();
+            lock (this) {
+                if (_pipe != null) {
+                    var pipe = _pipe;
+                    _pipe = null;
+                    pipe.Close();
+                    pipe.Dispose();
+                    IsDisconnected.Set();
+                }
+            }
         }
+
+        public IEnumerable<Package> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null ,bool? active= null, bool? required= null , bool? blocked = null, bool? latest=null) {
+            if( parameters.IsNullOrEmpty()) {
+                List<Package> packages = new List<Package>();
+                
+                FindPackages( null, null , null , null , null , null, installed, active, required, blocked, latest, null, null, null, null,
+                new PackageManagerMessages {
+                    PackageInformation = (package) => packages.Add(package),
+                }).Wait();
+
+                return packages;
+            }
+            return parameters.SelectMany(each => GetPackages(each , minVersion , maxVersion ,installed ,active,required, blocked ,latest )).ToArray();
+        }
+
+        public IEnumerable<Package> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null) {
+            if (parameter.IsNullOrEmpty())
+                return Enumerable.Empty<Package>();
+
+            Package singleResult = null;
+            var feedAdded = string.Empty;
+            PackageName packageName = null;
+
+            if (File.Exists(parameter)) {
+                var localPath = parameter.EnsureFileIsLocal();
+                var originalDirectory = Path.GetDirectoryName(parameter.GetFullPath());
+                // add the directory it came from as a session package feed
+                
+                if (!string.IsNullOrEmpty(localPath)) {
+                    RecognizeFile(null, localPath, null, new PackageManagerMessages() {
+                        PackageInformation = (package) => { singleResult = package; },
+                        FeedAdded = (feedLocation) => { feedAdded = feedLocation;  }
+                    }).Wait();
+                }
+
+                if(singleResult != null) {
+                    // if we get back a package from this, we can go ahead and add the directory where that package is 
+                    // ot the session feeds.
+                    AddFeed(originalDirectory, true, new PackageManagerMessages()).Wait();
+                    return singleResult.SingleItemAsEnumerable();
+                }
+                // if we did't get back a package, we might have given it a package feed.
+
+            } else if (Directory.Exists(parameter) || parameter.IndexOf('\\') > -1 || parameter.IndexOf('/') > -1 || (parameter.IndexOf('*') > -1 && parameter.ToLower().EndsWith(".msi") )) {
+                // specified a folder, or some kind of path that looks like a feed.
+                // add it as a feed, and then get the contents of that feed.
+                AddFeed(parameter, true, new PackageManagerMessages() {
+                  FeedAdded = (feedLocation) => { feedAdded = feedLocation; }  
+                }).Wait();
+            } else {
+                packageName = PackageName.Parse(parameter);
+            }
+
+            var packages = new List<Package>();
+
+            FindPackages(packageName != null && packageName.IsFullMatch ? packageName.CanonicalName : null , packageName == null ? null : packageName.Name, packageName == null ? null : packageName.Version, packageName == null ? null : packageName.Arch, packageName == null ? null : packageName.PublicKeyToken, null, installed, active, required, blocked, latest, null, null, feedAdded, null,
+                new PackageManagerMessages {
+                    PackageInformation = (package) => {
+                        if ((!minVersion.HasValue || package.Version.VersionStringToUInt64() >= minVersion) && (!maxVersion.HasValue || package.Version.VersionStringToUInt64() <= maxVersion)) {
+                            packages.Add(package);
+                        }
+                    },
+                }).Wait();
+
+            return packages;
+        }
+
 
         public Task FindPackages(string canonicalName, string name, string version, string arch, string publicKeyToken,
             bool? dependencies, bool? installed, bool? active, bool? required, bool? blocked, bool? latest,

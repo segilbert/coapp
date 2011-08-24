@@ -59,20 +59,44 @@ namespace CoApp.Toolkit.Tasks {
             return invoke.ReturnType;
         }
 
+        private object GetDelegate(Task task, FieldInfo field ) {
+            var value = field.GetValue(this);
+            if (value != null)
+                return value;
+            try {
+                var parentTask = task.GetParentTask();
+                if (parentTask != null) {
+                    var parentTaskMessageHandler = parentTask.GetMessageHandler(GetType());
+                    if (parentTaskMessageHandler != null) {
+                        return parentTaskMessageHandler.GetDelegate(parentTask, field);
+                    }
+                }
+            } catch {
+                
+            }
+            return null;
+        }
+
         /// <summary>
         /// Creates do-nothing delegates for events not listened to.
         /// </summary>
         /// <remarks></remarks>
         public void SetMissingDelegates() {
             foreach (var field in GetType().GetFields().Where(f => f.FieldType.BaseType == typeof(MulticastDelegate))) {
-                if (field.GetValue(this) != null)
+                // if (field.GetValue(this) != null)
+
+                object dlg;
+                if ((dlg = GetDelegate(CoTask.CurrentTask, field)) != null) {
+                    field.SetValue(this , dlg );
                     continue;
+                }
 
                 Type delegateReturnType = GetDelegateReturnType(field.FieldType);
                 Type[] delegateParameterTypes = GetDelegateParameterTypes(field.FieldType);
 
                 var dynamicMethod = new DynamicMethod(string.Empty, delegateReturnType, delegateParameterTypes);
                 ILGenerator il = dynamicMethod.GetILGenerator();
+
                 if (delegateReturnType.FullName != "System.Void") {
                     if (delegateReturnType.IsValueType) {
                         il.Emit(OpCodes.Ldc_I4, 0);
@@ -118,6 +142,22 @@ namespace CoApp.Toolkit.Tasks {
             get {
                 var currentTask = CoTask.CurrentTask;
                 return currentTask == null ? _none : (currentTask.GetMessageHandler(typeof(T)) as T) ?? _none;
+            }
+        }
+
+        public static T InvokeParent {
+            get {
+                var currentTask = CoTask.CurrentTask;
+                if (currentTask == null) {
+                    return _none;
+                }
+
+                var parentTask = currentTask.GetParentTask();
+                if (parentTask == null) {
+                    return _none;
+                } 
+
+                return parentTask.GetMessageHandler(typeof(T)) as T ?? _none;
             }
         }
     }

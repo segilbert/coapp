@@ -101,11 +101,11 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// <remarks></remarks>
         internal override IEnumerable<Package> FindPackages(string name, string version, string arch, string publicKeyToken) { 
             Scan();
-            return from p in _packageList where 
-                ( string.IsNullOrEmpty(name) || name.IsWildcardMatch(p.Name) )  && 
-                ( string.IsNullOrEmpty(version) || version.IsWildcardMatch(p.Version.UInt64VersiontoString()) )  && 
-                ( string.IsNullOrEmpty(arch) || arch.IsWildcardMatch(p.Architecture) )  && 
-                ( string.IsNullOrEmpty(publicKeyToken) || publicKeyToken.IsWildcardMatch(p.PublicKeyToken) )  select p;
+            return from p in _packageList where
+                (string.IsNullOrEmpty(name) || p.Name.IsWildcardMatch(name)) &&
+                (string.IsNullOrEmpty(version) || p.Version.UInt64VersiontoString().IsWildcardMatch(version)) &&
+                (string.IsNullOrEmpty(arch) || p.Architecture.IsWildcardMatch(arch)) &&
+                (string.IsNullOrEmpty(publicKeyToken) || p.PublicKeyToken.IsWildcardMatch(publicKeyToken)) select p;
         }
     }
 }

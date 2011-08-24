@@ -166,7 +166,7 @@ namespace CoApp.Toolkit.Pipes {
         /// <param name="value">The value.</param>
         /// <remarks></remarks>
         public void Add(string key, string value) {
-            if (value != null) {
+            if (!string.IsNullOrEmpty(value)) {
                 if (Data.ContainsKey(key)) {
                     Data[key] = value;
                 }

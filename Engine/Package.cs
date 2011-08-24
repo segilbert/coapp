@@ -155,6 +155,8 @@ namespace CoApp.Toolkit.Engine {
 
                 // this will activate the next one in line
                 GetCurrentPackage(Name, PublicKeyToken);
+                // GS01: fix this to rerun package composition on prior version.
+
             }
             catch (Exception) {
                 PackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
@@ -239,6 +241,9 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public void DoPackageComposition(bool makeCurrent) {
+            // GS01: if package composition fails, and we're in the middle of installing a package
+            // we should roll back the package install.
+
             var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this));
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)) {
@@ -356,8 +361,6 @@ namespace CoApp.Toolkit.Engine {
             get { return PackageManagerSettings.PerPackageSettings[CanonicalName, "Blocked"].BoolValue; } 
             set { PackageManagerSettings.PerPackageSettings[CanonicalName, "Blocked"].BoolValue = value; }
         }
-
-       
 
         public void SetPackageCurrent() {
             if (!IsInstalled) {

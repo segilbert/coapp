@@ -158,8 +158,7 @@ namespace CoApp.Toolkit.Engine {
                     publicKeyToken = match.Groups[4].Captures[0].Value;
                 }
 
-                var results = SearchForPackages(name, version, arch, publicKeyToken);
-
+                var results = SearchForPackages(name, version, arch, publicKeyToken, location);
                 // filter results of list based on secondary filters
 
                 results = from package in results
@@ -799,6 +798,11 @@ namespace CoApp.Toolkit.Engine {
                         return;
                     }
 
+                    if (antecedent.Result.IsPackageFeed) {
+                        PackageManagerMessages.Invoke.FeedAdded(location);
+                        PackageManagerMessages.Invoke.Recognized(location);
+                    }
+
                     // if this isn't a package file, then there is something odd going on here.
                     // we don't accept non-package files willy-nilly. 
                     PackageManagerMessages.Invoke.FileNotRecognized(location, "File isn't a package, and doesn't appear to have been requested. ");
@@ -1020,8 +1024,9 @@ namespace CoApp.Toolkit.Engine {
         /// <param name="arch"></param>
         /// <param name="publicKeyToken"></param>
         /// <returns></returns>
-        internal IEnumerable<Package> SearchForPackages(string name, string version, string arch, string publicKeyToken) {
-            return Feeds.SelectMany(each => each.FindPackages(name, version, arch, publicKeyToken)).ToArray();
+        internal IEnumerable<Package> SearchForPackages(string name, string version, string arch, string publicKeyToken, string location = null) {
+            var feeds = string.IsNullOrEmpty(location) ? Feeds : Feeds.Where(each => each.IsLocationMatch(location));
+            return feeds.SelectMany(each => each.FindPackages(name, version, arch, publicKeyToken)).Distinct().ToArray();
         }
 
         /// <summary>
