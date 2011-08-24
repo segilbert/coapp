@@ -11,6 +11,7 @@
 namespace CoApp.CLI {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Resources;
@@ -18,16 +19,10 @@ namespace CoApp.CLI {
     using System.Threading.Tasks;
     using Properties;
     using Toolkit.Console;
-    using Toolkit.Crypto;
-//     using Toolkit.Engine;
-//    using Toolkit.Engine.Client;
     using Toolkit.Engine;
     using Toolkit.Engine.Client;
     using Toolkit.Exceptions;
     using Toolkit.Extensions;
-    using Toolkit.Network;
-    using Toolkit.Tasks;
-    using Toolkit.Win32;
 
     /// <summary>
     /// Main Program for command line coapp tool
@@ -36,6 +31,16 @@ namespace CoApp.CLI {
     public class CoAppMain : AsyncConsoleProgram {
 
         private bool terse = false;
+
+
+        private ulong? minVersion = null;
+        private ulong? maxVersion = null;
+
+        private bool? installed = null;
+        private bool? active = null;
+        private bool? required = null;
+        private bool? blocked = null;
+        private bool? latest = null;
 
         /// <summary>
         /// Gets the res.
@@ -50,8 +55,13 @@ namespace CoApp.CLI {
         /// </summary>
         /// <param name="args">The command line arguments</param>
         /// <returns>int value representing the ERRORLEVEL.</returns>
-        /// <remarks></remarks>
+        /// <remarks></remarks>coapp.service
         private static int Main(string[] args) {
+            Process.Start("pskill.exe", "coapp.service");
+            Thread.Sleep(500);
+
+            Process.Start("coapp.service.exe", "--interactive");
+
             return new CoAppMain().Startup(args);
         }
 
@@ -68,25 +78,39 @@ namespace CoApp.CLI {
                 var options = args.Where( each => each.StartsWith("--")).Switches();
                 var parameters = args.Where(each => !each.StartsWith("--")).Parameters();
 
-
-                var name = string.Empty;
-                var minVersion=string.Empty;
-                var maxVersion=string.Empty;
-                var arch=string.Empty;
-                var publicKeyToken=string.Empty;
-                bool? installed=null;
-                bool? active=null;
-                bool? required=null;
-                bool? blocked=null;
-                bool? latest=null;
-
                 foreach (var arg in options.Keys) {
                     var argumentParameters = options[arg];
+                    var last = argumentParameters.LastOrDefault();
+                    var lastAsBool = (last ?? "true").IsTrue();
 
                     switch (arg) {
                         /* options  */
-                        case "name":
-                            name = argumentParameters.LastOrDefault();
+                        case "min-version":
+                            minVersion =last.VersionStringToUInt64();
+                            break;
+
+                        case "max-version":
+                            maxVersion = last.VersionStringToUInt64();
+                            break;
+
+                        case "installed":
+                            installed = lastAsBool;
+                            break;
+
+                        case "active":
+                            active = lastAsBool;
+                            break;
+
+                        case "required":
+                            required = lastAsBool;
+                            break;
+
+                        case "blocked":
+                            blocked = lastAsBool;
+                            break;
+
+                        case "latest":
+                            latest = lastAsBool;
                             break;
 
                             /* global switches */
@@ -98,6 +122,9 @@ namespace CoApp.CLI {
                             this.Assembly().SetLogo(string.Empty);
                             break;
 
+                        case "terse":
+                            terse = true;
+                            break;
                        
                         case "help":
                             return Help();
@@ -120,8 +147,11 @@ namespace CoApp.CLI {
 
                 if( ConsoleExtensions.InputRedirected ) {
                     // grab the contents of the input stream and use that as parameters
-                    var lines = Console.In.ReadToEnd().Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    parameters = parameters.Union(lines);
+                    var lines = Console.In.ReadToEnd().Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(each => each.Split(new[] { '#' }, StringSplitOptions.RemoveEmptyEntries)[0])
+                        .Select(each => each.Trim());
+                    
+                    parameters = parameters.Union(lines.Where( each => !each.StartsWith("#"))).ToArray();
                 }
 
                 if( ConsoleExtensions.OutputRedirected ) {
@@ -132,19 +162,19 @@ namespace CoApp.CLI {
                     return Help();
                 }
 
-                Console.WriteLine("Contacting Service...");
+                Console.WriteLine("# Contacting Service...");
                 PackageManager.Instance.Connect("command-line-client", "garrett");
-                Console.WriteLine("Waiting for service to respond...");
+                Console.WriteLine("# Waiting for service to respond...");
                 if (!PackageManager.Instance.IsReady.WaitOne(5000)) {
-                    Console.WriteLine("not connected...");
-                    throw new ConsoleException("Unable to connect to CoApp Service.");
+                    Console.WriteLine("# not connected...");
+                    throw new ConsoleException("# Unable to connect to CoApp Service.");
                 }
 
-                Console.WriteLine("Connected to Service...");
+                Console.WriteLine("# Connected to Service...");
 
                 if (command.EndsWith(".msi") && File.Exists(command) && parameters.IsNullOrEmpty() ) {
                     // assume install if the only thing given is a filename.
-                    Install(command.SingleItemAsEnumerable());
+                    Install(PackageManager.Instance.GetPackages(command,minVersion, maxVersion, installed, active ,required , blocked , latest));
                     return 0;
                 }
 
@@ -152,25 +182,21 @@ namespace CoApp.CLI {
                     command = command.ToLower();
                 }
 
-                
-                
-                    
-
 /*
-list-package	list	-l	lists packages
-get-packageinfo	info	-g	shows extended package information
-install-package	install	-i	installs a package
-remove-package	remove *	-r	removes a package
-update-package	update	-u	updates a package
-trim-packages	trim	-t	trims unneccessary packages
-activate-package	activate	-a	makes a specific package the 'current'
-block-package	block	-b	marks a package as 'blocked'
-unblock-package	unblock	-B	unblocks a package
-mark-package	mark	-m	marks a package as 'required'
-unmark-package	unmark	-M	unmarks a package as 'required'
-list-feed	feeds	-f	lists the feeds known to the system
-add-feed	add	-A	adds a feed to the system
-remove-feed	remove *	-R	removes a feed from the system
+list-package	    list	    -l	lists packages
+get-packageinfo	    info	    -g	shows extended package information
+install-package	    install	    -i	installs a package
+remove-package	    remove *    -r	removes a package
+update-package	    update	    -u	updates a package
+trim-packages	    trim	    -t	trims unneccessary packages
+activate-package	activate    -a	makes a specific package the 'current'
+block-package	    block	    -b	marks a package as 'blocked'
+unblock-package	    unblock	    -B	unblocks a package
+mark-package	    mark	    -m	marks a package as 'required'
+unmark-package	    unmark	    -M	unmarks a package as 'required'
+list-feed	        feeds	    -f	lists the feeds known to the system
+add-feed	        add	        -A	adds a feed to the system
+remove-feed	        remove *	-R	removes a feed from the system
 */
 
                     switch (command) {
@@ -210,7 +236,8 @@ remove-feed	remove *	-R	removes a feed from the system
                             if (parameters.Count() < 1) {
                                 throw new ConsoleException(Resources.InstallRequiresPackageName);
                             }
-                            Install(parameters);
+                            
+                            Install(PackageManager.Instance.GetPackages(parameters,minVersion, maxVersion, installed, active ,required , blocked , latest));
                             break;
 
                         case "-r":
@@ -220,14 +247,14 @@ remove-feed	remove *	-R	removes a feed from the system
                             if (parameters.Count() < 1) {
                                 throw new ConsoleException(Resources.RemoveRequiresPackageName);
                             }
-                            Remove(parameters);
+                            Remove(PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest));
                             break;
 
                         case "-l":
                         case "list":
                         case "list-package":
                         case "list-packages":
-                            ListPackages(parameters);
+                            ListPackages(PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest));
                             break;
 
                         case "-L":
@@ -326,10 +353,7 @@ remove-feed	remove *	-R	removes a feed from the system
                             throw new ConsoleException(Resources.UnknownCommand, command);
                     }
 
-                // wait for cancellation token, or service to disconnect
-                WaitHandle.WaitAny(new [] {
-                    CancellationTokenSource.Token.WaitHandle, PackageManager.Instance.IsDisconnected, PackageManager.Instance.IsCompleted
-                });
+                WaitForPackageManagerToComplete();
 
                 PackageManager.Instance.Disconnect();
             }
@@ -338,10 +362,18 @@ remove-feed	remove *	-R	removes a feed from the system
                 PackageManager.Instance.Disconnect();
                 Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
             }
+
+           // Process.Start("pskill.exe", "coapp.service");
             return 0;
         }
         
         
+        private void WaitForPackageManagerToComplete() {
+            // wait for cancellation token, or service to disconnect
+            WaitHandle.WaitAny(new[] {
+                    CancellationTokenSource.Token.WaitHandle, PackageManager.Instance.IsDisconnected, PackageManager.Instance.IsCompleted
+                });
+        }
 
         /*
         /// <summary>
@@ -367,27 +399,69 @@ remove-feed	remove *	-R	removes a feed from the system
         }
         */
 
+       
+
+
         /// <summary>
         /// Lists the packages.
         /// </summary>
         /// <param name="parameters">The parameters.</param>
         /// <remarks></remarks>
-        private void ListPackages(IEnumerable<string> parameters) {
+        private void ListPackages(IEnumerable<Package> packages) {
+            if (terse) {
+                foreach( var package in packages) {
+                    Console.WriteLine("{0} # Installed:{1}", package.CanonicalName, package.IsInstalled);
+                }
+            }
+            else if (packages.Any()) {
+                (from pkg in packages
+                 orderby pkg.Name
+                 select new {
+                     pkg.Name,
+                     Version = pkg.Version,
+                     Arch = pkg.Architecture,
+                     Installed = pkg.IsInstalled,
+                     Local_Path = pkg.IsInstalled ? "(installed)" : pkg.LocalPackagePath ?? "<not local>",
+                     // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
+                 }).ToTable().ConsoleOut();
+            } 
+            else {
+                Console.WriteLine("No packages found.");
+            }
 
-            PackageManager.Instance.FindPackages(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, new PackageManagerMessages {
+            /*
+            var packages = new List<Package>();
+            var t = PackageManager.Instance.FindPackages(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, new PackageManagerMessages {
                 UnexpectedFailure = UnexpectedFailure,
                 PackageInformation = (package) => {
-                  Console.WriteLine("Package: {0}, IsInstalled:[{1}]",package.CanonicalName,package.IsInstalled);
+                    if( terse ) {
+                        Console.WriteLine("{0} # Installed:{1}", package.CanonicalName, package.IsInstalled);
+                    } else {
+                        packages.Add(package);
+                    }
                 },
                 NoPackagesFound = NoPackagesFound,
                 PermissionRequired = OperationRequiresPermission,
                 Error = MessageArgumentError,
                 RequireRemoteFile = GetRemoteFile,
                 OperationCancelled = CancellationRequested,
-
-
             });
-           
+            if (!terse) {
+                t.ContinueWith(antecedent => {
+                    if (packages.Count() > 0) {
+                        (from pkg in packages
+                            orderby pkg.Name
+                            select new {
+                                pkg.Name,
+                                Version = pkg.Version,
+                                Arch = pkg.Architecture,
+                                Installed = pkg.IsInstalled,
+                                Local_Path = pkg.IsInstalled ? "(installed)" : pkg.LocalPackagePath ?? "<not local>",
+                                // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
+                            }).ToTable().ConsoleOut();
+                    }
+                }, TaskContinuationOptions.AttachedToParent);
+            } */
         }
 
         private void CancellationRequested(string obj) {
@@ -430,7 +504,7 @@ remove-feed	remove *	-R	removes a feed from the system
         /// </summary>
         /// <param name="parameters">The parameters.</param>
         /// <remarks></remarks>
-        private void Remove(IEnumerable<string> parameters) {
+        private void Remove(IEnumerable<Package> parameters) {
             
            
 
@@ -441,7 +515,7 @@ remove-feed	remove *	-R	removes a feed from the system
         /// </summary>
         /// <param name="parameters">The parameters.</param>
         /// <remarks></remarks>
-        private void Install(IEnumerable<string> parameters) {
+        private void Install(IEnumerable<Package> parameters) {
             
         }
 
