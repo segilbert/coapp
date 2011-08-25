@@ -29,9 +29,7 @@ namespace CoApp.CLI {
     /// </summary>
     /// <remarks></remarks>
     public class CoAppMain : AsyncConsoleProgram {
-
         private bool terse = false;
-
 
         private ulong? minVersion = null;
         private ulong? maxVersion = null;
@@ -42,6 +40,7 @@ namespace CoApp.CLI {
         private bool? blocked = null;
         private bool? latest = null;
 
+        private PackageManagerMessages messages;
         /// <summary>
         /// Gets the res.
         /// </summary>
@@ -57,10 +56,10 @@ namespace CoApp.CLI {
         /// <returns>int value representing the ERRORLEVEL.</returns>
         /// <remarks></remarks>coapp.service
         private static int Main(string[] args) {
-            Process.Start("pskill.exe", "coapp.service");
-            Thread.Sleep(500);
+            // Process.Start("pskill.exe", "coapp.service");
+            // Thread.Sleep(500);
 
-            Process.Start("coapp.service.exe", "--interactive");
+            // Process.Start("coapp.service.exe", "--interactive");
 
             return new CoAppMain().Startup(args);
         }
@@ -72,6 +71,15 @@ namespace CoApp.CLI {
         /// <returns>Process return code.</returns>
         /// <remarks></remarks>
         protected override int Main(IEnumerable<string> args) {
+            messages = new PackageManagerMessages {
+                UnexpectedFailure = UnexpectedFailure,
+                NoPackagesFound = NoPackagesFound,
+                PermissionRequired = OperationRequiresPermission,
+                Error = MessageArgumentError,
+                RequireRemoteFile = GetRemoteFile,
+                OperationCancelled = CancellationRequested,
+            };
+
             try {
                 #region commane line parsing
 
@@ -142,6 +150,7 @@ namespace CoApp.CLI {
 
                 #endregion
 
+                Task task = null;
                 var command = parameters.FirstOrDefault();
                 parameters = parameters.Skip(1);
 
@@ -172,9 +181,11 @@ namespace CoApp.CLI {
 
                 Console.WriteLine("# Connected to Service...");
 
+
+
                 if (command.EndsWith(".msi") && File.Exists(command) && parameters.IsNullOrEmpty() ) {
                     // assume install if the only thing given is a filename.
-                    Install(PackageManager.Instance.GetPackages(command,minVersion, maxVersion, installed, active ,required , blocked , latest));
+                    task = PackageManager.Instance.GetPackages(command, minVersion, maxVersion, installed, active, required, blocked, latest, messages).ContinueWith(antecedent => Install(antecedent.Result));
                     return 0;
                 }
 
@@ -236,8 +247,8 @@ remove-feed	        remove *	-R	removes a feed from the system
                             if (parameters.Count() < 1) {
                                 throw new ConsoleException(Resources.InstallRequiresPackageName);
                             }
-                            
-                            Install(PackageManager.Instance.GetPackages(parameters,minVersion, maxVersion, installed, active ,required , blocked , latest));
+                            task = PackageManager.Instance.GetPackages(command, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => Install(antecedent.Result));
                             break;
 
                         case "-r":
@@ -247,14 +258,17 @@ remove-feed	        remove *	-R	removes a feed from the system
                             if (parameters.Count() < 1) {
                                 throw new ConsoleException(Resources.RemoveRequiresPackageName);
                             }
-                            Remove(PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest));
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => Remove(antecedent.Result));
+
                             break;
 
                         case "-l":
                         case "list":
                         case "list-package":
                         case "list-packages":
-                            ListPackages(PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest));
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => ListPackages(antecedent.Result));
                             break;
 
                         case "-L":
@@ -272,8 +286,8 @@ remove-feed	        remove *	-R	removes a feed from the system
                             if (parameters.Count() != 1) {
                                 throw new ConsoleException(Resources.MissingParameterForUpgrade);
                             }
-
-                            // Upgrade(parameters);
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => Upgrade(antecedent.Result));
                             break;
 
                         case "-A":
@@ -311,41 +325,52 @@ remove-feed	        remove *	-R	removes a feed from the system
                         case "activate":
                         case "activate-package":
                         case "activate-packages":
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => Activate(antecedent.Result));
+
                             // activate(Parameters)
                             break;
 
                         case "-g":
                         case "get-packageinfo":
                         case "info":
-                            // getPackageInfo(parameters)
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
+
                             break;
 
                         case "-b":
                         case "block-packages":
                         case "block-package":
                         case "block":
-                            // block(parameters)
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => Block(antecedent.Result));
+
                             break;
 
                         case "-B":
                         case "unblock-packages":
                         case "unblock-package":
                         case "unblock":
-                            // unblock(parameters)
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => UnBlock(antecedent.Result));
+
                             break;
 
                         case "-m":
                         case "mark-packages":
                         case "mark-package":
                         case "mark":
-                            // mark(parameters)
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => Mark(antecedent.Result));
                             break;
 
                         case "-M":
                         case "unmark-packages":
                         case "unmark-package":
                         case "unmark":
-                            // unmark(parameters)
+                            task = PackageManager.Instance.GetPackages(parameters, minVersion, maxVersion, installed, active, required, blocked, latest, messages)
+                                .ContinueWith(antecedent => UnMark(antecedent.Result));
                             break;
 
 
@@ -353,7 +378,9 @@ remove-feed	        remove *	-R	removes a feed from the system
                             throw new ConsoleException(Resources.UnknownCommand, command);
                     }
 
-                WaitForPackageManagerToComplete();
+                    if (task != null) {
+                        task.ContinueWith(antecedent => WaitForPackageManagerToComplete()).Wait();
+                    }
 
                 PackageManager.Instance.Disconnect();
             }
@@ -366,7 +393,34 @@ remove-feed	        remove *	-R	removes a feed from the system
            // Process.Start("pskill.exe", "coapp.service");
             return 0;
         }
-        
+
+        private object UnMark(IEnumerable<Package> iEnumerable) {
+            throw new NotImplementedException();
+        }
+
+        private object Mark(IEnumerable<Package> iEnumerable) {
+            throw new NotImplementedException();
+        }
+
+        private object UnBlock(IEnumerable<Package> iEnumerable) {
+            throw new NotImplementedException();
+        }
+
+        private object Block(IEnumerable<Package> iEnumerable) {
+            throw new NotImplementedException();
+        }
+
+        private object GetPackageInfo(IEnumerable<Package> iEnumerable) {
+            throw new NotImplementedException();
+        }
+
+        private object Activate(IEnumerable<Package> iEnumerable) {
+            throw new NotImplementedException();
+        }
+
+        private object Upgrade(IEnumerable<Package> iEnumerable) {
+            throw new NotImplementedException();
+        }
         
         private void WaitForPackageManagerToComplete() {
             // wait for cancellation token, or service to disconnect
