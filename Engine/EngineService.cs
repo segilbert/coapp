@@ -170,9 +170,10 @@ namespace CoApp.Toolkit.Engine {
                                 if (string.IsNullOrEmpty(requestMessage["id"]) || string.IsNullOrEmpty(requestMessage.Data["client"])) {
                                     return;
                                 }
-                                var async = (bool?) requestMessage["async"];
+                                var isAsync = (bool?) requestMessage["async"];
 
-                                if (async.HasValue && async.Value == false) {
+                                if (isAsync.HasValue && isAsync.Value == false)
+                                {
                                     Console.WriteLine("Using Two-Pipe Client");
                                     StartResponsePipeAndProcessMesages(requestMessage.Data["client"], requestMessage["id"], serverPipe);
                                 }
