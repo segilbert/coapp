@@ -370,7 +370,7 @@ namespace CoApp.Toolkit.Engine {
                 }
             };
 
-            _sessionCacheMessages.Register(); // visible to this task and all properly behaved children
+            _sessionCacheMessages.Register();   // visible to this task and all properly behaved children
 
             Task readTask = null;
             SendSessionStarted(_sessionId);

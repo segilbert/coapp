@@ -292,27 +292,30 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-        public IEnumerable<Package> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null ,bool? active= null, bool? required= null , bool? blocked = null, bool? latest=null) {
+        public Task<IEnumerable<Package>> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null ,bool? active= null, bool? required= null , bool? blocked = null, bool? latest=null, PackageManagerMessages messages = null) {
             if( parameters.IsNullOrEmpty()) {
-                List<Package> packages = new List<Package>();
-                
-                FindPackages( null, null , null , null , null , null, installed, active, required, blocked, latest, null, null, null, null,
-                new PackageManagerMessages {
-                    PackageInformation = (package) => packages.Add(package),
-                }).Wait();
-
-                return packages;
+                return GetPackages(string.Empty, minVersion, maxVersion, installed, active, required, blocked, latest, messages);
             }
-            return parameters.SelectMany(each => GetPackages(each , minVersion , maxVersion ,installed ,active,required, blocked ,latest )).ToArray();
+
+            // spawn the tasks off in parallel
+            var tasks = parameters.Select(each => GetPackages(each, minVersion, maxVersion, installed, active, required, blocked, latest, messages)).ToArray();
+
+            // return a task that is the sum of all the tasks.
+            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => tasks.SelectMany(each => each.Result), TaskContinuationOptions.AttachedToParent);
         }
 
-        public IEnumerable<Package> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null) {
-            if (parameter.IsNullOrEmpty())
-                return Enumerable.Empty<Package>();
+        public Task<IEnumerable<Package>> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null) {
+            var packages = new List<Package>();
+
+            if (parameter.IsNullOrEmpty()) {
+                return FindPackages(null, null, null, null, null, null, installed, active, required, blocked, latest, null, null, null, null,
+                    new PackageManagerMessages {
+                        PackageInformation = (package) => packages.Add(package),
+                    }.Extend(messages) ).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
+            }
 
             Package singleResult = null;
             var feedAdded = string.Empty;
-            PackageName packageName = null;
 
             if (File.Exists(parameter)) {
                 var localPath = parameter.EnsureFileIsLocal();
@@ -320,51 +323,75 @@ namespace CoApp.Toolkit.Engine.Client {
                 // add the directory it came from as a session package feed
                 
                 if (!string.IsNullOrEmpty(localPath)) {
-                    RecognizeFile(null, localPath, null, new PackageManagerMessages() {
+                    return RecognizeFile(null, localPath, null, new PackageManagerMessages() {
                         PackageInformation = (package) => { singleResult = package; },
-                        FeedAdded = (feedLocation) => { feedAdded = feedLocation;  }
-                    }).Wait();
-                }
+                        FeedAdded = (feedLocation) => { feedAdded = feedLocation; }
+                    }.Extend(messages)).ContinueWith(antecedent => {
+                        if( singleResult != null) {
+                            return AddFeed(originalDirectory, true, new PackageManagerMessages() {
+                                // don't have to handle any messages here...
+                            }.Extend(messages)).ContinueWith(antecedent2 => { return singleResult.SingleItemAsEnumerable(); },
+                            TaskContinuationOptions.AttachedToParent).Result;
+                        }
+                       
+                        // if it was a feed, then continue with the big query
+                        if( feedAdded != null ) {
+                            return InternalGetPackages(null, feedAdded, minVersion, maxVersion, installed, active, required, blocked, latest, messages).Result;
+                        } 
 
-                if(singleResult != null) {
-                    // if we get back a package from this, we can go ahead and add the directory where that package is 
-                    // ot the session feeds.
-                    AddFeed(originalDirectory, true, new PackageManagerMessages()).Wait();
-                    return singleResult.SingleItemAsEnumerable();
+                        // if we get here, that means that we didn't recognize the file. 
+                        // we're gonna return an empty collection at this point.
+                        return singleResult.SingleItemAsEnumerable();
+                        
+                    } , TaskContinuationOptions.AttachedToParent);
                 }
-                // if we did't get back a package, we might have given it a package feed.
+                // if we don't get back a local path for the file... this is pretty odd. DUnno what we should really do here yet.
+                return Enumerable.Empty<Package>().AsResultTask();
+            } 
 
-            } else if (Directory.Exists(parameter) || parameter.IndexOf('\\') > -1 || parameter.IndexOf('/') > -1 || (parameter.IndexOf('*') > -1 && parameter.ToLower().EndsWith(".msi") )) {
+            if (Directory.Exists(parameter) || parameter.IndexOf('\\') > -1 || parameter.IndexOf('/') > -1 || (parameter.IndexOf('*') > -1 && parameter.ToLower().EndsWith(".msi") )) {
                 // specified a folder, or some kind of path that looks like a feed.
                 // add it as a feed, and then get the contents of that feed.
-                AddFeed(parameter, true, new PackageManagerMessages() {
-                  FeedAdded = (feedLocation) => { feedAdded = feedLocation; }  
-                }).Wait();
-            } else {
-                packageName = PackageName.Parse(parameter);
-            }
+                return AddFeed(parameter, true, new PackageManagerMessages {
+                  FeedAdded = (feedLocation) => { feedAdded = feedLocation; }
+                }.Extend(messages)).ContinueWith(antecedent => {
+                    // if it was a feed, then continue with the big query
+                        if( feedAdded != null ) {
+                            return InternalGetPackages(null, feedAdded, minVersion, maxVersion, installed, active, required, blocked, latest, messages).Result;
+                        } 
 
+                    // if we get here, that means that we didn't recognize the file. 
+                    // we're gonna return an empty collection at this point.
+                    return singleResult.SingleItemAsEnumerable();
+
+                } , TaskContinuationOptions.AttachedToParent);
+            } 
+            // can only be a canonical name match, proceed with that.            
+            return InternalGetPackages( PackageName.Parse(parameter), null, minVersion, maxVersion, installed, active, required, blocked, latest, messages);
+        }
+
+        private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, string feedAdded = null ,ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null ) {
             var packages = new List<Package>();
 
-            FindPackages(packageName != null && packageName.IsFullMatch ? packageName.CanonicalName : null , packageName == null ? null : packageName.Name, packageName == null ? null : packageName.Version, packageName == null ? null : packageName.Arch, packageName == null ? null : packageName.PublicKeyToken, null, installed, active, required, blocked, latest, null, null, feedAdded, null,
+            return FindPackages(packageName != null && packageName.IsFullMatch ? packageName.CanonicalName : null, packageName == null ? null : packageName.Name,
+                packageName == null ? null : packageName.Version, packageName == null ? null : packageName.Arch,
+                packageName == null ? null : packageName.PublicKeyToken, null, installed, active, required, blocked, latest, null, null, feedAdded, null,
                 new PackageManagerMessages {
                     PackageInformation = (package) => {
-                        if ((!minVersion.HasValue || package.Version.VersionStringToUInt64() >= minVersion) && (!maxVersion.HasValue || package.Version.VersionStringToUInt64() <= maxVersion)) {
+                        if ((!minVersion.HasValue || package.Version.VersionStringToUInt64() >= minVersion) &&
+                            (!maxVersion.HasValue || package.Version.VersionStringToUInt64() <= maxVersion)) {
                             packages.Add(package);
                         }
                     },
-                }).Wait();
-
-            return packages;
+                }.Extend(messages)).ContinueWith(antecedent => { return packages as IEnumerable<Package>; }, TaskContinuationOptions.AttachedToParent);
         }
-
 
         public Task FindPackages(string canonicalName, string name, string version, string arch, string publicKeyToken,
             bool? dependencies, bool? installed, bool? active, bool? required, bool? blocked, bool? latest,
             int? index, int? maxResults, string location, bool? forceScan, PackageManagerMessages messages) {
             IsCompleted.Reset();
                 return Task.Factory.StartNew(() => {
-                    messages.Register();
+                    if( messages != null ) { messages.Register(); } 
                     using( var eventQueue = new ManualEventQueue() ) { 
                         WriteAsync(new UrlEncodedMessage("find-packages") {
                             {"canonical-name" , canonicalName },
@@ -395,7 +422,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task GetPackageDetails(string canonicalName, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("get-package-details") {
                             {"canonical-name" , canonicalName },
@@ -412,7 +439,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task InstallPackage(string canonicalName, bool? autoUpgrade, bool? force, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("install-package") {
                             {"canonical-name" , canonicalName },
@@ -431,7 +458,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task ListFeeds(int? index, int? maxResults, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("find-feeds") {
                             {"index" , index },
@@ -449,7 +476,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task RemoveFeed(string location, bool? session, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("remove-feed") {
                             {"location" , location},
@@ -467,7 +494,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task AddFeed(string location, bool? session, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("add-feed") {
                             {"location" , location },
@@ -485,7 +512,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task VerifyFileSignature(string filename, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("verify-file-signature") {
                             {"filename" , filename },
@@ -502,7 +529,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task SetPackage(string canonicalName, bool? active, bool? required, bool? blocked, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("set-package") {
                             {"canonical-name" , canonicalName },
@@ -522,7 +549,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task RemovePackage(string canonicalName, bool? force, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("remove-package") {
                             {"canonical-name" , canonicalName },
@@ -540,7 +567,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task UnableToAcquire(string canonicalName, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("unable-to-acquire") {
                             {"canonical-name" , canonicalName },
@@ -557,7 +584,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("recongnize-file") {
                             {"canonical-name" , canonicalName },
@@ -576,7 +603,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task SuppressFeed(string location, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("suppress-feed") {
                             {"location" , location },

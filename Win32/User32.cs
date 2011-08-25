@@ -64,7 +64,7 @@ namespace CoApp.Toolkit.Win32 {
         public static extern bool GetWindowInfo(IntPtr hwnd, out WindowInfo wi);
 #endif
 
-        [DllImport("user32.dl" + "l")]
+        [DllImport("user32.dll")]
         public static extern bool PostMessage(IntPtr hwnd, Int32 msg, Int32 wparam, Int32 lparam);
 
         [DllImport("user32.dll")]

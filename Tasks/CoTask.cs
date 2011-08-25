@@ -151,10 +151,11 @@ namespace CoApp.Toolkit.Tasks {
         /// <returns></returns>
         /// <remarks></remarks>
         internal static MessageHandlers AddMessageHandler(this Task task, MessageHandlers handler) {
-            if (task == null)
-                return null;
-
             if (handler == null) {
+                return null;
+            }
+
+            if (task == null) {
                 return null;
             }
 
@@ -181,6 +182,8 @@ namespace CoApp.Toolkit.Tasks {
             }
 #endif
 
+            // ensures that missing delegates are set with at least an empty action/function
+            // or if a parent task has one, uses that.
             handler.SetMissingDelegates();
 
             lock (_tasks) {

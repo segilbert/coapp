@@ -135,7 +135,7 @@ namespace CoApp.Toolkit.Engine {
             int? index, int? maxResults, string location, bool? forceScan, PackageManagerMessages messages ) {
             
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 if( !PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EnumeratePackages) ) {
                     PackageManagerMessages.Invoke.PermissionRequired("EnumeratePackages");
@@ -210,7 +210,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task GetPackageDetails(string canonicalName, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 var package = GetSinglePackage(canonicalName, "get-package-details");
                 if( package == null ) {
@@ -224,7 +224,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task InstallPackage(string canonicalName, bool? autoUpgrade, bool? force, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 using (var manualResetEvent = new ManualResetEvent(true)) {
                     try {
@@ -390,10 +390,9 @@ namespace CoApp.Toolkit.Engine {
 
         public Task ListFeeds(int? index, int? maxResults, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
 
-                var found = false;
-                var feedFilters = BlockedScanLocations;
+                if( messages != null ) { messages.Register(); } 
+                
                 var canFilterSession = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds);
                 var canFilterSystem = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds);
 
@@ -421,7 +420,6 @@ namespace CoApp.Toolkit.Engine {
                             suppressed = canFilterSession && BlockedScanLocations.Contains(feedLocation),
                             validated,
                         };
-               
 
                 var results = x.Union(y);
 
@@ -451,7 +449,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task RemoveFeed(string location, bool? session, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 // Note: This may need better lookup/matching for the location
                 // as location can be a fuzzy match.
@@ -481,7 +479,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task AddFeed(string location, bool? session, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 if( session ?? false ) {
                     // new feed is a session feed
@@ -549,7 +547,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task VerifyFileSignature(string filename, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 if( string.IsNullOrEmpty(filename)) {
                     PackageManagerMessages.Invoke.Error("verify-signature", "filename", "parameter 'filename' is required to verify a file");
@@ -577,7 +575,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task SetPackage(string canonicalName, bool? active, bool? required, bool? blocked, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 var package = GetSinglePackage(canonicalName, "set-package");
                 
@@ -659,7 +657,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task RemovePackage(string canonicalName, bool? force ,PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 if (!PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.RemovePackage)) {
                     PackageManagerMessages.Invoke.PermissionRequired("RemovePackage");
@@ -711,7 +709,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task UnableToAcquire(string canonicalName, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 if (canonicalName.IsNullOrEmpty()) {
                     PackageManagerMessages.Invoke.Error("unable-to-acquire", "canonical-name", "canonical-name is required.");
@@ -747,7 +745,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
                 if( string.IsNullOrEmpty(localLocation)) {
                     PackageManagerMessages.Invoke.Error("recognize-file", "local-location", "parameter 'local-location' is required to recognize a file");
                     return;
@@ -815,7 +813,7 @@ namespace CoApp.Toolkit.Engine {
 
         public Task SuppressFeed(string location, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
-                messages.Register();
+                if( messages != null ) { messages.Register(); } 
 
                 var suppressedFeeds = SessionCache<List<string>>.Value["suppressed-feeds"] ?? new List<string>();
 

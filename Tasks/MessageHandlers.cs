@@ -80,15 +80,33 @@ namespace CoApp.Toolkit.Tasks {
         /// <summary>
         /// Creates do-nothing delegates for events not listened to.
         /// </summary>
+        /// <param name="checkParent">if set, this will check to see if there is a parent task with a delegate set that it can copy.</param>
         /// <remarks></remarks>
-        public void SetMissingDelegates() {
+        public void SetMissingDelegates(bool checkParent = true, MessageHandlers inheritFrom = null) {
             foreach (var field in GetType().GetFields().Where(f => f.FieldType.BaseType == typeof(MulticastDelegate))) {
-                // if (field.GetValue(this) != null)
-
-                object dlg;
-                if ((dlg = GetDelegate(CoTask.CurrentTask, field)) != null) {
-                    field.SetValue(this , dlg );
+                // if we have a delegate, we don't need to do anything.
+                if (field.GetValue(this) != null) {
                     continue;
+                } 
+
+                // if we are inheriting from a parent instance, check that first
+                if (inheritFrom != null && inheritFrom.GetType() == GetType() ) {
+                    var inheritedDelegate = field.GetValue(inheritFrom);
+                    if (inheritedDelegate != null) {
+                        // found one, copy it.
+                        field.SetValue(this, inheritedDelegate);
+                        continue;
+                    }
+                }
+
+                // otherwise, check the parent task for it's value.
+                if (checkParent) {
+                    object dlg;
+                    if ((dlg = GetDelegate(CoTask.CurrentTask, field)) != null) {
+                        // found one, copy it.
+                        field.SetValue(this, dlg);
+                        continue;
+                    }
                 }
 
                 Type delegateReturnType = GetDelegateReturnType(field.FieldType);
@@ -110,10 +128,6 @@ namespace CoApp.Toolkit.Tasks {
                 field.SetValue(this, dynamicMethod.CreateDelegate(field.FieldType));
             }
         }
-
-        public void Register() {
-            CoTask.CurrentTask.AddMessageHandler(this);
-        }
     }
 
     /// <summary>
@@ -125,13 +139,15 @@ namespace CoApp.Toolkit.Tasks {
         /// <summary>
         /// 
         /// </summary>
-        private static readonly T _none = new T();
+        public static T Default { get; private set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="T:System.Object"/> class.
         /// </summary>
         /// <remarks></remarks>
         static MessageHandlers() {
-            _none.SetMissingDelegates();
+            Default = new T();
+            Default.SetMissingDelegates(false);
         }
 
         /// <summary>
@@ -141,7 +157,7 @@ namespace CoApp.Toolkit.Tasks {
         public static T Invoke {
             get {
                 var currentTask = CoTask.CurrentTask;
-                return currentTask == null ? _none : (currentTask.GetMessageHandler(typeof(T)) as T) ?? _none;
+                return currentTask == null ? Default : (currentTask.GetMessageHandler(typeof(T)) as T) ?? Default;
             }
         }
 
@@ -149,16 +165,28 @@ namespace CoApp.Toolkit.Tasks {
             get {
                 var currentTask = CoTask.CurrentTask;
                 if (currentTask == null) {
-                    return _none;
+                    return Default;
                 }
 
                 var parentTask = currentTask.GetParentTask();
                 if (parentTask == null) {
-                    return _none;
+                    return Default;
                 } 
 
-                return parentTask.GetMessageHandler(typeof(T)) as T ?? _none;
+                return parentTask.GetMessageHandler(typeof(T)) as T ?? Default;
             }
+        }
+
+        public void Register() {
+            if (CoTask.CurrentTask == null && this as T != null) {
+                Default = this as T;
+            }
+            CoTask.CurrentTask.AddMessageHandler(this);
+        }
+
+        public T Extend(MessageHandlers inheritFrom = null) {
+            SetMissingDelegates(true, inheritFrom);
+            return this as T;
         }
     }
 }

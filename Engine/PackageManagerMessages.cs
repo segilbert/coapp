@@ -18,7 +18,6 @@ namespace CoApp.Toolkit.Engine {
 #endif 
 
     public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
-
 #if COAPP_ENGINE_CORE 
         public Action<Package, IEnumerable<Package>> PackageInformation;
 #else

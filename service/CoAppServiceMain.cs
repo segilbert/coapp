@@ -167,13 +167,13 @@ CoApp.Service [options]
 
                 var task = EngineService.Start();
 
-                Console.WriteLine("[CoApp Interactive -- Press X to stop.]");
+                Console.WriteLine("[CoApp Interactive -- Press escape to stop.]");
                 
                 // wait for user to cancel task, or when it's actually closed
                 while(!task.Wait( 1000 ) ) {
                     Console.Write(".");
                     while (Console.KeyAvailable) {
-                        if (Console.ReadKey(true).Key == ConsoleKey.X) {
+                        if (Console.ReadKey(true).Key == ConsoleKey.Escape) {
                             EngineService.Stop();
                         }
                     }
