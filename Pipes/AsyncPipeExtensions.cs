@@ -60,7 +60,7 @@ namespace CoApp.Toolkit.Pipes {
         /// <returns></returns>
         /// <remarks></remarks>
         public static Task WriteLineAsync(this Stream stream, string message, params object[] objs) {
-            var bytes = (message.format(objs).Trim() + "\r\n").ToByteArray();
+            var bytes = (message.format(objs).Trim()).ToByteArray();
             return stream.WriteAsync(bytes, 0, bytes.Length);
         }
     }
