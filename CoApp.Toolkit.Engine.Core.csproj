@@ -78,22 +78,49 @@
     <Compile Include="DynamicXml\DynamicDataRow.cs" />
     <Compile Include="DynamicXml\DynamicDataSet.cs" />
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
+    <Compile Include="Engine\Exceptions\ConfigurationException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\InvalidPackageException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageInstallFailedException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageIsNotInstalledException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageMissingException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageNotFoundException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageNotInstalledException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Engine\Exceptions\UnableToStartServiceException.cs" />
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />
     <Compile Include="Engine\CompositionRule.cs" />
     <Compile Include="Engine\EngineService.cs" />
-    <Compile Include="Engine\Exceptions\InvaildFeedLocationException.cs" />
-    <Compile Include="Engine\Exceptions\MultiplePackagesMatchException.cs" />
-    <Compile Include="Engine\Exceptions\PackageHasPotentialUpgradesException.cs" />
-    <Compile Include="Engine\Exceptions\ConfigurationException.cs" />
-    <Compile Include="Engine\Exceptions\PackageInstallFailedException.cs" />
-    <Compile Include="Engine\Exceptions\PackageIsNotInstalledException.cs" />
-    <Compile Include="Engine\Exceptions\PackageMissingException.cs" />
-    <Compile Include="Engine\Exceptions\InvalidPackageException.cs" />
-    <Compile Include="Engine\Exceptions\PackageNotFoundException.cs" />
-    <Compile Include="Engine\Exceptions\PackageNotInstalledException.cs" />
-    <Compile Include="Engine\Exceptions\PackageNotSatisfiedException.cs" />
-    <Compile Include="Engine\Exceptions\PackagesNotAvailableException.cs" />
-    <Compile Include="Engine\Exceptions\PackageRemoveFailedException.cs" />
     <Compile Include="Engine\PackageManagerSession.cs" />
     <Compile Include="Exceptions\PathIsNotFileUriException.cs" />
     <Compile Include="Engine\Feeds\DirectoryPackageFeed.cs" />

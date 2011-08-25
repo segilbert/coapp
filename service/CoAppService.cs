@@ -12,18 +12,18 @@ namespace CoApp.Service {
     using Toolkit.Engine;
 
     public class CoAppService : ServiceBase {
-        public const string Servicename = "CoAppService";
+        public const string CoAppServiceName = "CoApp Package Installer Service";
 
         public static bool IsInstalled {
             get {
-                return ServiceController.GetServices().Any(service => service.ServiceName == Servicename);
+                return ServiceController.GetServices().Any(service => service.ServiceName == CoAppServiceName);
             }
         }
 
-        protected static Lazy<ServiceController> Controller = new Lazy<ServiceController>(() => new ServiceController(Servicename)); 
+        protected static Lazy<ServiceController> Controller = new Lazy<ServiceController>(() => new ServiceController(CoAppServiceName)); 
 
         public CoAppService() {
-            ServiceName = Servicename;
+            ServiceName = CoAppServiceName;
         }
 
         public static void StartService() {
@@ -32,7 +32,6 @@ namespace CoApp.Service {
 
             if (Controller.Value.Status == ServiceControllerStatus.Stopped) {
                 Controller.Value.Start();
-                
             }
         }
 

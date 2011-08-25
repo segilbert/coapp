@@ -8,152 +8,23 @@
 // </license>
 //-----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CoApp.Toolkit.Engine.Client {
+    using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.IO.Pipes;
+    using System.Linq;
     using System.Security.Principal;
-    using System.Text.RegularExpressions;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
     using Pipes;
     using Tasks;
-    using Console = System.Console;
-
-
-    public class PackageName {
-        private static char[] _slashes = new [] {'\\', '/' };
-        private static Regex _canonicalName = new Regex(@"^(.*)-(\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5})-(any|x86|x64|arm)-([0-9a-f]{16})$", RegexOptions.IgnoreCase);
-        private static Regex[] _partialName = new[] {
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)-([0-9a-f]{16}|\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)$", RegexOptions.IgnoreCase),
-        };
-
-        public string CanonicalName { get; private set; }
-        public string Name { get; private set; }
-        public string Version { get; private set; }
-        public string Version1 { get; private set; }
-        public string Version2 { get; private set; }
-        public string Version3 { get; private set; }
-        public string Version4 { get; private set; }
-        public string Arch { get; private set; }
-        public string PublicKeyToken { get; private set; }
-
-        public bool IsPartialMatch { get { return !IsFullMatch && !Name.IsNullOrEmpty(); }}
-        public bool IsFullMatch { get { return (!string.IsNullOrEmpty(CanonicalName)); } }
-
-        private void SetFieldsFromMatch( Match match ) {
-            var c = match.Groups.Count;
-
-            if( c <= 1) {
-                return;
-            }
-
-            Name = c <= 1 ? string.Empty : match.Groups[1].Captures[0].Value;
-            Version1 = c <= 2 ? string.Empty : match.Groups[2].Captures[0].Value;
-            Version2 = c <= 3 ? string.Empty : match.Groups[3].Captures[0].Value;
-            Version3 = c <= 4 ? string.Empty : match.Groups[4].Captures[0].Value;
-            Version4 = c <= 5 ? string.Empty : match.Groups[5].Captures[0].Value;
-            Arch = c <= 6 ? string.Empty : match.Groups[6].Captures[0].Value;
-            PublicKeyToken = c <= 7 ? string.Empty : match.Groups[7].Captures[0].Value;
-
-            Version = Version1 + Version2 + Version3 + Version4;
-        }
-
-        private PackageName(string potentialPartialPackageName) {
-            if (potentialPartialPackageName.IndexOfAny(_slashes) > -1) {
-                return;
-            }
-                
-            var match = _canonicalName.Match(potentialPartialPackageName.ToLower());
-            if (match.Success) {
-                // perfect canonical match for a name
-                CanonicalName = potentialPartialPackageName;
-                SetFieldsFromMatch(match);
-                return;
-            }
-
-            foreach( var rx in _partialName ) {
-                match = rx.Match(potentialPartialPackageName);
-                if( match.Success ) {
-                    SetFieldsFromMatch(match);
-                    return;
-                }
-            }
-
-            Name = potentialPartialPackageName;
-            return;
-        }
-
-        public static PackageName Parse(string potentialPartialPackageName) {
-            return new PackageName(potentialPartialPackageName);
-        }
-    }
-
-    public class Package {
-        private static Dictionary<string, Package> AllPackages = new Dictionary<string, Package>();
-        public static Package GetPackage(string canonicalName ) {
-            lock( AllPackages ) {
-                if( AllPackages.ContainsKey(canonicalName)) {
-                    return AllPackages[canonicalName];
-                }
-
-                var result = new Package {
-                    CanonicalName = canonicalName
-                };
-
-                AllPackages.Add(canonicalName,result);
-                return result;
-            }
-        }
-
-        protected Package() {
-            
-        }
-        public string CanonicalName;
-        public string LocalPackagePath;
-        public string Name;
-        public string Version;
-        public string Architecture;
-        public string PublicKeyToken;
-        public bool IsInstalled;
-        public bool IsBlocked;
-        public bool Required;
-        public bool IsActive;
-        public bool IsDependency;
-        public string Description;
-        public string Summary;
-        public string DisplayName;
-        public string Copyright;
-        public string AuthorVersion;
-        public string Icon;
-        public string License;
-        public string LicenseUrl;
-        public string PublishDate;
-        public string PublisherName;
-        public string PublisherUrl;
-        public string PublisherEmail;
-
-        public IEnumerable<string> Tags;
-        public IEnumerable<string> RemoteLocations;
-        public IEnumerable<string> Dependencies;
-        public IEnumerable<string> SupercedentPackages;
-    };
-
-    
 
     public class PackageManager {
         internal class ManualEventQueue : Queue<UrlEncodedMessage>, IDisposable {
-            internal static readonly Dictionary<int, ManualEventQueue> _eventQueues = new Dictionary<int, ManualEventQueue>();
+            internal static readonly Dictionary<int, ManualEventQueue> EventQueues = new Dictionary<int, ManualEventQueue>();
             internal static readonly ManualResetEvent IsCompleted = new ManualResetEvent(true);
 
             public readonly ManualResetEvent ManualResetEvent = new ManualResetEvent(true);
@@ -164,15 +35,15 @@ namespace CoApp.Toolkit.Engine.Client {
                 if (tid == 0) {
                     throw new Exception("Cannot create a ManualEventQueue outside of a task.");
                 }
-                lock (_eventQueues) {
-                    _eventQueues.Add(tid, this);
+                lock (EventQueues) {
+                    EventQueues.Add(tid, this);
                 }
             }
 
             public void Dispose() {
-                lock (_eventQueues) {
-                    _eventQueues.Remove(Task.CurrentId.GetValueOrDefault());
-                    if( _eventQueues.Count ==  0) {
+                lock (EventQueues) {
+                    EventQueues.Remove(Task.CurrentId.GetValueOrDefault());
+                    if (EventQueues.Count == 0) {
                         Console.WriteLine("Completed: True");
                         IsCompleted.Set();
                     }
@@ -180,7 +51,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }
 
             public static ManualEventQueue GetQueueForTaskId(int taskId) {
-                return _eventQueues[taskId];
+                return EventQueues[taskId];
             }
 
             internal void DispatchResponses() {
@@ -197,30 +68,37 @@ namespace CoApp.Toolkit.Engine.Client {
 
         public static PackageManager Instance = new PackageManager();
 
+        private Task _serviceTask;
         private NamedPipeClientStream _pipe;
         internal const int BufferSize = 8192;
         public ManualResetEvent IsReady = new ManualResetEvent(false);
         public ManualResetEvent IsDisconnected = new ManualResetEvent(true);
-        public int ActiveCalls { get { return ManualEventQueue._eventQueues.Keys.Count; } }
-        public ManualResetEvent IsCompleted { get { return ManualEventQueue.IsCompleted; } }
+
+        public int ActiveCalls {
+            get { return ManualEventQueue.EventQueues.Keys.Count; }
+        }
+
+        public ManualResetEvent IsCompleted {
+            get { return ManualEventQueue.IsCompleted; }
+        }
 
         private bool IsConnected {
-            get {
-                return _pipe != null && _pipe.IsConnected;
-            }
+            get { return _pipe != null && _pipe.IsConnected; }
         }
 
         private PackageManager() {
-               
         }
 
-        public Task Connect(string clientName, string sessionId = null ) {
-            if (IsConnected)
-                return null;
+        public Task Connect(string clientName, string sessionId = null) {
+            if (IsConnected) {
+                return _serviceTask;
+            }
+
+            EngineServiceManager.EnsureServiceIsResponding();
 
             sessionId = sessionId ?? DateTime.Now.Ticks.ToString();
-            
-            return Task.Factory.StartNew(() => {
+
+            return _serviceTask = Task.Factory.StartNew(() => {
                 _pipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation);
 
                 try {
@@ -236,9 +114,8 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 StartSession(clientName, sessionId);
 
-                while( IsConnected  ) {
-                    var incomingMessage =
-                        new byte[BufferSize];
+                while (IsConnected) {
+                    var incomingMessage = new byte[BufferSize];
                     try {
                         _pipe.ReadAsync(incomingMessage, 0, BufferSize).ContinueWith(antecedent => {
                             if (antecedent.IsCanceled || antecedent.IsFaulted || !IsConnected) {
@@ -271,14 +148,15 @@ namespace CoApp.Toolkit.Engine.Client {
                                 // not able to queue up the response to the right task?
                             }
                         });
-                    } catch {
+                    }
+                    catch {
                         Disconnect();
                     }
                 }
-
                 Disconnect();
             });
         }
+
 
         public void Disconnect() {
             lock (this) {
@@ -292,8 +170,9 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-        public Task<IEnumerable<Package>> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null ,bool? active= null, bool? required= null , bool? blocked = null, bool? latest=null, PackageManagerMessages messages = null) {
-            if( parameters.IsNullOrEmpty()) {
+        public Task<IEnumerable<Package>> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null,
+            bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null) {
+            if (parameters.IsNullOrEmpty()) {
                 return GetPackages(string.Empty, minVersion, maxVersion, installed, active, required, blocked, latest, messages);
             }
 
@@ -301,17 +180,19 @@ namespace CoApp.Toolkit.Engine.Client {
             var tasks = parameters.Select(each => GetPackages(each, minVersion, maxVersion, installed, active, required, blocked, latest, messages)).ToArray();
 
             // return a task that is the sum of all the tasks.
-            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => tasks.SelectMany(each => each.Result), TaskContinuationOptions.AttachedToParent);
+            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => tasks.SelectMany(each => each.Result),
+                TaskContinuationOptions.AttachedToParent);
         }
 
-        public Task<IEnumerable<Package>> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null) {
+        public Task<IEnumerable<Package>> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null,
+            bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null) {
             var packages = new List<Package>();
 
             if (parameter.IsNullOrEmpty()) {
                 return FindPackages(null, null, null, null, null, null, installed, active, required, blocked, latest, null, null, null, null,
                     new PackageManagerMessages {
-                        PackageInformation = (package) => packages.Add(package),
-                    }.Extend(messages) ).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
+                        PackageInformation = package => packages.Add(package),
+                    }.Extend(messages)).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
             }
 
             Package singleResult = null;
@@ -321,114 +202,153 @@ namespace CoApp.Toolkit.Engine.Client {
                 var localPath = parameter.EnsureFileIsLocal();
                 var originalDirectory = Path.GetDirectoryName(parameter.GetFullPath());
                 // add the directory it came from as a session package feed
-                
+
                 if (!string.IsNullOrEmpty(localPath)) {
-                    return RecognizeFile(null, localPath, null, new PackageManagerMessages() {
-                        PackageInformation = (package) => { singleResult = package; },
-                        FeedAdded = (feedLocation) => { feedAdded = feedLocation; }
+                    return RecognizeFile(null, localPath, null, new PackageManagerMessages {
+                        PackageInformation = package => { singleResult = package; },
+                        FeedAdded = feedLocation => { feedAdded = feedLocation; }
                     }.Extend(messages)).ContinueWith(antecedent => {
-                        if( singleResult != null) {
-                            return AddFeed(originalDirectory, true, new PackageManagerMessages() {
+                        if (singleResult != null) {
+                            return AddFeed(originalDirectory, true, new PackageManagerMessages {
                                 // don't have to handle any messages here...
-                            }.Extend(messages)).ContinueWith(antecedent2 => { return singleResult.SingleItemAsEnumerable(); },
-                            TaskContinuationOptions.AttachedToParent).Result;
+                            }.Extend(messages)).ContinueWith(antecedent2 => singleResult.SingleItemAsEnumerable(),
+                                TaskContinuationOptions.AttachedToParent).Result;
                         }
-                       
+
                         // if it was a feed, then continue with the big query
-                        if( feedAdded != null ) {
+                        if (feedAdded != null) {
                             return InternalGetPackages(null, feedAdded, minVersion, maxVersion, installed, active, required, blocked, latest, messages).Result;
-                        } 
+                        }
 
                         // if we get here, that means that we didn't recognize the file. 
                         // we're gonna return an empty collection at this point.
                         return singleResult.SingleItemAsEnumerable();
-                        
-                    } , TaskContinuationOptions.AttachedToParent);
+                    }, TaskContinuationOptions.AttachedToParent);
                 }
                 // if we don't get back a local path for the file... this is pretty odd. DUnno what we should really do here yet.
                 return Enumerable.Empty<Package>().AsResultTask();
-            } 
+            }
 
-            if (Directory.Exists(parameter) || parameter.IndexOf('\\') > -1 || parameter.IndexOf('/') > -1 || (parameter.IndexOf('*') > -1 && parameter.ToLower().EndsWith(".msi") )) {
+            if (Directory.Exists(parameter) || parameter.IndexOf('\\') > -1 || parameter.IndexOf('/') > -1 ||
+                (parameter.IndexOf('*') > -1 && parameter.ToLower().EndsWith(".msi"))) {
                 // specified a folder, or some kind of path that looks like a feed.
                 // add it as a feed, and then get the contents of that feed.
                 return AddFeed(parameter, true, new PackageManagerMessages {
-                  FeedAdded = (feedLocation) => { feedAdded = feedLocation; }
+                    FeedAdded = feedLocation => { feedAdded = feedLocation; }
                 }.Extend(messages)).ContinueWith(antecedent => {
                     // if it was a feed, then continue with the big query
-                        if( feedAdded != null ) {
-                            return InternalGetPackages(null, feedAdded, minVersion, maxVersion, installed, active, required, blocked, latest, messages).Result;
-                        } 
+                    if (feedAdded != null) {
+                        return InternalGetPackages(null, feedAdded, minVersion, maxVersion, installed, active, required, blocked, latest, messages).Result;
+                    }
 
                     // if we get here, that means that we didn't recognize the file. 
                     // we're gonna return an empty collection at this point.
                     return singleResult.SingleItemAsEnumerable();
-
-                } , TaskContinuationOptions.AttachedToParent);
-            } 
+                }, TaskContinuationOptions.AttachedToParent);
+            }
             // can only be a canonical name match, proceed with that.            
-            return InternalGetPackages( PackageName.Parse(parameter), null, minVersion, maxVersion, installed, active, required, blocked, latest, messages);
+            return InternalGetPackages(PackageName.Parse(parameter), null, minVersion, maxVersion, installed, active, required, blocked, latest, messages);
         }
 
-        private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, string feedAdded = null ,ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null ) {
+        private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, string feedAdded = null, ulong? minVersion = null,
+            ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
+            PackageManagerMessages messages = null) {
             var packages = new List<Package>();
 
             return FindPackages(packageName != null && packageName.IsFullMatch ? packageName.CanonicalName : null, packageName == null ? null : packageName.Name,
                 packageName == null ? null : packageName.Version, packageName == null ? null : packageName.Arch,
                 packageName == null ? null : packageName.PublicKeyToken, null, installed, active, required, blocked, latest, null, null, feedAdded, null,
                 new PackageManagerMessages {
-                    PackageInformation = (package) => {
+                    PackageInformation = package => {
                         if ((!minVersion.HasValue || package.Version.VersionStringToUInt64() >= minVersion) &&
                             (!maxVersion.HasValue || package.Version.VersionStringToUInt64() <= maxVersion)) {
                             packages.Add(package);
                         }
                     },
-                }.Extend(messages)).ContinueWith(antecedent => { return packages as IEnumerable<Package>; }, TaskContinuationOptions.AttachedToParent);
+                }.Extend(messages)).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
         }
 
-        public Task FindPackages(string canonicalName, string name, string version, string arch, string publicKeyToken,
-            bool? dependencies, bool? installed, bool? active, bool? required, bool? blocked, bool? latest,
-            int? index, int? maxResults, string location, bool? forceScan, PackageManagerMessages messages) {
+        public Task FindPackages(string canonicalName, string name, string version, string arch, string publicKeyToken, bool? dependencies, bool? installed,
+            bool? active, bool? required, bool? blocked, bool? latest, int? index, int? maxResults, string location, bool? forceScan,
+            PackageManagerMessages messages) {
             IsCompleted.Reset();
-                return Task.Factory.StartNew(() => {
-                    if( messages != null ) { messages.Register(); } 
-                    using( var eventQueue = new ManualEventQueue() ) { 
-                        WriteAsync(new UrlEncodedMessage("find-packages") {
-                            {"canonical-name" , canonicalName },
-                            {"name", name},
-                            {"version", version },
-                            {"arch", arch },
-                            {"public-key-token", publicKeyToken },
-                            {"dependencies", dependencies  },
-                            {"installed", installed },
-                            {"active", active },
-                            {"required", required },
-                            {"blocked", blocked },
-                            {"latest", latest },
-                            {"index", index },
-                            {"max-results", maxResults },
-                            {"location", location },
-                            {"force-scan", forceScan },
+            return Task.Factory.StartNew(() => {
+                if (messages != null) {
+                    messages.Register();
+                }
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("find-packages") {
+                        {
+                            "canonical-name", canonicalName
+                            },
+                        {
+                            "name", name
+                            },
+                        {
+                            "version", version
+                            },
+                        {
+                            "arch", arch
+                            },
+                        {
+                            "public-key-token", publicKeyToken
+                            },
+                        {
+                            "dependencies", dependencies
+                            },
+                        {
+                            "installed", installed
+                            },
+                        {
+                            "active", active
+                            },
+                        {
+                            "required", required
+                            },
+                        {
+                            "blocked", blocked
+                            },
+                        {
+                            "latest", latest
+                            },
+                        {
+                            "index", index
+                            },
+                        {
+                            "max-results", maxResults
+                            },
+                        {
+                            "location", location
+                            },
+                        {
+                            "force-scan", forceScan
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
-                            {"rqid",  Task.CurrentId},
-                        });
-
-                        // will return when the final message comes thru.
-                        eventQueue.DispatchResponses();
-                    }
-                }).AutoManage();
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
         }
 
         public Task GetPackageDetails(string canonicalName, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("get-package-details") {
-                            {"canonical-name" , canonicalName },
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "canonical-name", canonicalName
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -439,15 +359,24 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task InstallPackage(string canonicalName, bool? autoUpgrade, bool? force, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("install-package") {
-                            {"canonical-name" , canonicalName },
-                            {"auto-upgrade" , autoUpgrade},
-                            {"force" , force},
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "canonical-name", canonicalName
+                            },
+                        {
+                            "auto-upgrade", autoUpgrade
+                            },
+                        {
+                            "force", force
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -458,14 +387,21 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task ListFeeds(int? index, int? maxResults, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("find-feeds") {
-                            {"index" , index },
-                            {"max-results" , maxResults },
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "index", index
+                            },
+                        {
+                            "max-results", maxResults
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -476,14 +412,21 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task RemoveFeed(string location, bool? session, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("remove-feed") {
-                            {"location" , location},
-                            {"session" , session},
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "location", location
+                            },
+                        {
+                            "session", session
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -494,14 +437,21 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task AddFeed(string location, bool? session, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("add-feed") {
-                            {"location" , location },
-                            {"session" , session},
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "location", location
+                            },
+                        {
+                            "session", session
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -512,13 +462,18 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task VerifyFileSignature(string filename, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("verify-file-signature") {
-                            {"filename" , filename },
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "filename", filename
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -529,16 +484,27 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task SetPackage(string canonicalName, bool? active, bool? required, bool? blocked, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("set-package") {
-                            {"canonical-name" , canonicalName },
-                            {"active" , active},
-                            {"required" , required},
-                            {"blocked" , blocked},
-
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "canonical-name", canonicalName
+                            },
+                        {
+                            "active", active
+                            },
+                        {
+                            "required", required
+                            },
+                        {
+                            "blocked", blocked
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -549,14 +515,21 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task RemovePackage(string canonicalName, bool? force, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("remove-package") {
-                            {"canonical-name" , canonicalName },
-                            {"force" , force},
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "canonical-name", canonicalName
+                            },
+                        {
+                            "force", force
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -567,13 +540,18 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task UnableToAcquire(string canonicalName, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("unable-to-acquire") {
-                            {"canonical-name" , canonicalName },
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "canonical-name", canonicalName
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -584,15 +562,24 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("recongnize-file") {
-                            {"canonical-name" , canonicalName },
-                            {"local-location" , localLocation},
-                            {"remote-location" , remoteLocation},
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "canonical-name", canonicalName
+                            },
+                        {
+                            "local-location", localLocation
+                            },
+                        {
+                            "remote-location", remoteLocation
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -603,13 +590,18 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task SuppressFeed(string location, PackageManagerMessages messages) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
-                if( messages != null ) { messages.Register(); } 
+                if (messages != null) {
+                    messages.Register();
+                }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("suppress-feed") {
-                            {"location" , location },
-                            
-                            {"rqid",  Task.CurrentId},
-                        });
+                        {
+                            "location", location
+                            },
+                        {
+                            "rqid", Task.CurrentId
+                            },
+                    });
 
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
@@ -644,7 +636,9 @@ namespace CoApp.Toolkit.Engine.Client {
                     break;
 
                 case "found-feed":
-                    PackageManagerMessages.Invoke.FeedDetails(responseMessage["location"], DateTime.FromFileTime((long?)responseMessage["last-scanned"] ?? 0), (bool?)responseMessage["session"] ?? false, (bool?)responseMessage["suppressed"] ?? false, (bool?)responseMessage["validated"] ?? false);
+                    PackageManagerMessages.Invoke.FeedDetails(responseMessage["location"], DateTime.FromFileTime((long?) responseMessage["last-scanned"] ?? 0),
+                        (bool?) responseMessage["session"] ?? false, (bool?) responseMessage["suppressed"] ?? false,
+                        (bool?) responseMessage["validated"] ?? false);
                     break;
 
                 case "found-package":
@@ -663,7 +657,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     result.RemoteLocations = responseMessage.GetCollection("remote-locations");
                     result.Dependencies = responseMessage.GetCollection("dependencies");
                     result.SupercedentPackages = responseMessage.GetCollection("supercedent-packages");
-                    
+
 
                     PackageManagerMessages.Invoke.PackageInformation(result);
                     break;
@@ -673,7 +667,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     break;
 
                 case "installing-package":
-                    PackageManagerMessages.Invoke.InstallingPackageProgress(responseMessage["canonical-name"], (int?)responseMessage["percent-complete"] ?? 0);
+                    PackageManagerMessages.Invoke.InstallingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0);
                     break;
 
                 case "message-argument-error":
@@ -703,18 +697,18 @@ namespace CoApp.Toolkit.Engine.Client {
                 case "package-details":
                     var details = Package.GetPackage(responseMessage["canonical-name"]);
                     details.Description = responseMessage["description"];
-                    
-                details.Summary = responseMessage["summary"];
-                details.DisplayName  = responseMessage["display-name"];
-                details.Copyright = responseMessage["copyright"];
-                details.AuthorVersion = responseMessage["author-version"];
-                details.Icon = responseMessage[ "icon"];
-                details.License  = responseMessage["license"];
-                details.LicenseUrl = responseMessage["license-url"];
-                details.PublishDate = responseMessage["publish-date"]; 
-                details.PublisherName = responseMessage["publisher-name"];
-                details.PublisherUrl = responseMessage["publisher-url"];
-                details.PublisherEmail = responseMessage["publisher-email"];
+
+                    details.Summary = responseMessage["summary"];
+                    details.DisplayName = responseMessage["display-name"];
+                    details.Copyright = responseMessage["copyright"];
+                    details.AuthorVersion = responseMessage["author-version"];
+                    details.Icon = responseMessage["icon"];
+                    details.License = responseMessage["license"];
+                    details.LicenseUrl = responseMessage["license-url"];
+                    details.PublishDate = responseMessage["publish-date"];
+                    details.PublisherName = responseMessage["publisher-name"];
+                    details.PublisherUrl = responseMessage["publisher-url"];
+                    details.PublisherEmail = responseMessage["publisher-email"];
                     details.Tags = responseMessage.GetCollection("tags");
 
                     /*
@@ -740,16 +734,17 @@ namespace CoApp.Toolkit.Engine.Client {
                     break;
 
                 case "removing-package":
-                    PackageManagerMessages.Invoke.RemovingPackageProgress(responseMessage["canonical-name"], (int?)responseMessage["percent-complete"] ?? 0);
+                    PackageManagerMessages.Invoke.RemovingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0);
                     break;
 
                 case "require-remote-file":
-                    PackageManagerMessages.Invoke.RequireRemoteFile(responseMessage["canonical-name"], responseMessage.GetCollection("remote-locations"), responseMessage["destination"],
-                        (bool?) responseMessage["force"] ?? false);
+                    PackageManagerMessages.Invoke.RequireRemoteFile(responseMessage["canonical-name"], responseMessage.GetCollection("remote-locations"),
+                        responseMessage["destination"], (bool?) responseMessage["force"] ?? false);
                     break;
 
                 case "signature-validation":
-                    PackageManagerMessages.Invoke.SignatureValidation(responseMessage["filename"], (bool?)responseMessage["is-valid"] ?? false, responseMessage["certificate-subject-name"]);
+                    PackageManagerMessages.Invoke.SignatureValidation(responseMessage["filename"], (bool?) responseMessage["is-valid"] ?? false,
+                        responseMessage["certificate-subject-name"]);
                     break;
 
                 case "unable-to-recognize-file":
@@ -785,19 +780,26 @@ namespace CoApp.Toolkit.Engine.Client {
         private void WriteAsync(UrlEncodedMessage message) {
             if (IsConnected) {
                 try {
-                    _pipe.WriteLineAsync(message.ToString()).ContinueWith(antecedent => { System.Console.WriteLine("Async Write Fail!? (1)"); }, TaskContinuationOptions.OnlyOnFaulted);
+                    _pipe.WriteLineAsync(message.ToString()).ContinueWith(antecedent => { Console.WriteLine("Async Write Fail!? (1)"); },
+                        TaskContinuationOptions.OnlyOnFaulted);
                 }
                 catch (Exception e) {
-                     System.Console.WriteLine("Async Write Fail!? (2)");
+                    Console.WriteLine("Async Write Fail!? (2)");
                 }
             }
         }
 
-        private void StartSession(string clientId, string sessionId ) {
+        private void StartSession(string clientId, string sessionId) {
             WriteAsync(new UrlEncodedMessage("start-session") {
-                {"client" , clientId },
-                {"id"  , sessionId },
-                {"rqid"  , sessionId },
+                {
+                    "client", clientId
+                    },
+                {
+                    "id", sessionId
+                    },
+                {
+                    "rqid", sessionId
+                    },
             });
         }
     }

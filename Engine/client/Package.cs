@@ -1,85 +1,65 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2011 Garrett Serack. All rights reserved.
+// </copyright>
+// <license>
+//     The software is licensed under the Apache 2.0 License (the "License")
+//     You may not use the software except in compliance with the License. 
+// </license>
+//-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Engine.Client {
-    using System.Collections.ObjectModel;
+    using System.Collections.Generic;
+
 
     public class Package {
-    public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
+        private static readonly Dictionary<string, Package> _allPackages = new Dictionary<string, Package>();
 
-        public class Party {
-            public string Name { get; set; }
-            public string Url { get; set; }
-            public string Email { get; set; }
+        public static Package GetPackage(string canonicalName) {
+            lock (_allPackages) {
+                if (_allPackages.ContainsKey(canonicalName)) {
+                    return _allPackages[canonicalName];
+                }
+
+                var result = new Package {
+                    CanonicalName = canonicalName
+                };
+
+                _allPackages.Add(canonicalName, result);
+                return result;
+            }
         }
 
-        public string CosmeticName {
-            get; set; }
-
-        public string ProductCode {
-            get;
-            set;
+        protected Package() {
         }
 
-        public string Name {
-            get;
-            set;
-        }
+        public string CanonicalName;
+        public string LocalPackagePath;
+        public string Name;
+        public string Version;
+        public string Architecture;
+        public string PublicKeyToken;
+        public bool IsInstalled;
+        public bool IsBlocked;
+        public bool Required;
+        public bool IsActive;
+        public bool IsDependency;
+        public string Description;
+        public string Summary;
+        public string DisplayName;
+        public string Copyright;
+        public string AuthorVersion;
+        public string Icon;
+        public string License;
+        public string LicenseUrl;
+        public string PublishDate;
+        public string PublisherName;
+        public string PublisherUrl;
+        public string PublisherEmail;
 
-        public string Architecture {
-            get;
-            set;
-        }
-
-        public string PublicKeyToken {
-            get;
-            set;
-        }
-        public UInt64 Version {
-            get;
-            set;
-        }
-
-        public readonly MultiplexedProperty<string> FeedLocation = new MultiplexedProperty<string>((x, y) => Changed());
-
-        private static object Changed() {
-            
-            throw new NotImplementedException();
-        }
-
-        public readonly MultiplexedProperty<Uri> RemoteLocation = new MultiplexedProperty<Uri>((x, y) => Changed());
-        public readonly MultiplexedProperty<string> LocalPackagePath = new MultiplexedProperty<string>((x, y) => Changed(), false);
-
-        public List<PackageAssemblyInfo> Assemblies = new List<PackageAssemblyInfo>();
-
-        public Party Publisher { get; set; }
-        public IEnumerable<Party> Contributors { get; set; }
-
-        public bool HasLocalFile {
-            get;
-            set;
-        }
-
-        public bool HasRemoteLocation {
-            get;
-            set;
-        }
-
-        public bool CanSatisfy {
-            get;
-            set;
-        }
-
-        public bool CouldNotDownload {
-            get;
-            set;
-        }
-
-        public bool PackageFailedInstall {
-            get;
-            set;
-        }
-    }
+        public IEnumerable<string> Tags;
+        public IEnumerable<string> RemoteLocations;
+        public IEnumerable<string> Dependencies;
+        public IEnumerable<string> SupercedentPackages;
+    };
 }

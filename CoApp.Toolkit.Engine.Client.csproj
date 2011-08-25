@@ -64,6 +64,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -72,9 +73,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\Client\Package.cs" />
     <Compile Include="Engine\Client\PackageManager.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Engine\EngineServiceManager.cs" />
+    <Compile Include="Engine\PackageName.cs" />
+    <Compile Include="Engine\Exceptions\UnableToStartServiceException.cs" />
     <Compile Include="Engine\PackageManagerMessages.cs" />
     <Compile Include="Properties\Engine.Core.AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />

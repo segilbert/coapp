@@ -20,7 +20,7 @@ namespace CoApp.Service {
             ServiceProcessInstaller.Password = null;
             ServiceProcessInstaller.Username = null;
 
-            ServiceInstaller.ServiceName = CoAppService.Servicename;
+            ServiceInstaller.ServiceName = CoAppService.CoAppServiceName;
             ServiceInstaller.StartType = ServiceStartMode.Automatic;
 
             Installers.AddRange(new Installer[] {ServiceProcessInstaller,ServiceInstaller});
