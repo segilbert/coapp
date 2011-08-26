@@ -167,12 +167,12 @@ namespace CoApp.Toolkit.Extensions {
                 tSize = columnWidths.Sum() + columnWidths.Length;
             }
             */
-            var fmt = "|" + string.Join("", columnWidths.ByIndex().Select(n => "{{{0},{1}}}|".format(n, columnWidths[n])));
-            
+            // var fmt = "|" + string.Join("", columnWidths.ByIndex().Select(n => "{{{0},{1}}}|".format(n, columnWidths[n])));
+            var fmt = string.Join("", columnWidths.ByIndex().Select(n => "{{{0},{1}}}|".format(n, columnWidths[n]))).Trim('|');
             var breaker = "-".PadLeft(tSize + 1, '-');
 
             var result = new List<string>();
-            result.Add(breaker);
+            // result.Add(breaker);
             result.Add(fmt.format(JustifyAll(columnTitles, columnWidths, columnJustifications)));
             result.Add(breaker);
             result.AddRange(rows.Select(row => fmt.format(JustifyAll(row, columnWidths, columnJustifications))));

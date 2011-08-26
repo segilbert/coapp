@@ -233,7 +233,9 @@ namespace CoApp.Toolkit.Engine {
                         }
 
                         var package = GetSinglePackage(canonicalName, "install-package");
+
                         if (package == null) {
+                            PackageManagerMessages.Invoke.UnknownPackage(canonicalName);
                             return;
                         }
 

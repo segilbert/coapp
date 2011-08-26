@@ -44,7 +44,7 @@ namespace CoApp.Toolkit.Engine.Client {
                 lock (EventQueues) {
                     EventQueues.Remove(Task.CurrentId.GetValueOrDefault());
                     if (EventQueues.Count == 0) {
-                        Console.WriteLine("Completed: True");
+                        // Console.WriteLine("Completed: True");
                         IsCompleted.Set();
                     }
                 }
@@ -131,7 +131,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            Console.WriteLine("    Response:{0}", responseMessage.Command);
+                            //Console.WriteLine("    Response:{0}", responseMessage.Command);
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -143,8 +143,8 @@ namespace CoApp.Toolkit.Engine.Client {
                                     IsReady.Set();
                                     return;
                                 }
-                                Console.WriteLine("Unable to queue the response to the right request event queue!");
-                                Console.WriteLine("    Response:{0}", responseMessage.Command);
+                                // Console.WriteLine("Unable to queue the response to the right request event queue!");
+                                //Console.WriteLine("    Response:{0}", responseMessage.Command);
                                 // not able to queue up the response to the right task?
                             }
                         });

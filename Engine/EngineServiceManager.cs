@@ -18,7 +18,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading;
     using Exceptions;
     using Extensions;
-    using TimeoutException = System.ServiceProcess.TimeoutException;
+    using TimeoutException = System.TimeoutException;
 
     public static class EngineServiceManager {
         public const string CoAppServiceName = "CoApp Package Installer Service";
@@ -163,7 +163,7 @@ namespace CoApp.Toolkit.Engine {
                             testPipe.Close();
                             testPipe.Dispose();
                         }
-                        catch (TimeoutException) {
+                        catch (System.TimeoutException) {
                             return false;
                         }
                         return true;
