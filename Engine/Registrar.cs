@@ -517,7 +517,8 @@ namespace CoApp.Toolkit.Engine {
                 // pkgDetails.displayName
                 pkg.FullDescription = pkgDetails.description;
                 long publishDateTicks;
-                if (Int64.TryParse(pkgDetails.publishDate, out publishDateTicks)) {
+                if (Int64.TryParse(pkgDetails.publishDate, out publishDateTicks))
+                {
                     pkg.PublishDate = new DateTime(publishDateTicks);
                 }
                 pkg.AuthorVersion = pkgDetails.authorVersion;

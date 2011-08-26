@@ -8,14 +8,14 @@
 // </license>
 //-----------------------------------------------------------------------
 
-
 namespace CoApp.Toolkit.Extensions
 {
     using System;
     using System.Linq;
+    using System.Reflection;
     public static class ObjectExtensions
     {
-        static int[] tenPrimes = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 };
+        private static int[] tenPrimes = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 };
 
         /// <summary>
         /// Create a pretty good hashcode using the hashcodes from a bunch of objects.
@@ -47,6 +47,5 @@ namespace CoApp.Toolkit.Extensions
 
             return objects.Skip(10).Aggregate(hashCodesWithPrimes, (result, obj) => result + (obj == null ? 0 : obj.GetHashCode()));    
         }
-
     }
 }

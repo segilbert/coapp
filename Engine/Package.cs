@@ -184,7 +184,8 @@ namespace CoApp.Toolkit.Engine {
             // {$DOTNETASSEMBLIES} CoApp .NET Reference Assembly directory ({$APPS}\.NET\Assemblies)
             // {$INCLUDE} CoApp include directory ({$APPS}\include)
             // {$INSTALL} CoApp .installed directory ({$APPS}\.installed)
-
+            // {$ALLPROGRAMS} The Programs directory for all users 
+            //                  (usually C:\ProgramData\Microsoft\Windows\Start Menu\Programs)
             // Package Variables:
             // {$PUBLISHER}         Publisher name (CN of the certificate used to sign the package)
             // {$PRODUCTNAME}       Name of product being installed
@@ -194,6 +195,7 @@ namespace CoApp.Toolkit.Engine {
 
             // {$PACKAGEDIR}        Where the product is getting installed into
             // {$CANONICALPACKAGEDIR} The "publicly visible location" of the "current" version of the package.
+            
 
             var result = text;
 
@@ -207,6 +209,7 @@ namespace CoApp.Toolkit.Engine {
             result = result.Replace(@"{$BIN}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin"));
             result = result.Replace(@"{$APPS}", PackageManagerSettings.CoAppRootDirectory);
             result = result.Replace(@"{$INSTALL}", PackageManagerSettings.CoAppInstalledDirectory);
+            result = result.Replace(@"{$ALLPROGRAMS}", KnownFolders.GetFolderPath(KnownFolder.CommonPrograms));
 
             result = result.Replace(@"{$PUBLISHER}", PackageDetails.Publisher.Name);
             result = result.Replace(@"{$PRODUCTNAME}", Name);
@@ -526,6 +529,16 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        /*
+        public bool Supercedes(Package p)
+        {
+            return Architecture == p.Architecture &&
+                   PublicKeyToken == p.PublicKeyToken &&
+                   Name.Equals(p.Name, StringComparison.CurrentCultureIgnoreCase) &&
+                   p.Version <= PolicyMaximumVersion && p.Version >= PolicyMinimumVersion;
+        }
+        */
+        
         public bool CouldNotDownload {
             get { return _couldNotDownload; }
             set {
@@ -547,13 +560,11 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public bool CanSatisfy { get; set; }
-
     }
 
     public class NotifiesPackageManager {
         internal static void Changed() {
             // notify the Registrar that a change has occured in a package.
             NewPackageManager.Instance.Updated();
-        }
     }
 }

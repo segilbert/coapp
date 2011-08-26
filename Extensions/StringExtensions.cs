@@ -762,6 +762,7 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
+        /// is this supposed to be deleted?
         /// <summary>
         /// Gets the key token from full key.
         /// 
