@@ -97,7 +97,7 @@ namespace CoApp.Toolkit.Engine {
                 PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds.ToArray();
 
                 // remove it from the cached feeds
-                SessionCache<PackageFeed>.Value.Clear(feedLocation);
+                Cache<PackageFeed>.Value.Clear(feedLocation);
             }
         }
         

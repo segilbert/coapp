@@ -59,8 +59,10 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 while (continueHandlingMessages && ManualResetEvent.WaitOne()) {
                     ManualResetEvent.Reset();
-                    while (Count > 0 && continueHandlingMessages) {
-                        continueHandlingMessages = Dispatch(Dequeue());
+                    while (Count > 0 ) {
+                        if(!Dispatch(Dequeue() ) ) {
+                            continueHandlingMessages = false;
+                        }
                     }
                 }
             }
@@ -131,7 +133,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            //Console.WriteLine("    Response:{0}", responseMessage.Command);
+                            // Console.WriteLine("    Response:{0}", responseMessage.Command);
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -143,8 +145,8 @@ namespace CoApp.Toolkit.Engine.Client {
                                     IsReady.Set();
                                     return;
                                 }
-                                // Console.WriteLine("Unable to queue the response to the right request event queue!");
-                                //Console.WriteLine("    Response:{0}", responseMessage.Command);
+                                //  Console.WriteLine("Unable to queue the response to the right request event queue!");
+                                // Console.WriteLine("    Response:{0}", responseMessage.Command);
                                 // not able to queue up the response to the right task?
                             }
                         });
