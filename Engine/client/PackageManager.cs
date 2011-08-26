@@ -270,9 +270,9 @@ namespace CoApp.Toolkit.Engine.Client {
                 }.Extend(messages)).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
         }
 
-        public Task FindPackages(string canonicalName, string name, string version, string arch, string publicKeyToken, bool? dependencies, bool? installed,
-            bool? active, bool? required, bool? blocked, bool? latest, int? index, int? maxResults, string location, bool? forceScan,
-            PackageManagerMessages messages) {
+        public Task FindPackages(string canonicalName = null, string name = null, string version = null, string arch = null, string publicKeyToken = null, bool? dependencies = null, bool? installed = null,
+            bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, int? index = null, int? maxResults = null, string location = null, bool? forceScan = null,
+            PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -336,7 +336,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task GetPackageDetails(string canonicalName, PackageManagerMessages messages) {
+        public Task GetPackageDetails(string canonicalName, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -358,7 +358,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task InstallPackage(string canonicalName, bool? autoUpgrade, bool? force, PackageManagerMessages messages) {
+        public Task InstallPackage(string canonicalName, bool? autoUpgrade = null, bool? force = null, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -386,7 +386,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task ListFeeds(int? index, int? maxResults, PackageManagerMessages messages) {
+        public Task ListFeeds(int? index = null, int? maxResults = null, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -411,7 +411,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task RemoveFeed(string location, bool? session, PackageManagerMessages messages) {
+        public Task RemoveFeed(string location, bool? session = null, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -436,7 +436,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task AddFeed(string location, bool? session, PackageManagerMessages messages) {
+        public Task AddFeed(string location, bool? session = null, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -461,7 +461,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task VerifyFileSignature(string filename, PackageManagerMessages messages) {
+        public Task VerifyFileSignature(string filename, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -483,7 +483,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task SetPackage(string canonicalName, bool? active, bool? required, bool? blocked, PackageManagerMessages messages) {
+        public Task SetPackage(string canonicalName, bool? active = null, bool? required = null, bool? blocked = null, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -514,7 +514,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task RemovePackage(string canonicalName, bool? force, PackageManagerMessages messages) {
+        public Task RemovePackage(string canonicalName, bool? force = null, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -539,7 +539,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task UnableToAcquire(string canonicalName, PackageManagerMessages messages) {
+        public Task UnableToAcquire(string canonicalName, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -561,7 +561,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages) {
+        public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -589,7 +589,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task SuppressFeed(string location, PackageManagerMessages messages) {
+        public Task SuppressFeed(string location, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -611,7 +611,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        internal static bool Dispatch(UrlEncodedMessage responseMessage) {
+        internal static bool Dispatch(UrlEncodedMessage responseMessage = null) {
             switch (responseMessage.Command) {
                 case "failed-package-install":
                     PackageManagerMessages.Invoke.FailedPackageInstall(responseMessage["canonical-name"], responseMessage["filename"], responseMessage["reason"]);

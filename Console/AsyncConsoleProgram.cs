@@ -27,14 +27,16 @@ namespace CoApp.Toolkit.Console {
 
         protected virtual int Startup(IEnumerable<string> args) {
             var task = Task.Factory.StartNew(() => {
+#if DEBUG
                 new DebugMessage {
                     WriteLine = (text) => {
                         Console.WriteLine("[DEBUG][{0}] {1}", ++Counter,text);
                     }
                 }.Register();
-                
+#endif                
                 Main(args);
             }, CancellationTokenSource.Token);
+
             try {
                 Console.CancelKeyPress += (x, y) => {
                     if (!CancellationTokenSource.IsCancellationRequested) {
@@ -42,7 +44,8 @@ namespace CoApp.Toolkit.Console {
                         CancellationTokenSource.Cancel();
                         if (y.SpecialKey == ConsoleSpecialKey.ControlBreak) {
                             // can't cancel so we just block on the task.
-                            task.Wait();
+                            return;
+                            // task.Wait();
                         }
                     }
                     y.Cancel = true;
@@ -95,8 +98,11 @@ namespace CoApp.Toolkit.Console {
             using (new ConsoleColors(ConsoleColor.Red, ConsoleColor.Black)) {
                 Console.WriteLine("Error: {0}", text.format(par));
             }
-            Console.WriteLine("Press Enter To Continue.");
-            Console.ReadLine();
+            
+            int x = 6;
+            while( x-- > 0 || !CancellationTokenSource.Token.WaitHandle.WaitOne( 500 ) ) {
+                Console.Write(".");
+            }
 
             return 1;
         }
