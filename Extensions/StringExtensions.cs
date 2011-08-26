@@ -74,8 +74,6 @@ namespace CoApp.Toolkit.Extensions {
         /// </summary>
         private static readonly Regex _badDirIdCharsRegex = new Regex(@"\s|\.|\-|\\");
 
-        private static readonly Regex _badPathCharacters = new Regex("[^"+LettersNumbersUnderscoresAndDashesAndDots+"]");
-        
         /// <summary>
         /// a two-part version regex.
         /// </summary>
@@ -273,8 +271,6 @@ namespace CoApp.Toolkit.Extensions {
             regexPart2 = regexPart2.Replace("?", @"[^\<\>\|]*");
 
             regexStuff += regexPart2 + '$';
-
-
 
             var mask = new Regex(regexStuff, RegexOptions.IgnoreCase);
             /*

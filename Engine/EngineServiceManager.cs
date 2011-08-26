@@ -200,7 +200,7 @@ namespace CoApp.Toolkit.Engine {
 #else
     // wouldn't start. 
     // make it someone elses problem.
-                        rethrow;
+                        throw;
 #endif
                     }
                     // assumably, it's running if we got this far.
