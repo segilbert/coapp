@@ -214,6 +214,7 @@
     <Compile Include="Win32\IoReparseTag.cs" />
     <Compile Include="Win32\ISymlink.cs" />
     <Compile Include="Win32\Kernel32.cs" />
+    <Compile Include="Win32\KnownFolders.cs" />
     <Compile Include="Win32\LegacySymlink.cs" />
     <Compile Include="Win32\ModernSymlink.cs" />
     <Compile Include="Win32\MoveFileFlags.cs" />

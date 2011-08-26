@@ -73,6 +73,8 @@ namespace CoApp.Toolkit.Extensions {
         /// Note: Eric is this yours?
         /// </summary>
         private static readonly Regex _badDirIdCharsRegex = new Regex(@"\s|\.|\-|\\");
+
+        private static readonly Regex _badPathCharacters = new Regex("[^"+LettersNumbersUnderscoresAndDashesAndDots+"]");
         
         /// <summary>
         /// a two-part version regex.
@@ -570,6 +572,10 @@ namespace CoApp.Toolkit.Extensions {
         /// <remarks></remarks>
         public static string MakeSafeDirectoryId(this string input) {
             return _badDirIdCharsRegex.Replace(input, "_");
+        }
+
+        public static string MakeSafeFileName(this string input ) {
+            return new Regex(@"-+").Replace(new Regex(@"[^\d\w_\-\.]").Replace(input, "-"), "-");
         }
 
         /// <summary>

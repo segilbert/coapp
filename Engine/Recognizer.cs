@@ -83,12 +83,17 @@ namespace CoApp.Toolkit.Engine {
                         } ;
                     }, new RecognizerState { OriginalUrl = location.AbsoluteUri } , TaskCreationOptions.AttachedToParent);
 
+                    // since we're expecting that the canonicalname will be used as a filename 
+                    // in the .cache directory, we need to generate a safe filename based on the 
+                    // data in the URL
+                    var safeCanonicalName = location.GetLeftPart(UriPartial.Path).MakeSafeFileName();
+
                     // store the task until the client tells us that it has the file.
-                    SessionCache<Task<RecognitionInfo>>.Value[item] = completion;
+                    SessionCache<Task<RecognitionInfo>>.Value[safeCanonicalName] = completion;
 
                     // GS01: Should we make a deeper path in the cache directory?
                     // perhaps that would let us use a cached version of the file we're looking for.
-                    PackageManagerMessages.Invoke.RequireRemoteFile(item, location.AbsoluteUri.SingleItemAsEnumerable(), PackageManagerSettings.CoAppCacheDirectory,false);
+                    PackageManagerMessages.Invoke.RequireRemoteFile(safeCanonicalName, location.AbsoluteUri.SingleItemAsEnumerable(), PackageManagerSettings.CoAppCacheDirectory, false);
 
                     // return the completion task, as whatever is waiting for this 
                     // needs to continue on that.
@@ -160,6 +165,16 @@ namespace CoApp.Toolkit.Engine {
                             break;
 
                         default:
+                            // guess based on file contents
+                            try {
+                                if( CoAppMSI.IsCoAppPackageFile(localPath) ) {
+                                    result.IsCoAppMSI = true;
+                                    result.IsPackageFile = true;
+                                }
+                            }catch {
+                                // not a coapp file...
+                            }
+
                             if (result.FullPath.IsXmlFile()) {
                                 try {
                                     // this could be an atom feed

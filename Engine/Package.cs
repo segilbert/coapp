@@ -566,5 +566,6 @@ namespace CoApp.Toolkit.Engine {
         internal static void Changed() {
             // notify the Registrar that a change has occured in a package.
             NewPackageManager.Instance.Updated();
+        }
     }
 }
