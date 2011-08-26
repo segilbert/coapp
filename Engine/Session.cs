@@ -457,7 +457,6 @@ namespace CoApp.Toolkit.Engine {
                     } else {
                         readTask.Wait((int)_synchronousClientHeartbeat.TotalMilliseconds, _cancellationTokenSource.Token);
                     }
-                    // readTask.Wait(_isAsychronous ? 6000 : (int) _synchronousClientHeartbeat.TotalMilliseconds, _cancellationTokenSource.Token);
 
                     if (IsCancelled) {
                         return;
