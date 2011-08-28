@@ -29,7 +29,7 @@ namespace CoApp.Toolkit.Utility {
     using RegistryView = Configuration.RegistryView;
 
     /// <summary>
-    /// Finds an executable in the file system
+    /// Utility to search for an executable in the file system
     /// </summary>
     public class ProgramFinder {
         private static IEnumerable<string> _commonSearchLocations = new List<string>();
