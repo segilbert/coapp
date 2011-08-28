@@ -28,17 +28,38 @@ namespace CoApp.Toolkit.Utility {
     using Win32;
     using RegistryView = Configuration.RegistryView;
 
+    /// <summary>
+    /// Finds an executable in the file system
+    /// </summary>
     public class ProgramFinder {
         private static IEnumerable<string> _commonSearchLocations = new List<string>();
         private IEnumerable<string> _searchLocations = new List<string>();
         private IEnumerable<string> _recursiveSearchLocations = new List<string>();
 
+        /// <summary>
+        /// A ProgramFinder which searches in all Program Files directories
+        /// </summary>
         public static ProgramFinder ProgramFiles;
+        /// <summary>
+        /// A ProgramFinder which searches in Program Files and Windows' system32 folder
+        /// </summary>
         public static ProgramFinder ProgramFilesAndSys32;
+        /// <summary>
+        /// A ProgramFinder which searches in Program Files, GAC and Window's .NET tools
+        /// </summary>
         public static ProgramFinder ProgramFilesAndDotNet;
+        /// <summary>
+        /// A ProgramFinder which searches in Program Files, Windows' system32 folder, GAC and Window's .NET tools
+        /// </summary>
         public static ProgramFinder ProgramFilesSys32AndDotNet;
+        /// <summary>
+        /// A ProgramFinder which searches in Program Files, .NET tools, WDK and Windows SDK
+        /// </summary>
         public static ProgramFinder ProgramFilesAndDotNetAndSdk;
 
+        /// <summary>
+        /// Disable cacheing (no lookup, no writes)
+        /// </summary>
         public static bool IgnoreCache;
 
         static ProgramFinder() {
@@ -64,10 +85,19 @@ namespace CoApp.Toolkit.Utility {
                 : new ProgramFinder("", @"%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%;%SystemRoot%\Microsoft.NET;" + sdkFolder + ";" + wdkFolder);
         }
 
+        /// <summary>
+        /// A ProgramFinder which searches in given paths and common locations
+        /// </summary>
+        /// <param name="searchPath">Paths to search (semicolon ';' delimited)</param>
         public ProgramFinder(string searchPath) {
             AddSearchLocations(searchPath);
         }
 
+        /// <summary>
+        /// A ProgramFinder which searches in given paths and common locations
+        /// </summary>
+        /// <param name="searchPath">Paths to search (semicolon ';' delimited</param>
+        /// <param name="recursivePath">Paths to search recursively (semicolon ';' delimited</param>
         public ProgramFinder(string searchPath, string recursivePath) {
             AddSearchLocations(searchPath);
             AddRecursiveSearchLocations(recursivePath);
@@ -93,14 +123,39 @@ namespace CoApp.Toolkit.Utility {
             AddPathsToList(paths, ref _commonSearchLocations);
         }
 
+        /// <summary>
+        /// Finds a tool in the file system
+        /// </summary>
+        /// <param name="filename">The name of the tool</param>
+        /// <param name="minimumVersion">Minimum required version</param>
+        /// <param name="filters">A list of tool names which should be excluded from the scan</param>
+        /// <returns></returns>
         public string ScanForFile(string filename, string minimumVersion, IEnumerable<string> filters = null) {
             return ScanForFile(filename, ExecutableInfo.none, minimumVersion, filters);
         }
 
+        /// <summary>
+        /// Finds a tool in the file system
+        /// </summary>
+        /// <param name="filename">The name of the tool</param>
+        /// <param name="executableType">Platform or assembly information</param>
+        /// <param name="filters">A list of tool names which should be excluded from the scan</param>
+        /// <returns></returns>
         public string ScanForFile(string filename, ExecutableInfo executableType, IEnumerable<string> filters) {
             return ScanForFile(filename, executableType, "0.0", filters);
         }
 
+        /// <summary>
+        /// Finds a tool in the file system
+        /// </summary>
+        /// <param name="filename">The name of the tool</param>
+        /// <param name="executableType">Platform or assembly info</param>
+        /// <param name="minimumVersion">Minimum required version</param>
+        /// <param name="excludeFilters">A list of tool names which should be excluded from the scan</param>
+        /// <param name="includeFilters">A list of tool names which should be included in the scan</param>
+        /// <param name="rememberMissingFile">Disables searching for files which are known to be missing.</param>
+        /// <param name="tagWithCosmeticVersion"></param>
+        /// <returns></returns>
         public string ScanForFile(string filename, ExecutableInfo executableType = ExecutableInfo.none, string minimumVersion = "0.0",
             IEnumerable<string> excludeFilters = null, IEnumerable<string> includeFilters= null, bool rememberMissingFile = false, string tagWithCosmeticVersion = null ) {
             if (!IgnoreCache) {
@@ -167,10 +222,22 @@ namespace CoApp.Toolkit.Utility {
             return GetCachedPath("{0}/{1}/{2}".format(toolEntry, executableInfo, minimumToolVersion));
         }
 
+        /// <summary>
+        /// Save a tool to the registry
+        /// </summary>
+        /// <param name="toolEntry">Name of the tool</param>
+        /// <param name="location">Full path to the tool</param>
+        /// <param name="executableInfo">Platform or assembly information</param>
+        /// <param name="minimumToolVersion"></param>
         private static void SetCachedPath(string toolEntry, string location, ExecutableInfo executableInfo, string minimumToolVersion) {
             SetCachedPath("{0}/{1}/{2}".format(toolEntry, executableInfo, minimumToolVersion), location);
         }
 
+        /// <summary>
+        /// Look up a given tool in the registry. (Returns special strings.)
+        /// </summary>
+        /// <param name="toolEntry">A formatted tool entry</param>
+        /// <returns>A string from the cache (a full path or "NOT-FOUND")</returns>
         private static string GetCachedPath(string toolEntry) {
             if (IgnoreCache) {
                 return null;
@@ -192,10 +259,20 @@ namespace CoApp.Toolkit.Utility {
             return result;
         }
 
+        /// <summary>
+        /// Save a tool to the registry
+        /// </summary>
+        /// <param name="toolEntry">Formatted tool entry</param>
+        /// <param name="location">Full path to the tool</param>
         private static void SetCachedPath(string toolEntry, string location) {
             Configuration.RegistryView.CoAppUser[@"Tools#" + toolEntry].StringValue = location;
         }
 
+        /// <summary>
+        /// Write something to the console
+        /// </summary>
+        /// <param name="message">A formatted message</param>
+        /// <param name="arguments">Zero or more strings to format</param>
         private static void Notify(string message, params string[] arguments) {
             Console.WriteLine(message.format(arguments));
         }
