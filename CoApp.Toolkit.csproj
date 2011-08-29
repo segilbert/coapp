@@ -330,7 +330,7 @@
 if not exist "$(TargetDir)optional\" xcopy /q /s /c /i  "$(SolutionDir)tools\optional" "$(TargetDir)optional\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-toolkit-build-numbers.js" cscript /nologo "$(SolutionDir)scripts\inc-toolkit-build-numbers.js"</PreBuildEvent>
+    <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-toolkit-build-numbers.js" cscript /nologo //E:Jscript "$(SolutionDir)scripts\inc-toolkit-build-numbers.js"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
