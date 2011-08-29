@@ -83,7 +83,7 @@ namespace CoApp.Toolkit.Engine {
 
         private void RemoveSessionFeed(string feedLocation) {
             lock (this) {
-                var sessionFeeds = from feed in SessionFeedLocations where !feed.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase) select feed;
+                var sessionFeeds = from emove in SessionFeedLocations where !emove.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase) select emove;
                 SessionCache<IEnumerable<string>>.Value["session-feeds"] = sessionFeeds.ToArray();
                 
                 // remove it from the cached feeds
@@ -665,7 +665,7 @@ namespace CoApp.Toolkit.Engine {
 
                 // seems like a good time to check if we're supposed to bail...
                 if (CancellationRequested) {
-                    PackageManagerMessages.Invoke.OperationCancelled("remove-package");
+                    PackageManagerMessages.Invoke.OperationCancelled("set-package");
                     return;
                 }
 
@@ -752,7 +752,7 @@ namespace CoApp.Toolkit.Engine {
                     return;
                 }
 
-                if (!package.IsBlocked) {
+                if (package.IsBlocked) {
                     PackageManagerMessages.Invoke.PackageBlocked(canonicalName);
                     return;
                 }
@@ -778,6 +778,7 @@ namespace CoApp.Toolkit.Engine {
                     PackageManagerMessages.Invoke.RemovedPackage(canonicalName);
                 }
                 catch (OperationCompletedBeforeResultException e) {
+                    Console.WriteLine("Failed? {0}", e.StackTrace);
                     PackageManagerMessages.Invoke.FailedPackageRemoval(canonicalName, e.Message);
                     return;
                 }

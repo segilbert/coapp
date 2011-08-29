@@ -128,7 +128,7 @@ namespace CoApp.Toolkit.Engine {
                 PackageHandler.Install(this, progress);
                 _isInstalled = true;
 
-
+                    
                 if (Version > currentVersion) {
                     SetPackageCurrent();
                 }
@@ -153,14 +153,21 @@ namespace CoApp.Toolkit.Engine {
                 PackageHandler.Remove(this, progress);
                 _isInstalled = false;
 
-                // this will activate the next one in line
-                GetCurrentPackage(Name, PublicKeyToken);
-                // GS01: fix this to rerun package composition on prior version.
-
             }
             catch (Exception) {
                 PackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
                 throw new OperationCompletedBeforeResultException();
+            }
+            finally {
+                try {
+                    // this will activate the next one in line
+                    GetCurrentPackage(Name, PublicKeyToken);
+                    // GS01: fix this to rerun package composition on prior version.
+                }
+                catch (Exception e) {
+                    // boooo!
+                    Console.WriteLine("failed setting active package for {0}-{1}", Name, PublicKeyToken);
+                }
             }
         }
         #endregion

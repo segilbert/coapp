@@ -118,8 +118,12 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 while (IsConnected) {
                     var incomingMessage = new byte[BufferSize];
+                    
                     try {
-                        _pipe.ReadAsync(incomingMessage, 0, BufferSize).ContinueWith(antecedent => {
+
+                        var readTask = _pipe.ReadAsync(incomingMessage, 0, BufferSize);
+
+                        readTask.ContinueWith(antecedent => {
                             if (antecedent.IsCanceled || antecedent.IsFaulted || !IsConnected) {
                                 Disconnect();
                                 return;
@@ -133,7 +137,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            Console.WriteLine("    Response:{0}", responseMessage.Command);
+                             Console.WriteLine("    Response:{0}", responseMessage.Command);
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -149,7 +153,8 @@ namespace CoApp.Toolkit.Engine.Client {
                                 // Console.WriteLine("    Response:{0}", responseMessage.Command);
                                 // not able to queue up the response to the right task?
                             }
-                        });
+                        }).AutoManage();
+                        readTask.Wait();
                     }
                     catch {
                         Disconnect();

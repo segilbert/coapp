@@ -215,6 +215,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 int currentTotalTicks = -1;
                 int currentProgress = 0;
                 int progressDirection = 1;
+                int actualPercent = 0;
 
                 Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
                     switch (messageType) {
@@ -247,7 +248,11 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                             }
 
                             if (currentTotalTicks > 0) {
-                                progress(currentProgress*100/currentTotalTicks);
+                                var newPercent = (currentProgress*100/currentTotalTicks);
+                                if( actualPercent < newPercent) {
+                                    actualPercent = newPercent;
+                                    progress(actualPercent);    
+                                }
                             }
                             break;
                     }
@@ -278,6 +283,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 int currentTotalTicks = -1;
                 int currentProgress = 0;
                 int progressDirection = 1;
+                int actualPercent = 0;
 
                 Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
                     switch (messageType) {
@@ -307,7 +313,13 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                                         break;
                                 }
                                 if (currentTotalTicks > 0) {
-                                    progress(currentProgress*100/currentTotalTicks);
+                                    if (currentTotalTicks > 0) {
+                                        var newPercent = (currentProgress * 100 / currentTotalTicks);
+                                        if (actualPercent < newPercent) {
+                                            actualPercent = newPercent;
+                                            progress(actualPercent);
+                                        }
+                                    }
                                 }
                             }
                             break;
