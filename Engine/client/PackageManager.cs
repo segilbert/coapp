@@ -59,8 +59,8 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 while (continueHandlingMessages && ManualResetEvent.WaitOne()) {
                     ManualResetEvent.Reset();
-                    while (Count > 0 ) {
-                        if(!Dispatch(Dequeue() ) ) {
+                    while (Count > 0) {
+                        if (!Dispatch(Dequeue())) {
                             continueHandlingMessages = false;
                         }
                     }
@@ -133,7 +133,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            // Console.WriteLine("    Response:{0}", responseMessage.Command);
+                            Console.WriteLine("    Response:{0}", responseMessage.Command);
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -172,27 +172,34 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-        public Task<IEnumerable<Package>> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null,
-            bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null) {
+        public Task<IEnumerable<Package>> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null,
+            bool? dependencies = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
+            string location = null, bool? forceScan = null, PackageManagerMessages messages = null) {
             if (parameters.IsNullOrEmpty()) {
-                return GetPackages(string.Empty, minVersion, maxVersion, installed, active, required, blocked, latest, messages);
+                return GetPackages(string.Empty, minVersion, maxVersion, dependencies, installed, active, required, blocked, latest, location, forceScan,
+                    messages);
             }
 
             // spawn the tasks off in parallel
-            var tasks = parameters.Select(each => GetPackages(each, minVersion, maxVersion, installed, active, required, blocked, latest, messages)).ToArray();
+            var tasks =
+                parameters.Select(
+                    each => GetPackages(each, minVersion, maxVersion, dependencies, installed, active, required, blocked, latest, location, forceScan, messages))
+                    .ToArray();
 
             // return a task that is the sum of all the tasks.
-            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => tasks.SelectMany(each => each.Result),
+            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => tasks.SelectMany(each => each.Result).Distinct(),
                 TaskContinuationOptions.AttachedToParent);
         }
 
-        public Task<IEnumerable<Package>> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? installed = null,
-            bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, PackageManagerMessages messages = null) {
+        public Task<IEnumerable<Package>> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? dependencies = null,
+            bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, string location = null,
+            bool? forceScan = null, PackageManagerMessages messages = null) {
             var packages = new List<Package>();
 
             if (parameter.IsNullOrEmpty()) {
-                return FindPackages(null, null, null, null, null, null, installed, active, required, blocked, latest, null, null, null, null,
-                    new PackageManagerMessages {
+                return FindPackages( /* canonicalName:*/
+                    null, /* name */null, /* version */null, /* arch */ null, /* pkt */null, dependencies, installed, active, required, blocked, latest,
+                    /* index */null, /* max-results */null, location, forceScan, new PackageManagerMessages {
                         PackageInformation = package => packages.Add(package),
                     }.Extend(messages)).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
             }
@@ -213,13 +220,15 @@ namespace CoApp.Toolkit.Engine.Client {
                         if (singleResult != null) {
                             return AddFeed(originalDirectory, true, new PackageManagerMessages {
                                 // don't have to handle any messages here...
-                            }.Extend(messages)).ContinueWith(antecedent2 => singleResult.SingleItemAsEnumerable(),
-                                TaskContinuationOptions.AttachedToParent).Result;
+                            }.Extend(messages)).ContinueWith(antecedent2 => singleResult.SingleItemAsEnumerable(), TaskContinuationOptions.AttachedToParent).
+                                Result;
                         }
 
                         // if it was a feed, then continue with the big query
                         if (feedAdded != null) {
-                            return InternalGetPackages(null, feedAdded, minVersion, maxVersion, installed, active, required, blocked, latest, messages).Result;
+                            return
+                                InternalGetPackages(null, minVersion, maxVersion, dependencies, installed, active, required, blocked, latest, feedAdded,
+                                    forceScan, messages).Result;
                         }
 
                         // if we get here, that means that we didn't recognize the file. 
@@ -240,7 +249,10 @@ namespace CoApp.Toolkit.Engine.Client {
                 }.Extend(messages)).ContinueWith(antecedent => {
                     // if it was a feed, then continue with the big query
                     if (feedAdded != null) {
-                        return InternalGetPackages(null, feedAdded, minVersion, maxVersion, installed, active, required, blocked, latest, messages).Result;
+                        // this overrides any passed in locations with just the feed added.
+                        return
+                            InternalGetPackages(null, minVersion, maxVersion, dependencies, installed, active, required, blocked, latest, feedAdded, forceScan,
+                                messages).Result;
                     }
 
                     // if we get here, that means that we didn't recognize the file. 
@@ -249,18 +261,19 @@ namespace CoApp.Toolkit.Engine.Client {
                 }, TaskContinuationOptions.AttachedToParent);
             }
             // can only be a canonical name match, proceed with that.            
-            return InternalGetPackages(PackageName.Parse(parameter), null, minVersion, maxVersion, installed, active, required, blocked, latest, messages);
+            return InternalGetPackages(PackageName.Parse(parameter), minVersion, maxVersion, dependencies, installed, active, required, blocked, latest,
+                location, forceScan, messages);
         }
 
-        private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, string feedAdded = null, ulong? minVersion = null,
-            ulong? maxVersion = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
-            PackageManagerMessages messages = null) {
+        private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, ulong? minVersion = null, ulong? maxVersion = null,
+            bool? dependencies = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
+            string location = null, bool? forceScan = null, PackageManagerMessages messages = null) {
             var packages = new List<Package>();
 
             return FindPackages(packageName != null && packageName.IsFullMatch ? packageName.CanonicalName : null, packageName == null ? null : packageName.Name,
                 packageName == null ? null : packageName.Version, packageName == null ? null : packageName.Arch,
-                packageName == null ? null : packageName.PublicKeyToken, null, installed, active, required, blocked, latest, null, null, feedAdded, null,
-                new PackageManagerMessages {
+                packageName == null ? null : packageName.PublicKeyToken, dependencies, installed, active, required, blocked, latest, null, null, location,
+                forceScan, new PackageManagerMessages {
                     PackageInformation = package => {
                         if ((!minVersion.HasValue || package.Version.VersionStringToUInt64() >= minVersion) &&
                             (!maxVersion.HasValue || package.Version.VersionStringToUInt64() <= maxVersion)) {
@@ -270,9 +283,9 @@ namespace CoApp.Toolkit.Engine.Client {
                 }.Extend(messages)).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
         }
 
-        public Task FindPackages(string canonicalName = null, string name = null, string version = null, string arch = null, string publicKeyToken = null, bool? dependencies = null, bool? installed = null,
-            bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, int? index = null, int? maxResults = null, string location = null, bool? forceScan = null,
-            PackageManagerMessages messages = null) {
+        public Task FindPackages(string canonicalName = null, string name = null, string version = null, string arch = null, string publicKeyToken = null,
+            bool? dependencies = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
+            int? index = null, int? maxResults = null, string location = null, bool? forceScan = null, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -280,54 +293,22 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("find-packages") {
-                        {
-                            "canonical-name", canonicalName
-                            },
-                        {
-                            "name", name
-                            },
-                        {
-                            "version", version
-                            },
-                        {
-                            "arch", arch
-                            },
-                        {
-                            "public-key-token", publicKeyToken
-                            },
-                        {
-                            "dependencies", dependencies
-                            },
-                        {
-                            "installed", installed
-                            },
-                        {
-                            "active", active
-                            },
-                        {
-                            "required", required
-                            },
-                        {
-                            "blocked", blocked
-                            },
-                        {
-                            "latest", latest
-                            },
-                        {
-                            "index", index
-                            },
-                        {
-                            "max-results", maxResults
-                            },
-                        {
-                            "location", location
-                            },
-                        {
-                            "force-scan", forceScan
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"canonical-name", canonicalName},
+                        {"name", name},
+                        {"version", version},
+                        {"arch", arch},
+                        {"public-key-token", publicKeyToken},
+                        {"dependencies", dependencies},
+                        {"installed", installed},
+                        {"active", active},
+                        {"required", required},
+                        {"blocked", blocked},
+                        {"latest", latest},
+                        {"index", index},
+                        {"max-results", maxResults},
+                        {"location", location},
+                        {"force-scan", forceScan},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -344,12 +325,8 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("get-package-details") {
-                        {
-                            "canonical-name", canonicalName
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"canonical-name", canonicalName},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -358,7 +335,8 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
-        public Task InstallPackage(string canonicalName, bool? autoUpgrade = null, bool? force = null, PackageManagerMessages messages = null) {
+        public Task InstallPackage(string canonicalName, bool? autoUpgrade = null, bool? force = null, bool? download = null, bool? pretend = null,
+            PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
@@ -366,18 +344,12 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("install-package") {
-                        {
-                            "canonical-name", canonicalName
-                            },
-                        {
-                            "auto-upgrade", autoUpgrade
-                            },
-                        {
-                            "force", force
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"canonical-name", canonicalName},
+                        {"auto-upgrade", autoUpgrade},
+                        {"force", force},
+                        {"download", download},
+                        {"pretend", pretend},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -394,15 +366,9 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("find-feeds") {
-                        {
-                            "index", index
-                            },
-                        {
-                            "max-results", maxResults
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"index", index},
+                        {"max-results", maxResults},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -419,15 +385,9 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("remove-feed") {
-                        {
-                            "location", location
-                            },
-                        {
-                            "session", session
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"location", location},
+                        {"session", session},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -444,15 +404,9 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("add-feed") {
-                        {
-                            "location", location
-                            },
-                        {
-                            "session", session
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"location", location},
+                        {"session", session},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -469,12 +423,8 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("verify-file-signature") {
-                        {
-                            "filename", filename
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"filename", filename},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -491,21 +441,11 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("set-package") {
-                        {
-                            "canonical-name", canonicalName
-                            },
-                        {
-                            "active", active
-                            },
-                        {
-                            "required", required
-                            },
-                        {
-                            "blocked", blocked
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"canonical-name", canonicalName},
+                        {"active", active},
+                        {"required", required},
+                        {"blocked", blocked},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -522,15 +462,9 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("remove-package") {
-                        {
-                            "canonical-name", canonicalName
-                            },
-                        {
-                            "force", force
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"canonical-name", canonicalName},
+                        {"force", force},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -547,12 +481,8 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("unable-to-acquire") {
-                        {
-                            "canonical-name", canonicalName
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"canonical-name", canonicalName},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -569,18 +499,10 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("recongnize-file") {
-                        {
-                            "canonical-name", canonicalName
-                            },
-                        {
-                            "local-location", localLocation
-                            },
-                        {
-                            "remote-location", remoteLocation
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"canonical-name", canonicalName},
+                        {"local-location", localLocation},
+                        {"remote-location", remoteLocation},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -597,12 +519,8 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("suppress-feed") {
-                        {
-                            "location", location
-                            },
-                        {
-                            "rqid", Task.CurrentId
-                            },
+                        {"location", location},
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.
@@ -793,15 +711,9 @@ namespace CoApp.Toolkit.Engine.Client {
 
         private void StartSession(string clientId, string sessionId) {
             WriteAsync(new UrlEncodedMessage("start-session") {
-                {
-                    "client", clientId
-                    },
-                {
-                    "id", sessionId
-                    },
-                {
-                    "rqid", sessionId
-                    },
+                {"client", clientId},
+                {"id", sessionId},
+                {"rqid", sessionId},
             });
         }
     }

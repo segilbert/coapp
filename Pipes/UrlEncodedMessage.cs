@@ -235,8 +235,12 @@ namespace CoApp.Toolkit.Pipes {
         /// <returns></returns>
         /// <remarks></remarks>
         public IEnumerable<string> GetCollection(string p) {
-            var rx = new Regex(@"^{0}\[.\n]\]$".format(Regex.Escape(p)));
+            var rx = new Regex(@"^{0}\[\d*\]$".format(Regex.Escape(p)));
             return from k in Data.Keys where rx.IsMatch(k) select Data[k];
+        }
+
+        public static implicit operator string(UrlEncodedMessage value) {
+            return value.ToString();
         }
     }
 }

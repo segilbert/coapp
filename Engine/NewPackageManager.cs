@@ -169,10 +169,25 @@ namespace CoApp.Toolkit.Engine {
 
                     select package;
 
+
                 // only the latest?
-                if (latest.HasValue && latest == true) {
+                if (latest == true) {
                     results = results.HighestPackages();
                 }
+
+                // if the client has asked for the dependencies as well, include them in the result set.
+                // otherwise the client will get the names in 
+                if (dependencies == true) {
+                    // grab the dependencies too.
+                    var deps = results.SelectMany(each => each.InternalPackageData.Dependencies).Distinct();
+
+                    if (latest == true) {
+                        deps = deps.HighestPackages();
+                    }
+
+                    results = results.Union(deps).Distinct();
+                }
+
 
                 // paginate the results
                 if (index.HasValue) {
@@ -224,7 +239,7 @@ namespace CoApp.Toolkit.Engine {
             return t;
         }
 
-        public Task InstallPackage(string canonicalName, bool? autoUpgrade, bool? force, PackageManagerMessages messages) {
+        public Task InstallPackage(string canonicalName, bool? autoUpgrade, bool? force, bool? download, bool? pretend, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
                 if (messages != null) {
                     messages.Register();
@@ -235,6 +250,8 @@ namespace CoApp.Toolkit.Engine {
                         lock (manualResetEvents) {
                             manualResetEvents.Add(manualResetEvent);
                         }
+
+                        var packagesTriedToDownloadThisTask = new List<Package>();
 
                         var package = GetSinglePackage(canonicalName, "install-package");
 
@@ -298,11 +315,31 @@ namespace CoApp.Toolkit.Engine {
                                 return;
                             }
 
+                            if (download == false && pretend == true) {
+                                // we can just return a bunch of foundpackage messages, since we're not going to be 
+                                // actually installing anything, nor trying to download anything.
+                                foreach( var p in installGraph) {
+                                    PackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
+                                }
+                                return;
+                            }
+
+
                             // we've got an install graph.
                             // let's see if we've got all the files
                             var missingFiles = from p in installGraph where !p.InternalPackageData.HasLocalFile select p;
+
+                            if( download == true ) {
+                                // we want to try downloading all the files that we're missing, regardless if we've tried before.
+                                // unless we've already tried in this task once. 
+                                foreach( var p in missingFiles.Where( each => packagesTriedToDownloadThisTask.Contains(each)) ) {
+                                    packagesTriedToDownloadThisTask.Add(p);
+                                    p.PackageSessionData.CouldNotDownload = false;
+                                }
+                            }
+
                             if (missingFiles.Any()) {
-                                // we've got some that don't have files.
+                                // we've got some packages to install that don't have files.
                                 foreach (var p in missingFiles.Where(p => !p.PackageSessionData.RequestedDownload)) {
                                     PackageManagerMessages.Invoke.RequireRemoteFile(p.CanonicalName,
                                         p.InternalPackageData.RemoteLocation.Select(each => each.AbsoluteUri), PackageManagerSettings.CoAppCacheDirectory, false);
@@ -311,6 +348,16 @@ namespace CoApp.Toolkit.Engine {
                                 }
                             }
                             else {
+
+                                if( pretend == true ) {
+                                    // we can just return a bunch of found-package messages, since we're not going to be 
+                                    // actually installing anything, and everything we needed is downloaded.
+                                    foreach (var p in installGraph) {
+                                        PackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
+                                    }
+                                    return;
+                                }
+
                                 var failed = false;
                                 // no missing files? Check
                                 // complete install graph? Check

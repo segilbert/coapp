@@ -57,6 +57,8 @@ namespace CoApp.Toolkit.Engine.Client {
         public string PublisherUrl;
         public string PublisherEmail;
 
+        public bool IsConflicted;
+
         public IEnumerable<string> Tags;
         public IEnumerable<string> RemoteLocations;
         public IEnumerable<string> Dependencies;
