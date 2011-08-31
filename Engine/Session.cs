@@ -461,16 +461,23 @@ namespace CoApp.Toolkit.Engine {
 
                                 if (!string.IsNullOrEmpty(rqid)) {
                                     dispatchTask.ContinueWith(dispatchAntecedent => {
-                                        // had to force this to ensure that async writes are at least in the pipe 
-                                        // before waiting on the pipe drain.
-                                        // without this, it is possible that the async writes are still 'getting to the pipe' 
-                                        // and not actually in the pipe, **even though the async write is complete**
-                                        Thread.Sleep(50);
-
-                                        _responsePipe.WaitForPipeDrain();
-                                        WriteAsync(new UrlEncodedMessage("task-complete") {
-                                            {"rqid", rqid}
-                                        });
+                                        try {
+                                            // had to force this to ensure that async writes are at least in the pipe 
+                                            // before waiting on the pipe drain.
+                                            // without this, it is possible that the async writes are still 'getting to the pipe' 
+                                            // and not actually in the pipe, **even though the async write is complete**
+                                            Thread.Sleep(50);
+                                            if (_responsePipe != null) {
+                                                _responsePipe.WaitForPipeDrain();
+                                                WriteAsync(new UrlEncodedMessage("task-complete") {
+                                                    {"rqid", rqid}
+                                                });
+                                            }
+                                        } catch(Exception e) {
+                                            Debug.WriteLine(e.Message);
+                                            Debug.WriteLine(e.StackTrace);
+                                            // supress any exceptions.
+                                        }
                                     });
                                 }
 

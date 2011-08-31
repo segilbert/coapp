@@ -480,8 +480,6 @@ namespace CoApp.Toolkit.Engine {
                     results = results.Take(maxResults.Value);
                 }
 
-
-
                 if (results.Any()) {
                     foreach (var f in results) {
                         PackageManagerMessages.Invoke.FeedDetails(f.feed, f.LastScanned, f.session, f.suppressed, f.validated);
@@ -707,7 +705,7 @@ namespace CoApp.Toolkit.Engine {
                         PackageManagerMessages.Invoke.PermissionRequired("ChangeBlockedState");
                     }
                     else {
-                        package.IsBlocked = true;
+                        package.IsBlocked = false;
                     }
                 }
 

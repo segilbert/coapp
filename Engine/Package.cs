@@ -146,6 +146,9 @@ namespace CoApp.Toolkit.Engine {
                 else {
                     DoPackageComposition(false);
                 }
+                if( PackageSessionData.UserSpecified ) {
+                    Required = true;
+                }
 
                 // GS01 : what was this call for again? 
                 // SaveCachedInfo();
