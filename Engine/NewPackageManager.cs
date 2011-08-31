@@ -352,7 +352,7 @@ namespace CoApp.Toolkit.Engine {
                                     // we can just return a bunch of found-package messages, since we're not going to be 
                                     // actually installing anything, and everything we needed is downloaded.
                                     foreach (var p in installGraph) {
-                                        PackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
+                                        PackageManagerMessages.Invoke.PackageInformation(p, Enumerable.Empty<Package>());
                                     }
                                     return;
                                 }

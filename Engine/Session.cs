@@ -80,6 +80,8 @@ namespace CoApp.Toolkit.Engine {
         private PackageManagerSession _packageManagerSession;
         private SessionCacheMessages _sessionCacheMessages;
 
+        private readonly PackageManagerMessages _messages;
+
         private bool Connected {
             get { return _resetEvent.WaitOne(0); }
             set {
@@ -229,6 +231,38 @@ namespace CoApp.Toolkit.Engine {
             _isElevated = isElevated;
             _isAsychronous = serverPipe == responsePipe;
             Connected = true;
+
+            // default handlers work for all messages now.
+            _messages = new PackageManagerMessages {
+                Error = SendMessageArgumentError,
+                FailedPackageInstall = SendFailedPackageInstall,
+                FailedPackageRemoval = SendFailedRemovePackage,
+                FeedAdded = SendFeedAdded,
+                FeedDetails = SendFoundFeed,
+                FeedRemoved = SendFeedRemoved,
+                FeedSuppressed = SendFeedSuppressed,
+                FileNotFound = SendFileNotFound,
+                FileNotRecognized = SendUnableToRecognizeFile,
+                InstalledPackage = SendInstalledPackage,
+                InstallingPackageProgress = SendInstallingPackage,
+                NoFeedsFound = SendNoFeedsFound,
+                NoPackagesFound = SendNoPackagesFound,
+                OperationCancelled = SendCancellationRequested,
+                PackageBlocked = SendPackageIsBlocked,
+                PackageDetails = SendPackageDetails,
+                PackageHasPotentialUpgrades = SendPackageHasPotentialUpgrades,
+                PackageInformation = SendFoundPackage,
+                PackageSatisfiedBy = SendPackageSatifiedBy,
+                PermissionRequired = SendOperationRequiresPermission,
+                RemovedPackage = SendRemovedPackage,
+                RemovingPackageProgress = SendRemovingPackage,
+                RequireRemoteFile = SendRequireRemoteFile,
+                SignatureValidation = SendSignatureValidation,
+                UnexpectedFailure = SendUnexpectedFailure,
+                UnknownPackage = SendUnknownPackage,
+                Warning = SendMessageWarning,
+            };
+        
 
             // this session task
             _task = Task.Factory.StartNew(ProcessMesages, _cancellationTokenSource.Token);
@@ -518,142 +552,66 @@ namespace CoApp.Toolkit.Engine {
                         requestMessage["arch"], requestMessage["public-key-token"], requestMessage["dependencies"], requestMessage["installed"],
                         requestMessage["active"], requestMessage["required"], requestMessage["blocked"], requestMessage["latest"], requestMessage["index"],
                         requestMessage["max-results"], requestMessage["location"], requestMessage["force-scan"], new PackageManagerMessages {
-                            UnexpectedFailure = SendUnexpectedFailure,
-                            PackageInformation = (package, supercedents) => SendFoundPackage(package, supercedents),
-                            NoPackagesFound = SendNoPackagesFound,
-                            PermissionRequired = SendOperationRequiresPermission,
-                            Error = SendMessageArgumentError,
-                            RequireRemoteFile = SendRequireRemoteFile,
-                            OperationCancelled = SendCancellationRequested,
                             RequestId = requestMessage["rqid"],
-                        });
+                        }.Extend(_messages));
 
                 case "get-package-details":
                     return NewPackageManager.Instance.GetPackageDetails(requestMessage["canonical-name"].ToString(), new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        PackageDetails = SendPackageDetails,
-                        UnknownPackage = SendUnknownPackage,
-                        Error = SendMessageArgumentError,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
                 case "install-package":
                     return NewPackageManager.Instance.InstallPackage(requestMessage["canonical-name"], requestMessage["auto-upgrade"], requestMessage["force"],
                         requestMessage["download"], requestMessage["pretend"], new PackageManagerMessages {
-                            UnexpectedFailure = SendUnexpectedFailure,
-                            UnknownPackage = SendUnknownPackage,
-                            PermissionRequired = SendOperationRequiresPermission,
-                            Error = SendMessageArgumentError,
-                            InstallingPackageProgress = SendInstallingPackage,
-                            InstalledPackage = SendInstalledPackage,
-                            FailedPackageInstall = SendFailedPackageInstall,
-                            PackageBlocked = SendPackageIsBlocked,
-                            RequireRemoteFile = SendRequireRemoteFile,
-                            SignatureValidation = SendSignatureValidation,
-                            OperationCancelled = SendCancellationRequested,
-                            PackageHasPotentialUpgrades = SendPackageHasPotentialUpgrades,
-                            PackageSatisfiedBy = SendPackageSatifiedBy,
                             RequestId = requestMessage["rqid"],
-                        });
+                        }.Extend(_messages));
 
                 case "recognize-file":
                     return NewPackageManager.Instance.RecognizeFile(requestMessage["canonical-name"], requestMessage["local-location"],
                         requestMessage["remote-location"], new PackageManagerMessages {
-                            UnexpectedFailure = SendUnexpectedFailure,
-                            Error = SendMessageArgumentError,
-                            FileNotRecognized = SendUnableToRecognizeFile,
-                            OperationCancelled = SendCancellationRequested,
-                            FileNotFound = SendFileNotFound,
-                            PackageInformation = SendFoundPackage,
                             RequestId = requestMessage["rqid"],
-                        });
+                        }.Extend(_messages));
 
                 case "unable-to-acquire":
                     return NewPackageManager.Instance.UnableToAcquire(requestMessage["canonical-name"], new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        Error = SendMessageArgumentError,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
                 case "remove-package":
                     return NewPackageManager.Instance.RemovePackage(requestMessage["canonical-name"], requestMessage["force"], new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        UnknownPackage = SendUnknownPackage,
-                        PermissionRequired = SendOperationRequiresPermission,
-                        FailedPackageRemoval = SendFailedRemovePackage,
-                        RemovingPackageProgress = SendRemovingPackage,
-                        RemovedPackage = SendRemovedPackage,
-                        Error = SendMessageArgumentError,
-                        PackageBlocked = SendPackageIsBlocked,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
                 case "set-package":
                     return NewPackageManager.Instance.SetPackage(requestMessage["canonical-name"], requestMessage["active"], requestMessage["required"],
                         requestMessage["blocked"], new PackageManagerMessages {
-                            UnexpectedFailure = SendUnexpectedFailure,
-                            Error = SendMessageArgumentError,
-                            PermissionRequired = SendOperationRequiresPermission,
-                            UnknownPackage = SendUnknownPackage,
-                            OperationCancelled = SendCancellationRequested,
-                            PackageInformation = SendFoundPackage,
                             RequestId = requestMessage["rqid"],
-                        });
+                        }.Extend(_messages));
 
                 case "verify-file-signature":
                     return NewPackageManager.Instance.VerifyFileSignature(requestMessage["filename"], new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        Error = SendMessageArgumentError,
-                        FileNotFound = SendFileNotFound,
-                        SignatureValidation = SendSignatureValidation,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
                 case "add-feed":
                     return NewPackageManager.Instance.AddFeed(requestMessage["location"], requestMessage["session"], new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        Error = SendMessageArgumentError,
-                        Warning = SendMessageWarning,
-                        FeedAdded = SendFeedAdded,
-                        PermissionRequired = SendOperationRequiresPermission,
-                        RequireRemoteFile = SendRequireRemoteFile,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
                 case "remove-feed":
                     return NewPackageManager.Instance.RemoveFeed(requestMessage["location"], requestMessage["session"], new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        Error = SendMessageArgumentError,
-                        Warning = SendMessageWarning,
-                        FeedRemoved = SendFeedRemoved,
-                        PermissionRequired = SendOperationRequiresPermission,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
                 case "find-feeds":
                     return NewPackageManager.Instance.ListFeeds(requestMessage["index"], requestMessage["max-results"], new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        Error = SendMessageArgumentError,
-                        FeedDetails = SendFoundFeed,
-                        NoFeedsFound = SendNoFeedsFound,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
                 case "suppress-feed":
                     return NewPackageManager.Instance.SuppressFeed(requestMessage["location"], new PackageManagerMessages {
-                        UnexpectedFailure = SendUnexpectedFailure,
-                        Error = SendMessageArgumentError,
-                        FeedSuppressed = SendFeedSuppressed,
-                        OperationCancelled = SendCancellationRequested,
-                        RequestId = requestMessage["rqid"],
-                    });
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
 
 
                 case "stop-service":
@@ -668,7 +626,8 @@ namespace CoApp.Toolkit.Engine {
                 default:
                     // not recognized command, return error code.
                     WriteAsync(new UrlEncodedMessage("unknown-command") {
-                        {"command", requestMessage.Command}
+                        {"command", requestMessage.Command},
+                        {"rqid", requestMessage["rqid"].ToString() },
                     });
                     return "unknown-command".AsResultTask();
             }

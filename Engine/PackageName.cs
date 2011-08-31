@@ -14,7 +14,7 @@ namespace CoApp.Toolkit.Engine {
 
     public class PackageName {
         private static readonly char[] _slashes = new [] {'\\', '/' };
-        private static readonly Regex _canonicalName = new Regex(@"^(.*)-(\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5})-(any|x86|x64|arm)-([0-9a-f]{16})$", RegexOptions.IgnoreCase);
+        private static readonly Regex _canonicalName = new Regex(@"^(.*)-(\d{1,5})(\.\d{1,5})(\.\d{1,5})(\.\d{1,5})-(any|x86|x64|arm)-([0-9a-f]{16})$", RegexOptions.IgnoreCase);
         private static readonly Regex[] _partialName = new[] {
             new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)-([0-9a-f]{16}|\*)$", RegexOptions.IgnoreCase),
             new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)$", RegexOptions.IgnoreCase),

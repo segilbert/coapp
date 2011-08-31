@@ -10,6 +10,7 @@
 
 namespace CoApp.Toolkit.Engine.Client {
     using System.Collections.Generic;
+    using System.Linq;
 
 
     public class Package {
@@ -21,8 +22,14 @@ namespace CoApp.Toolkit.Engine.Client {
                     return _allPackages[canonicalName];
                 }
 
+                var packageName = PackageName.Parse(canonicalName);
+
                 var result = new Package {
-                    CanonicalName = canonicalName
+                    CanonicalName = canonicalName,
+                    Name = packageName.Name,
+                    Architecture = packageName.Arch,
+                    Version = packageName.Version,
+                    PublicKeyToken = packageName.PublicKeyToken
                 };
 
                 _allPackages.Add(canonicalName, result);
@@ -58,10 +65,11 @@ namespace CoApp.Toolkit.Engine.Client {
         public string PublisherEmail;
 
         public bool IsConflicted;
+        public Package SatisfiedBy;
 
-        public IEnumerable<string> Tags;
-        public IEnumerable<string> RemoteLocations;
-        public IEnumerable<string> Dependencies;
-        public IEnumerable<string> SupercedentPackages;
+        public IEnumerable<string> Tags = Enumerable.Empty<string>();
+        public IEnumerable<string> RemoteLocations= Enumerable.Empty<string>();
+        public IEnumerable<string> Dependencies= Enumerable.Empty<string>();
+        public IEnumerable<string> SupercedentPackages= Enumerable.Empty<string>();
     };
 }
