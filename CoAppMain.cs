@@ -281,14 +281,12 @@ namespace CoApp.CLI {
                             break;
 #endif
 
-
                     case "-l":
                     case "list":
                     case "list-package":
                     case "list-packages":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location, _forceScan
-                            , messages: _messages).ContinueWith(antecedent => ListPackages(antecedent.Result));
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => ListPackages(antecedent.Result));
                         break;
 
                     case "-i":
@@ -347,7 +345,7 @@ namespace CoApp.CLI {
                         // and then see if each one of those can be upgraded.
 
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, false, _latest ,_location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Upgrade(antecedent.Result));
                         break;
 
@@ -377,9 +375,7 @@ namespace CoApp.CLI {
                         if (parameters.Count() != 0) {
                             throw new ConsoleException(Resources.TrimErrorMessage);
                         }
-
-
-                        // Trim();
+                        task = Trim();
                         break;
 
 
@@ -388,18 +384,16 @@ namespace CoApp.CLI {
                     case "activate-package":
                     case "activate-packages":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Activate(antecedent.Result));
 
-                        // activate(Parameters)
                         break;
 
                     case "-g":
                     case "get-packageinfo":
                     case "info":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _installed, _active, _required, _blocked, _latest,
-                                messages: _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
 
                         break;
 
@@ -408,7 +402,7 @@ namespace CoApp.CLI {
                     case "block-package":
                     case "block":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Block(antecedent.Result));
 
                         break;
@@ -418,7 +412,7 @@ namespace CoApp.CLI {
                     case "unblock-package":
                     case "unblock":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => UnBlock(antecedent.Result));
 
                         break;
@@ -428,7 +422,7 @@ namespace CoApp.CLI {
                     case "mark-package":
                     case "mark":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Mark(antecedent.Result));
                         break;
 
@@ -437,7 +431,7 @@ namespace CoApp.CLI {
                     case "unmark-package":
                     case "unmark":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => UnMark(antecedent.Result));
                         break;
 
@@ -493,32 +487,113 @@ namespace CoApp.CLI {
             }, TaskContinuationOptions.AttachedToParent);
         }
 
-        private object UnMark(IEnumerable<Package> iEnumerable) {
-            throw new NotImplementedException();
+        private object UnMark(IEnumerable<Package> packages) {
+            if (packages.Any()) {
+                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName,required: false)).ToArray();
+                return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
+            }
+            return null;
         }
 
-        private object Mark(IEnumerable<Package> iEnumerable) {
-            throw new NotImplementedException();
+        private object Mark(IEnumerable<Package> packages) {
+            if (packages.Any()) {
+                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName,required: true)).ToArray();
+                return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
+            }
+            return null;
         }
 
-        private object UnBlock(IEnumerable<Package> iEnumerable) {
-            throw new NotImplementedException();
+        private object UnBlock(IEnumerable<Package> packages) {
+            if (packages.Any()) {
+                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName, blocked: false)).ToArray();
+                return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
+            }
+            return null;
         }
 
-        private object Block(IEnumerable<Package> iEnumerable) {
-            throw new NotImplementedException();
+        private object Block(IEnumerable<Package> packages) {
+            if (packages.Any()) {
+                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName, blocked: true)).ToArray();
+                return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
+            }
+            return null;
         }
 
-        private object GetPackageInfo(IEnumerable<Package> iEnumerable) {
-            throw new NotImplementedException();
+        private Task Activate(IEnumerable<Package> packages) {
+            if (packages.Any()) {
+                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName, active: true)).ToArray();
+                return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
+            }
+            return null;
         }
 
-        private object Activate(IEnumerable<Package> iEnumerable) {
-            throw new NotImplementedException();
+
+        private Task GetPackageInfo(IEnumerable<Package> packages) {
+            if(packages.Any()) {
+                var remoteTasks = packages.Select(package => PackageManager.Instance.GetPackageDetails(package.CanonicalName, _messages )).ToArray();
+                return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => {
+
+                var length0 = packages.Max(each => Math.Max( Math.Max(each.Name.Length, each.Architecture.Length), each.PublisherName.Length)) + 1;
+                var length1 = packages.Max(each =>  Math.Max( Math.Max( each.Version.Length,each.AuthorVersion.Length),each.PublisherUrl.Length) )+1;
+
+                foreach (var package in packages) {
+                    var date = DateTime.FromFileTime(long.Parse(package.PublishDate));
+                    Console.WriteLine("-----------------------------------------------------------");
+                    Console.WriteLine("Package: {0}", package.DisplayName);
+                    Console.WriteLine("  Name: {{0,-{0}}}      Architecture:{{1,-{1}}} ".format(length0, length1), package.Name, package.Architecture);
+                    Console.WriteLine("  Version: {{0,-{0}}}   Author Version:{{1,-{1}}} ".format(length0, length1), package.Version, package.AuthorVersion);
+                    Console.WriteLine("  Published:{0}", date.ToShortDateString());
+                    Console.WriteLine("  Local Path:{0}", package.LocalPackagePath);
+                    Console.WriteLine("  Publisher: {{0,-{0}}} Location:{{1,-{1}}} ".format(length0, length1), package.PublisherName, package.PublisherUrl);
+                    Console.WriteLine("  Installed: {0,-6} Blocked:{1,-6} Required:{2,-6} Active:{3,-6}", package.IsInstalled, package.IsBlocked,
+                        package.Required, package.IsActive);
+                    Console.WriteLine("  Summary: {0}", package.Summary);
+                    Console.WriteLine("  Description: {0}", package.Description);
+                    Console.WriteLine("  Copyright: {0}", package.Copyright);
+                    Console.WriteLine("  License: {0}", package.License);
+                    Console.WriteLine("  License URL: {0}", package.LicenseUrl);
+                    if (!package.Tags.IsNullOrEmpty()) {
+                        Console.WriteLine("  Tags: {0}", package.Tags.Aggregate((current, each) => current + "," + each));
+                    }
+
+                    if (package.RemoteLocations.Any()) {
+                        Console.WriteLine("  Remote Locations:");
+                        foreach (var location in package.RemoteLocations) {
+                            Console.WriteLine("    {0}", location);
+                        }
+                    }
+
+                    if (package.Dependencies.Any()) {
+                        Console.WriteLine("  Package Dependencies:");
+                        foreach (var dep in package.Dependencies) {
+                            Console.WriteLine("    {0}", dep);
+                        }
+                    }
+
+                    /*
+                        SupercedentPackages 
+                        SatisfiedBy;
+                     */
+
+                }
+                    Console.WriteLine("-----------------------------------------------------------");
+                }, TaskContinuationOptions.AttachedToParent);
+            }
+            return null;
         }
 
-        private object Upgrade(IEnumerable<Package> iEnumerable) {
-            throw new NotImplementedException();
+       
+
+        private Task Upgrade(IEnumerable<Package> packages) {
+            if (packages.Any()) {
+
+            }
+            return null;
+        }
+
+         private Task Trim() {
+
+            return null;
         }
 
         private void WaitForPackageManagerToComplete() {
