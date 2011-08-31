@@ -88,6 +88,9 @@ namespace CoApp.CLI {
                 Error = MessageArgumentError,
                 RequireRemoteFile = GetRemoteFile,
                 OperationCancelled = CancellationRequested,
+                PackageSatisfiedBy = (original, satisfiedBy) => {
+                    original.SatisfiedBy = satisfiedBy;
+                }
             };
 
             try {
@@ -572,8 +575,6 @@ namespace CoApp.CLI {
                         Arch = pkg.Architecture,
                         Installed = pkg.IsInstalled,
                         Local_Path = pkg.IsInstalled ? "(installed)" : pkg.LocalPackagePath ?? "<not local>",
-                        // Deps = pkg.Dependencies.IsNullOrEmpty() ? "" : pkg.Dependencies.Aggregate( (current,each) => current + "," + each)
-                        // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
                     }).ToTable().ConsoleOut();
             }
             else {
@@ -667,10 +668,12 @@ namespace CoApp.CLI {
                     RemovedPackage = (canonicalName) => {
                         // completed install of package 
                         removedList.Add(canonicalName);
+                         Console.WriteLine();
                     },
                     FailedPackageInstall = (canonicalName, filename, reason) => {
                         // failed install of package 
                         failedList.Add(canonicalName);
+                         Console.WriteLine();
                     },
                     PackageBlocked= (canonicalName) => {
                         // failed install of package 
@@ -704,30 +707,58 @@ namespace CoApp.CLI {
             }
 
             if (!failed) {
-                if (packages.Any()) {
-                    Console.WriteLine("Packages requested to install:");
-                    foreach( var p in packages ) {
-                        Console.WriteLine("   {0}", p.CanonicalName);
-                    }
-                }
+                
 
+                if (packages.Any()) {
+                    Console.WriteLine("Packages to install:\r\n");
+                    
+                    var pretendList = new List<Package>();
+                    foreach (var p in packages) {
+                        var package = p;
+
+                        PackageManager.Instance.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, true, new PackageManagerMessages {
+                            PackageInformation = (pkg) => {
+                                // pretending to install package pkg
+                                pretendList.Add(pkg);
+                            },
+
+                            PackageSatisfiedBy = (pkg, satisfiedBy) => {
+                                pkg.SatisfiedBy = satisfiedBy;
+                                pretendList.Add(pkg);
+                            },
+                        }.Extend(_messages)).Wait();
+                    }
+
+                    (from pkg in pretendList.Distinct()
+                        let getsSatisfied = !(pkg.SatisfiedBy == null || pkg.SatisfiedBy == pkg)
+                        orderby pkg.Name
+                        select new {
+                            pkg.Name,
+                            Version = pkg.Version,
+                            Arch = pkg.Architecture,
+                            Type = getsSatisfied ? "(superceded)" : packages.Contains(pkg) ? "Requested" : "Dependency",
+                            Package_Location = getsSatisfied ? "Satisfied by {0}".format(pkg.SatisfiedBy.CanonicalName) : pkg.LocalPackagePath ?? pkg.RemoteLocations.FirstOrDefault() ?? "<unknown>",
+                            // Satisfied_By = getsSatisfied ? "" : pkg.SatisfiedBy.CanonicalName ,
+                            // Satisfied_By = pkg.SatisfiedBy == null ? pkg.CanonicalName : pkg.SatisfiedBy.CanonicalName ,
+                            // Status = pkg.IsInstalled ? "Installed" : "will install",
+                        }).OrderBy(each => each.Type ).ToTable().ConsoleOut();
+                }
                 Console.WriteLine();
 
+                if( _pretend == true ) {
+                    return;
+                }
+
+                
                 // now, each package in the list can be installed
-                var pretendList = new List<Package>();
+                
                 var installedList= new List<string>();
                 var failedList = new List<string>();
                 
-
                 foreach( var p in packages ) {
                     var package = p;
 
                     PackageManager.Instance.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, _pretend, new PackageManagerMessages {
-                        PackageInformation = (pkg) => {
-                            // pretending to install package pkg
-                            pretendList.Add(pkg);
-                        },
-
                         InstallingPackageProgress = (canonicalName, progress ) => {
                             // installation progress
                             ConsoleExtensions.PrintProgressBar("Installing: {0}".format(canonicalName), progress);
@@ -742,23 +773,15 @@ namespace CoApp.CLI {
                         FailedPackageInstall = (canonicalName, filename , reason ) => {
                             // failed install of package 
                             failedList.Add(canonicalName);
-                        },
 
-                        PackageSatisfiedBy = (original, satisfiedBy) => {
-                            if( package == original ) {
-                                // we're satisfying a requested package.
-                                if (original == satisfiedBy) {
-                                    Console.WriteLine("Package '{0}' is already installed.", original.CanonicalName);
-                                }
-                                else {
-                                    Console.WriteLine("Package '{0}' is satisfied by '{1}'.", original.CanonicalName, satisfiedBy.CanonicalName);
-                                    Console.WriteLine("   (use --auto-upgrade=false to install anyway)");
-                                }
-                            } else {
-                                Console.WriteLine("Dependent package '{0}' is satisfied by '{1}'.", original.CanonicalName, satisfiedBy.CanonicalName);
+                            if (packages.Contains(Package.GetPackage(canonicalName))) {
+                                Console.WriteLine("\r\nNOTE: Requested package {0} failed to install [{1}]", canonicalName, reason);
+                            }
+                            else {
+                                Console.WriteLine("\r\nNOTE: Dependent package {0} failed to install [{1}]", canonicalName, reason);
+                                Console.WriteLine("    (attempting to find alternative)");
                             }
                         },
-
                     }.Extend(_messages)).Wait();
                     
                 }
