@@ -11,6 +11,7 @@
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.IO.Pipes;
     using System.Linq;
@@ -140,7 +141,7 @@ namespace CoApp.Toolkit.Engine {
                     // found just one session.
                     session._serverPipe = serverPipe;
                     session._responsePipe = responsePipe;
-                    Console.WriteLine("Rejoining existing session...");
+                    Debug.WriteLine("Rejoining existing session...");
                     session.SendSessionStarted(sessionId);
                     session.SendQueuedMessages();
                     session.Connected = true;
@@ -158,7 +159,7 @@ namespace CoApp.Toolkit.Engine {
             // no viable matching session.
             // Let's start a new one.
             Add(new Session(clientId, sessionId, serverPipe, responsePipe, userId, isElevated));
-            Console.WriteLine("Starting new session...");
+            Debug.WriteLine("Starting new session...");
         }
 
         public void End() {
@@ -170,17 +171,10 @@ namespace CoApp.Toolkit.Engine {
                     _activeSessions.Remove(this);
                 }
 
-                Console.WriteLine("Ending Client: [{0}]-[{1}]", _clientId, _sessionId);
+                Debug.WriteLine("Ending Client: [{0}]-[{1}]".format( _clientId, _sessionId));
 
                 // end any outstanding tasks as gracefully as we can.
                 _cancellationTokenSource.Cancel();
-
-                // _task should wait here I think...
-                /*
-                while(!_task.IsCompleted && !_task.Wait(1000) ) {
-                    Console.WriteLine("Waiting for task to complete... You may want to expand the message here to see what its waiting on.");
-                }
-                */
 
                 // drop all our local session data.
                 _sessionCache.Clear();
@@ -196,7 +190,7 @@ namespace CoApp.Toolkit.Engine {
         private void Disconnect() {
             if (Connected) {
                 Connected = false;
-                Console.WriteLine("disposing of pipes: [{0}]-[{1}]", _clientId, _sessionId);
+                Debug.WriteLine("disposing of pipes: [{0}]-[{1}]".format( _clientId, _sessionId));
                 try {
                     if (_serverPipe != null) {
                         _serverPipe.Close();
@@ -253,7 +247,7 @@ namespace CoApp.Toolkit.Engine {
         private readonly Queue<UrlEncodedMessage> _outputQueue = new Queue<UrlEncodedMessage>();
 
         private void QueueResponseMessage(UrlEncodedMessage response) {
-            Console.WriteLine("adding message to queue: {0}", response);
+            Console.WriteLine("adding message to queue: {0}".format( response));
             Disconnect();
 
             lock (_outputQueue) {
@@ -384,7 +378,7 @@ namespace CoApp.Toolkit.Engine {
                         return;
                     }
 
-                    Console.WriteLine("Waiting for client to reconnect.");
+                    Debug.WriteLine("Waiting for client to reconnect.");
                     _resetEvent.WaitOne(_maxDisconenctedWait);
                     _waitingForClientResponse = true; // debug, always drop session on timeout.
 
@@ -397,7 +391,7 @@ namespace CoApp.Toolkit.Engine {
                     continue;
                 }
 
-                Console.WriteLine("In Loop");
+                Debug.WriteLine("In Loop");
 
                 try {
                     if (IsCancelled) {
@@ -425,6 +419,10 @@ namespace CoApp.Toolkit.Engine {
                                 }
                                 var requestMessage = new UrlEncodedMessage(rawMessage);
                                 var rqid = requestMessage["rqid"].ToString();
+
+                                // create a request cache.
+                                new RequestCacheMessages().Register();
+
                                 var dispatchTask = Dispatch(requestMessage);
 
                                 if (!string.IsNullOrEmpty(rqid)) {
@@ -511,7 +509,8 @@ namespace CoApp.Toolkit.Engine {
         /// <remarks>
         /// </remarks>
         private Task Dispatch(UrlEncodedMessage requestMessage) {
-            Console.WriteLine("Req: {0}", requestMessage.Command);
+            Debug.WriteLine("Req: {0}".format(requestMessage.Command));
+
             switch (requestMessage.Command) {
                 case "find-packages":
                     // get the package names collection and run the command
@@ -554,6 +553,7 @@ namespace CoApp.Toolkit.Engine {
                             SignatureValidation = SendSignatureValidation,
                             OperationCancelled = SendCancellationRequested,
                             PackageHasPotentialUpgrades = SendPackageHasPotentialUpgrades,
+                            PackageSatisfiedBy = SendPackageSatifiedBy,
                             RequestId = requestMessage["rqid"],
                         });
 
@@ -656,6 +656,15 @@ namespace CoApp.Toolkit.Engine {
                     });
 
 
+                case "stop-service":
+                    if (PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.StopService)) {
+                        _cancellationTokenSource.Cancel();
+                        EngineService.Stop();
+                        return "Shutting down".AsResultTask();
+                    }
+                    return "Unable to Stop Service".AsResultTask();
+
+
                 default:
                     // not recognized command, return error code.
                     WriteAsync(new UrlEncodedMessage("unknown-command") {
@@ -680,7 +689,7 @@ namespace CoApp.Toolkit.Engine {
         private void SendFoundPackage(Package package, IEnumerable<Package> supercedentPackages) {
             var msg = new UrlEncodedMessage("found-package") {
                 {"canonical-name", package.CanonicalName},
-                {"local-location", package.InternalPackageData.LocalPackagePath},
+                {"local-location", package.InternalPackageData.LocalLocation},
                 {"name", package.Name},
                 {"version", package.Version.UInt64VersiontoString()},
                 {"arch", package.Architecture},
@@ -692,7 +701,7 @@ namespace CoApp.Toolkit.Engine {
                 {"dependent", package.PackageSessionData.IsDependency.ToString()},
             };
 
-            msg.AddCollection("remote-locations", package.InternalPackageData.RemoteLocation.Select(each => each.AbsoluteUri));
+            msg.AddCollection("remote-locations", package.InternalPackageData.RemoteLocations);
             msg.AddCollection("dependencies", package.InternalPackageData.Dependencies.Select(each => each.CanonicalName));
             msg.AddCollection("supercedent-packages", supercedentPackages.Select(each => each.CanonicalName));
 
@@ -815,6 +824,13 @@ namespace CoApp.Toolkit.Engine {
                 {"message-name", messageName},
                 {"argument-name", argumentName},
                 {"warning", problem},
+            });
+        }
+
+        private void SendPackageSatifiedBy( Package requested, Package satisfiedBy  ) {
+            WriteAsync(new UrlEncodedMessage("package-satisfied-by") {
+                {"canonical-name", requested.CanonicalName},
+                {"satisfied-by", satisfiedBy.CanonicalName},
             });
         }
 

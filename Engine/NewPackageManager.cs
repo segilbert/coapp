@@ -304,7 +304,7 @@ namespace CoApp.Toolkit.Engine {
                             catch (OperationCompletedBeforeResultException) {
                                 // we encountered an unresolvable condition in the install graph.
                                 // messages should have already been sent.
-                                PackageManagerMessages.Invoke.FailedPackageInstall(canonicalName, package.InternalPackageData.LocalPackagePath,
+                                PackageManagerMessages.Invoke.FailedPackageInstall(canonicalName, package.InternalPackageData.LocalLocation,
                                     "One or more dependencies are unable to be resolved.");
                                 return;
                             }
@@ -327,7 +327,7 @@ namespace CoApp.Toolkit.Engine {
 
                             // we've got an install graph.
                             // let's see if we've got all the files
-                            var missingFiles = from p in installGraph where !p.InternalPackageData.HasLocalFile select p;
+                            var missingFiles = from p in installGraph where !p.InternalPackageData.HasLocalLocation select p;
 
                             if( download == true ) {
                                 // we want to try downloading all the files that we're missing, regardless if we've tried before.
@@ -342,13 +342,12 @@ namespace CoApp.Toolkit.Engine {
                                 // we've got some packages to install that don't have files.
                                 foreach (var p in missingFiles.Where(p => !p.PackageSessionData.RequestedDownload)) {
                                     PackageManagerMessages.Invoke.RequireRemoteFile(p.CanonicalName,
-                                        p.InternalPackageData.RemoteLocation.Select(each => each.AbsoluteUri), PackageManagerSettings.CoAppCacheDirectory, false);
+                                        p.InternalPackageData.RemoteLocations , PackageManagerSettings.CoAppCacheDirectory, false);
 
                                     p.PackageSessionData.RequestedDownload = true;
                                 }
                             }
                             else {
-
                                 if( pretend == true ) {
                                     // we can just return a bunch of found-package messages, since we're not going to be 
                                     // actually installing anything, and everything we needed is downloaded.
@@ -368,40 +367,28 @@ namespace CoApp.Toolkit.Engine {
                                         PackageManagerMessages.Invoke.OperationCancelled("install-package");
                                         return;
                                     }
+                                    var validLocation = package.PackageSessionData.LocalValidatedLocation;
+
                                     try {
                                         if (!pkg.IsInstalled) {
-                                            var isValid = false;
-                                            foreach (
-                                                var location in
-                                                    pkg.InternalPackageData.LocalPackagePath.Value.SingleItemAsEnumerable().Union(
-                                                        pkg.InternalPackageData.LocalPackagePath.OtherValues)) {
-                                                isValid = Verifier.HasValidSignature(location);
-                                                PackageManagerMessages.Invoke.SignatureValidation(location, isValid,
-                                                    Verifier.GetPublisherInformation(location)["PublisherName"]);
-                                                if (isValid) {
-                                                    pkg.InternalPackageData.LocalPackagePath.Value = location;
-                                                    break;
-                                                }
-                                            }
-
-                                            if (!isValid) {
-                                                PackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, pkg.InternalPackageData.LocalPackagePath,
-                                                    "Package failed to install due to not being signed with a valid certificate.");
+                                            if (string.IsNullOrEmpty(validLocation)) {
+                                                // can't find a valid location
+                                                PackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, pkg.InternalPackageData.LocalLocation, "Can not find local valid package");
                                                 pkg.PackageSessionData.PackageFailedInstall = true;
                                             }
-
-                                            // GS01: We should put a softer lock here to keep the client aware that packages 
-                                            // are being installed on other threads...
-                                            lock (typeof (MSIBase)) {
-                                                pkg.Install(percentage => PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, percentage));
+                                            else {
+                                                // GS01: We should put a softer lock here to keep the client aware that packages 
+                                                // are being installed on other threads...
+                                                lock (typeof (MSIBase)) {
+                                                    pkg.Install( percentage => PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, percentage));
+                                                }
+                                                PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, 100);
+                                                PackageManagerMessages.Invoke.InstalledPackage(pkg.CanonicalName);
                                             }
-                                            PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, 100);
-                                            PackageManagerMessages.Invoke.InstalledPackage(pkg.CanonicalName);
                                         }
                                     }
                                     catch (PackageInstallFailedException pife) {
-                                        PackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, pkg.InternalPackageData.LocalPackagePath,
-                                            "Package failed to install.");
+                                        PackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, validLocation, "Package failed to install.");
                                         pkg.PackageSessionData.PackageFailedInstall = true;
 
                                         if (!pkg.PackageSessionData.AllowedToSupercede) {
@@ -778,7 +765,6 @@ namespace CoApp.Toolkit.Engine {
                     PackageManagerMessages.Invoke.RemovedPackage(canonicalName);
                 }
                 catch (OperationCompletedBeforeResultException e) {
-                    Console.WriteLine("Failed? {0}", e.StackTrace);
                     PackageManagerMessages.Invoke.FailedPackageRemoval(canonicalName, e.Message);
                     return;
                 }
@@ -968,6 +954,8 @@ namespace CoApp.Toolkit.Engine {
         }
 
         internal Package GetPackageFromFilename(string filename ) {
+            filename = filename.CanonicalizePathIfLocalAndExists();
+
             if (!File.Exists(filename)) {
                 PackageManagerMessages.Invoke.FileNotFound(filename);
                 return null;
@@ -975,13 +963,9 @@ namespace CoApp.Toolkit.Engine {
 
             Package pkg;
 
-            filename = filename.GetFullPath();
-
             lock (_packages) {
                 pkg = (_packages.Where(
-                    package =>
-                        package.InternalPackageData.HasLocalFile && package.InternalPackageData.LocalPackagePath.ContainsValue(filename))).
-                    FirstOrDefault();
+                    package => package.InternalPackageData.HasLocalLocation && package.InternalPackageData.LocalLocations.Contains(filename))).FirstOrDefault();
             }
 
             if (pkg != null) {
@@ -1024,7 +1008,7 @@ namespace CoApp.Toolkit.Engine {
                 pkg.InternalPackageData.Dependencies.AddRange((IEnumerable<Package>) packageFileInformation.dependencies);
             }
 
-            pkg.InternalPackageData.LocalPackagePath.Value = filename;
+            pkg.InternalPackageData.LocalLocation = filename;
 
             pkg.InternalPackageData.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) packageFileInformation.assemblies.Values);
             pkg.InternalPackageData.Roles.AddRange((IEnumerable<Tuple<PackageRole, string>>) packageFileInformation.roles);
@@ -1141,16 +1125,22 @@ namespace CoApp.Toolkit.Engine {
         /// <param name="package"></param>
         /// <returns></returns>
         private IEnumerable<Package> GenerateInstallGraph(Package package, bool hypothetical = false) {
-            if (package.IsInstalled)
+            if (package.IsInstalled) {
+                if (!package.PackageRequestData.NotifiedClientThisSupercedes) {
+                    PackageManagerMessages.Invoke.PackageSatisfiedBy(package, package);
+                    package.PackageRequestData.NotifiedClientThisSupercedes = true;
+                }
+
                 yield break;
+            }
 
             var packageData = package.PackageSessionData;
 
-            if( !package.PackageSessionData.PotentiallyInstallable)
+            if (!package.PackageSessionData.PotentiallyInstallable) {
                 yield break;
+            }
 
             if (!packageData.DoNotSupercede) {
-
                 var installedSupercedents = SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken);
 
                 if( package.PackageSessionData.UserSpecified || hypothetical )  {
@@ -1165,8 +1155,12 @@ namespace CoApp.Toolkit.Engine {
                                 where p.InternalPackageData.PolicyMinimumVersion <= package.Version &&
                                       p.InternalPackageData.PolicyMaximumVersion >= package.Version select p).OrderByDescending(p => p.Version).ToArray();
                 }
-
-                if (installedSupercedents.Any()) {
+                var installedSupercedent = installedSupercedents.FirstOrDefault();
+                if (installedSupercedent != null ) {
+                    if (!installedSupercedent.PackageRequestData.NotifiedClientThisSupercedes) {
+                        PackageManagerMessages.Invoke.PackageSatisfiedBy(package, installedSupercedent);
+                        installedSupercedent.PackageRequestData.NotifiedClientThisSupercedes = true;
+                    }
                     yield break; // a supercedent package is already installed.
                 }
 
@@ -1201,11 +1195,17 @@ namespace CoApp.Toolkit.Engine {
                                 continue;
                             }
 
+                            // we should tell the client that we're making a substitution.
+                            if (!supercedent.PackageRequestData.NotifiedClientThisSupercedes) {
+                                PackageManagerMessages.Invoke.PackageSatisfiedBy(package, supercedent);
+                                supercedent.PackageRequestData.NotifiedClientThisSupercedes = true;
+                            }
+
                             supercedent.PackageSessionData.UserSpecified = true;
                             // since we got to this spot, we can assume that we can 
                             // supercede this package with the results of the successful
                             // GIG call.
-                            foreach (var child in children) {
+                            foreach (var child in children) { 
                                 yield return child;
                             }
 

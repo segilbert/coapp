@@ -29,6 +29,9 @@ namespace CoApp.Toolkit.Engine {
         internal static PermissionPolicy ChangeBlockedState = new PermissionPolicy( "ChangeBlockedState", "Allows a user to change whether a given package is blocked from being upgraded", new[] { "Administrators" });
         internal static PermissionPolicy EditSystemFeeds = new PermissionPolicy( "EditSystemFeeds", "Allows users to edit remembered feeds for the system", new[] { "Administrators" });
         internal static PermissionPolicy EditSessionFeeds = new PermissionPolicy( "EditSessionFeeds", "Allows users to edit remembered feeds for the session", new[] { "Everyone" });
+        
+        internal static PermissionPolicy PauseService = new PermissionPolicy("PauseService", "Allows users to place the CoApp Service into a suspended (paused) state", new[] { "Administrators" });
+        internal static PermissionPolicy StopService = new PermissionPolicy("StopService", "Allows users to stop the CoApp Service", new[] { "Administrators" });
 
         /// <summary>
         /// Determines whether the user has access to the policy.

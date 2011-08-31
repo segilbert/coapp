@@ -172,13 +172,10 @@ namespace CoApp.Toolkit.Engine {
                                 }
                                 var isAsync = (bool?) requestMessage["async"];
 
-                                if (isAsync.HasValue && isAsync.Value == false)
-                                {
-                                    Console.WriteLine("Using Two-Pipe Client");
+                                if (isAsync.HasValue && isAsync.Value == false) {
                                     StartResponsePipeAndProcessMesages(requestMessage.Data["client"], requestMessage["id"], serverPipe);
                                 }
                                 else {
-                                    Console.WriteLine("Using Async Client");
                                     Session.Start(requestMessage.Data["client"], requestMessage["id"], serverPipe, serverPipe);
                                 }
                             }).Wait();

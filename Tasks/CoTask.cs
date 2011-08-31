@@ -75,7 +75,7 @@ namespace CoApp.Toolkit.Tasks {
                         if (cls.Namespace.Contains("Tasks")) {
                             continue;
                         }
-                        Console.WriteLine("Unneccesary Automanage() in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
+                        Debug.WriteLine("Unneccesary Automanage() in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
                         break;
                     }
                 }
@@ -175,7 +175,7 @@ namespace CoApp.Toolkit.Tasks {
                         if (cls.Namespace.Contains("Tasks")) {
                             continue;
                         }
-                        Console.WriteLine("Info: Registering a MessageHandler where no parent task exists in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
+                        Debug.WriteLine("Info: Registering a MessageHandler where no parent task exists in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
                         break;
                     }
                 }

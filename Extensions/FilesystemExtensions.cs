@@ -682,10 +682,29 @@ namespace CoApp.Toolkit.Extensions {
                     File.Copy(fullpath, localCopy);
                     return localCopy;
                 }
-
                 return fullpath;
             }
             return null;
+        }
+
+        public static string CanonicalizePathIfLocalAndExists(this string filename) {
+            if (string.IsNullOrEmpty(filename)) {
+                return null;
+            }
+
+            try {
+                var fullpath = filename.CanonicalizePath();
+                if( !fullpath.StartsWith(@"\\") && File.Exists(fullpath) ) {
+                    return fullpath;
+                } 
+            }
+            catch {
+            }
+            return null;
+        }
+
+        public static bool FileIsLocalAndExists(this string filename) {
+            return !string.IsNullOrEmpty(CanonicalizePathIfLocalAndExists(filename));
         }
 
         public static IEnumerable<string> GetMinimalPaths( this IEnumerable<string> paths ) {

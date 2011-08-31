@@ -54,6 +54,8 @@ namespace CoApp.Toolkit.Engine {
         public Action<Package> UnableToInstallPackage;
         public Action<Package, IEnumerable<Package>> UnableToResolveDependencies;
 
+        public Action<Package,Package> PackageSatisfiedBy;
+
         public string RequestId;
     }
 }

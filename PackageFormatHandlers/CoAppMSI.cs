@@ -261,7 +261,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 }), InstallLogModes.Progress);
 
                 try {
-                    Installer.InstallProduct(package.InternalPackageData.LocalPackagePath,
+                    Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation,
                         @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
                             package.PackageSessionData.UserSpecified ? "ADD_TO_ARP=1" : ""));
                 }
@@ -313,12 +313,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                                         break;
                                 }
                                 if (currentTotalTicks > 0) {
-                                    if (currentTotalTicks > 0) {
-                                        var newPercent = (currentProgress * 100 / currentTotalTicks);
-                                        if (actualPercent < newPercent) {
-                                            actualPercent = newPercent;
-                                            progress(actualPercent);
-                                        }
+                                    var newPercent = (currentProgress*100/currentTotalTicks);
+                                    if (actualPercent < newPercent) {
+                                        actualPercent = newPercent;
+                                        progress(actualPercent);
                                     }
                                 }
                             }
@@ -329,7 +327,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 }), InstallLogModes.Progress);
 
                 try {
-                    Installer.InstallProduct(package.InternalPackageData.LocalPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+                    Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
                 }
                 finally {
                     SetUIHandlersToSilent();
@@ -346,7 +344,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// Note: Refactoring comming up soon.
         /// </remarks>
         public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
-            dynamic packageData = GetDynamicMSIData(package.InternalPackageData.LocalPackagePath);
+            dynamic packageData = GetDynamicMSIData(package.PackageSessionData.LocalValidatedLocation);
 
             if (packageData.CO_INSTALL_PROPERTIES == null) {
                 return Enumerable.Empty<CompositionRule>();

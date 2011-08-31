@@ -9,6 +9,25 @@ namespace CoApp.Toolkit.Tasks {
         public Func<Type, Func<object>,object> GetInstance;
     }
 
+    public class RequestCacheMessages : MessageHandlers<RequestCacheMessages> {
+        private readonly Dictionary<Type, object> _requestCache = new Dictionary<Type, object>();
+
+        public Func<Type, Func<object>, object> GetInstance;
+
+        public RequestCacheMessages() {
+            GetInstance = GetInstanceImpl;
+        }
+
+        private object GetInstanceImpl(Type type, Func<object> constructor ) {
+            lock (_requestCache) {
+                if (!_requestCache.ContainsKey(type)) {
+                    _requestCache.Add(type, constructor());
+                }
+                return _requestCache[type];
+            }
+        }
+    }
+
     public class Cache<T> where T : class {
         public static Cache<T> Value = new Cache<T>();
 
@@ -147,5 +166,31 @@ namespace CoApp.Toolkit.Tasks {
 
     }
 
-   
+    public class RequestCache<T> : Cache<T> where T : class {
+        public new static RequestCache<T> Value {
+            get {
+                return (RequestCacheMessages.Invoke.GetInstance(typeof(T), () => new RequestCache<T>())) as RequestCache<T>;
+            }
+        }
+
+        public override T this[string index] {
+            get {
+                // check current cache.
+                return _cache.ContainsKey(index) ? _cache[index] : GetAndRememberDelegateValue(index) ?? Cache<T>.Value[index];
+            }
+            set {
+                lock (_cache) {
+                    if (_cache.ContainsKey(index)) {
+                        _cache[index] = value;
+                    }
+                    else {
+                        _cache.Add(index, value);
+                    }
+                }
+            }
+        }
+
+        public override IEnumerable<string> Keys { get { return _cache.Keys; } }
+        public override IEnumerable<T> Values { get { return _cache.Values.AsEnumerable(); } }
+    }
 }

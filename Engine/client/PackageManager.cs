@@ -11,6 +11,7 @@
 namespace CoApp.Toolkit.Engine.Client {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.IO.Pipes;
     using System.Linq;
@@ -137,7 +138,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                             Console.WriteLine("    Response:{0}", responseMessage.Command);
+                            Debug.WriteLine("Response:{0}".format( responseMessage.ToString()) );
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -617,6 +618,10 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 case "operation-requires-permission":
                     PackageManagerMessages.Invoke.PermissionRequired(responseMessage["policy-required"]);
+                    break;
+
+                case "package-satisfied-by":
+                    PackageManagerMessages.Invoke.PackageSatisfiedBy(Package.GetPackage(responseMessage["canonical-name"]), Package.GetPackage(responseMessage["satisfied-by"]));
                     break;
 
                 case "package-details":

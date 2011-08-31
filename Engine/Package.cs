@@ -14,9 +14,10 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.ObjectModel;
     using System.IO;
     using System.Linq;
+    using Crypto;
     using Exceptions;
     using Extensions;
-
+    using Feeds;
     using PackageFormatHandlers;
     using Shell;
     using Tasks;
@@ -56,6 +57,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         internal PackageSessionData PackageSessionData { get { return SessionCache<PackageSessionData>.Value[CanonicalName] ?? (SessionCache<PackageSessionData>.Value[CanonicalName] = new PackageSessionData(this)); } }
+        internal PackageRequestData PackageRequestData { get { return RequestCache<PackageRequestData>.Value[CanonicalName] ?? (RequestCache<PackageRequestData>.Value[CanonicalName] = new PackageRequestData(this)); } }
 
         public bool IsInstalled {
             get {
@@ -73,7 +75,17 @@ namespace CoApp.Toolkit.Engine {
                     return false;
                 }))()).Value;
             }
-            set { _isInstalled = value; }
+            set {
+                if( _isInstalled != value ) {
+                    if( value ) {
+                        InstalledPackageFeed.Instance.PackageInstalled( this );
+                    }
+                    else {
+                        InstalledPackageFeed.Instance.PackageRemoved(this);
+                    }
+                }
+                _isInstalled = value;
+            }
         }
 
         public bool IsActive {
@@ -126,8 +138,7 @@ namespace CoApp.Toolkit.Engine {
                 var currentVersion = GetCurrentPackage(Name, PublicKeyToken);
 
                 PackageHandler.Install(this, progress);
-                _isInstalled = true;
-
+                IsInstalled = true;
                     
                 if (Version > currentVersion) {
                     SetPackageCurrent();
@@ -142,7 +153,7 @@ namespace CoApp.Toolkit.Engine {
             catch (Exception) {
                 //we could get here and the MSI had installed but nothing else
                 PackageHandler.Remove(this, null);
-                _isInstalled = false;
+                IsInstalled = false;
                 throw new PackageInstallFailedException(this);
             }
         }
@@ -151,8 +162,7 @@ namespace CoApp.Toolkit.Engine {
             try {
                 UndoPackageComposition();
                 PackageHandler.Remove(this, progress);
-                _isInstalled = false;
-
+                IsInstalled = false;
             }
             catch (Exception) {
                 PackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
@@ -393,9 +403,18 @@ namespace CoApp.Toolkit.Engine {
     }
 
     internal class InternalPackageData : NotifiesPackageManager {
+        private Package _package;
+
         private string _canonicalPackageLocation;
         private string _canonicalFeedLocation;
-        private Package _package;
+
+        private string _primaryLocalLocation;
+        private string _primaryRemoteLocation;
+        private string _primaryFeedLocation;
+
+        private readonly List<Uri> _remoteLocations = new List<Uri>();
+        private readonly List<string> _feedLocations = new List<string>();
+        private readonly List<string> _localLocations = new List<string>();
 
         // set once only:
         internal UInt64 PolicyMinimumVersion { get; set; }
@@ -406,18 +425,13 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         public readonly List<Tuple<PackageRole, string>> Roles = new List<Tuple<PackageRole, string>>();
         public readonly List<PackageAssemblyInfo> Assemblies = new List<PackageAssemblyInfo>();
-
-        public readonly MultiplexedProperty<string> FeedLocation = new MultiplexedProperty<string>((x, y) => Changed());
-        public readonly MultiplexedProperty<Uri> RemoteLocation = new MultiplexedProperty<Uri>((x, y) => Changed());
-        public readonly MultiplexedProperty<string> LocalPackagePath = new MultiplexedProperty<string>((x, y) => Changed(), false);
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
 
         public string CanonicalPackageLocation {
             get { return _canonicalPackageLocation; }
             set {
-                _canonicalPackageLocation = value;
                 try {
-                    RemoteLocation.Add(new Uri(value));
+                    RemoteLocation = _canonicalPackageLocation = new Uri(value).AbsoluteUri;
                 }
                 catch {
                 }
@@ -427,8 +441,7 @@ namespace CoApp.Toolkit.Engine {
         public string CanonicalFeedLocation {
             get { return _canonicalFeedLocation; }
             set {
-                _canonicalFeedLocation = value;
-                FeedLocation.Add(value);
+                FeedLocation = _canonicalFeedLocation = value;
             }
         }
 
@@ -440,23 +453,137 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public bool IsPackageSatisfied {
-            get { return _package.IsInstalled || !string.IsNullOrEmpty(LocalPackagePath) && RemoteLocation != null && _package.PackageSessionData.Supercedent != null; }
+            get { return _package.IsInstalled || !string.IsNullOrEmpty(LocalLocation) && RemoteLocation != null && _package.PackageSessionData.Supercedent != null; }
         }
 
-
-        public bool HasLocalFile {
-            get {
-                if (string.IsNullOrEmpty(LocalPackagePath) && File.Exists(LocalPackagePath))
-                    return true;
-
-                return LocalPackagePath.Any(location => File.Exists(location));
-            }
+        public bool HasLocalLocation {
+            get { return !string.IsNullOrEmpty(LocalLocation); }
         }
 
         public bool HasRemoteLocation {
-            get { return RemoteLocation.Value != null; }
+            get { return !string.IsNullOrEmpty(RemoteLocation); }
         }
 
+        public IEnumerable<string> LocalLocations { get { return _localLocations.ToArray(); } }
+        public IEnumerable<string> RemoteLocations { get { return _remoteLocations.Select(each => each.AbsoluteUri).ToArray(); } }
+        public IEnumerable<string> FeedLocations { get { return _feedLocations.ToArray(); } }
+
+        public string LocalLocation { 
+            get {
+                if (_primaryLocalLocation.FileIsLocalAndExists()) {
+                    return _primaryLocalLocation;
+                }
+                // use the setter to remove non-viable locations.
+                LocalLocation = null;
+
+                // whatever is primary after the set is good for me.
+                return _primaryLocalLocation;
+            }
+            set {
+                lock (_localLocations) {
+                    try {
+                        var location = value.CanonicalizePathIfLocalAndExists();
+
+                        if (!string.IsNullOrEmpty(location)) {
+                            // this location is acceptable.
+                            _primaryLocalLocation = location;
+                            if (!_localLocations.Contains(location)) {
+                                _localLocations.Add(location);
+                            }
+                            return;
+                        }
+                    } catch {
+                        // file couldn't canonicalize.
+                    }
+
+                    _primaryLocalLocation = null;
+
+                    // try to find an acceptable local location from the list 
+                    foreach (var path in _localLocations.Where(path => path.FileIsLocalAndExists())) {
+                        _primaryLocalLocation = path;
+                        break;
+                    }
+                }
+            }
+        }
+
+        public string RemoteLocation {
+            get {
+                if (!string.IsNullOrEmpty(_canonicalPackageLocation)) {
+                    return _canonicalPackageLocation;
+                }
+
+                if (!string.IsNullOrEmpty(_primaryRemoteLocation)) {
+                    return _primaryRemoteLocation;
+                }
+
+                // use the setter to remove non-viable locations.
+                RemoteLocation = null;
+
+                // whatever is primary after the set is good for me.
+                return _primaryRemoteLocation;
+            }
+
+            set {
+                lock (_remoteLocations) {
+                    if (!string.IsNullOrEmpty(value)) {
+                        try {
+                            var location = new Uri(value);
+
+                            // this location is acceptable.
+                            _primaryRemoteLocation = location.AbsoluteUri;
+
+                            if (!_remoteLocations.Contains(location)) {
+                                _remoteLocations.Add(location);
+                            }
+
+                            return;
+                        }
+                        catch {
+                            // path couldn't be expressed as a URI?.
+                        }
+                    }
+                    
+                    // set it as the first viable remote location.
+                    var uri = _remoteLocations.FirstOrDefault();
+                    _primaryRemoteLocation = uri == null ? null : uri.AbsoluteUri;
+                }
+            }
+        }
+
+        public string FeedLocation {
+            get {
+                if (!string.IsNullOrEmpty(_canonicalFeedLocation)) {
+                    return _canonicalFeedLocation;
+                }
+
+                if (!string.IsNullOrEmpty(_primaryFeedLocation)) {
+                    return _primaryFeedLocation;
+                }
+
+                // use the setter to remove non-viable locations.
+                FeedLocation = null;
+
+                // whatever is primary after the set is good for me.
+                return _primaryFeedLocation;
+            }
+
+            set {
+                lock (_feedLocations) {
+                    if (!string.IsNullOrEmpty(value)) {
+                        _primaryFeedLocation= value;
+                        if (!_feedLocations.Contains(value)) {
+                            _feedLocations.Add(value);
+                        }
+                        return;
+                    }
+
+                    // set it as the first viable remote location.
+                    var location = _feedLocations.FirstOrDefault();
+                    _primaryFeedLocation = string.IsNullOrEmpty(location) ? null : location;
+                }
+            }
+        }
     }
 
     internal class PackageDetails : NotifiesPackageManager {
@@ -511,6 +638,7 @@ namespace CoApp.Toolkit.Engine {
         private Package _supercedent;
         private bool _packageFailedInstall;
         private Package _package;
+        private string _localValidatedLocation;
 
         internal PackageSessionData(Package package) {
             _package = package;
@@ -562,11 +690,53 @@ namespace CoApp.Toolkit.Engine {
 
         public bool PotentiallyInstallable {
             get {
-                return !PackageFailedInstall && (_package.InternalPackageData.HasLocalFile || !CouldNotDownload && _package.InternalPackageData.HasRemoteLocation);
+                return !PackageFailedInstall && (_package.InternalPackageData.HasLocalLocation || !CouldNotDownload && _package.InternalPackageData.HasRemoteLocation);
             }
         }
 
         public bool CanSatisfy { get; set; }
+
+        
+        public string LocalValidatedLocation {
+            get {
+                if (!string.IsNullOrEmpty(_localValidatedLocation) && _localValidatedLocation.FileIsLocalAndExists()) {
+                    return _localValidatedLocation;
+                }
+
+                var location = _package.InternalPackageData.LocalLocation;
+                if (string.IsNullOrEmpty(location)) {
+                    // there are no local locations at all for this package?
+                    return _localValidatedLocation = null;
+                }
+
+                if (Verifier.HasValidSignature(location)) {
+                    PackageManagerMessages.Invoke.SignatureValidation(location, true, Verifier.GetPublisherName(location));
+                    return _localValidatedLocation = location;
+                }
+                PackageManagerMessages.Invoke.SignatureValidation(location, false, null);
+
+                var result = _package.InternalPackageData.LocalLocations.Any(Verifier.HasValidSignature) ? location : null;
+
+                PackageManagerMessages.Invoke.SignatureValidation(result, !string.IsNullOrEmpty(result), string.IsNullOrEmpty(result) ? null : Verifier.GetPublisherName(result));
+                return _localValidatedLocation = result;
+            }
+        }
+    }
+
+    /// <summary>
+    /// This stores information that is really only relevant to the currently running 
+    /// request, not between sessions.
+    /// 
+    /// The instance of this is bound to the Session.
+    /// </summary>
+    internal class PackageRequestData : NotifiesPackageManager {
+        private Package _package;
+
+        internal bool NotifiedClientThisSupercedes;
+
+        internal PackageRequestData(Package package) {
+            _package = package;
+        }
     }
 
     public class NotifiesPackageManager {

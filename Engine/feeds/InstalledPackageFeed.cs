@@ -23,6 +23,23 @@ namespace CoApp.Toolkit.Engine.Feeds {
             LoadCache();
         }
 
+        internal void PackageRemoved( Package package ) {
+            lock (this) {
+                if (_packageList.Contains(package)) {
+                    _packageList.Remove(package);
+                }
+            }
+        }
+
+        internal void PackageInstalled(Package package) {
+            lock (this) {
+                if (!_packageList.Contains(package)) {
+                    _packageList.Add(package);
+                }
+            }
+        }
+
+
         protected void Scan() {
             if (!Scanned) {
                 LastScanned = DateTime.Now;
