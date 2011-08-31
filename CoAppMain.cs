@@ -219,6 +219,7 @@ namespace CoApp.CLI {
                 }
 
                 if (ConsoleExtensions.OutputRedirected) {
+                    this.Assembly().SetLogo(string.Empty);
                     _terse = true;
                     _verbose = false;
                 }
