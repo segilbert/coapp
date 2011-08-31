@@ -143,6 +143,8 @@ namespace CoApp.Toolkit.Engine {
                     return;
                 }
 
+                UpdateIsRequestedFlags();
+
                 // get basic list of packages based on primary characteristics
                 if (!string.IsNullOrEmpty(canonicalName)) {
                     // if canonical name is passed, override name,version,pkt,arch with the parsed canonicalname.
@@ -188,7 +190,6 @@ namespace CoApp.Toolkit.Engine {
                     results = results.Union(deps).Distinct();
                 }
 
-
                 // paginate the results
                 if (index.HasValue) {
                     results = results.Skip(index.Value);
@@ -199,7 +200,7 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 if (results.Any()) {
-                    UpdateIsRequestedFlags();
+                    
 
                     foreach (var package in results) {
                         if (CancellationRequested) {
@@ -1199,7 +1200,10 @@ namespace CoApp.Toolkit.Engine {
                                 supercedent.PackageRequestData.NotifiedClientThisSupercedes = true;
                             }
 
-                            supercedent.PackageSessionData.UserSpecified = true;
+                            if( supercedent.Name == package.Name ) {
+                                supercedent.PackageSessionData.UserSpecified = package.PackageSessionData.UserSpecified;   
+                            }
+                            
                             // since we got to this spot, we can assume that we can 
                             // supercede this package with the results of the successful
                             // GIG call.
@@ -1265,15 +1269,8 @@ namespace CoApp.Toolkit.Engine {
                     p.PackageSessionData.IsDependency = false;
                 }
 
-                foreach (var dep in installedPackages.SelectMany(package => package.InternalPackageData.Dependencies).Distinct()) {
-                    // find each dependency that is the policy-preferred version, and mark it as currentlyrequested.
-                    var sup = (from supercedent in SearchForInstalledPackages(dep.Name, null, dep.Architecture, dep.PublicKeyToken)
-                        where dep.InternalPackageData.PolicyMinimumVersion <= dep.Version && dep.InternalPackageData.PolicyMaximumVersion >= dep.Version
-                        select dep).OrderByDescending(p => p.Version).FirstOrDefault();
-
-                    if( sup != null ) {
-                        sup.PackageSessionData.IsDependency = true;
-                    }
+                foreach( var package in installedPackages.Where(each=>each.Required)) {
+                    package.UpdateDependencyFlags();
                 }
             }
         }

@@ -166,6 +166,8 @@ namespace CoApp.Toolkit.Engine {
                 UndoPackageComposition();
                 PackageHandler.Remove(this, progress);
                 IsInstalled = false;
+                PackageManagerSettings.PerPackageSettings.DeleteSubkey(CanonicalName);
+
             }
             catch (Exception) {
                 PackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
@@ -180,6 +182,7 @@ namespace CoApp.Toolkit.Engine {
                 catch (Exception e) {
                     // boooo!
                     Console.WriteLine("failed setting active package for {0}-{1}", Name, PublicKeyToken);
+                    PackageManagerSettings.PerPackageSettings.DeleteSubkey(GeneralName);
                 }
             }
         }
@@ -240,6 +243,20 @@ namespace CoApp.Toolkit.Engine {
             return result;
         }
 
+        internal void UpdateDependencyFlags() {
+            foreach (var dependentPackage in InternalPackageData.Dependencies.Where(each=>!each.Required)) {
+                // find each dependency that is the policy-preferred version, and mark it as currentlyrequested.
+                var supercedentPackage = (from supercedent in NewPackageManager.Instance.SearchForInstalledPackages(dependentPackage.Name, null, dependentPackage.Architecture, dependentPackage.PublicKeyToken)
+                    where supercedent.InternalPackageData.PolicyMinimumVersion <= dependentPackage.Version && supercedent.InternalPackageData.PolicyMaximumVersion >= dependentPackage.Version
+                    select supercedent).OrderByDescending(p => p.Version).FirstOrDefault();
+
+                (supercedentPackage??dependentPackage).UpdateDependencyFlags();
+            }
+            // if this isn't already set, do it.
+            if( !Required ) {
+                PackageSessionData.IsDependency = true;
+            }
+        }
 
         public IEnumerable<CompositionRule> ImplicitRules {
             get {
