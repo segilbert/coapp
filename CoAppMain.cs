@@ -41,7 +41,13 @@ namespace CoApp.CLI {
         private bool? _blocked = null;
         private bool? _latest = null;
         private bool? _force = null;
+        private bool? _forceScan = null;
+        private string _location = null;
         private bool? _pause = null;
+        private bool? _dependencies = null;
+        private bool? _download = null;
+        private bool? _pretend = null;
+        private bool? _autoUpgrade = null;
 
         private PackageManagerMessages _messages;
 
@@ -60,6 +66,11 @@ namespace CoApp.CLI {
         /// <returns>int value representing the ERRORLEVEL.</returns>
         /// <remarks></remarks>coapp.service
         private static int Main(string[] args) {
+            if( System.Diagnostics.Debugger.IsAttached) {
+                // wait for service to start if we're attached to the debugger
+                // (it could be starting still)
+                Thread.Sleep(2000);
+            }
             return new CoAppMain().Startup(args);
         }
 
@@ -124,12 +135,38 @@ namespace CoApp.CLI {
                             _force = lastAsBool;
                             break;
 
+                        case "force-scan":
+                            _forceScan = lastAsBool;
+                            break;
+
+                        case "download":
+                            _download = lastAsBool;
+                            break;
+
+                        case "pretend":
+                            _pretend= lastAsBool;
+                            break;
+
+                        case "auto-upgrade":
+                            _autoUpgrade = lastAsBool;
+                            break;
+
+
+                        case "use-feed":
+                            _location = last;
+                            break;
+
                         case "pause":
                             _pause = lastAsBool;
                             break;
 
                         case "verbose":
                             _verbose = lastAsBool;
+                            break;
+
+                        case "dependencies":
+                        case "deps":
+                            _dependencies = lastAsBool;
                             break;
 
                             /* global switches */
@@ -142,7 +179,9 @@ namespace CoApp.CLI {
                             break;
 
                         case "terse":
+                            this.Assembly().SetLogo(string.Empty);
                             _terse = true;
+                            _verbose = false;
                             break;
 
                         case "help":
@@ -178,6 +217,7 @@ namespace CoApp.CLI {
 
                 if (ConsoleExtensions.OutputRedirected) {
                     _terse = true;
+                    _verbose = false;
                 }
 
                 if (command.IsNullOrEmpty()) {
@@ -198,7 +238,7 @@ namespace CoApp.CLI {
                 if (command.EndsWith(".msi") && File.Exists(command) && parameters.IsNullOrEmpty()) {
                     // assume install if the only thing given is a filename.
                     task =
-                        PackageManager.Instance.GetPackages(command, _minVersion, _maxVersion, _installed, _active, _required, _blocked, _latest, _messages).
+                        PackageManager.Instance.GetPackages(command, _minVersion, _maxVersion, _dependencies , _installed, _active, _required, _blocked, _latest, _location, _forceScan, messages: _messages).
                             ContinueWith(antecedent => Install(antecedent.Result));
                     return 0;
                 }
@@ -237,6 +277,17 @@ namespace CoApp.CLI {
                             Console.WriteLine("Name: {0}", Verifier.GetPublisherInformation(parameters.First())["PublisherName"]);
                             break;
 #endif
+
+
+                    case "-l":
+                    case "list":
+                    case "list-package":
+                    case "list-packages":
+                        task =
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location, _forceScan
+                            , messages: _messages).ContinueWith(antecedent => ListPackages(antecedent.Result));
+                        break;
+
                     case "-i":
                     case "install":
                     case "install-package":
@@ -245,9 +296,15 @@ namespace CoApp.CLI {
                             throw new ConsoleException(Resources.InstallRequiresPackageName);
                         }
 
+                        // if you haven't specified this, we're gonna assume that you want the latest version
+                        // this is overridden if the user specifies a version tho'
+                        if( _latest == null ) {
+                            _latest = true;
+                        }
+
                         task =
-                            PackageManager.Instance.GetPackages(command, _minVersion, _maxVersion, false, _active, _required, _blocked, _latest, _messages).
-                                ContinueWith(antecedent => Install(antecedent.Result));
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location, _forceScan, messages: _messages).
+                                ContinueWith(antecedent => { Install(antecedent.Result);  });
                         break;
 
                     case "-r":
@@ -261,26 +318,19 @@ namespace CoApp.CLI {
                             throw new ConsoleException(Resources.RemoveRequiresPackageName);
                         }
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion,_dependencies, true,  _active, _required, _blocked, _latest,_location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Remove(antecedent.Result));
 
                         break;
 
-                    case "-l":
-                    case "list":
-                    case "list-package":
-                    case "list-packages":
-                        task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _installed, _active, _required, _blocked, _latest,
-                                _messages).ContinueWith(antecedent => ListPackages(antecedent.Result));
-                        break;
+                  
 
                     case "-L":
                     case "feed":
                     case "feeds":
                     case "list-feed":
                     case "list-feeds":
-                        ListFeeds();
+                        task = ListFeeds();
                         break;
 
                     case "-u":
@@ -294,7 +344,7 @@ namespace CoApp.CLI {
                         // and then see if each one of those can be upgraded.
 
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
                                 ContinueWith(antecedent => Upgrade(antecedent.Result));
                         break;
 
@@ -305,7 +355,7 @@ namespace CoApp.CLI {
                         if (parameters.Count() < 1) {
                             throw new ConsoleException(Resources.AddFeedRequiresLocation);
                         }
-                        // AddFeed(parameters);
+                        task = AddFeed(parameters);
                         break;
 
                     case "-R":
@@ -314,7 +364,7 @@ namespace CoApp.CLI {
                         if (parameters.Count() < 1) {
                             throw new ConsoleException(Resources.DeleteFeedRequiresLocation);
                         }
-                        //DeleteFeed(parameters);
+                        task = DeleteFeed(parameters);
                         break;
 
                     case "-t":
@@ -335,7 +385,7 @@ namespace CoApp.CLI {
                     case "activate-package":
                     case "activate-packages":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
                                 ContinueWith(antecedent => Activate(antecedent.Result));
 
                         // activate(Parameters)
@@ -346,7 +396,7 @@ namespace CoApp.CLI {
                     case "info":
                         task =
                             PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _installed, _active, _required, _blocked, _latest,
-                                _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
+                                messages: _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
 
                         break;
 
@@ -355,7 +405,7 @@ namespace CoApp.CLI {
                     case "block-package":
                     case "block":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
                                 ContinueWith(antecedent => Block(antecedent.Result));
 
                         break;
@@ -365,7 +415,7 @@ namespace CoApp.CLI {
                     case "unblock-package":
                     case "unblock":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
                                 ContinueWith(antecedent => UnBlock(antecedent.Result));
 
                         break;
@@ -375,7 +425,7 @@ namespace CoApp.CLI {
                     case "mark-package":
                     case "mark":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
                                 ContinueWith(antecedent => Mark(antecedent.Result));
                         break;
 
@@ -384,7 +434,7 @@ namespace CoApp.CLI {
                     case "unmark-package":
                     case "unmark":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, _messages).
+                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, true, _active, _required, _blocked, _latest, messages: _messages).
                                 ContinueWith(antecedent => UnMark(antecedent.Result));
                         break;
 
@@ -401,7 +451,14 @@ namespace CoApp.CLI {
                     }).Wait();
                 }
 
+                if( _pause == true ) {
+                    Console.ReadLine();
+                }
                 PackageManager.Instance.Disconnect();
+                if (_pause == true) {
+                    Console.ReadLine();
+                }
+
             }
             catch (ConsoleException failure) {
                 CancellationTokenSource.Cancel();
@@ -409,8 +466,28 @@ namespace CoApp.CLI {
                 Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
             }
 
-            // Process.Start("pskill.exe", "coapp.service");
+            
             return 0;
+        }
+
+        private Task AddFeed(IEnumerable<string> feeds) {
+            var tasks = feeds.Select(each => PackageManager.Instance.AddFeed(each, false, new PackageManagerMessages {
+                FeedAdded = (f) => { Console.WriteLine("Adding Feed: {0}", f); }
+            }.Extend(_messages))).ToArray();
+
+            return Task.Factory.ContinueWhenAll(tasks, antecdent => {
+                // 
+            }, TaskContinuationOptions.AttachedToParent);
+        }
+
+        private Task DeleteFeed(IEnumerable<string> feeds) {
+            var tasks = feeds.Select(each => PackageManager.Instance.RemoveFeed(each, false, new PackageManagerMessages {
+                FeedRemoved = (f) => { Console.WriteLine("Feed Removed: {0}", f); }
+            }.Extend(_messages))).ToArray();
+
+            return Task.Factory.ContinueWhenAll(tasks, antecdent => {
+                // 
+            }, TaskContinuationOptions.AttachedToParent);
         }
 
         private object UnMark(IEnumerable<Package> iEnumerable) {
@@ -495,6 +572,7 @@ namespace CoApp.CLI {
                         Arch = pkg.Architecture,
                         Installed = pkg.IsInstalled,
                         Local_Path = pkg.IsInstalled ? "(installed)" : pkg.LocalPackagePath ?? "<not local>",
+                        // Deps = pkg.Dependencies.IsNullOrEmpty() ? "" : pkg.Dependencies.Aggregate( (current,each) => current + "," + each)
                         // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
                     }).ToTable().ConsoleOut();
             }
@@ -557,13 +635,12 @@ namespace CoApp.CLI {
             throw new ConsoleException("SERVER EXCEPTION: {0}\r\n{1}", obj.Message, obj.StackTrace);
         }
 
-        private void ListFeeds() {
-            PackageManager.Instance.ListFeeds(null, null, new PackageManagerMessages {
+        private Task ListFeeds() {
+            return PackageManager.Instance.ListFeeds(null, null, new PackageManagerMessages {
                 RequireRemoteFile = GetRemoteFile,
                 NoFeedsFound = () => { Console.WriteLine("No Feeds Found."); },
                 FeedDetails = (location, lastScanned, isSession, isSuppressed, isValidated) => {
-                    Console.Write("HI!");
-                    Console.WriteLine("FEED: {0}", location);
+                    Console.WriteLine("Feed: {0}", location);
                 }
             });
         }
@@ -578,18 +655,114 @@ namespace CoApp.CLI {
         /// <param name="parameters">The parameters.</param>
         /// <remarks></remarks>
         private void Remove(IEnumerable<Package> parameters) {
+            var removedList = new List<string>();
+            var failedList = new List<string>();
 
+            foreach( var package in parameters ) {
+                PackageManager.Instance.RemovePackage(package.CanonicalName, null, new PackageManagerMessages {
+                    RemovingPackageProgress= (canonicalName, progress) => {
+                        // installation progress
+                        ConsoleExtensions.PrintProgressBar("Removing {0}".format(canonicalName), progress);
+                    },
+                    RemovedPackage = (canonicalName) => {
+                        // completed install of package 
+                        removedList.Add(canonicalName);
+                    },
+                    FailedPackageInstall = (canonicalName, filename, reason) => {
+                        // failed install of package 
+                        failedList.Add(canonicalName);
+                    },
+                    PackageBlocked= (canonicalName) => {
+                        // failed install of package 
+                        failedList.Add(canonicalName);
+                    },
+                }).Wait();
+            }
 
 
         }
 
         /// <summary>
-        /// Installs the specified parameters.
+        /// Installs the packages specified.  
+        /// 
+        /// 
         /// </summary>
         /// <param name="parameters">The parameters.</param>
         /// <remarks></remarks>
-        private void Install(IEnumerable<Package> parameters) {
+        private void Install(IEnumerable<Package> packages) {
+            
+            var failed = false;
+            foreach (var conflicts in packages.Select(package => packages.Where(each => each.Name == package.Name && each.PublicKeyToken == package.PublicKeyToken).ToArray()).Where(conflicts => conflicts.Count() > 1 && !conflicts.FirstOrDefault().IsConflicted)) {
+                failed = true;
+                // there are conflicting duplicates of a package in here. 
+                // tell the user and bail.
+                Console.WriteLine("A conflict exists between the following packages:");
+                foreach (var conflict in conflicts) {
+                    conflict.IsConflicted = true;
+                    Console.WriteLine("   {0}", conflict.CanonicalName);
+                }
+            }
 
+            if (!failed) {
+                if (packages.Any()) {
+                    Console.WriteLine("Packages requested to install:");
+                    foreach( var p in packages ) {
+                        Console.WriteLine("   {0}", p.CanonicalName);
+                    }
+                }
+
+                Console.WriteLine();
+
+                // now, each package in the list can be installed
+                var pretendList = new List<Package>();
+                var installedList= new List<string>();
+                var failedList = new List<string>();
+                
+
+                foreach( var p in packages ) {
+                    var package = p;
+
+                    PackageManager.Instance.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, _pretend, new PackageManagerMessages {
+                        PackageInformation = (pkg) => {
+                            // pretending to install package pkg
+                            pretendList.Add(pkg);
+                        },
+
+                        InstallingPackageProgress = (canonicalName, progress ) => {
+                            // installation progress
+                            ConsoleExtensions.PrintProgressBar("Installing: {0}".format(canonicalName), progress);
+                        },
+
+                        InstalledPackage = (canonicalName) => {
+                            // completed install of package 
+                            installedList.Add(canonicalName);
+                            Console.WriteLine();
+                        }, 
+
+                        FailedPackageInstall = (canonicalName, filename , reason ) => {
+                            // failed install of package 
+                            failedList.Add(canonicalName);
+                        },
+
+                        PackageSatisfiedBy = (original, satisfiedBy) => {
+                            if( package == original ) {
+                                // we're satisfying a requested package.
+                                if (original == satisfiedBy) {
+                                    Console.WriteLine("Package '{0}' is already installed.", original.CanonicalName);
+                                }
+                                else {
+                                    Console.WriteLine("Package '{0}' is satisfied by '{1}'.", original.CanonicalName, satisfiedBy.CanonicalName);
+                                    Console.WriteLine("   (use --auto-upgrade=false to install anyway)");
+                                }
+                            } else {
+                                Console.WriteLine("Dependent package '{0}' is satisfied by '{1}'.", original.CanonicalName, satisfiedBy.CanonicalName);
+                            }
+                        },
+
+                    }.Extend(_messages)).Wait();
+                    
+                }
+            }
         }
 
         private void Verbose(string text, params object[] objs) {
