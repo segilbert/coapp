@@ -113,7 +113,6 @@
     <Compile Include="Network\Ftp.cs" />
     <Compile Include="Network\HttpServer.cs" />
     <Compile Include="Network\RemoteFile.cs" />
-    <Compile Include="Network\TransferManager.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\PackageType.cs" />
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />

@@ -8,350 +8,163 @@
 // </license>
 //-----------------------------------------------------------------------
 
+
 namespace CoApp.Toolkit.Network {
     using System;
     using System.Collections.Generic;
+    using System.Dynamic;
     using System.IO;
+    using System.Linq;
     using System.Net;
-    using System.Net.Configuration;
     using System.Reflection;
-    using System.Text.RegularExpressions;
-    using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
     using Tasks;
 
-    public class RemoteFile {
-        private const string SchemeHttp = "http";
-        private const string SchemeHttps = "https";
-        private const string SchemeFtp = "ftp";
-        private const int BUFFER_SIZE = 32768;
-        private static readonly Regex _uriRegex = new Regex(".*://");
-        private static readonly Regex _encodedValueRegex = new Regex("%..");
+    public class UniqueInstance<T> :IDisposable where T : class {
+        private static readonly Dictionary<string, T> instances = new Dictionary<string, T>();
+        private string ___key;
 
+        internal static T GetInstance(Func<T> constructor, string key ) {
+            if (!instances.ContainsKey(key)) {
+                var v = constructor();
+                (v as UniqueInstance<T>).___key = key;
+                instances.Add(key, v);
+            }
+            return instances[key];
+        }
+
+        protected static void Remove(string key) {
+            lock (instances) {
+                if( instances.ContainsKey(key)) {
+                    instances.Remove(key);
+                }
+            }
+        }
+
+        internal static T GetInstance<T1>(Func<T1,T> constructor, T1 c1) {
+            return GetInstance (() => constructor(c1), c1.ToString());
+        }
+
+        internal static T GetInstance<T1>(Func<T> constructor, T1 c1) {
+            return GetInstance (constructor, c1.ToString());
+        }
+
+        internal static T GetInstance<T1,T2>(Func<T1,T2,T> constructor, T1 c1, T2 c2) {
+            return GetInstance(() => constructor(c1, c2), "" + c1 + c2);
+        }
+
+        internal static T GetInstance<T1,T2>(Func<T> constructor, T1 c1, T2 c2) {
+            return GetInstance(constructor, "" + c1 + c2);
+        }
+
+        internal static void Remove<T1>(T1 c1) {
+            Remove( c1.ToString());
+        }
+        internal static void Remove<T1,T2>(T1 c1, T2 c2) {
+            Remove( ""+ c1 + c2 );
+        }
+
+        public void Dispose() {
+            instances.Remove(___key);
+        }
+    }   
+
+    public class RemoteFileMessages:MessageHandlers<RemoteFileMessages> {
+        public Action Failed;
+        public Action Completed;
+        public Action<int> Progress;
+    }
+
+    public class RemoteFile:UniqueInstance<RemoteFile> {
         public static IEnumerable<string> ServerSideExtensions = new[] {"asp", "aspx", "php", "jsp", "cfm"};
+        private const int BUFFER_SIZE = 32768;
 
-        public TriggeredProperty<long> DownloadProgress;
-
-        private Uri _actualRemoteLocation;
-        private CancellationToken _cancellationToken;
-        private long _contentLength;
-        private Task _currentTask;
-        private TaskType _currentTaskType;
-        private string _folder;
-        private DateTime _lastModified;
         private FileStream _filestream;
+        public readonly Uri RemoteLocation;
+        private readonly string _localDirectory;
+        private string _filename;
+        private Task _getTask;
+        private bool IsCancelled;
+        private string _fullPath;
+        private DateTime _lastModified;
+        private long _contentLength;
 
-        public string Folder {
-            get { return _folder; }
-            set {
-                _folder = value;
-                if (LocalFullPath != null) {
-                    LocalFullPath = Path.Combine(value, Path.GetFileName(LocalFullPath));
-                }
-            }
+        public static RemoteFile GetRemoteFile(string remoteLocation, string localDestination) {
+            return GetInstance((r,l) => new RemoteFile(r, l), remoteLocation ,localDestination );
         }
 
-        public Uri RemoteLocation { get; internal set; }
-
-        public bool IsLocal {
-            get { return File.Exists(LocalFullPath) && !IsPartial; }
+        public static RemoteFile GetRemoteFile(Uri remoteLocation, string localDestination) {
+            return GetInstance((r,l) => new RemoteFile(r, l), remoteLocation ,localDestination );
         }
 
-        public string LocalFullPath { get; internal set; }
-
-        public bool HasPreviewed {
-            get { return _lastModified != DateTime.MinValue; }
+        private RemoteFile(string remoteLocation, string localDestination) : this(new Uri(remoteLocation), localDestination) {
         }
 
-        public HttpStatusCode LastStatus { get; internal set; }
-
-        public CancellationToken CancellationToken {
-            get { return _cancellationToken; }
-            set {
-                if (_cancellationToken != value) {
-                    if (_currentTaskType != TaskType.None) {
-                        throw new Exception("Cancellation Token Should not be changed while tasks are in progress");
-                    }
-
-                    _cancellationToken = value;
-                }
-            }
-        }
-
-        private bool IsCancelled {
-            get { return CancellationToken.IsCancellationRequested; }
-        }
-
-        public Uri ActualRemoteLocation {
-            get { return _actualRemoteLocation ?? RemoteLocation; }
-            internal set { _actualRemoteLocation = value; }
-        }
-
-        public bool IsRedirect {
-            get { return _actualRemoteLocation != null; }
-        }
-
-        public DateTime LastModified {
-            get { return _lastModified; }
-        }
-
-        public long ContentLength {
-            get { return _contentLength; }
-        }
-
-        public long CurrentLength {
-            get { return File.Exists(LocalFullPath) ? new FileInfo(LocalFullPath).Length : -1; }
-        }
-
-        public bool IsPartial {
-            get { return ContentLength != CurrentLength; }
-        }
-
-        static RemoteFile() {
-            //Get the assembly that contains the internal class 
-            Assembly aNetAssembly = Assembly.GetAssembly(typeof (SettingsSection));
-            if (aNetAssembly != null) {
-                //Use the assembly in order to get the internal type for the internal class 
-                Type aSettingsType = aNetAssembly.GetType("System.Net.Configuration.SettingsSectionInternal");
-                if (aSettingsType != null) {
-                    //Use the internal static property to get an instance of the internal settings class. 
-                    //If the static instance isn't created allready the property will create it for us. 
-                    object anInstance = aSettingsType.InvokeMember("Section",
-                        BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.NonPublic, null, null, new object[] {});
-                    if (anInstance != null) {
-                        //Locate the private bool field that tells the framework is unsafe header parsing should be allowed or not 
-                        FieldInfo aUseUnsafeHeaderParsing = aSettingsType.GetField("useUnsafeHeaderParsing",
-                            BindingFlags.NonPublic | BindingFlags.Instance);
-                        if (aUseUnsafeHeaderParsing != null) {
-                            aUseUnsafeHeaderParsing.SetValue(anInstance, true);
-                        }
-                    }
-                }
-            }
-        }
-
-        private RemoteFile() {
-            _folder = Environment.CurrentDirectory;
-            _lastModified = DateTime.MinValue;
-            LastStatus = HttpStatusCode.Unused;
-            DownloadProgress = new TriggeredProperty<long>(-1, value => value != DownloadProgress.Value) {TripOnce = false};
-            _currentTaskType = TaskType.None;
-        }
-
-        public RemoteFile(Uri remoteLocation) : this() {
+        private RemoteFile(Uri remoteLocation, string localDestination) {
             RemoteLocation = remoteLocation;
-        }
+            var destination = localDestination.CanonicalizePath();
 
-        public RemoteFile(Uri remoteLocation, string localFolder) : this() {
-            RemoteLocation = remoteLocation;
-            _folder = localFolder;
-            if (!Directory.Exists(_folder)) {
-                Directory.CreateDirectory(_folder);
+            _localDirectory = Path.GetDirectoryName(destination);
+            
+            if(!Directory.Exists(_localDirectory)) {
+                Directory.CreateDirectory(_localDirectory);
+            }
+
+            if(Directory.Exists(destination)) {
+                // they just gave us the local folder where to stick the download.
+                // we'll have to figure out a filename...
+                _localDirectory = destination;
+            } else {
+                _filename = Path.GetFileName(destination);
             }
         }
 
-        public RemoteFile(Uri remoteLocation, CancellationToken cancellationToken) : this(remoteLocation) {
-            CancellationToken = cancellationToken;
+        public bool IsFile {
+            get { return RemoteLocation.IsFile; }
         }
 
-        public RemoteFile(Uri remoteLocation, string localFolder, CancellationToken cancellationToken) : this(remoteLocation, localFolder) {
-            CancellationToken = cancellationToken;
+        public bool IsInternet {
+            get { return IsHttp || IsFtp; }
+        }
+
+        public bool IsHttp {
+            get { return RemoteLocation.IsHttpScheme(); }
+        }
+
+        public bool IsFtp {
+            get { return RemoteLocation.Scheme.Equals("ftp"); }
+        }
+
+        public string Filename {
+            get {
+                return _fullPath ?? (_fullPath = (_filename != null ? Path.Combine(_localDirectory, _filename) : null));
+            }
         }
 
        
-        private void Cancel() {
-            if (_currentTaskType != TaskType.None) {
-                Complete();
-            }
-        }
 
-        private Task CancelledTask() {
-            return Task.Factory.StartNew(Cancel);
-        }
-
-        internal void Serialize(Stream outputStream) {
-        }
-
-        internal static RemoteFile Deserialize(Stream inputStream) {
-            return null;
-        }
-
-        private void Complete() {
-            if( _filestream != null ) {
-                _filestream.Dispose();
-                _filestream = null;
-            }
-
-            if (_currentTaskType == TaskType.Get) {
-                DownloadProgress = new TriggeredProperty<long>(0, value => value != DownloadProgress.Value) {TripOnce = false};
-            }
-
+        public Task Get(RemoteFileMessages messages = null ) {
             lock (this) {
-                _currentTaskType = TaskType.None;
-                _currentTask = null;
-            }
-        }
-
-        private Task RunOperation(TaskType type, Operation publicOperation, Operation privateOperation) {
-            if (IsCancelled) {
-                return CancelledTask();
-            }
-
-            lock (this) {
-                if (_currentTaskType == type) {
-                    return _currentTask;
+                if (_getTask != null && !_getTask.IsCompleted) {
+                    return _getTask;
                 }
 
-                if (_currentTaskType != TaskType.None) {
-                    return _currentTask.ContinueWith(antecedent => publicOperation().Wait(), TaskContinuationOptions.AttachedToParent);
-                }
-                _currentTaskType = type;
-                return _currentTask = privateOperation();
-            }
-        }
+                var webRequest = (HttpWebRequest) WebRequest.Create(RemoteLocation);
+                webRequest.AllowAutoRedirect = true;
+                webRequest.Method = WebRequestMethods.Http.Get;
+                
+                return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(asyncResult => {
+                    if (messages != null) {
+                        messages.Register();
 
-        public Task Preview() {
-            return RunOperation(TaskType.Preview, Preview, PreviewImpl);
-        }
-
-        private Task PreviewImpl() {
-            switch (RemoteLocation.Scheme) {
-                case SchemeHttp:
-                case SchemeHttps:
-                    return PreviewImplHttp();
-                case SchemeFtp:
-                    return PreviewImplFtp();
-            }
-            throw new ProtocolViolationException();
-        }
-
-        private Task PreviewImplHttp() {
-            var webRequest = (HttpWebRequest) WebRequest.Create(RemoteLocation);
-            webRequest.AllowAutoRedirect = false;
-            webRequest.Method = WebRequestMethods.Http.Head;
-
-            if (IsCancelled) {
-                return CancelledTask();
-            }
-
-            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(
-                    asyncResult => {
                         try {
-
                             if (IsCancelled) {
-                                Cancel();
+                                _cancel();
                             }
 
                             var httpWebResponse = asyncResult.Result as HttpWebResponse;
-                            LastStatus = httpWebResponse.StatusCode;
-
-                            if (httpWebResponse.StatusCode == HttpStatusCode.Moved ||
-                                httpWebResponse.StatusCode == HttpStatusCode.TemporaryRedirect) {
-                                try {
-                                    var rf = new RemoteFile(new Uri(httpWebResponse.Headers[HttpResponseHeader.Location]), CancellationToken);
-                                    if (IsCancelled) {
-                                        Cancel();
-                                    }
-
-                                    rf.Preview().Wait();
-                                    LastStatus = rf.LastStatus;
-
-                                    if (rf.HasPreviewed) {
-                                        ActualRemoteLocation = rf.ActualRemoteLocation;
-                                        _contentLength = rf.ContentLength;
-                                        _lastModified = rf.LastModified;
-                                        LocalFullPath = rf.LocalFullPath;
-                                    }
-                                }
-                                catch {
-                                    // not really sure if we should do something here. 
-                                }
-                                Complete();
-                                return;
-                            }
-
-                            if (httpWebResponse.StatusCode == HttpStatusCode.OK) {
-                                _lastModified = httpWebResponse.LastModified;
-                                _contentLength = httpWebResponse.ContentLength;
-                                if (IsCancelled) {
-                                    Cancel();
-                                }
-
-                                GenerateLocalFilename();
-
-                                var filename = httpWebResponse.ContentDispositionFilename();
-                                if (!string.IsNullOrEmpty(filename)) {
-                                    GenerateLocalFilename(filename);
-                                }
-                            }
-                        }
-                        catch( AggregateException ae ) {
-                            ae = ae.Flatten();
-                            var e = ae.InnerExceptions[0] as WebException;
-
-                            if( e != null ) {
-                                try {
-                                    LastStatus = ((HttpWebResponse)e.Response).StatusCode;
-                                }
-                                catch (Exception) {
-                                    // if the fit hits the shan, just call it not found.
-                                    LastStatus = HttpStatusCode.NotFound;
-                                } 
-                            }
-                        }
-                        catch (WebException e) {
-                            try {
-                                LastStatus = ((HttpWebResponse) e.Response).StatusCode;
-                            }
-                            catch (Exception) {
-                                // if the fit hits the shan, just call it not found.
-                                LastStatus = HttpStatusCode.NotFound;
-                            }
-                        }
-                        Complete();
-                    }, TaskContinuationOptions.AttachedToParent);
-        }
-
-        private Task PreviewImplFtp() {
-            throw new NotImplementedException();
-        }
-
-        public Task Get(bool resumeExistingDownload = true) {
-            return RunOperation(TaskType.Get, () => Get(resumeExistingDownload), () => GetImpl(resumeExistingDownload));
-        }
-
-        private Task GetImpl(bool resumeExistingDownload = true) {
-            switch (RemoteLocation.Scheme) {
-                case SchemeHttp:
-                case SchemeHttps:
-                    return GetImplHttp(resumeExistingDownload);
-                case SchemeFtp:
-                    return GetImplFtp(resumeExistingDownload);
-            }
-            throw new Exception("FTP/HTTP/HTTPS only");
-        }
-
-        private Task GetImplHttp(bool resumeExistingDownload = true) {
-            var webRequest = (HttpWebRequest) WebRequest.Create(RemoteLocation);
-            webRequest.AllowAutoRedirect = true;
-            webRequest.Method = WebRequestMethods.Http.Get;
-
-            if (IsCancelled) {
-                return CancelledTask();
-            }
-
-            return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(
-                    asyncResult => {
-                        try {
-                            var v = webRequest;
-
-                            if (IsCancelled) {
-                                Cancel();
-                            }
-
-                            var httpWebResponse = asyncResult.Result as HttpWebResponse;
-                            LastStatus = httpWebResponse.StatusCode;
+                            var lastStatus = httpWebResponse.StatusCode;
 
                             if (httpWebResponse.StatusCode == HttpStatusCode.OK) {
                                 _lastModified = httpWebResponse.LastModified;
@@ -359,80 +172,63 @@ namespace CoApp.Toolkit.Network {
                                 ActualRemoteLocation = httpWebResponse.ResponseUri;
 
                                 if (IsCancelled) {
-                                    Cancel();
+                                    _cancel();
                                 }
+                                
+                                if( string.IsNullOrEmpty(_filename) ) {
+                                    _filename = httpWebResponse.ContentDispositionFilename();
 
-                                GenerateLocalFilename();
-
-                                var filename = httpWebResponse.ContentDispositionFilename();
-                                if (!string.IsNullOrEmpty(filename)) {
-                                    GenerateLocalFilename(filename);
+                                    if (string.IsNullOrEmpty(_filename)) {
+                                        _filename = ActualRemoteLocation.LocalPath.Substring(ActualRemoteLocation.LocalPath.LastIndexOf('/') + 1);
+                                        if (string.IsNullOrEmpty(_filename ) || ServerSideExtensions.Contains(Path.GetExtension(_filename)) ) {
+                                            ActualRemoteLocation.GetLeftPart(UriPartial.Path).MakeSafeFileName();
+                                        }
+                                    }
                                 }
 
                                 try {
                                     // we should open the file here, so that it's ready when we start the async read cycle.
-                                    if( _filestream != null ) {
+                                    if (_filestream != null) {
                                         throw new Exception("THIS VERY BAD AND UNEXPECTED.");
                                     }
-                                    _filestream = File.Open(LocalFullPath, FileMode.Create);
+
+                                    _filestream = File.Open(Filename, FileMode.Create);
 
                                     if (IsCancelled) {
-                                        Cancel();
+                                        _cancel();
+                                        return;
                                     }
 
                                     var tcs = new TaskCompletionSource<HttpWebResponse>(TaskCreationOptions.AttachedToParent);
-                                    // GS01: ((Tasklet) tcs.Task).CancellationToken = Tasklet.CurrentCancellationToken;
-
                                     tcs.Iterate(AsyncReadImpl(tcs, httpWebResponse));
                                     return;
                                 }
                                 catch {
                                     // failed to actually create the file, or some other catastrophic failure.
-
-                                    Complete();
+                                    _cancel();
                                     return;
                                 }
                             }
                             // this is not good. 
                             throw new Exception("Status Code other than OK");
+                        }catch (Exception e ){
+                            Console.WriteLine(e.Message);   
+                            Console.WriteLine(e.StackTrace);   
                         }
-                        catch (WebException e) {
-                            try {
-                                LastStatus = ((HttpWebResponse) e.Response).StatusCode;
-                            }
-                            catch (Exception) {
-                                // if the fit hits the shan, just call it not found.
-                                LastStatus = HttpStatusCode.NotFound;
-                            }
-                            Complete();
-                        }
-                        catch (AggregateException ae) {
-                            ae = ae.Flatten();
-                            var e = ae.InnerExceptions[0] as WebException;
-
-                            if (e != null) {
-                                try {
-                                    LastStatus = ((HttpWebResponse)e.Response).StatusCode;
-                                }
-                                catch (Exception) {
-                                    // if the fit hits the shan, just call it not found.
-                                    LastStatus = HttpStatusCode.NotFound;
-                                } 
-                            }
-
-                            Complete();
-                            return;
-                        }
-                        catch (Exception e) {
-                            Console.WriteLine("BAD ERROR: {0}\r\n{1}", e.Message, e.StackTrace);
-                            LastStatus = HttpStatusCode.NotFound;
-                            Complete();
-                            return;
-                        }
-                        Console.WriteLine("Really? It gets here?");
-                        Complete();
-                    }, TaskContinuationOptions.AttachedToParent);
+                    }
+                }, TaskContinuationOptions.AttachedToParent);
+            }
         }
+
+        private void _cancel() {
+            RemoteFileMessages.Invoke.Failed();
+        }
+
+        public void Cancel() {
+            
+        }
+
+        protected Uri ActualRemoteLocation { get; set; }
 
         private IEnumerable<Task> AsyncReadImpl(TaskCompletionSource<HttpWebResponse> tcs, HttpWebResponse httpWebResponse) {
             using (var responseStream = httpWebResponse.GetResponseStream()) {
@@ -440,7 +236,7 @@ namespace CoApp.Toolkit.Network {
                 var buffer = new byte[BUFFER_SIZE];
                 while (true) {
                     if (IsCancelled) {
-                        Cancel();
+                        _cancel();
                         tcs.SetResult(null);
                         break;
                     }
@@ -456,7 +252,8 @@ namespace CoApp.Toolkit.Network {
                     }
 
                     total += bytesRead;
-                    DownloadProgress.Value = _contentLength <= 0 ? total : (int) (total*100/_contentLength);
+                    
+                    RemoteFileMessages.Invoke.Progress((int) (_contentLength <= 0 ? total : (int) (total*100/_contentLength)));
 
                     // write to output file.
                     _filestream.Write(buffer, 0, bytesRead);
@@ -467,101 +264,27 @@ namespace CoApp.Toolkit.Network {
 
                 try {
                     if (IsCancelled) {
-                        Cancel();
+                        _cancel();
                         tcs.SetResult(null);
                     }
 
-                    var fi = new FileInfo(LocalFullPath);
-                    File.SetCreationTime(LocalFullPath, LastModified);
-                    File.SetLastWriteTime(LocalFullPath, LastModified);
+                    var fi = new FileInfo(Filename);
+                    File.SetCreationTime(Filename, _lastModified);
+                    File.SetLastWriteTime(Filename,_lastModified);
+
                     if (_contentLength == 0) {
                         _contentLength = fi.Length;
                     }
-
-                    Complete();
+                    RemoteFileMessages.Invoke.Completed();
                     tcs.SetResult(null);
                 }
                 catch (Exception e) {
                     Console.WriteLine(e.Message);
-                    Complete();
                     tcs.SetException(e);
                 }
             }
         }
-
-        private Task GetImplFtp(bool resumeExistingDownload = true) {
-            throw new NotImplementedException();
-        }
-
-        public Task Put(string localFilename = null) {
-            localFilename = localFilename ?? LocalFullPath;
-            return RunOperation(TaskType.Put, () => Put(localFilename), () => PutImpl(localFilename));
-        }
-
-        private Task PutImpl(string localFilename = null) {
-            throw new NotImplementedException();
-        }
-
-        public Task Stop(bool deletePartialDownload = false) {
-            return RunOperation(TaskType.Stop, () => Stop(deletePartialDownload), () => StopImpl(deletePartialDownload));
-        }
-
-        private Task StopImpl(bool deletePartialDownload = false) {
-            throw new NotImplementedException();
-        }
-
-        public Task Delete() {
-            return RunOperation(TaskType.Delete, Delete, DeleteImpl);
-        }
-
-        private Task DeleteImpl() {
-            throw new NotImplementedException();
-        }
-
-        public Task Move(Uri newRemoteLocation) {
-            return RunOperation(TaskType.Move, () => Move(newRemoteLocation), () => MoveImpl(newRemoteLocation));
-        }
-
-        private Task MoveImpl(Uri newRemoteLocation) {
-            throw new NotImplementedException();
-        }
-
-        public void DeleteLocalFile() {
-            throw new NotImplementedException();
-        }
-
-        private void GenerateLocalFilename(string filename) {
-            LocalFullPath = Path.Combine(_folder, filename);
-        }
-
-        private void GenerateLocalFilename() {
-            var fname = ActualRemoteLocation.LocalPath.Substring(ActualRemoteLocation.LocalPath.LastIndexOf('/') + 1);
-
-            if (string.IsNullOrEmpty(fname)) {
-                fname = _uriRegex.Replace(ActualRemoteLocation.AbsoluteUri, "");
-                fname = _encodedValueRegex.Replace(fname, "#").Replace('/', '-').Replace(':', '-') + "$DEFAULT";
-            }
-            GenerateLocalFilename(fname);
-        }
-
-        #region Nested type: Operation
-
-        private delegate Task Operation();
-
-        #endregion
-
-        #region Nested type: TaskType
-
-        private enum TaskType {
-            None,
-            Preview,
-            Get,
-            Put,
-            Stop,
-            Delete,
-            Move
-        }
-
-        #endregion
     }
+
+  
 }

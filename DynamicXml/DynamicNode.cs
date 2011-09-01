@@ -180,4 +180,48 @@ namespace CoApp.Toolkit.DynamicXml {
             return new DynamicNode(e);
         }
     }
+
+    /* internal static class DynamicTypeAssigner {
+        internal static bool IsDelegateType(Type d) {
+            return d.BaseType == typeof(MulticastDelegate) && d.GetMethod("Invoke") != null;
+        }
+
+        internal static Type[] GetDelegateParameterTypes(Type d) {
+            if (!IsDelegateType(d))
+                throw new ApplicationException("Not a delegate.");
+
+            var parameters = d.GetMethod("Invoke").GetParameters();
+            var typeParameters = new Type[parameters.Length];
+            for (var i = 0; i < parameters.Length; i++) {
+                typeParameters[i] = parameters[i].ParameterType;
+            }
+            return typeParameters;
+        }
+
+        /// <summary>
+        /// Gets the Return type of a delegate
+        /// </summary>
+        /// <param name="d">The d.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        internal static Type GetDelegateReturnType(Type d) {
+            if (!IsDelegateType(d))
+                throw new ApplicationException("Not a delegate.");
+
+            return d.GetMethod("Invoke").ReturnType;
+        }
+
+        internal static void CopyMethodsToDelegates(this object destination, object from) {
+            var destType = from.GetType();
+            
+            foreach (var field in destination.GetType().GetFields(BindingFlags.NonPublic).Where(f => f.FieldType.BaseType == typeof(MulticastDelegate))) {
+                var name = field.Name.TrimStart('_');
+                var method = destType.GetMethod(name, GetDelegateParameterTypes(field.GetType()));
+                if( method != null && method.ReturnType == GetDelegateReturnType(field.GetType()) ) {
+                    field.SetValue(destination, Delegate.CreateDelegate(destType, from, method));
+                }
+            }
+        }
+
+    }*/
 }

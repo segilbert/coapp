@@ -40,7 +40,7 @@ namespace CoApp.Toolkit.Engine {
         private void SetFieldsFromMatch( Match match ) {
             Name = match.Value("name");
 
-            Version1 = match.Value("v1",".*");
+            Version1 = match.Value("v1","*");
             Version2 = match.Value("v2",".*");
             Version3 = match.Value("v3",".*");
             Version4 = match.Value("v4",".*");

@@ -588,7 +588,12 @@ namespace CoApp.Toolkit.Extensions {
             try {
                 pathUri = new Uri(path);
                 if( !pathUri.IsFile ) {
-                    throw new PathIsNotFileUriException(path, pathUri);
+                    // perhaps try getting the fullpath
+                    try {
+                        pathUri = new Uri(path.GetFullPath());
+                    } catch {
+                        throw new PathIsNotFileUriException(path, pathUri);    
+                    }
                 }
                 
                 // is this a unc path?
