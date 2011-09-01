@@ -32,10 +32,6 @@ namespace CoApp.Toolkit.Engine {
 
         private List<ManualResetEvent> manualResetEvents = new List<ManualResetEvent>();
 
-        /// <summary>
-        /// the collection of all known packages
-        /// </summary>
-        private static readonly ObservableCollection<Package> _packages = new ObservableCollection<Package>();
 
         private bool CancellationRequested {
             get { return PackageManagerSession.Invoke.CancellationRequested(); }
@@ -797,7 +793,7 @@ namespace CoApp.Toolkit.Engine {
                 Updated(); // notify threads that we're not going to be able to get that file.
 
                 if (continuationTask != null) {
-                    var state = continuationTask.AsyncState as Recognizer.RecognizerState;
+                    var state = continuationTask.AsyncState as RequestRemoteFileState;
                     if (state != null) {
                         state.LocalLocation = null;
                     }
@@ -841,7 +837,7 @@ namespace CoApp.Toolkit.Engine {
                     var continuationTask = SessionCache<Task<Recognizer.RecognitionInfo>>.Value[canonicalName];
                     SessionCache<Task<Recognizer.RecognitionInfo>>.Value.Clear(canonicalName);
                     if (continuationTask != null) {
-                        var state = continuationTask.AsyncState as Recognizer.RecognizerState;
+                        var state = continuationTask.AsyncState as RequestRemoteFileState;
                         if (state != null) {
                             state.LocalLocation = localLocation;
                         }
@@ -858,7 +854,7 @@ namespace CoApp.Toolkit.Engine {
                     }
 
                     if (antecedent.Result.IsPackageFile) {
-                        var package = GetPackageFromFilename(location);
+                        var package = Package.GetPackageFromFilename(location);
                         SessionPackageFeed.Instance.Add(package);
                         PackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
                         PackageManagerMessages.Invoke.Recognized(localLocation);
@@ -952,121 +948,7 @@ namespace CoApp.Toolkit.Engine {
             get { return SessionCache<List<string>>.Value["suppressed-feeds"] ?? new List<string>(); }
         }
 
-        internal Package GetPackageFromFilename(string filename ) {
-            filename = filename.CanonicalizePathIfLocalAndExists();
-
-            if (!File.Exists(filename)) {
-                PackageManagerMessages.Invoke.FileNotFound(filename);
-                return null;
-            }
-
-            Package pkg;
-
-            lock (_packages) {
-                pkg = (_packages.Where(
-                    package => package.InternalPackageData.HasLocalLocation && package.InternalPackageData.LocalLocations.Contains(filename))).FirstOrDefault();
-            }
-
-            if (pkg != null) {
-                return pkg;
-            }
-
-            var packageFileInformation = CoAppMSI.GetCoAppPackageFileInformation(filename);
-
-            // try via just the package id
-            if (!string.IsNullOrEmpty(packageFileInformation.packageId)) {
-                lock (_packages) {
-                    pkg = _packages.Where(package => package.ProductCode == packageFileInformation.packageId).FirstOrDefault();
-                }
-            }
-
-            // try via the cosmetic name fields
-            if (pkg == null) {
-                lock (_packages) {
-                    pkg = (_packages.Where(package =>
-                        package.Architecture == packageFileInformation.Architecture &&
-                        package.Version == packageFileInformation.Version &&
-                        package.PublicKeyToken == packageFileInformation.PublicKeyToken &&
-                        package.Name.Equals(packageFileInformation.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
-                }
-            }
-
-            if (pkg == null) {
-                pkg = new Package(packageFileInformation.Name, packageFileInformation.Architecture, packageFileInformation.Version, packageFileInformation.PublicKeyToken, packageFileInformation.packageId);
-
-                lock( _packages ) {
-                    _packages.Add(pkg);
-                }
-            }
-
-            if (string.IsNullOrEmpty(pkg.ProductCode)) {
-                pkg.ProductCode = packageFileInformation.packageId;
-            }
-
-            if (pkg.InternalPackageData.Dependencies.Count == 0) {
-                pkg.InternalPackageData.Dependencies.AddRange((IEnumerable<Package>) packageFileInformation.dependencies);
-            }
-
-            pkg.InternalPackageData.LocalLocation = filename;
-
-            pkg.InternalPackageData.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) packageFileInformation.assemblies.Values);
-            pkg.InternalPackageData.Roles.AddRange((IEnumerable<Tuple<PackageRole, string>>) packageFileInformation.roles);
-
-            pkg.InternalPackageData.PolicyMinimumVersion = packageFileInformation.policy_min_version;
-            pkg.InternalPackageData.PolicyMaximumVersion = packageFileInformation.policy_max_version;
-
-            pkg.PackageHandler = CoAppMSI.Instance;
-
-            pkg.InternalPackageData.CanonicalFeedLocation = packageFileInformation.feedLocation;
-            pkg.InternalPackageData.CanonicalPackageLocation = packageFileInformation.originalLocation;
-
-            // set the delegate to get the package details if it is really needed.
-            Cache<PackageDetails>.Value.Insert(pkg.CanonicalName, (unusedCanonicalFileName) => CoAppMSI.GetPackageDetails(pkg, filename));
-
-            return pkg;
-        }
-
-        internal Package GetPackage(string packageName, ulong version, string architecture, string publicKeyToken, string packageId) {
-            Package pkg;
-
-            // try via just the package id
-            if (!string.IsNullOrEmpty(packageId)) {
-                lock (_packages) {
-                    pkg = _packages.Where(package => package.ProductCode == packageId).FirstOrDefault();
-                }
-
-                if (pkg != null && string.IsNullOrEmpty(pkg.Name)) {
-                    pkg.Name = packageName;
-                    pkg.Architecture = architecture;
-                    pkg.Version = version;
-                    pkg.PublicKeyToken = publicKeyToken;
-                }
-
-                if (pkg != null)
-                    return pkg;
-            }
-
-            lock (_packages) {
-                pkg = (_packages.Where(package =>
-                    package.Architecture == architecture &&
-                    package.Version == version &&
-                    package.PublicKeyToken == publicKeyToken &&
-                    package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
-            }
-            
-            if (pkg == null) {
-                pkg = new Package(packageName, architecture, version, publicKeyToken, packageId);
-                lock(_packages) {
-                    _packages.Add(pkg);
-                }
-            }
-
-            if( !string.IsNullOrEmpty(packageId) && string.IsNullOrEmpty(pkg.ProductCode) ) {
-                pkg.ProductCode = packageId;
-            }
-
-            return pkg;
-        }
+        
        
         internal IEnumerable<PackageFeed> Feeds { get {
             // ensure that the system feeds actually get loaded.

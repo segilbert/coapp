@@ -66,7 +66,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
 
                 foreach (var p in files) {
                     try {
-                        var pkg = NewPackageManager.Instance.GetPackageFromFilename(p);
+                        var pkg = Package.GetPackageFromFilename(p);
                         pkg.InternalPackageData.FeedLocation = Location;
                         
                         if( !_packageList.Contains(pkg))

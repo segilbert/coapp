@@ -139,10 +139,12 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         if (_allFeeds.ContainsKey(info.FullPath)) {
                             return _allFeeds[info.FullPath];
                         }
-                        /*
+                        
                         if (info.IsAtom) {
                             result = new AtomPackageFeed(info.FullPath);
                         }
+
+                        /*
                         if (info.IsArchive) {
                             result = new ArchivePackageFeed(info.FullPath);
                         }
@@ -153,12 +155,11 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         if (_allFeeds.ContainsKey(info.FullUrl.AbsoluteUri)) {
                             return _allFeeds[info.FullUrl.AbsoluteUri];
                         }
-
-                        /*
+                        
                         if (info.IsAtom) {
                             result = new AtomPackageFeed(info.FullUrl);
                         }
-                         */
+                        
                     }
                 }
 

@@ -401,7 +401,7 @@ namespace CoApp.Toolkit.Engine {
 
             _sessionCacheMessages.Register(); // visible to this task and all properly behaved children
 
-            Task readTask = null;
+            Task<int> readTask = null;
             SendSessionStarted(_sessionId);
 
             while (EngineService.IsRunning) {
@@ -436,7 +436,11 @@ namespace CoApp.Toolkit.Engine {
                     if ((readTask == null || readTask.IsCompleted) && Connected) {
                         var serverInput = new byte[EngineService.BufferSize];
                         try {
-                            readTask = _serverPipe.ReadAsync(serverInput, 0, serverInput.Length).AutoManage().ContinueWith(antecedent => {
+                            // when the readasync command can finally complete, then we know that
+                            // it's ok to ask it to read again.
+                            readTask = _serverPipe.ReadAsync(serverInput, 0, serverInput.Length).AutoManage();
+                            
+                            readTask.ContinueWith(antecedent => {
                                 if (antecedent.IsFaulted || antecedent.IsCanceled || !_serverPipe.IsConnected) {
                                     Disconnect();
                                     return;

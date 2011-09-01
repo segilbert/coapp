@@ -15,19 +15,21 @@ namespace CoApp.Toolkit.Engine {
     using System.Net;
     using System.Threading.Tasks;
     using Extensions;
-    
+    using Feeds.Atom;
     using Network;
     using PackageFormatHandlers;
     using Tasks;
+
+    internal class RequestRemoteFileState {
+            internal string OriginalUrl;
+            internal string LocalLocation;
+        }
 
     /// <summary>
     /// NOTE: EXPLICITLY IGNORE, This is getting refactored 
     /// </summary>
     internal class Recognizer {
-        internal class RecognizerState {
-            internal string OriginalUrl;
-            internal string LocalLocation;
-        }
+        
 
         private static Task<RecognitionInfo> CacheAndReturnTask( string itemPath , RecognitionInfo recognitionInfo) {
             SessionCache<RecognitionInfo>.Value[itemPath] = recognitionInfo;
@@ -53,13 +55,15 @@ namespace CoApp.Toolkit.Engine {
                     // we have to issue a request to the client to get it for us
 
                     // first let's create a delegate to run when the file gets resolved.
-                    var completion = new Task<RecognitionInfo>((recognizerState) => {
-                        var state = recognizerState as RecognizerState;
+                    var completion = new Task<RecognitionInfo>((rrfState) => {
+                        var state = rrfState as RequestRemoteFileState;
                         if( state == null || string.IsNullOrEmpty(state.LocalLocation) ) {
                             // didn't fill in the local location? -- this happens when the client can't download.
                             // PackageManagerMessages.Invoke.FileNotRecognized() ?
                             return new RecognitionInfo {
                                 FullPath = location.AbsoluteUri,
+                                FullUrl = location,
+                                IsURL = true,
                                 IsInvalid = true,
                             } ;
                         }
@@ -73,6 +77,8 @@ namespace CoApp.Toolkit.Engine {
                             };
 
                             result.CopyDetailsFrom(continuedResult);
+                            result.IsURL = true;
+
                             return Cache(item, result);
                         }
                         // so, the callback comes, but it's not a file. 
@@ -81,7 +87,7 @@ namespace CoApp.Toolkit.Engine {
                             FullPath = location.AbsoluteUri,
                             IsInvalid = true,
                         } ;
-                    }, new RecognizerState { OriginalUrl = location.AbsoluteUri } , TaskCreationOptions.AttachedToParent);
+                    }, new RequestRemoteFileState { OriginalUrl = location.AbsoluteUri } , TaskCreationOptions.AttachedToParent);
 
                     // since we're expecting that the canonicalname will be used as a filename 
                     // in the .cache directory, we need to generate a safe filename based on the 
@@ -137,6 +143,7 @@ namespace CoApp.Toolkit.Engine {
                     var ext = Path.GetExtension(localPath);
                     var result = new RecognitionInfo {
                         IsFile = true,
+                        FullPath = localPath
                     };
 
                     switch (ext) {
@@ -175,19 +182,14 @@ namespace CoApp.Toolkit.Engine {
                                 // not a coapp file...
                             }
 
-                            if (result.FullPath.IsXmlFile()) {
+                            if (localPath.IsXmlFile()) {
                                 try {
                                     // this could be an atom feed
-
-                                        
-                                    /*
-                                    var feed = AtomFeed.Load(result.FullPath);
+                                    var feed = AtomFeed.Load(localPath);
                                     if (feed != null) {
                                         result.IsPackageFeed = true;
                                         result.IsAtom = true;
                                     }
-                                        * */
-
                                 }
                                 catch {
                                     // can't seem to figure out what this is. 

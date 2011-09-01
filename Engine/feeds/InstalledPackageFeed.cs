@@ -59,7 +59,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     }
 
                     try {
-                        _packageList.Add( NewPackageManager.Instance.GetPackageFromFilename(packageFilename) );
+                        _packageList.Add( Package.GetPackageFromFilename(packageFilename) );
                     } catch(Exception e) {
                         // Console.WriteLine(e.Message);
                         // files that fail aren't coapp packages. 

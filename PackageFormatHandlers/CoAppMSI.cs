@@ -129,7 +129,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     arch = pak.arch;
                     version = ((string)pak.version).VersionStringToUInt64();
                     pkt = pak.public_key_token;
-                    result.dependencies.Add(NewPackageManager.Instance.GetPackage(name, version, arch, pkt, pkgid));
+                    result.dependencies.Add(Package.GetPackage(name, version, arch, pkt, pkgid));
                 }
             }
 

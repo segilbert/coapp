@@ -504,7 +504,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     messages.Register();
                 }
                 using (var eventQueue = new ManualEventQueue()) {
-                    WriteAsync(new UrlEncodedMessage("recongnize-file") {
+                    WriteAsync(new UrlEncodedMessage("recognize-file") {
                         {"canonical-name", canonicalName},
                         {"local-location", localLocation},
                         {"remote-location", remoteLocation},

@@ -118,6 +118,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Engine\Exceptions\UnableToStartServiceException.cs" />
+    <Compile Include="Engine\Feeds\AtomPackageFeed.cs" />
+    <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
+    <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
+    <Compile Include="Engine\PackageName.cs" />
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />
     <Compile Include="Engine\CompositionRule.cs" />
     <Compile Include="Engine\EngineService.cs" />

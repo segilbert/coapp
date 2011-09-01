@@ -151,7 +151,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                     int percent = ((n++)*100)/total;
                     PackageManagerMessages.Invoke.ScanningPackagesProgress(p.LocalPackage,percent);
-                    NewPackageManager.Instance.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
+                    Package.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
                 }
                 catch {
                 }

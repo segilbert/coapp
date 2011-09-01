@@ -46,7 +46,7 @@ namespace CoApp.Toolkit.Engine {
         /// <summary>
         /// Gets the package details object.
         /// 
-        /// if _packageDetails is null, it tries to get the data from the system cache (probably by use of a delegate)
+        /// if _packageDetails is null, it tries to get the data from the cache (probably by use of a delegate)
         /// </summary>
         internal PackageDetails PackageDetails { 
             get { return _packageDetails ?? (_packageDetails = Cache<PackageDetails>.Value[CanonicalName] ); }
@@ -102,6 +102,163 @@ namespace CoApp.Toolkit.Engine {
             get { return "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant(); }
         }
 
+                /// <summary>
+        /// the collection of all known packages
+        /// </summary>
+        private static readonly ObservableCollection<Package> _packages = new ObservableCollection<Package>();
+
+
+
+        internal static Package GetPackageFromProductCode(string productCode) {
+            Guid pkgGuid;
+
+            if( productCode[0] == '{' && Guid.TryParse(productCode, out pkgGuid)) {
+                lock (_packages) {
+                    var pkg = _packages.Where(package => package.ProductCode == productCode).FirstOrDefault();
+                    if (pkg == null) {
+                        // where the only thing we know is packageID.
+                        pkg = new Package(productCode);
+                        _packages.Add(pkg);
+                    }
+                    return pkg;
+                }
+            }
+            return null; // only happens if the productCode isn't a guid.
+        }
+
+        internal static  Package GetPackageFromCanonicalName(string canonicalName) {
+            lock (_packages) {
+                var packageName = PackageName.Parse(canonicalName);
+                if (packageName.IsFullMatch) {
+                    var pkg = _packages.Where(package => package.CanonicalName == canonicalName).FirstOrDefault();
+                    if (pkg == null) {
+                        // where the only thing we know is canonical Name.
+                        pkg = new Package(packageName.Name, packageName.Arch, packageName.Version.VersionStringToUInt64(), packageName.PublicKeyToken, null);
+                        _packages.Add(pkg);
+                    }
+                    return pkg;
+                }
+            }
+            return null; // only happens if the canonicalName isn't a canonicalName.
+        }
+
+        internal static Package GetPackageFromFilename(string filename ) {
+            filename = filename.CanonicalizePathIfLocalAndExists();
+
+            if (!File.Exists(filename)) {
+                PackageManagerMessages.Invoke.FileNotFound(filename);
+                return null;
+            }
+
+            Package pkg;
+
+            lock (_packages) {
+                pkg = (_packages.Where(
+                    package => package.InternalPackageData.HasLocalLocation && package.InternalPackageData.LocalLocations.Contains(filename))).FirstOrDefault();
+            }
+
+            if (pkg != null) {
+                return pkg;
+            }
+
+            var packageFileInformation = CoAppMSI.GetCoAppPackageFileInformation(filename);
+
+            // try via just the package id
+            if (!string.IsNullOrEmpty(packageFileInformation.packageId)) {
+                lock (_packages) {
+                    pkg = _packages.Where(package => package.ProductCode == packageFileInformation.packageId).FirstOrDefault();
+                }
+            }
+
+            // try via the cosmetic name fields
+            if (pkg == null) {
+                lock (_packages) {
+                    pkg = (_packages.Where(package =>
+                        package.Architecture == packageFileInformation.Architecture &&
+                        package.Version == packageFileInformation.Version &&
+                        package.PublicKeyToken == packageFileInformation.PublicKeyToken &&
+                        package.Name.Equals(packageFileInformation.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+                }
+            }
+
+            if (pkg == null) {
+                pkg = new Package(packageFileInformation.Name, packageFileInformation.Architecture, packageFileInformation.Version, packageFileInformation.PublicKeyToken, packageFileInformation.packageId);
+
+                lock( _packages ) {
+                    _packages.Add(pkg);
+                }
+            }
+
+            if (string.IsNullOrEmpty(pkg.ProductCode)) {
+                pkg.ProductCode = packageFileInformation.packageId;
+            }
+
+            if (pkg.InternalPackageData.Dependencies.Count == 0) {
+                pkg.InternalPackageData.Dependencies.AddRange((IEnumerable<Package>) packageFileInformation.dependencies);
+            }
+
+            pkg.InternalPackageData.LocalLocation = filename;
+
+            pkg.InternalPackageData.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) packageFileInformation.assemblies.Values);
+            pkg.InternalPackageData.Roles.AddRange((IEnumerable<Tuple<PackageRole, string>>) packageFileInformation.roles);
+
+            pkg.InternalPackageData.PolicyMinimumVersion = packageFileInformation.policy_min_version;
+            pkg.InternalPackageData.PolicyMaximumVersion = packageFileInformation.policy_max_version;
+
+            pkg.PackageHandler = CoAppMSI.Instance;
+
+            pkg.InternalPackageData.CanonicalFeedLocation = packageFileInformation.feedLocation;
+            pkg.InternalPackageData.CanonicalPackageLocation = packageFileInformation.originalLocation;
+
+            // set the delegate to get the package details if it is really needed.
+            Cache<PackageDetails>.Value.Insert(pkg.CanonicalName, (unusedCanonicalFileName) => CoAppMSI.GetPackageDetails(pkg, filename));
+
+            return pkg;
+        }
+
+        internal static Package GetPackage(string packageName, ulong version, string architecture, string publicKeyToken, string packageId) {
+            Package pkg;
+
+            // try via just the package id
+            if (!string.IsNullOrEmpty(packageId)) {
+                lock (_packages) {
+                    pkg = _packages.Where(package => package.ProductCode == packageId).FirstOrDefault();
+                }
+
+                if (pkg != null && string.IsNullOrEmpty(pkg.Name)) {
+                    pkg.Name = packageName;
+                    pkg.Architecture = architecture;
+                    pkg.Version = version;
+                    pkg.PublicKeyToken = publicKeyToken;
+                }
+
+                if (pkg != null)
+                    return pkg;
+            }
+
+            lock (_packages) {
+                pkg = (_packages.Where(package =>
+                    package.Architecture == architecture &&
+                    package.Version == version &&
+                    package.PublicKeyToken == publicKeyToken &&
+                    package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+            }
+            
+            if (pkg == null) {
+                pkg = new Package(packageName, architecture, version, publicKeyToken, packageId);
+                lock(_packages) {
+                    _packages.Add(pkg);
+                }
+            }
+
+            if( !string.IsNullOrEmpty(packageId) && string.IsNullOrEmpty(pkg.ProductCode) ) {
+                pkg.ProductCode = packageId;
+            }
+
+            return pkg;
+        }
+
+
         private Package() {
             Name = string.Empty;
             Version = 0;
@@ -109,11 +266,11 @@ namespace CoApp.Toolkit.Engine {
             PublicKeyToken = string.Empty;
         }
 
-        internal Package(string productCode) : this() {
+        private Package(string productCode) : this() {
             ProductCode = productCode;
         }
 
-        internal Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) : this(productCode) {
+        private Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) : this(productCode) {
             Name = name;
             Version = version;
             Architecture = architecture;

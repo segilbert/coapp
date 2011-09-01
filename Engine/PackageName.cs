@@ -12,17 +12,17 @@ namespace CoApp.Toolkit.Engine {
     using System.Text.RegularExpressions;
     using Extensions;
 
+    internal static class MatchExtensions {
+        internal static string Value(this Match match, string group, string _default = null) {
+            return (match.Groups[group].Success ? match.Groups[group].Captures[0].Value : _default??string.Empty).Trim('-',' ');
+        }
+    }
+
     public class PackageName {
         private static readonly char[] _slashes = new [] {'\\', '/' };
-        private static readonly Regex _canonicalName = new Regex(@"^(.*)-(\d{1,5})(\.\d{1,5})(\.\d{1,5})(\.\d{1,5})-(any|x86|x64|arm)-([0-9a-f]{16})$", RegexOptions.IgnoreCase);
-        private static readonly Regex[] _partialName = new[] {
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)-([0-9a-f]{16}|\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)-(any|x86|x64|arm|all|\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)(\.\d{1,5}|\.\*)$", RegexOptions.IgnoreCase),
-            new Regex(@"^(.*)-(\d{1,5}|\*)$", RegexOptions.IgnoreCase)
-        };
+        private static readonly Regex _canonicalName = new Regex(@"^(?<name>.*)(?<v1>-\d{1,5})(?<v2>\.\d{1,5})(?<v3>\.\d{1,5})(?<v4>\.\d{1,5})(?<arch>-any|-x86|-x64|-arm)(-[0-9a-f]{16})$", RegexOptions.IgnoreCase);
+        private static readonly Regex _partialMatchFull =
+             new Regex( @"^(?<name>.*?)?(?<v1>-\d{1,5}|-\*)?(?<v2>\.\d{1,5}|\.\*)?(?<v3>\.\d{1,5}|\.\*)?(?<v4>\.\d{1,5}|\.\*)?(?<arch>-{1,2}any|-{1,2}x86|-{1,2}x64|-{1,2}arm|-{1,2}all|-\*)?(?<pkt>-{1,3}[0-9a-f]{16})?$", RegexOptions.IgnoreCase);
 
         public string CanonicalName { get; private set; }
         public string Name { get; private set; }
@@ -38,19 +38,14 @@ namespace CoApp.Toolkit.Engine {
         public bool IsFullMatch { get { return (!string.IsNullOrEmpty(CanonicalName)); } }
 
         private void SetFieldsFromMatch( Match match ) {
-            var c = match.Groups.Count;
+            Name = match.Value("name");
 
-            if( c <= 1) {
-                return;
-            }
-
-            Name = c <= 1 ? string.Empty : match.Groups[1].Captures[0].Value;
-            Version1 = c <= 2 ? string.Empty : match.Groups[2].Captures[0].Value;
-            Version2 = c <= 3 ? string.Empty : match.Groups[3].Captures[0].Value;
-            Version3 = c <= 4 ? string.Empty : match.Groups[4].Captures[0].Value;
-            Version4 = c <= 5 ? string.Empty : match.Groups[5].Captures[0].Value;
-            Arch = c <= 6 ? string.Empty : match.Groups[6].Captures[0].Value;
-            PublicKeyToken = c <= 7 ? string.Empty : match.Groups[7].Captures[0].Value;
+            Version1 = match.Value("v1",".*");
+            Version2 = match.Value("v2",".*");
+            Version3 = match.Value("v3",".*");
+            Version4 = match.Value("v4",".*");
+            Arch = match.Value("arch");
+            PublicKeyToken= match.Value("pkt");
 
             Version = Version1 + Version2 + Version3 + Version4;
         }
@@ -68,12 +63,10 @@ namespace CoApp.Toolkit.Engine {
                 return;
             }
 
-            foreach( var rx in _partialName ) {
-                match = rx.Match(potentialPartialPackageName);
-                if( match.Success ) {
-                    SetFieldsFromMatch(match);
-                    return;
-                }
+            match = _partialMatchFull.Match(potentialPartialPackageName);
+            if( match.Success ) {
+                SetFieldsFromMatch(match);
+                return;
             }
 
             Name = potentialPartialPackageName;
