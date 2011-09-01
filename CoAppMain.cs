@@ -14,6 +14,7 @@ namespace CoApp.CLI {
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Resources;
     using System.Threading;
     using System.Threading.Tasks;
@@ -86,11 +87,13 @@ namespace CoApp.CLI {
                 NoPackagesFound = NoPackagesFound,
                 PermissionRequired = OperationRequiresPermission,
                 Error = MessageArgumentError,
-                RequireRemoteFile = GetRemoteFile,
+                RequireRemoteFile = (canonicalName, remoteLocations, localFolder, force ) => GetRemoteFile(canonicalName, remoteLocations, localFolder, force ),
                 OperationCancelled = CancellationRequested,
                 PackageSatisfiedBy = (original, satisfiedBy) => {
                     original.SatisfiedBy = satisfiedBy;
-                }
+                },
+                PackageBlocked = BlockedPackage,
+                UnknownPackage = UnknownPackage,
             };
 
             try {
@@ -470,6 +473,14 @@ namespace CoApp.CLI {
             return 0;
         }
 
+        private void UnknownPackage(string canonicalName) {
+            Console.WriteLine("Unknown Package {0}", canonicalName);
+        }
+
+        private void BlockedPackage(string canonicalName) {
+            Console.WriteLine("Package {0} is blocked", canonicalName);
+        }
+
         private Task AddFeed(IEnumerable<string> feeds) {
             var tasks = feeds.Select(each => PackageManager.Instance.AddFeed(each, false, new PackageManagerMessages {
                 FeedAdded = (f) => { Console.WriteLine("Adding Feed: {0}", f); }
@@ -735,17 +746,104 @@ namespace CoApp.CLI {
 
         private Task ListFeeds() {
             return PackageManager.Instance.ListFeeds(null, null, new PackageManagerMessages {
-                RequireRemoteFile = GetRemoteFile,
                 NoFeedsFound = () => { Console.WriteLine("No Feeds Found."); },
                 FeedDetails = (location, lastScanned, isSession, isSuppressed, isValidated) => {
                     Console.WriteLine("Feed: {0}", location);
                 }
-            });
+            }.Extend(_messages));
         }
 
-        private void GetRemoteFile(string canonicalName, IEnumerable<string> arg2, string arg3, bool arg4) {
-            PackageManager.Instance.UnableToAcquire(canonicalName, new PackageManagerMessages());
+        private Dictionary<string, Task> currentDownloads = new Dictionary<string, Task>();
+
+        private Task GetRemoteFile(string canonicalName, IEnumerable<string> locations, string targetFolder, bool forceDownload) {
+            var targetFilename = Path.Combine(targetFolder, canonicalName);
+            lock (currentDownloads) {
+                if (currentDownloads.ContainsKey(targetFilename)) {
+                    return currentDownloads[targetFilename];
+                }
+
+                if (File.Exists(targetFilename)) {
+                    if (forceDownload) {
+                        targetFilename.TryHardToDeleteFile();
+                    }
+                    else {
+                        PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, "<file exists>",
+                            new PackageManagerMessages().Extend(_messages));
+                        return null;
+                    }
+                }
+
+                // gotta download the file...
+                var task = Task.Factory.StartNew(() => {
+                    var mre = new ManualResetEvent(false);
+
+                    foreach (var location in locations) {
+                        mre.Reset();
+
+                        try {
+                            var uri = new Uri(location);
+                            if (uri.IsFile) {
+                                // try to copy the file local.
+                                var remoteFile = uri.AbsoluteUri.CanonicalizePath();
+
+                                // if this fails, we'll just move down the line.
+                                File.Copy(remoteFile, targetFilename);
+                                PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, uri.AbsoluteUri,
+                                    new PackageManagerMessages().Extend(_messages));
+                                return;
+                            }
+
+                            var webClient = new WebClient();
+                            webClient.DownloadFileCompleted += (sender, args) => {
+                                Console.WriteLine("DONE: {0}", uri.AbsoluteUri );
+
+                                if (args.Cancelled || args.Error != null) {
+                                    // this didn't finsh correctly.
+                                    if (File.Exists(targetFilename)) {
+                                        targetFilename.TryHardToDeleteFile();
+                                    }
+                                    mre.Set(); // try the next one.
+                                    return;
+                                }
+
+                                Console.WriteLine("Sending Response: {0}", canonicalName );
+                                PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, uri.AbsoluteUri,
+                                    new PackageManagerMessages().Extend(_messages));
+                                mre.Set();
+                            };
+
+                            webClient.DownloadProgressChanged +=
+                                (sender, args) => { "Downloading {0}".format(uri.AbsoluteUri).PrintProgressBar(args.ProgressPercentage); };
+
+                            webClient.DownloadFileAsync(uri, targetFilename);
+                            
+
+                            Console.WriteLine("!!!!");
+
+                            if (File.Exists(targetFilename)) {
+                                return;
+                            }
+
+                        }
+                        catch {
+                            // bogus, dude.
+                            // try the next one.
+                        }
+                    }
+
+                    PackageManager.Instance.UnableToAcquire(canonicalName, new PackageManagerMessages());
+
+                }, TaskCreationOptions.AttachedToParent).ContinueWith(antecedent => {
+                    lock (currentDownloads) {
+                        currentDownloads.Remove(targetFilename);
+                    }
+                }, TaskContinuationOptions.AttachedToParent);
+
+                currentDownloads.Add(targetFilename, task);
+                return task;
+            }
         }
+
 
         /// <summary>
         /// Removes the specified parameters.
