@@ -167,7 +167,7 @@ namespace CoApp.Toolkit.Engine {
                 results = from package in results
                     where
                         (installed == null || package.IsInstalled == installed) && (active == null || package.IsActive == active) &&
-                            (required == null || package.Required == required) && (blocked == null || package.IsBlocked == blocked)
+                            (required == null || package.IsRequired == required) && (blocked == null || package.IsBlocked == blocked)
 
                     select package;
 
@@ -265,7 +265,7 @@ namespace CoApp.Toolkit.Engine {
                         var highestInstalledPackage =
                             SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken).HighestPackages();
                         if (highestInstalledPackage.Any() && highestInstalledPackage.FirstOrDefault().Version < package.Version) {
-                            if (!package.IsBlocked) {
+                            if (package.IsBlocked) {
                                 PackageManagerMessages.Invoke.PackageBlocked(canonicalName);
                                 return;
                             }
@@ -285,7 +285,7 @@ namespace CoApp.Toolkit.Engine {
                         // mark the package as the client requested.
                         package.PackageSessionData.DoNotSupercede = (false == autoUpgrade);
                         package.PackageSessionData.UpgradeAsNeeded = (true == autoUpgrade);
-                        package.PackageSessionData.UserSpecified = true;
+                        package.PackageSessionData.IsClientSpecified = true;
 
                         // the resolve-acquire-install-loop
                         do {
@@ -341,11 +341,11 @@ namespace CoApp.Toolkit.Engine {
 
                             if (missingFiles.Any()) {
                                 // we've got some packages to install that don't have files.
-                                foreach (var p in missingFiles.Where(p => !p.PackageSessionData.RequestedDownload)) {
+                                foreach (var p in missingFiles.Where(p => !p.PackageSessionData.HasRequestedDownload)) {
                                     PackageManagerMessages.Invoke.RequireRemoteFile(p.CanonicalName,
                                         p.InternalPackageData.RemoteLocations , PackageManagerSettings.CoAppCacheDirectory, false);
 
-                                    p.PackageSessionData.RequestedDownload = true;
+                                    p.PackageSessionData.HasRequestedDownload = true;
                                 }
                             }
                             else {
@@ -679,7 +679,7 @@ namespace CoApp.Toolkit.Engine {
                         PackageManagerMessages.Invoke.PermissionRequired("ChangeRequiredState");
                     }
                     else {
-                        package.Required = true;
+                        package.IsRequired = true;
                     }
                 }
 
@@ -688,7 +688,7 @@ namespace CoApp.Toolkit.Engine {
                         PackageManagerMessages.Invoke.PermissionRequired("ChangeRequiredState");
                     }
                     else {
-                        package.Required = false;
+                        package.IsRequired = false;
                     }
                 }
 
@@ -1135,14 +1135,14 @@ namespace CoApp.Toolkit.Engine {
 
             var packageData = package.PackageSessionData;
 
-            if (!package.PackageSessionData.PotentiallyInstallable) {
+            if (!package.PackageSessionData.IsPotentiallyInstallable) {
                 yield break;
             }
 
             if (!packageData.DoNotSupercede) {
                 var installedSupercedents = SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken);
 
-                if( package.PackageSessionData.UserSpecified || hypothetical )  {
+                if( package.PackageSessionData.IsClientSpecified || hypothetical )  {
                     // this means that we're talking about a requested package
                     // and not a dependent package and we can liberally construe supercedent 
                     // as anything with a highger version number
@@ -1168,7 +1168,7 @@ namespace CoApp.Toolkit.Engine {
                 
                 var supercedents = SearchForPackages(package.Name, null, package.Architecture, package.PublicKeyToken).ToArray();
 
-                if( package.PackageSessionData.UserSpecified || hypothetical )  {
+                if( package.PackageSessionData.IsClientSpecified || hypothetical )  {
                     // this means that we're talking about a requested package
                     // and not a dependent package and we can liberally construe supercedent 
                     // as anything with a highger version number
@@ -1201,7 +1201,7 @@ namespace CoApp.Toolkit.Engine {
                             }
 
                             if( supercedent.Name == package.Name ) {
-                                supercedent.PackageSessionData.UserSpecified = package.PackageSessionData.UserSpecified;   
+                                supercedent.PackageSessionData.IsClientSpecified = package.PackageSessionData.IsClientSpecified;   
                             }
                             
                             // since we got to this spot, we can assume that we can 
@@ -1269,7 +1269,7 @@ namespace CoApp.Toolkit.Engine {
                     p.PackageSessionData.IsDependency = false;
                 }
 
-                foreach( var package in installedPackages.Where(each=>each.Required)) {
+                foreach( var package in installedPackages.Where(each=>each.IsRequired)) {
                     package.UpdateDependencyFlags();
                 }
             }

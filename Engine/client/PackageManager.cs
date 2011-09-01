@@ -577,7 +577,8 @@ namespace CoApp.Toolkit.Engine.Client {
                     result.PublicKeyToken = responseMessage["public-key-token"];
                     result.IsInstalled = (bool?) responseMessage["installed"] ?? false;
                     result.IsBlocked = (bool?) responseMessage["blocked"] ?? false;
-                    result.Required = (bool?) responseMessage["required"] ?? false;
+                    result.IsRequired = (bool?) responseMessage["required"] ?? false;
+                    result.IsClientRequired = (bool?) responseMessage["client-required"] ?? false;
                     result.IsActive = (bool?) responseMessage["active"] ?? false;
                     result.IsDependency = (bool?) responseMessage["dependent"] ?? false;
                     result.RemoteLocations = responseMessage.GetCollection("remote-locations");

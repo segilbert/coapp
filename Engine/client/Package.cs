@@ -12,7 +12,6 @@ namespace CoApp.Toolkit.Engine.Client {
     using System.Collections.Generic;
     using System.Linq;
 
-
     public class Package {
         private static readonly Dictionary<string, Package> _allPackages = new Dictionary<string, Package>();
 
@@ -48,7 +47,8 @@ namespace CoApp.Toolkit.Engine.Client {
         public string PublicKeyToken;
         public bool IsInstalled;
         public bool IsBlocked;
-        public bool Required;
+        public bool IsRequired;
+        public bool IsClientRequired;
         public bool IsActive;
         public bool IsDependency;
         public string Description;

@@ -125,7 +125,6 @@ namespace CoApp.Toolkit.Engine {
         /// the smooth running of the package manager.
         /// </summary>
         internal void DropDetails() {
-
             // drop the package details. If it's needed again, there should be a delegate to grab it 
             // from the MSI or Feed.
             _packageDetails = null;
@@ -146,8 +145,8 @@ namespace CoApp.Toolkit.Engine {
                 else {
                     DoPackageComposition(false);
                 }
-                if( PackageSessionData.UserSpecified ) {
-                    Required = true;
+                if( PackageSessionData.IsClientSpecified ) {
+                    IsRequired = true;
                 }
 
                 // GS01 : what was this call for again? 
@@ -244,7 +243,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         internal void UpdateDependencyFlags() {
-            foreach (var dependentPackage in InternalPackageData.Dependencies.Where(each=>!each.Required)) {
+            foreach (var dependentPackage in InternalPackageData.Dependencies.Where(each=>!each.IsRequired)) {
                 // find each dependency that is the policy-preferred version, and mark it as currentlyrequested.
                 var supercedentPackage = (from supercedent in NewPackageManager.Instance.SearchForInstalledPackages(dependentPackage.Name, null, dependentPackage.Architecture, dependentPackage.PublicKeyToken)
                     where supercedent.InternalPackageData.PolicyMinimumVersion <= dependentPackage.Version && supercedent.InternalPackageData.PolicyMaximumVersion >= dependentPackage.Version
@@ -253,7 +252,7 @@ namespace CoApp.Toolkit.Engine {
                 (supercedentPackage??dependentPackage).UpdateDependencyFlags();
             }
             // if this isn't already set, do it.
-            if( !Required ) {
+            if( !IsRequired ) {
                 PackageSessionData.IsDependency = true;
             }
         }
@@ -390,11 +389,20 @@ namespace CoApp.Toolkit.Engine {
             return ver;
         }
 
-        public bool Required { 
-            get {
-                return PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue || PackageSessionData.IsDependency;
-            } 
-            set { PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue = value; }
+        /// <summary>
+        ///  Indicates that the client specifically requested the package, or is the dependency of a requested package
+        /// </summary>
+        public bool IsRequired { 
+            get { return IsClientRequired || PackageSessionData.IsDependency; } 
+            set { IsClientRequired = value; }
+        }
+
+        /// <summary>
+        ///  Indicates that the client specifically requested the package
+        /// </summary>
+        public bool IsClientRequired {
+            get { return PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue; }
+            set { PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue = value;}
         }
 
         public bool IsBlocked { 
@@ -649,8 +657,8 @@ namespace CoApp.Toolkit.Engine {
 
         internal bool DoNotSupercede; // TODO: it's possible these could be contradictory
         internal bool UpgradeAsNeeded; // TODO: it's possible these could be contradictory
-        internal bool UserSpecified;
-        internal bool RequestedDownload;
+        internal bool IsClientSpecified;
+        internal bool HasRequestedDownload;
 
         internal bool IsDependency;
 
@@ -705,10 +713,10 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public bool AllowedToSupercede {
-            get { return UpgradeAsNeeded || (!UserSpecified && !DoNotSupercede) && PotentiallyInstallable; }
+            get { return UpgradeAsNeeded || (!IsClientSpecified && !DoNotSupercede) && IsPotentiallyInstallable; }
         }
 
-        public bool PotentiallyInstallable {
+        public bool IsPotentiallyInstallable {
             get {
                 return !PackageFailedInstall && (_package.InternalPackageData.HasLocalLocation || !CouldNotDownload && _package.InternalPackageData.HasRemoteLocation);
             }

@@ -662,7 +662,8 @@ namespace CoApp.Toolkit.Engine {
                 {"public-key-token", package.PublicKeyToken},
                 {"installed", package.IsInstalled.ToString()},
                 {"blocked", package.IsBlocked.ToString()},
-                {"required", package.Required.ToString()},
+                {"required", package.IsRequired.ToString()},
+                {"client-required", package.IsClientRequired.ToString()},
                 {"active", package.IsActive.ToString()},
                 {"dependent", package.PackageSessionData.IsDependency.ToString()},
             };

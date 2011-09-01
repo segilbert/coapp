@@ -263,7 +263,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 try {
                     Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation,
                         @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
-                            package.PackageSessionData.UserSpecified ? "ADD_TO_ARP=1" : ""));
+                            package.PackageSessionData.IsClientSpecified ? "ADD_TO_ARP=1" : ""));
                 }
                 finally {
                     SetUIHandlersToSilent();
