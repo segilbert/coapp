@@ -24,6 +24,7 @@ namespace CoApp.CLI {
     using Toolkit.Engine.Client;
     using Toolkit.Exceptions;
     using Toolkit.Extensions;
+    using Toolkit.Network;
 
     /// <summary>
     /// Main Program for command line coapp tool
@@ -541,7 +542,6 @@ namespace CoApp.CLI {
             return null;
         }
 
-
         private Task GetPackageInfo(IEnumerable<Package> packages) {
             if(packages.Any()) {
                 var remoteTasks = packages.Select(package => PackageManager.Instance.GetPackageDetails(package.CanonicalName, _messages )).ToArray();
@@ -688,40 +688,6 @@ namespace CoApp.CLI {
             else {
                 Console.WriteLine("No packages found.");
             }
-
-            /*
-            var packages = new List<Package>();
-            var t = PackageManager.Instance.FindPackages(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, new PackageManagerMessages {
-                UnexpectedFailure = UnexpectedFailure,
-                PackageInformation = (package) => {
-                    if( terse ) {
-                        Console.WriteLine("{0} # Installed:{1}", package.CanonicalName, package.IsInstalled);
-                    } else {
-                        packages.Add(package);
-                    }
-                },
-                NoPackagesFound = NoPackagesFound,
-                PermissionRequired = OperationRequiresPermission,
-                Error = MessageArgumentError,
-                RequireRemoteFile = GetRemoteFile,
-                OperationCancelled = CancellationRequested,
-            });
-            if (!terse) {
-                t.ContinueWith(antecedent => {
-                    if (packages.Count() > 0) {
-                        (from pkg in packages
-                            orderby pkg.Name
-                            select new {
-                                pkg.Name,
-                                Version = pkg.Version,
-                                Arch = pkg.Architecture,
-                                Installed = pkg.IsInstalled,
-                                Local_Path = pkg.IsInstalled ? "(installed)" : pkg.LocalPackagePath ?? "<not local>",
-                                // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
-                            }).ToTable().ConsoleOut();
-                    }
-                }, TaskContinuationOptions.AttachedToParent);
-            } */
         }
 
         private void CancellationRequested(string obj) {
@@ -775,11 +741,8 @@ namespace CoApp.CLI {
 
                 // gotta download the file...
                 var task = Task.Factory.StartNew(() => {
-                    var mre = new ManualResetEvent(false);
-
                     foreach (var location in locations) {
-                        mre.Reset();
-
+                       
                         try {
                             var uri = new Uri(location);
                             if (uri.IsFile) {
@@ -793,33 +756,20 @@ namespace CoApp.CLI {
                                 return;
                             }
 
-                            var webClient = new WebClient();
-                            webClient.DownloadFileCompleted += (sender, args) => {
-                                Console.WriteLine("DONE: {0}", uri.AbsoluteUri );
-
-                                if (args.Cancelled || args.Error != null) {
-                                    // this didn't finsh correctly.
+                            var rf = RemoteFile.GetRemoteFile(uri, targetFilename);
+                            rf.Get(new RemoteFileMessages {
+                                Completed = () => {
+                                   Console.WriteLine();
+                                   PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, uri.AbsoluteUri, new PackageManagerMessages().Extend(_messages)); 
+                                },
+                                Failed = () => {
                                     if (File.Exists(targetFilename)) {
                                         targetFilename.TryHardToDeleteFile();
                                     }
-                                    mre.Set(); // try the next one.
-                                    return;
-                                }
-
-                                Console.WriteLine("Sending Response: {0}", canonicalName );
-                                PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, uri.AbsoluteUri,
-                                    new PackageManagerMessages().Extend(_messages));
-                                mre.Set();
-                            };
-
-                            webClient.DownloadProgressChanged +=
-                                (sender, args) => { "Downloading {0}".format(uri.AbsoluteUri).PrintProgressBar(args.ProgressPercentage); };
-
-                            webClient.DownloadFileAsync(uri, targetFilename);
+                                },
+                                Progress = (percent) => { "Downloading {0}".format(uri.AbsoluteUri).PrintProgressBar(percent);}
+                            }).Wait();
                             
-
-                            Console.WriteLine("!!!!");
-
                             if (File.Exists(targetFilename)) {
                                 return;
                             }
@@ -876,8 +826,6 @@ namespace CoApp.CLI {
                     },
                 }).Wait();
             }
-
-
         }
 
         /// <summary>
@@ -942,7 +890,6 @@ namespace CoApp.CLI {
                     return;
                 }
 
-                
                 // now, each package in the list can be installed
                 
                 var installedList= new List<string>();
