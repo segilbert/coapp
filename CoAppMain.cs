@@ -154,7 +154,6 @@ namespace CoApp.CLI {
                             _autoUpgrade = lastAsBool;
                             break;
 
-
                         case "use-feed":
                             _location = last;
                             break;
@@ -306,7 +305,7 @@ namespace CoApp.CLI {
 
                         task =
                             PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location, _forceScan, messages: _messages).
-                                ContinueWith(antecedent => { Install(antecedent.Result);  });
+                                ContinueWith(antecedent => Install(antecedent.Result));
                         break;
 
                     case "-r":
@@ -339,12 +338,22 @@ namespace CoApp.CLI {
                     case "upgrade":
                     case "upgrade-package":
                     case "upgrade-packages":
+                    case "update":
+                    case "update-package":
+                    case "update-packages":
                         if (parameters.Count() != 1) {
                             throw new ConsoleException(Resources.MissingParameterForUpgrade);
                         }
+
+                        // if they didn't say to rescan (one way or the other), we're defaulting to yeah,
+                        // because we really should force a rescan if we're updating 
+                        if( _forceScan == null ) {
+                            _forceScan = true;
+                        }
+
                         // should get all packages that are installed (using criteria),
                         // and then see if each one of those can be upgraded.
-
+                        
                         task =
                             PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, false, _latest ,_location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Upgrade(antecedent.Result));
@@ -376,9 +385,9 @@ namespace CoApp.CLI {
                         if (parameters.Count() != 0) {
                             throw new ConsoleException(Resources.TrimErrorMessage);
                         }
-                        task = Trim();
+                        task = PackageManager.Instance.GetPackages("*", _minVersion, _maxVersion, _dependencies, true, _active, false, _blocked, _latest, _location,
+                            _forceScan, messages: _messages).ContinueWith(antecedent => Remove(antecedent.Result));
                         break;
-
 
                     case "-a":
                     case "activate":
@@ -393,18 +402,14 @@ namespace CoApp.CLI {
                     case "-g":
                     case "get-packageinfo":
                     case "info":
-                        task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
-
+                        task = PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
                         break;
 
                     case "-b":
                     case "block-packages":
                     case "block-package":
                     case "block":
-                        task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
-                                ContinueWith(antecedent => Block(antecedent.Result));
+                        task =PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages). ContinueWith(antecedent => Block(antecedent.Result));
 
                         break;
 
@@ -412,9 +417,7 @@ namespace CoApp.CLI {
                     case "unblock-packages":
                     case "unblock-package":
                     case "unblock":
-                        task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
-                                ContinueWith(antecedent => UnBlock(antecedent.Result));
+                        task = PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => UnBlock(antecedent.Result));
 
                         break;
 
@@ -435,7 +438,6 @@ namespace CoApp.CLI {
                             PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => UnMark(antecedent.Result));
                         break;
-
 
                     default:
                         throw new ConsoleException(Resources.UnknownCommand, command);
@@ -547,7 +549,7 @@ namespace CoApp.CLI {
                     Console.WriteLine("  Local Path:{0}", package.LocalPackagePath);
                     Console.WriteLine("  Publisher: {{0,-{0}}} Location:{{1,-{1}}} ".format(length0, length1), package.PublisherName, package.PublisherUrl);
                     Console.WriteLine("  Installed: {0,-6} Blocked:{1,-6} Required:{2,-6} Active:{3,-6}", package.IsInstalled, package.IsBlocked,
-                        package.Required, package.IsActive);
+                        package.IsRequired, package.IsActive);
                     Console.WriteLine("  Summary: {0}", package.Summary);
                     Console.WriteLine("  Description: {0}", package.Description);
                     Console.WriteLine("  Copyright: {0}", package.Copyright);
@@ -587,13 +589,32 @@ namespace CoApp.CLI {
 
         private Task Upgrade(IEnumerable<Package> packages) {
             if (packages.Any()) {
+                var upgrades = new List<Package>();
+                
+                var anyUpgrades = packages.Where(each => each.IsClientRequired).Select(package => PackageManager.Instance.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
+                    PackageInformation = (pkg) => {
+                        if (pkg.Version.VersionStringToUInt64() > package.Version.VersionStringToUInt64()) {
+                            upgrades.Add(pkg);
+                        }
+                    }
+                }.Extend(_messages)));
 
+                var policyUpgrades = packages.Where(each => each.IsDependency).Select(package => PackageManager.Instance.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
+                    PackageInformation = (pkg) => {
+                        if (!pkg.SupercedentPackages.IsNullOrEmpty()) {
+                            var pkgToAdd = pkg.SupercedentPackages.Select(Package.GetPackage).MaxElement(each => each.Version.VersionStringToUInt64());
+                            if (pkgToAdd.Version.VersionStringToUInt64() > package.Version.VersionStringToUInt64()) {
+                                upgrades.Add(pkgToAdd);
+                            }
+                        }
+                    }
+                }.Extend(_messages)));
+
+                return Task.Factory.ContinueWhenAll(anyUpgrades.Union(policyUpgrades).ToArray(), antecedent => {
+                    _autoUpgrade = true;
+                    Install(upgrades);
+                }, TaskContinuationOptions.AttachedToParent);
             }
-            return null;
-        }
-
-         private Task Trim() {
-
             return null;
         }
 
@@ -736,7 +757,7 @@ namespace CoApp.CLI {
             var failedList = new List<string>();
 
             foreach( var package in parameters ) {
-                PackageManager.Instance.RemovePackage(package.CanonicalName, null, new PackageManagerMessages {
+                PackageManager.Instance.RemovePackage(package.CanonicalName, _force, new PackageManagerMessages {
                     RemovingPackageProgress= (canonicalName, progress) => {
                         // installation progress
                         ConsoleExtensions.PrintProgressBar("Removing {0}".format(canonicalName), progress);
@@ -783,8 +804,6 @@ namespace CoApp.CLI {
             }
 
             if (!failed) {
-                
-
                 if (packages.Any()) {
                     Console.WriteLine("Packages to install:\r\n");
                     
@@ -805,7 +824,7 @@ namespace CoApp.CLI {
                         }.Extend(_messages)).Wait();
                     }
 
-                    (from pkg in pretendList.Distinct()
+                    (from pkg in pretendList.Distinct().Where(each => !each.IsInstalled)
                         let getsSatisfied = !(pkg.SatisfiedBy == null || pkg.SatisfiedBy == pkg)
                         orderby pkg.Name
                         select new {
