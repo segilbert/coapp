@@ -196,15 +196,14 @@ namespace CoApp.Toolkit.Engine {
                 try {
                     if (_serverPipe != null) {
                         _serverPipe.Close();
-                        _serverPipe.Dispose();
-                        _serverPipe = null;
                     }
+                    _serverPipe = null;
 
-                    if (_isAsychronous && _responsePipe != null) {
+                    if (!_isAsychronous && _responsePipe != null) {
                         _responsePipe.Close();
-                        _responsePipe.Dispose();
-                        _responsePipe = null;
                     }
+                    _responsePipe = null;
+
                 }
                 catch (Exception e) {
                     Console.WriteLine("Errors when disposing pipes.");
@@ -348,24 +347,6 @@ namespace CoApp.Toolkit.Engine {
             // it's session-local-storage. So for this task and all its children, this will serve up data.
 
             _packageManagerSession = new PackageManagerSession {
-                /*
-                GetPackageSessionData = (package) => {
-                    lock (_sessionData) {
-                        if (!_sessionData.ContainsKey(package.CanonicalName)) {
-                            _sessionData.Add(package.CanonicalName, new PackageSessionData(package));
-                        }
-                    }
-                    return _sessionData[package.CanonicalName];
-                },
-
-                DropPackageSessionData = (package) => {
-                    lock (_sessionData) {
-                        if (_sessionData.ContainsKey(package.CanonicalName)) {
-                            _sessionData.Remove(package.CanonicalName);
-                        }
-                    }
-                },
-*/
                 CheckForPermission = (policy) => {
                     var result = false;
                     _serverPipe.RunAsClient(() => { result = policy.HasPermission; });
