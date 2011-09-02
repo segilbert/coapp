@@ -34,7 +34,7 @@ namespace CoApp.Toolkit.Engine {
         public string Arch { get; private set; }
         public string PublicKeyToken { get; private set; }
 
-        public bool IsPartialMatch { get { return !IsFullMatch && !Name.IsNullOrEmpty(); }}
+        public bool IsPartialMatch { get { return !IsFullMatch && !Version.IsNullOrEmpty(); }}
         public bool IsFullMatch { get { return (!string.IsNullOrEmpty(CanonicalName)); } }
 
         private void SetFieldsFromMatch( Match match ) {
