@@ -20,7 +20,7 @@ namespace CoApp.Toolkit.Engine {
 
     public class PackageName {
         private static readonly char[] _slashes = new [] {'\\', '/' };
-        private static readonly Regex _canonicalName = new Regex(@"^(?<name>.*)(?<v1>-\d{1,5})(?<v2>\.\d{1,5})(?<v3>\.\d{1,5})(?<v4>\.\d{1,5})(?<arch>-any|-x86|-x64|-arm)(?<pkt>-[0-9a-f]{16})$", RegexOptions.IgnoreCase);
+        private static readonly Regex _canonicalName = new Regex(@"^(?<name>.+)(?<v1>-\d{1,5})(?<v2>\.\d{1,5})(?<v3>\.\d{1,5})(?<v4>\.\d{1,5})(?<arch>-any|-x86|-x64|-arm)(?<pkt>-[0-9a-f]{16})$", RegexOptions.IgnoreCase);
         private static readonly Regex _partialMatchFull =
              new Regex( @"^(?<name>.*?)?(?<v1>-\d{1,5}|-\*)?(?<v2>\.\d{1,5}|\.\*)?(?<v3>\.\d{1,5}|\.\*)?(?<v4>\.\d{1,5}|\.\*)?(?<arch>-{1,2}any|-{1,2}x86|-{1,2}x64|-{1,2}arm|-{1,2}all|-\*)?(?<pkt>-{1,3}[0-9a-f]{16})?$", RegexOptions.IgnoreCase);
 
