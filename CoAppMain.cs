@@ -11,10 +11,8 @@
 namespace CoApp.CLI {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Resources;
     using System.Threading;
     using System.Threading.Tasks;
@@ -328,8 +326,6 @@ namespace CoApp.CLI {
 
                         break;
 
-                  
-
                     case "-L":
                     case "feed":
                     case "feeds":
@@ -636,33 +632,6 @@ namespace CoApp.CLI {
             });
         }
 
-        /*
-        /// <summary>
-        /// Dumps the packages.
-        /// </summary>
-        /// <param name="packages">The packages.</param>
-        /// <remarks></remarks>
-        private void DumpPackages(IEnumerable<Package> packages) {
-            if (packages.Count() > 0) {
-                    (from pkg in packages orderby pkg.Name
-                        select new {
-                            pkg.Name,
-                            Version = pkg.Version.UInt64VersiontoString(),
-                            Arch = pkg.Architecture,
-                            Publisher = pkg.Publisher.Name,
-                            // Local_Path = pkg.LocalPackagePath.Value ?? "<not local>",
-                            // Remote_Location = pkg.RemoteLocation.Value != null ? pkg.RemoteLocation.Value.AbsoluteUri : "<unknown>"
-                        } ).ToTable().ConsoleOut();
-            }
-            else {
-                Console.WriteLine("\rNo packages.");
-            }
-        }
-        */
-
-
-
-
         /// <summary>
         /// Lists the packages.
         /// </summary>
@@ -681,8 +650,8 @@ namespace CoApp.CLI {
                         pkg.Name,
                         Version = pkg.Version,
                         Arch = pkg.Architecture,
-                        Installed = pkg.IsInstalled,
-                        Local_Path = pkg.IsInstalled ? "(installed)" : pkg.LocalPackagePath ?? "<not local>",
+                        Status = (pkg.IsInstalled ? "Installed " + (pkg.IsBlocked ? "Blocked " : "") + (pkg.IsClientRequired ? "Required ": pkg.IsRequired ? "Dependency " : "")+ (pkg.IsActive ? "Active " : "" ) : ""),
+                        Location = pkg.IsInstalled ? "(installed)" : !string.IsNullOrEmpty(pkg.LocalPackagePath) ? pkg.LocalPackagePath : (pkg.RemoteLocations.IsNullOrEmpty() ? "<unknown>" :  pkg.RemoteLocations.FirstOrDefault()),
                     }).ToTable().ConsoleOut();
             }
             else {
@@ -742,7 +711,6 @@ namespace CoApp.CLI {
                 // gotta download the file...
                 var task = Task.Factory.StartNew(() => {
                     foreach (var location in locations) {
-                       
                         try {
                             var uri = new Uri(location);
                             if (uri.IsFile) {
@@ -773,7 +741,6 @@ namespace CoApp.CLI {
                             if (File.Exists(targetFilename)) {
                                 return;
                             }
-
                         }
                         catch {
                             // bogus, dude.
@@ -878,7 +845,7 @@ namespace CoApp.CLI {
                             Version = pkg.Version,
                             Arch = pkg.Architecture,
                             Type = getsSatisfied ? "(superceded)" : packages.Contains(pkg) ? "Requested" : "Dependency",
-                            Package_Location = getsSatisfied ? "Satisfied by {0}".format(pkg.SatisfiedBy.CanonicalName) : pkg.LocalPackagePath ?? pkg.RemoteLocations.FirstOrDefault() ?? "<unknown>",
+                            Location = getsSatisfied ? "Satisfied by {0}".format(pkg.SatisfiedBy.CanonicalName) : !string.IsNullOrEmpty(pkg.LocalPackagePath) ?pkg.LocalPackagePath :  (pkg.RemoteLocations.IsNullOrEmpty() ? "<unknown>" :  pkg.RemoteLocations.FirstOrDefault())
                             // Satisfied_By = getsSatisfied ? "" : pkg.SatisfiedBy.CanonicalName ,
                             // Satisfied_By = pkg.SatisfiedBy == null ? pkg.CanonicalName : pkg.SatisfiedBy.CanonicalName ,
                             // Status = pkg.IsInstalled ? "Installed" : "will install",
