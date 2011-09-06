@@ -131,8 +131,6 @@
     <Compile Include="Engine\Feeds\InstalledPackageFeed.cs" />
     <Compile Include="Engine\Feeds\PackageFeed.cs" />
     <Compile Include="Engine\Feeds\SessionPackageFeed.cs" />
-    <Compile Include="Engine\Network\RemoteFile.cs" />
-    <Compile Include="Engine\Network\TransferManager.cs" />
     <Compile Include="Engine\NewPackageManager.cs" />
     <Compile Include="Engine\Package.cs" />
     <Compile Include="Engine\PackageCollectionExtensions.cs" />

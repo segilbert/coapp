@@ -14,6 +14,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Collections.ObjectModel;
     using System.IO;
     using System.Linq;
+    using Configuration;
     using Crypto;
     using Exceptions;
     using Extensions;
@@ -90,7 +91,7 @@ namespace CoApp.Toolkit.Engine {
 
         public bool IsActive {
             get { 
-                return GetCurrentPackage(Name, PublicKeyToken) == Version;
+                return GetCurrentPackageVersion(Name, PublicKeyToken) == Version;
             }
         }
 
@@ -291,7 +292,7 @@ namespace CoApp.Toolkit.Engine {
         #region Install/Remove
         public void Install(Action<int> progress = null) {
             try {
-                var currentVersion = GetCurrentPackage(Name, PublicKeyToken);
+                var currentVersion = GetCurrentPackageVersion(Name, PublicKeyToken);
 
                 PackageHandler.Install(this, progress);
                 IsInstalled = true;
@@ -305,9 +306,6 @@ namespace CoApp.Toolkit.Engine {
                 if( PackageSessionData.IsClientSpecified ) {
                     IsRequired = true;
                 }
-
-                // GS01 : what was this call for again? 
-                // SaveCachedInfo();
             }
             catch (Exception) {
                 //we could get here and the MSI had installed but nothing else
@@ -323,7 +321,6 @@ namespace CoApp.Toolkit.Engine {
                 PackageHandler.Remove(this, progress);
                 IsInstalled = false;
                 PackageManagerSettings.PerPackageSettings.DeleteSubkey(CanonicalName);
-
             }
             catch (Exception) {
                 PackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
@@ -332,7 +329,7 @@ namespace CoApp.Toolkit.Engine {
             finally {
                 try {
                     // this will activate the next one in line
-                    GetCurrentPackage(Name, PublicKeyToken);
+                    GetCurrentPackageVersion(Name, PublicKeyToken);
                     // GS01: fix this to rerun package composition on prior version.
                 }
                 catch (Exception e) {
@@ -520,11 +517,11 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        internal static ulong GetCurrentPackage(string packageName, string publicKeyToken) {
+
+        internal static ulong GetCurrentPackageVersion(string packageName, string publicKeyToken) {
             var installedVersionsOfPackage = from pkg in NewPackageManager.Instance.InstalledPackages
-                where
-                    pkg.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase) &&
-                        pkg.PublicKeyToken.Equals(publicKeyToken, StringComparison.CurrentCultureIgnoreCase)
+                where pkg.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase) &&
+                      pkg.PublicKeyToken.Equals(publicKeyToken, StringComparison.CurrentCultureIgnoreCase)
                 orderby pkg.Version descending
                 select pkg;
 
@@ -558,13 +555,13 @@ namespace CoApp.Toolkit.Engine {
         ///  Indicates that the client specifically requested the package
         /// </summary>
         public bool IsClientRequired {
-            get { return PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue; }
-            set { PackageManagerSettings.PerPackageSettings[CanonicalName, "Required"].BoolValue = value;}
+            get { return PackageSessionData.PackageSettings["#Required"].BoolValue; }
+            set { PackageSessionData.PackageSettings["#Required"].BoolValue = value;}
         }
 
         public bool IsBlocked { 
-            get { return PackageManagerSettings.PerPackageSettings[CanonicalName, "Blocked"].BoolValue; } 
-            set { PackageManagerSettings.PerPackageSettings[CanonicalName, "Blocked"].BoolValue = value; }
+            get { return PackageSessionData.PackageSettings["#Blocked"].BoolValue; } 
+            set { PackageSessionData.PackageSettings["#Blocked"].BoolValue = value; }
         }
 
         public void SetPackageCurrent() {
@@ -573,15 +570,15 @@ namespace CoApp.Toolkit.Engine {
             }
             var generalName = GeneralName;
 
-            if (Version == (ulong) PackageManagerSettings.PerPackageSettings[generalName, "CurrentVersion"].LongValue) {
+            if (Version == (ulong) PackageSessionData.GeneralPackageSettings["#CurrentVersion"].LongValue) {
                 return; // it's already set to the current version.
             }
 
             DoPackageComposition(true);
 
-            if (0 != (ulong) PackageManagerSettings.PerPackageSettings[generalName, "CurrentVersion"].LongValue) {
+            if (0 != (ulong) PackageSessionData.GeneralPackageSettings["#CurrentVersion"].LongValue) {
                 // if there isn't a forced current version, let's not force it
-                PackageManagerSettings.PerPackageSettings[generalName, "CurrentVersion"].LongValue = (long) Version;
+                PackageSessionData.GeneralPackageSettings["#CurrentVersion"].LongValue = (long) Version;
             }
         }
          #endregion
@@ -906,6 +903,18 @@ namespace CoApp.Toolkit.Engine {
                 return _localValidatedLocation = result;
             }
         }
+
+        private RegistryView _generalPackageSettings;
+        internal RegistryView GeneralPackageSettings { get {
+            return
+                _generalPackageSettings ?? (_generalPackageSettings = PackageManagerSettings.PerPackageSettings["{0}-{1}".format(_package.Name, _package.PublicKeyToken)]);
+        }}
+
+        private RegistryView _packageSettings;
+        internal RegistryView PackageSettings { get {
+            return _generalPackageSettings ?? (_packageSettings = PackageManagerSettings.PerPackageSettings[_package.CanonicalName]);
+        }}
+
     }
 
     /// <summary>

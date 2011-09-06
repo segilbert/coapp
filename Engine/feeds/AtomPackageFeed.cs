@@ -13,12 +13,10 @@ namespace CoApp.Toolkit.Engine.Feeds {
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Net;
     using System.ServiceModel.Syndication;
     using System.Threading.Tasks;
     using Atom;
     using Extensions;
-    using Network;
     using Tasks;
 
     /// <summary>

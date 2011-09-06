@@ -10,46 +10,38 @@
 
 namespace CoApp.Toolkit.Engine {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Net;
     using System.Threading.Tasks;
     using Extensions;
     using Feeds.Atom;
-    using Network;
     using PackageFormatHandlers;
     using Tasks;
 
     internal class RequestRemoteFileState {
-            internal string OriginalUrl;
-            internal string LocalLocation;
-        }
+        internal string LocalLocation;
+        internal string OriginalUrl;
+    }
 
-    /// <summary>
-    /// NOTE: EXPLICITLY IGNORE, This is getting refactored 
-    /// </summary>
     internal class Recognizer {
-        
-
-        private static Task<RecognitionInfo> CacheAndReturnTask( string itemPath , RecognitionInfo recognitionInfo) {
+        private static Task<RecognitionInfo> CacheAndReturnTask(string itemPath, RecognitionInfo recognitionInfo) {
             SessionCache<RecognitionInfo>.Value[itemPath] = recognitionInfo;
             return recognitionInfo.AsResultTask();
         }
 
-         private static RecognitionInfo Cache( string itemPath , RecognitionInfo recognitionInfo) {
+        private static RecognitionInfo Cache(string itemPath, RecognitionInfo recognitionInfo) {
             SessionCache<RecognitionInfo>.Value[itemPath] = recognitionInfo;
-             return recognitionInfo;
-         }
+            return recognitionInfo;
+        }
 
         internal static Task<RecognitionInfo> Recognize(string item) {
             var cachedResult = SessionCache<RecognitionInfo>.Value[item];
-            if( cachedResult != null ) {
+            if (cachedResult != null) {
                 return cachedResult.AsResultTask();
             }
-            
+
             try {
                 var location = new Uri(item);
-                if( !location.IsFile ) {
+                if (!location.IsFile) {
                     // some sort of remote item.
                     // since we can't do anything with a remote item directly, 
                     // we have to issue a request to the client to get it for us
@@ -57,7 +49,7 @@ namespace CoApp.Toolkit.Engine {
                     // first let's create a delegate to run when the file gets resolved.
                     var completion = new Task<RecognitionInfo>((rrfState) => {
                         var state = rrfState as RequestRemoteFileState;
-                        if( state == null || string.IsNullOrEmpty(state.LocalLocation) ) {
+                        if (state == null || string.IsNullOrEmpty(state.LocalLocation)) {
                             // didn't fill in the local location? -- this happens when the client can't download.
                             // PackageManagerMessages.Invoke.FileNotRecognized() ?
                             return new RecognitionInfo {
@@ -65,12 +57,12 @@ namespace CoApp.Toolkit.Engine {
                                 FullUrl = location,
                                 IsURL = true,
                                 IsInvalid = true,
-                            } ;
+                            };
                         }
                         var newLocation = new Uri(state.LocalLocation);
-                        if( newLocation.IsFile ) {
+                        if (newLocation.IsFile) {
                             var continuedResult = Recognize(state.LocalLocation).Result;
-                            
+
                             // create the result object 
                             var result = new RecognitionInfo {
                                 FullUrl = location,
@@ -86,8 +78,10 @@ namespace CoApp.Toolkit.Engine {
                         return new RecognitionInfo {
                             FullPath = location.AbsoluteUri,
                             IsInvalid = true,
-                        } ;
-                    }, new RequestRemoteFileState { OriginalUrl = location.AbsoluteUri } , TaskCreationOptions.AttachedToParent);
+                        };
+                    }, new RequestRemoteFileState {
+                        OriginalUrl = location.AbsoluteUri
+                    }, TaskCreationOptions.AttachedToParent);
 
                     // since we're expecting that the canonicalname will be used as a filename 
                     // in the .cache directory, we need to generate a safe filename based on the 
@@ -99,7 +93,8 @@ namespace CoApp.Toolkit.Engine {
 
                     // GS01: Should we make a deeper path in the cache directory?
                     // perhaps that would let us use a cached version of the file we're looking for.
-                    PackageManagerMessages.Invoke.RequireRemoteFile(safeCanonicalName, location.AbsoluteUri.SingleItemAsEnumerable(), PackageManagerSettings.CoAppCacheDirectory, false);
+                    PackageManagerMessages.Invoke.RequireRemoteFile(safeCanonicalName, location.AbsoluteUri.SingleItemAsEnumerable(),
+                        PackageManagerSettings.CoAppCacheDirectory, false);
 
                     // return the completion task, as whatever is waiting for this 
                     // needs to continue on that.
@@ -111,10 +106,10 @@ namespace CoApp.Toolkit.Engine {
                 // let's figure out what it is.
                 var localPath = location.LocalPath;
 
-                if( localPath.Contains("?") || localPath.Contains("*") ) {
+                if (localPath.Contains("?") || localPath.Contains("*")) {
                     // looks like a wildcard package feed.
                     // which is a directory feed with a filter.
-                    var i = localPath.IndexOfAny(new [] {'*','?'} );
+                    var i = localPath.IndexOfAny(new[] {'*', '?'});
 
                     var lastSlash = localPath.LastIndexOf('\\', i);
                     var folder = localPath.Substring(0, lastSlash);
@@ -131,7 +126,7 @@ namespace CoApp.Toolkit.Engine {
                 if (Directory.Exists(localPath)) {
                     // it's a directory.
                     // which means that it's a package feed.
-                    return CacheAndReturnTask( item, new RecognitionInfo {
+                    return CacheAndReturnTask(item, new RecognitionInfo {
                         FullPath = localPath,
                         Filter = "*",
                         IsFolder = true,
@@ -139,7 +134,7 @@ namespace CoApp.Toolkit.Engine {
                     });
                 }
 
-                if( File.Exists(localPath)) {
+                if (File.Exists(localPath)) {
                     var ext = Path.GetExtension(localPath);
                     var result = new RecognitionInfo {
                         IsFile = true,
@@ -174,11 +169,12 @@ namespace CoApp.Toolkit.Engine {
                         default:
                             // guess based on file contents
                             try {
-                                if( CoAppMSI.IsCoAppPackageFile(localPath) ) {
+                                if (CoAppMSI.IsCoAppPackageFile(localPath)) {
                                     result.IsCoAppMSI = true;
                                     result.IsPackageFile = true;
                                 }
-                            }catch {
+                            }
+                            catch {
                                 // not a coapp file...
                             }
 
@@ -200,14 +196,12 @@ namespace CoApp.Toolkit.Engine {
                     }
                     return CacheAndReturnTask(item, result);
                 }
-                
-               
-
-            } catch(UriFormatException) {
+            }
+            catch (UriFormatException) {
             }
             // item wasn't able to match any known URI, UNC or Local Path format.
             // or was file not found
-                return new RecognitionInfo {
+            return new RecognitionInfo {
                 FullPath = item,
                 IsInvalid = true,
             }.AsResultTask();
@@ -216,14 +210,10 @@ namespace CoApp.Toolkit.Engine {
         #region Nested type: RecognitionInfo
 
         internal class RecognitionInfo {
-            
-
             internal string Filter { get; set; }
             internal string FullPath { get; set; }
 
-            internal Uri FullUrl {
-                get; set; 
-            }
+            internal Uri FullUrl { get; set; }
 
             internal bool IsUnknown {
                 get { return !(IsPackageFeed | IsPackageFile); }
@@ -255,7 +245,7 @@ namespace CoApp.Toolkit.Engine {
             internal bool IsCoAppODataService { get; set; }
             internal bool IsNugetODataService { get; set; }
 
-           
+
             internal void CopyDetailsFrom(RecognitionInfo fileInfo) {
                 FullPath = fileInfo.FullPath;
                 IsInvalid = fileInfo.IsInvalid;

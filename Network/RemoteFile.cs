@@ -16,6 +16,7 @@ namespace CoApp.Toolkit.Network {
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Configuration;
     using System.Reflection;
     using System.Threading.Tasks;
     using Extensions;
@@ -89,6 +90,30 @@ namespace CoApp.Toolkit.Network {
         private string _fullPath;
         private DateTime _lastModified;
         private long _contentLength;
+        private HttpStatusCode _lastStatus = HttpStatusCode.NotImplemented;
+
+       static RemoteFile() {
+            //Get the assembly that contains the internal class 
+            Assembly aNetAssembly = Assembly.GetAssembly(typeof (SettingsSection));
+            if (aNetAssembly != null) {
+                //Use the assembly in order to get the internal type for the internal class 
+                Type aSettingsType = aNetAssembly.GetType("System.Net.Configuration.SettingsSectionInternal");
+                if (aSettingsType != null) {
+                    //Use the internal static property to get an instance of the internal settings class. 
+                    //If the static instance isn't created allready the property will create it for us. 
+                    object anInstance = aSettingsType.InvokeMember("Section",
+                        BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.NonPublic, null, null, new object[] {});
+                    if (anInstance != null) {
+                        //Locate the private bool field that tells the framework is unsafe header parsing should be allowed or not 
+                        FieldInfo aUseUnsafeHeaderParsing = aSettingsType.GetField("useUnsafeHeaderParsing",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (aUseUnsafeHeaderParsing != null) {
+                            aUseUnsafeHeaderParsing.SetValue(anInstance, true);
+                        }
+                    }
+                }
+            }
+        }
 
         public static RemoteFile GetRemoteFile(string remoteLocation, string localDestination) {
             return GetInstance((r,l) => new RemoteFile(r, l), remoteLocation ,localDestination );
@@ -149,22 +174,22 @@ namespace CoApp.Toolkit.Network {
                 if (_getTask != null && !_getTask.IsCompleted) {
                     return _getTask;
                 }
-
+                
                 var webRequest = (HttpWebRequest) WebRequest.Create(RemoteLocation);
                 webRequest.AllowAutoRedirect = true;
                 webRequest.Method = WebRequestMethods.Http.Get;
                 
-                return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, webRequest.EndGetResponse, this).ContinueWith(asyncResult => {
+                return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, (Func<IAsyncResult, WebResponse>)webRequest.BetterEndGetResponse , this).ContinueWith(asyncResult => {
                     if (messages != null) {
                         messages.Register();
-
+                        
                         try {
                             if (IsCancelled) {
                                 _cancel();
                             }
-
+                            
                             var httpWebResponse = asyncResult.Result as HttpWebResponse;
-                            var lastStatus = httpWebResponse.StatusCode;
+                            _lastStatus = httpWebResponse.StatusCode;
 
                             if (httpWebResponse.StatusCode == HttpStatusCode.OK) {
                                 _lastModified = httpWebResponse.LastModified;
@@ -174,13 +199,13 @@ namespace CoApp.Toolkit.Network {
                                 if (IsCancelled) {
                                     _cancel();
                                 }
-                                
-                                if( string.IsNullOrEmpty(_filename) ) {
+
+                                if (string.IsNullOrEmpty(_filename)) {
                                     _filename = httpWebResponse.ContentDispositionFilename();
 
                                     if (string.IsNullOrEmpty(_filename)) {
                                         _filename = ActualRemoteLocation.LocalPath.Substring(ActualRemoteLocation.LocalPath.LastIndexOf('/') + 1);
-                                        if (string.IsNullOrEmpty(_filename ) || ServerSideExtensions.Contains(Path.GetExtension(_filename)) ) {
+                                        if (string.IsNullOrEmpty(_filename) || ServerSideExtensions.Contains(Path.GetExtension(_filename))) {
                                             ActualRemoteLocation.GetLeftPart(UriPartial.Path).MakeSafeFileName();
                                         }
                                     }
@@ -211,9 +236,30 @@ namespace CoApp.Toolkit.Network {
                             }
                             // this is not good. 
                             throw new Exception("Status Code other than OK");
-                        }catch (Exception e ){
-                            Console.WriteLine(e.Message);   
-                            Console.WriteLine(e.StackTrace);   
+                        }
+                        catch (AggregateException e) {
+                            // at this point, we've failed somehow
+                            if (_lastStatus == HttpStatusCode.NotImplemented) {
+                                // we never got started. Probably not found.
+                            }
+                            var ee = e.Flatten();
+                            foreach (var ex in ee.InnerExceptions) {
+                                var wex = ex as WebException;
+                                if( wex != null ) {
+                                    Console.WriteLine("Status:" + wex.Status);
+                                    Console.WriteLine("Response:" + wex.Response);
+                                    Console.WriteLine("Response:" + ((HttpWebResponse)wex.Response).StatusCode);
+                                }
+
+                                Console.WriteLine(ex.GetType());
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine(ex.StackTrace);
+                            }
+                        }
+                        catch (Exception e) {
+                            Console.WriteLine(e.GetType());
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine(e.StackTrace);
                         }
                     }
                 }, TaskContinuationOptions.AttachedToParent);
@@ -288,3 +334,24 @@ namespace CoApp.Toolkit.Network {
 
   
 }
+        /*
+        public static HttpWebResponse HttpWebResponse(this Task<WebResponse> asyncResult ) {
+            if( asyncResult.IsFaulted && asyncResult.Exception != null ) {
+                return asyncResult.Exception.Flatten().InnerExceptions.OfType<WebException>().Select(wex => wex.Response).OfType<HttpWebResponse>().FirstOrDefault();
+            }
+            return asyncResult.Result as HttpWebResponse;
+        }
+
+        public static WebResponse WebResponse(this Task<WebResponse> asyncResult ) {
+            if( asyncResult.IsFaulted && asyncResult.Exception != null ) {
+                return asyncResult.Exception.Flatten().InnerExceptions.OfType<WebException>().Select(wex => wex.Response).OfType<WebResponse>().FirstOrDefault();
+            }
+            return asyncResult.Result as HttpWebResponse;
+        }
+        
+
+        public static HttpStatusCode HttpStatusCode( this Task<WebResponse> asyncResult ) {
+            var response = asyncResult.HttpWebResponse();
+            return response != null ? response.StatusCode : default(HttpStatusCode);
+        }
+        */
