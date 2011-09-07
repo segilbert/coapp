@@ -48,19 +48,8 @@
     <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Deployment.WindowsInstaller, Version=3.5.2519.13, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\solution\ext\WiX\Microsoft.Deployment.WindowsInstaller.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Deployment.WindowsInstaller.Linq, Version=3.5.2519.13, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\solution\ext\WiX\Microsoft.Deployment.WindowsInstaller.Linq.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Deployment.WindowsInstaller.Package, Version=3.5.2519.13, Culture=neutral, PublicKeyToken=820d50196d4e8857, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\solution\ext\WiX\Microsoft.Deployment.WindowsInstaller.Package.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
@@ -73,6 +62,104 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="dtf\Compression.Cab\CabEngine.cs" />
+    <Compile Include="dtf\Compression.Cab\CabException.cs" />
+    <Compile Include="dtf\Compression.Cab\CabFileInfo.cs" />
+    <Compile Include="dtf\Compression.Cab\CabInfo.cs" />
+    <Compile Include="dtf\Compression.Cab\CabPacker.cs" />
+    <Compile Include="dtf\Compression.Cab\CabUnpacker.cs" />
+    <Compile Include="dtf\Compression.Cab\CabWorker.cs" />
+    <Compile Include="dtf\Compression.Cab\HandleManager.cs" />
+    <Compile Include="dtf\Compression.Cab\NativeMethods.cs" />
+    <Compile Include="dtf\Compression.Zip\ConcatStream.cs" />
+    <Compile Include="dtf\Compression.Zip\CrcStream.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipCompressionMethod.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipEngine.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipException.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipFileInfo.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipFormat.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipInfo.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipPacker.cs" />
+    <Compile Include="dtf\Compression.Zip\ZipUnpacker.cs" />
+    <Compile Include="dtf\Compression\ArchiveException.cs" />
+    <Compile Include="dtf\Compression\ArchiveFileInfo.cs" />
+    <Compile Include="dtf\Compression\ArchiveFileStreamContext.cs" />
+    <Compile Include="dtf\Compression\ArchiveInfo.cs" />
+    <Compile Include="dtf\Compression\ArchiveProgressEventArgs.cs" />
+    <Compile Include="dtf\Compression\ArchiveProgressType.cs" />
+    <Compile Include="dtf\Compression\BasicUnpackStreamContext.cs" />
+    <Compile Include="dtf\Compression\CargoStream.cs" />
+    <Compile Include="dtf\Compression\CompressionEngine.cs" />
+    <Compile Include="dtf\Compression\CompressionLevel.cs" />
+    <Compile Include="dtf\Compression\DuplicateStream.cs" />
+    <Compile Include="dtf\Compression\IPackStreamContext.cs" />
+    <Compile Include="dtf\Compression\IUnpackStreamContext.cs" />
+    <Compile Include="dtf\Compression\OffsetStream.cs" />
+    <Compile Include="dtf\Compression\SafeNativeMethods.cs" />
+    <Compile Include="dtf\Resources\BitmapResource.cs" />
+    <Compile Include="dtf\Resources\FixedFileVersionInfo.cs" />
+    <Compile Include="dtf\Resources\GroupIconInfo.cs" />
+    <Compile Include="dtf\Resources\GroupIconResource.cs" />
+    <Compile Include="dtf\Resources\NativeMethods.cs" />
+    <Compile Include="dtf\Resources\Resource.cs" />
+    <Compile Include="dtf\Resources\ResourceCollection.cs" />
+    <Compile Include="dtf\Resources\ResourceType.cs" />
+    <Compile Include="dtf\Resources\VersionEnums.cs" />
+    <Compile Include="dtf\Resources\VersionInfo.cs" />
+    <Compile Include="dtf\Resources\VersionResource.cs" />
+    <Compile Include="dtf\Resources\VersionStringTable.cs" />
+    <Compile Include="dtf\WindowsInstaller.Linq\Attributes.cs" />
+    <Compile Include="dtf\WindowsInstaller.Linq\Entities.cs" />
+    <Compile Include="dtf\WindowsInstaller.Linq\QDatabase.cs" />
+    <Compile Include="dtf\WindowsInstaller.Linq\QRecord.cs" />
+    <Compile Include="dtf\WindowsInstaller.Linq\QTable.cs" />
+    <Compile Include="dtf\WindowsInstaller.Linq\Query.cs" />
+    <Compile Include="dtf\WindowsInstaller.Package\InstallPackage.cs" />
+    <Compile Include="dtf\WindowsInstaller.Package\InstallPath.cs" />
+    <Compile Include="dtf\WindowsInstaller.Package\PatchPackage.cs" />
+    <Compile Include="dtf\WindowsInstaller.Package\TransformInfo.cs" />
+    <Compile Include="dtf\WindowsInstaller\ColumnCollection.cs" />
+    <Compile Include="dtf\WindowsInstaller\ColumnEnums.cs" />
+    <Compile Include="dtf\WindowsInstaller\ColumnInfo.cs" />
+    <Compile Include="dtf\WindowsInstaller\ComponentInfo.cs" />
+    <Compile Include="dtf\WindowsInstaller\ComponentInstallation.cs" />
+    <Compile Include="dtf\WindowsInstaller\CustomActionAttribute.cs" />
+    <Compile Include="dtf\WindowsInstaller\customactiondata.cs" />
+    <Compile Include="dtf\WindowsInstaller\CustomActionProxy.cs" />
+    <Compile Include="dtf\WindowsInstaller\Database.cs" />
+    <Compile Include="dtf\WindowsInstaller\DatabaseQuery.cs" />
+    <Compile Include="dtf\WindowsInstaller\DatabaseTransform.cs" />
+    <Compile Include="dtf\WindowsInstaller\EmbeddedUIProxy.cs" />
+    <Compile Include="dtf\WindowsInstaller\Enums.cs" />
+    <Compile Include="dtf\WindowsInstaller\Exceptions.cs" />
+    <Compile Include="dtf\WindowsInstaller\ExternalUIHandler.cs" />
+    <Compile Include="dtf\WindowsInstaller\FeatureInfo.cs" />
+    <Compile Include="dtf\WindowsInstaller\FeatureInstallation.cs" />
+    <Compile Include="dtf\WindowsInstaller\Handle.cs" />
+    <Compile Include="dtf\WindowsInstaller\IEmbeddedUI.cs" />
+    <Compile Include="dtf\WindowsInstaller\Installation.cs" />
+    <Compile Include="dtf\WindowsInstaller\InstallationPart.cs" />
+    <Compile Include="dtf\WindowsInstaller\InstallCost.cs" />
+    <Compile Include="dtf\WindowsInstaller\Installer.cs" />
+    <Compile Include="dtf\WindowsInstaller\InstallerAdvertise.cs" />
+    <Compile Include="dtf\WindowsInstaller\InstallerUtils.cs" />
+    <Compile Include="dtf\WindowsInstaller\MediaDisk.cs" />
+    <Compile Include="dtf\WindowsInstaller\NativeMethods.cs" />
+    <Compile Include="dtf\WindowsInstaller\PatchInstallation.cs" />
+    <Compile Include="dtf\WindowsInstaller\ProductInstallation.cs" />
+    <Compile Include="dtf\WindowsInstaller\Record.cs" />
+    <Compile Include="dtf\WindowsInstaller\RecordStream.cs" />
+    <Compile Include="dtf\WindowsInstaller\RemotableNativeMethods.cs" />
+    <Compile Include="dtf\WindowsInstaller\Session.cs" />
+    <Compile Include="dtf\WindowsInstaller\ShortcutTarget.cs" />
+    <Compile Include="dtf\WindowsInstaller\SourceList.cs" />
+    <Compile Include="dtf\WindowsInstaller\SourceMediaList.cs" />
+    <Compile Include="dtf\WindowsInstaller\SummaryInfo.cs" />
+    <Compile Include="dtf\WindowsInstaller\TableCollection.cs" />
+    <Compile Include="dtf\WindowsInstaller\TableInfo.cs" />
+    <Compile Include="dtf\WindowsInstaller\Transaction.cs" />
+    <Compile Include="dtf\WindowsInstaller\ValidationErrorInfo.cs" />
+    <Compile Include="dtf\WindowsInstaller\View.cs" />
     <Compile Include="Engine\Client\Package.cs" />
     <Compile Include="Engine\Client\PackageManager.cs">
       <SubType>Code</SubType>
@@ -85,13 +172,19 @@
     <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="dtf\Compression.Cab\Errors.txt" />
+    <Content Include="dtf\Compression.Zip\Compression.Zip.csproj" />
+    <Content Include="dtf\WindowsInstaller\Errors.txt" />
     <ProjectReference Include="CoApp.Toolkit.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
       <Name>CoApp.Toolkit %28coapp.toolkit\CoApp.Toolkit%29</Name>
     </ProjectReference>
     <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="dtf\Compression.Cab\Errors.resources.resources" />
+    <EmbeddedResource Include="dtf\WindowsInstaller\Errors.resources" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

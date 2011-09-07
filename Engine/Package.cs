@@ -108,8 +108,6 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         private static readonly ObservableCollection<Package> _packages = new ObservableCollection<Package>();
 
-
-
         internal static Package GetPackageFromProductCode(string productCode) {
             Guid pkgGuid;
 

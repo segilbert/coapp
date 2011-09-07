@@ -254,14 +254,9 @@ namespace CoApp.Toolkit.Extensions {
                 return _wildcards[key].IsMatch(text);
             }
 
-          
-
             if (wildcardMask.EndsWith("**")) {
                 wildcardMask += @"\*";
             }
-
-            
-
             var regexStuff = '^' + ignorePrefix;
 
             var regexPart2 = wildcardMask.CommentEach(_validFpCharsThatHurtRegexs);
