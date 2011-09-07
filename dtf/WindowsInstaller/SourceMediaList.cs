@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="SourceMediaList.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// A list of source media for an installed product or patch.
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class SourceMediaList : ICollection<MediaDisk>
+    internal class SourceMediaList : ICollection<MediaDisk>
     {
         private Installation installation;
 
@@ -39,7 +39,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of source media in the list.
         /// </summary>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -58,7 +58,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// A SourceMediaList is never read-only.
         /// </summary>
         /// <value>read-only status of the list</value>
-        public bool IsReadOnly
+        internal bool IsReadOnly
         {
             get
             {
@@ -73,7 +73,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistaddmediadisk.asp">MsiSourceListAddMediaDisk</a>
         /// </p></remarks>
-        public void Add(MediaDisk item)
+        internal void Add(MediaDisk item)
         {
             uint ret = NativeMethods.MsiSourceListAddMediaDisk(
                 this.installation.InstallationCode,
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearallex.asp">MsiSourceListClearAllEx</a>
         /// </p></remarks>
-        public void Clear()
+        internal void Clear()
         {
             uint ret = NativeMethods.MsiSourceListClearAllEx(
                 this.installation.InstallationCode,
@@ -116,7 +116,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="diskId">disk id of the media to look for</param>
         /// <returns>true if the media exists in the list, false otherwise</returns>
-        public bool Contains(int diskId)
+        internal bool Contains(int diskId)
         {
             foreach (MediaDisk mediaDisk in this)
             {
@@ -138,7 +138,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">destination array to be filed</param>
         /// <param name="arrayIndex">offset into the destination array where copying begins</param>
-        public void CopyTo(MediaDisk[] array, int arrayIndex)
+        internal void CopyTo(MediaDisk[] array, int arrayIndex)
         {
             foreach (MediaDisk mediaDisk in this)
             {
@@ -154,7 +154,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearmediadisk.asp">MsiSourceListClearMediaDisk</a>
         /// </p></remarks>
-        public bool Remove(int diskId)
+        internal bool Remove(int diskId)
         {
             uint ret = NativeMethods.MsiSourceListClearMediaDisk(
                 this.installation.InstallationCode,
@@ -183,7 +183,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistenummediadisks.asp">MsiSourceListEnumMediaDisks</a>
         /// </p></remarks>
-        public IEnumerator<MediaDisk> GetEnumerator()
+        internal IEnumerator<MediaDisk> GetEnumerator()
         {
             uint diskId;
             StringBuilder volumeBuf = new StringBuilder(40);

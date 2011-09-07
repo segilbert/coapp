@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ArchiveException.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.Compression
     /// file format.
     /// </summary>
     [Serializable]
-    public class ArchiveException : IOException
+    internal class ArchiveException : IOException
     {
         /// <summary>
         /// Creates a new ArchiveException with a specified error message and a reference to the
@@ -37,7 +37,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="innerException">The exception that is the cause of the current exception. If the
         /// innerException parameter is not a null reference (Nothing in Visual Basic), the current exception
         /// is raised in a catch block that handles the inner exception.</param>
-        public ArchiveException(string message, Exception innerException)
+        internal ArchiveException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
@@ -46,7 +46,7 @@ namespace Microsoft.Deployment.Compression
         /// Creates a new ArchiveException with a specified error message.
         /// </summary>
         /// <param name="message">The message that describes the error.</param>
-        public ArchiveException(string message)
+        internal ArchiveException(string message)
             : this(message, null)
         {
         }
@@ -54,7 +54,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Creates a new ArchiveException.
         /// </summary>
-        public ArchiveException()
+        internal ArchiveException()
             : this(null, null)
         {
         }
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected ArchiveException(SerializationInfo info, StreamingContext context)
+        internal ArchiveException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }

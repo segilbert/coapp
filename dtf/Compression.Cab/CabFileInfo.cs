@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="CabFileInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.Compression.Cab
     /// the file properties and extracting the file.
     /// </summary>
     [Serializable]
-    public class CabFileInfo : ArchiveFileInfo
+    internal class CabFileInfo : ArchiveFileInfo
     {
         private int cabFolder;
 
@@ -37,7 +37,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <param name="cabinetInfo">An object representing the cabinet containing the file.</param>
         /// <param name="filePath">The path to the file within the cabinet. Usually, this is a simple file
         /// name, but if the cabinet contains a directory structure this may include the directory.</param>
-        public CabFileInfo(CabInfo cabinetInfo, string filePath)
+        internal CabFileInfo(CabInfo cabinetInfo, string filePath)
             : base(cabinetInfo, filePath)
         {
             if (cabinetInfo == null)
@@ -75,7 +75,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected CabFileInfo(SerializationInfo info, StreamingContext context)
+        internal CabFileInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
             this.cabFolder = info.GetInt32("cabFolder");
@@ -88,7 +88,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <param name="context">The StreamingContext that contains contextual information
         /// about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
             info.AddValue("cabFolder", this.cabFolder);
@@ -102,7 +102,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// may be null if the CabinetFileInfo object was returned directly from a
         /// stream.
         /// </value>
-        public CabInfo Cabinet
+        internal CabInfo Cabinet
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// Gets the full path of the cabinet that contains this file.
         /// </summary>
         /// <value>The full path of the cabinet that contains this file.</value>
-        public string CabinetName
+        internal string CabinetName
         {
             get
             {
@@ -128,7 +128,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <value>The number of the cabinet folder containing this file.</value>
         /// <remarks>A single folder or the first folder of a cabinet
         /// (or chain of cabinets) is numbered 0.</remarks>
-        public int CabinetFolderNumber
+        internal int CabinetFolderNumber
         {
             get
             {
@@ -149,7 +149,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <remarks>
         /// This implementation refreshes the <see cref="CabinetFolderNumber"/>.
         /// </remarks>
-        protected override void Refresh(ArchiveFileInfo newFileInfo)
+        internal override void Refresh(ArchiveFileInfo newFileInfo)
         {
             base.Refresh(newFileInfo);
             this.cabFolder = ((CabFileInfo) newFileInfo).cabFolder;

@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="VersionStringTable.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -30,7 +30,7 @@ namespace Microsoft.Deployment.Resources
     /// Represents a string table of a file version resource.
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public sealed class VersionStringTable : IDictionary<string, string>
+    internal sealed class VersionStringTable : IDictionary<string, string>
     {
         private VersionResource parent;
         private VersionInfo rawStringVersionInfo;
@@ -44,7 +44,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the locale (LCID) of the string table.
         /// </summary>
-        public int Locale
+        internal int Locale
         {
             get
             {
@@ -61,7 +61,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets or sets a string value.
         /// </summary>
         /// <param name="key">Name of the string.</param>
-        public string this[string key]
+        internal string this[string key]
         {
             get
             {
@@ -170,7 +170,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Removes all strings from the string table.
         /// </summary>
-        public void Clear()
+        internal void Clear()
         {
             this.rawStringVersionInfo.Clear();
         }
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets a collection of all the names of the strings in the table.
         /// </summary>
-        public ICollection<string> Keys
+        internal ICollection<string> Keys
         {
             get
             {
@@ -194,7 +194,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets a collection of all the values in the table.
         /// </summary>
-        public ICollection<string> Values
+        internal ICollection<string> Values
         {
             get
             {
@@ -210,7 +210,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the number of strings in the table.
         /// </summary>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -230,7 +230,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets an enumeration over all strings in the table.
         /// </summary>
         /// <returns>Enumeration of string name and value pairs</returns>
-        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        internal IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
             foreach (VersionInfo verValue in this.rawStringVersionInfo)
             {

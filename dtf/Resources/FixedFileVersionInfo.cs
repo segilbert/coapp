@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="FixedFileVersionInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.Resources
 
     internal class FixedFileVersionInfo
     {
-        public FixedFileVersionInfo()
+        internal FixedFileVersionInfo()
         {
             // Set reasonable defaults
             this.signature = 0xFEEF04BD;
@@ -45,7 +45,7 @@ namespace Microsoft.Deployment.Resources
         private uint signature;
         private uint structVersion;
 
-        public Version FileVersion
+        internal Version FileVersion
         {
             get
             {
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.Resources
         }
         private Version fileVersion;
 
-        public Version ProductVersion
+        internal Version ProductVersion
         {
             get
             {
@@ -83,14 +83,14 @@ namespace Microsoft.Deployment.Resources
         }
         private Version productVersion;
 
-        public VersionBuildTypes FileFlagsMask
+        internal VersionBuildTypes FileFlagsMask
         {
             get { return this.fileFlagsMask; }
             set { this.fileFlagsMask = value; }
         }
         private VersionBuildTypes fileFlagsMask;
 
-        public VersionBuildTypes FileFlags
+        internal VersionBuildTypes FileFlags
         {
             get { return this.fileFlags; }
             set { this.fileFlags = value; }
@@ -98,35 +98,35 @@ namespace Microsoft.Deployment.Resources
         private VersionBuildTypes fileFlags;
 
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        public VersionFileOS FileOS
+        internal VersionFileOS FileOS
         {
             get { return this.fileOS; }
             set { this.fileOS = value; }
         }
         private VersionFileOS fileOS;
 
-        public VersionFileType FileType
+        internal VersionFileType FileType
         {
             get { return this.fileType; }
             set { this.fileType = value; }
         }
         private VersionFileType fileType;
 
-        public VersionFileSubtype FileSubtype
+        internal VersionFileSubtype FileSubtype
         {
             get { return this.fileSubtype; }
             set { this.fileSubtype = value; }
         }
         private VersionFileSubtype fileSubtype;
 
-        public DateTime Timestamp
+        internal DateTime Timestamp
         {
             get { return this.timestamp; }
             set { this.timestamp = value; }
         }
         private DateTime timestamp;
 
-        public void Read(BinaryReader reader)
+        internal void Read(BinaryReader reader)
         {
             this.signature = reader.ReadUInt32();
             this.structVersion = reader.ReadUInt32();
@@ -140,7 +140,7 @@ namespace Microsoft.Deployment.Resources
             this.timestamp = UInt64ToDateTime(reader.ReadUInt64());
         }
 
-        public void Write(BinaryWriter writer)
+        internal void Write(BinaryWriter writer)
         {
             writer.Write(this.signature);
             writer.Write(this.structVersion);
@@ -154,7 +154,7 @@ namespace Microsoft.Deployment.Resources
             writer.Write(DateTimeToUInt64(this.timestamp));
         }
 
-        public static explicit operator FixedFileVersionInfo(byte[] bytesValue)
+        internal static explicit operator FixedFileVersionInfo(byte[] bytesValue)
         {
             FixedFileVersionInfo ffviValue = new FixedFileVersionInfo();
             using (BinaryReader reader = new BinaryReader(new MemoryStream(bytesValue, false)))
@@ -164,7 +164,7 @@ namespace Microsoft.Deployment.Resources
             return ffviValue;
         }
 
-        public static explicit operator byte[](FixedFileVersionInfo ffviValue)
+        internal static explicit operator byte[](FixedFileVersionInfo ffviValue)
         {
             const int FFVI_LENGTH = 52;
 

@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="QTable.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -36,7 +36,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
     /// class, or a specialized subclass of QRecord.</para>
     /// </remarks>
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public sealed class QTable<TRecord> : IOrderedQueryable<TRecord>, IQueryProvider
+    internal sealed class QTable<TRecord> : IOrderedQueryable<TRecord>, IQueryProvider
         where TRecord : QRecord, new()
     {
         private QDatabase db;
@@ -81,7 +81,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// from the name of the record type parameter.
         /// </summary>
         /// <param name="db">database that contains the table</param>
-        public QTable(QDatabase db)
+        internal QTable(QDatabase db)
             : this(db, InferTableName())
         {
         }
@@ -91,7 +91,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// </summary>
         /// <param name="db">database that contains the table</param>
         /// <param name="table">name of the table</param>
-        public QTable(QDatabase db, string table)
+        internal QTable(QDatabase db, string table)
         {
             if (db == null)
             {
@@ -115,7 +115,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Gets schema information about the table.
         /// </summary>
-        public TableInfo TableInfo
+        internal TableInfo TableInfo
         {
             get
             {
@@ -126,7 +126,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Gets the database this table is associated with.
         /// </summary>
-        public QDatabase Database
+        internal QDatabase Database
         {
             get
             {
@@ -138,7 +138,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// Enumerates over all records in the table.
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<TRecord> GetEnumerator()
+        internal IEnumerator<TRecord> GetEnumerator()
         {
             string query = this.tableInfo.SqlSelectString;
 
@@ -294,7 +294,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <para>The record is tied to this table in this database;
         /// it cannot be inserted into another table or database.</para>
         /// </remarks>
-        public TRecord NewRecord()
+        internal TRecord NewRecord()
         {
             TRecord rec = new TRecord();
             rec.Database = this.Database;

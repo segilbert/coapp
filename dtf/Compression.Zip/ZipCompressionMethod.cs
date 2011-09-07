@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ZipCompressionMethod.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,18 +27,18 @@ namespace Microsoft.Deployment.Compression.Zip
     /// Proprietary zip implementations may define additional compression
     /// methods outside of those included here.
     /// </remarks>
-    public enum ZipCompressionMethod
+    internal enum ZipCompressionMethod
     {
         /// <summary>
         /// The file is stored (no compression)
         /// </summary>
         Store = 0,
-        
+
         /// <summary>
         /// The file is Shrunk
         /// </summary>
         Shrink = 1,
-        
+
         /// <summary>
         /// The file is Reduced with compression factor 1
         /// </summary>
@@ -58,18 +58,18 @@ namespace Microsoft.Deployment.Compression.Zip
         /// The file is Reduced with compression factor 4
         /// </summary>
         Reduce4 = 5,
-        
+
         /// <summary>
         /// The file is Imploded
         /// </summary>
         Implode = 6,
-        
+
         /// <summary>
         /// The file is Deflated;
         /// the most common and widely-compatible form of zip compression.
         /// </summary>
         Deflate = 8,
-        
+
         /// <summary>
         /// The file is Deflated using the enhanced Deflate64 method.
         /// </summary>

@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="NativeMethods.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -130,7 +130,7 @@ internal static class NativeMethods
 
 [DllImport("msi.dll", CharSet=CharSet.Unicode)] internal static extern uint MsiSetInternalUI(uint dwUILevel, ref IntPtr phWnd);
 [DllImport("msi.dll", CharSet=CharSet.Unicode)] internal static extern uint MsiSetInternalUI(uint dwUILevel, IntPtr phWnd);
-[DllImport("msi.dll", CharSet=CharSet.Unicode)] internal static extern NativeExternalUIHandler MsiSetExternalUI([MarshalAs(UnmanagedType.FunctionPtr)] NativeExternalUIHandler puiHandler, uint dwMessageFilter, IntPtr pvContext); 
+[DllImport("msi.dll", CharSet=CharSet.Unicode)] internal static extern NativeExternalUIHandler MsiSetExternalUI([MarshalAs(UnmanagedType.FunctionPtr)] NativeExternalUIHandler puiHandler, uint dwMessageFilter, IntPtr pvContext);
 [DllImport("msi.dll", CharSet=CharSet.Unicode)] internal static extern uint MsiEnableLog(uint dwLogMode, string szLogFile, uint dwLogAttributes);
 //[DllImport("msi.dll", CharSet=CharSet.Unicode)] internal static extern uint MsiEnumProducts(uint iProductIndex, StringBuilder lpProductBuf);
 [DllImport("msi.dll", CharSet=CharSet.Unicode)] internal static extern uint MsiGetProductInfo(string szProduct, string szProperty, StringBuilder lpValueBuf, ref uint pcchValueBuf);
@@ -289,21 +289,21 @@ internal static class NativeMethods
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
     internal struct MsiPatchSequenceData
     {
-        public string szPatchData;
-        public int ePatchDataType;
-        public int dwOrder;
-        public uint dwStatus;
+        internal string szPatchData;
+        internal int ePatchDataType;
+        internal int dwOrder;
+        internal uint dwStatus;
     }
 
     internal class MsiHandle : SafeHandle
     {
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        public MsiHandle(IntPtr handle, bool ownsHandle)
+        internal MsiHandle(IntPtr handle, bool ownsHandle)
             : base(handle, ownsHandle)
         {
         }
 
-        public override bool IsInvalid
+        internal override bool IsInvalid
         {
             get
             {
@@ -311,13 +311,13 @@ internal static class NativeMethods
             }
         }
 
-        public static implicit operator IntPtr(MsiHandle msiHandle)
+        internal static implicit operator IntPtr(MsiHandle msiHandle)
         {
             return msiHandle.handle;
         }
 
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        protected override bool ReleaseHandle()
+        internal override bool ReleaseHandle()
         {
             return RemotableNativeMethods.MsiCloseHandle((int) this.handle) == 0;
         }

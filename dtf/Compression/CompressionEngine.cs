@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="CompressionEngine.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -26,7 +26,7 @@ using System.Globalization;
     /// Base class for an engine capable of packing and unpacking a particular
     /// compressed file format.
     /// </summary>
-    public abstract class CompressionEngine : IDisposable
+    internal abstract class CompressionEngine : IDisposable
     {
         private CompressionLevel compressionLevel;
         private bool dontUseTempFiles;
@@ -34,7 +34,7 @@ using System.Globalization;
         /// <summary>
         /// Creates a new instance of the compression engine base class.
         /// </summary>
-        protected CompressionEngine()
+        internal CompressionEngine()
         {
             this.compressionLevel = CompressionLevel.Normal;
         }
@@ -52,7 +52,7 @@ using System.Globalization;
         /// or unpacking an archive.
         /// </summary>
         /// <seealso cref="ArchiveProgressType"/>
-        public event EventHandler<ArchiveProgressEventArgs> Progress;
+        internal event EventHandler<ArchiveProgressEventArgs> Progress;
 
         /// <summary>
         /// Gets or sets a flag indicating whether temporary files are created
@@ -66,7 +66,7 @@ using System.Globalization;
         /// to false may yield slightly better performance when creating small
         /// archives. Or it may be necessary if the process does not have sufficient
         /// privileges to create temporary files.</remarks>
-        public bool UseTempFiles
+        internal bool UseTempFiles
         {
             get
             {
@@ -84,7 +84,7 @@ using System.Globalization;
         /// </summary>
         /// <value>A compression level ranging from minimum to maximum compression,
         /// or no compression.</value>
-        public CompressionLevel CompressionLevel
+        internal CompressionLevel CompressionLevel
         {
             get
             {
@@ -100,7 +100,7 @@ using System.Globalization;
         /// <summary>
         /// Disposes of resources allocated by the compression engine.
         /// </summary>
-        public void Dispose()
+        internal void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
@@ -119,7 +119,7 @@ using System.Globalization;
         /// The stream context implementation may provide a mapping from the
         /// file paths within the archive to the external file paths.
         /// </remarks>
-        public void Pack(IPackStreamContext streamContext, IEnumerable<string> files)
+        internal void Pack(IPackStreamContext streamContext, IEnumerable<string> files)
         {
             if (files == null)
             {
@@ -145,7 +145,7 @@ using System.Globalization;
         /// The stream context implementation may provide a mapping from the file
         /// paths within the archive to the external file paths.
         /// </remarks>
-        public abstract void Pack(
+        internal abstract void Pack(
             IPackStreamContext streamContext,
             IEnumerable<string> files,
             long maxArchiveSize);
@@ -157,7 +157,7 @@ using System.Globalization;
         /// <param name="stream">Stream for reading the archive file.</param>
         /// <returns>True if the stream is a valid archive
         /// (with no offset); false otherwise.</returns>
-        public abstract bool IsArchive(Stream stream);
+        internal abstract bool IsArchive(Stream stream);
 
         /// <summary>
         /// Gets the offset of an archive that is positioned 0 or more bytes
@@ -167,7 +167,7 @@ using System.Globalization;
         /// <returns>The offset in bytes of the archive,
         /// or -1 if no archive is found in the Stream.</returns>
         /// <remarks>The archive must begin on a 4-byte boundary.</remarks>
-        public virtual long FindArchiveOffset(Stream stream)
+        internal virtual long FindArchiveOffset(Stream stream)
         {
             if (stream == null)
             {
@@ -195,7 +195,7 @@ using System.Globalization;
         /// <returns>Information about all files in the archive stream.</returns>
         /// <exception cref="ArchiveException">The stream is not a valid
         /// archive.</exception>
-        public IList<ArchiveFileInfo> GetFileInfo(Stream stream)
+        internal IList<ArchiveFileInfo> GetFileInfo(Stream stream)
         {
             return this.GetFileInfo(new BasicUnpackStreamContext(stream), null);
         }
@@ -214,7 +214,7 @@ using System.Globalization;
         /// The <paramref name="fileFilter"/> predicate takes an internal file
         /// path and returns true to include the file or false to exclude it.
         /// </remarks>
-        public abstract IList<ArchiveFileInfo> GetFileInfo(
+        internal abstract IList<ArchiveFileInfo> GetFileInfo(
             IUnpackStreamContext streamContext,
             Predicate<string> fileFilter);
 
@@ -226,7 +226,7 @@ using System.Globalization;
         /// archive.</returns>
         /// <exception cref="ArchiveException">The stream is not a valid
         /// archive.</exception>
-        public IList<string> GetFiles(Stream stream)
+        internal IList<string> GetFiles(Stream stream)
         {
             return this.GetFiles(new BasicUnpackStreamContext(stream), null);
         }
@@ -246,7 +246,7 @@ using System.Globalization;
         /// The <paramref name="fileFilter"/> predicate takes an internal file
         /// path and returns true to include the file or false to exclude it.
         /// </remarks>
-        public IList<string> GetFiles(
+        internal IList<string> GetFiles(
             IUnpackStreamContext streamContext,
             Predicate<string> fileFilter)
         {
@@ -278,7 +278,7 @@ using System.Globalization;
         /// archive.</exception>
         /// <remarks>The entire extracted file is cached in memory, so this
         /// method requires enough free memory to hold the file.</remarks>
-        public Stream Unpack(Stream stream, string path)
+        internal Stream Unpack(Stream stream, string path)
         {
             if (stream == null)
             {
@@ -299,7 +299,7 @@ using System.Globalization;
                     return String.Compare(
                         match, path, true, CultureInfo.InvariantCulture) == 0;
                 });
-            
+
             Stream extractStream = streamContext.FileStream;
             if (extractStream != null)
             {
@@ -322,7 +322,7 @@ using System.Globalization;
         /// The <paramref name="fileFilter"/> predicate takes an internal file
         /// path and returns true to include the file or false to exclude it.
         /// </remarks>
-        public abstract void Unpack(
+        internal abstract void Unpack(
             IUnpackStreamContext streamContext,
             Predicate<string> fileFilter);
 
@@ -331,7 +331,7 @@ using System.Globalization;
         /// event to listeners.
         /// </summary>
         /// <param name="e">Event details.</param>
-        protected void OnProgress(ArchiveProgressEventArgs e)
+        internal void OnProgress(ArchiveProgressEventArgs e)
         {
             if (this.Progress != null)
             {
@@ -347,7 +347,7 @@ using System.Globalization;
         /// resources will be disposed. If false, the method has been called by
         /// the runtime from inside the finalizer, and only unmanaged resources
         /// will be disposed.</param>
-        protected virtual void Dispose(bool disposing)
+        internal virtual void Dispose(bool disposing)
         {
         }
 
@@ -355,7 +355,7 @@ using System.Globalization;
         /// Compresion utility function for converting old-style
         /// date and time values to a DateTime structure.
         /// </summary>
-        public static void DosDateAndTimeToDateTime(
+        internal static void DosDateAndTimeToDateTime(
             short dosDate, short dosTime, out DateTime dateTime)
         {
             if (dosDate == 0 && dosTime == 0)
@@ -375,7 +375,7 @@ using System.Globalization;
         /// Compresion utility function for converting a DateTime structure
         /// to old-style date and time values.
         /// </summary>
-        public static void DateTimeToDosDateAndTime(
+        internal static void DateTimeToDosDateAndTime(
             DateTime dateTime, out short dosDate, out short dosTime)
         {
             dateTime = new DateTime(dateTime.Ticks, DateTimeKind.Utc);

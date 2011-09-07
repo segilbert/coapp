@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="QRecord.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -37,14 +37,14 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
     /// useful: <see cref="DatabaseTableAttribute"/>,
     /// <see cref="DatabaseColumnAttribute"/></para>
     /// </remarks>
-    public class QRecord
+    internal class QRecord
     {
         /// <summary>
         /// Do not call. Use QTable.NewRecord() instead.
         /// </summary>
         /// <remarks>
-        /// Subclasses must also provide a public parameterless constructor.
-        /// <para>QRecord constructors are only public due to implementation
+        /// Subclasses must also provide a internal parameterless constructor.
+        /// <para>QRecord constructors are only internal due to implementation
         /// reasons (to satisfy the new() constraint on the QTable generic
         /// class). They are not intended to be called by user code other than
         /// a subclass constructor. If the constructor is invoked directly,
@@ -53,7 +53,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// will throw a NullReferenceException.</para>
         /// </remarks>
         /// <seealso cref="QTable&lt;TRecord&gt;.NewRecord()"/>
-        public QRecord()
+        internal QRecord()
         {
         }
 
@@ -68,7 +68,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Gets the number of fields in the record.
         /// </summary>
-        public int FieldCount
+        internal int FieldCount
         {
             get
             {
@@ -83,7 +83,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <remarks>
         /// Setting a field value will automatically update the database.
         /// </remarks>
-        public string this[string field]
+        internal string this[string field]
         {
             get
             {
@@ -119,7 +119,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <remarks>
         /// Setting a field value will automatically update the database.
         /// </remarks>
-        public string this[int index]
+        internal string this[int index]
         {
             get
             {
@@ -147,7 +147,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// </summary>
         /// <param name="index">zero-based column index of the field</param>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "I")]
-        protected int I(int index)
+        internal int I(int index)
         {
             string value = this[index];
             return value.Length > 0 ?
@@ -158,7 +158,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// Used by subclasses to get a field as a nullable integer.
         /// </summary>
         /// <param name="index">zero-based column index of the field</param>
-        protected int? NI(int index)
+        internal int? NI(int index)
         {
             string value = this[index];
             return value.Length > 0 ?
@@ -168,7 +168,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Dumps all record fields to a string.
         /// </summary>
-        public override string ToString()
+        internal override string ToString()
         {
             StringBuilder buf = new StringBuilder(this.GetType().Name);
             buf.Append(" {");
@@ -188,7 +188,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// </summary>
         /// <param name="fields">column names of fields to update</param>
         /// <param name="values">new values for each field being updated</param>
-        public void Update(IList<string> fields, IList<string> values)
+        internal void Update(IList<string> fields, IList<string> values)
         {
             if (fields == null)
             {
@@ -236,7 +236,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <para>Updating primary key fields is not yet implemented; use Delete()
         /// and Insert() instead.</para>
         /// </remarks>
-        public void Update(IList<int> indexes, IList<string> values)
+        internal void Update(IList<int> indexes, IList<string> values)
         {
             if (indexes == null)
             {
@@ -357,11 +357,11 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// </summary>
         /// <remarks>
         /// The record (primary keys) may not already exist in the table.
-        /// <para>Use <see cref="QTable&lt;TRecord&gt;.NewRecord()"/> to get a new 
+        /// <para>Use <see cref="QTable&lt;TRecord&gt;.NewRecord()"/> to get a new
         /// record. Prmary keys and all required fields
         /// must be filled in before insertion.</para>
         /// </remarks>
-        public void Insert()
+        internal void Insert()
         {
             this.Insert(false);
         }
@@ -373,11 +373,11 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// inserted, to be visible only as long as the database is open</param>
         /// <remarks>
         /// The record (primary keys) may not already exist in the table.
-        /// <para>Use <see cref="QTable&lt;TRecord&gt;.NewRecord()"/> to get a new 
+        /// <para>Use <see cref="QTable&lt;TRecord&gt;.NewRecord()"/> to get a new
         /// record. Prmary keys and all required fields
         /// must be filled in before insertion.</para>
         /// </remarks>
-        public void Insert(bool temporary)
+        internal void Insert(bool temporary)
         {
             using (Record updateRec = this.Database.CreateRecord(this.FieldCount))
             {
@@ -422,7 +422,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Deletes the record from the table if it exists.
         /// </summary>
-        public void Delete()
+        internal void Delete()
         {
             using (Record keyRec = this.Database.CreateRecord(this.TableInfo.PrimaryKeys.Count))
             {
@@ -459,7 +459,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Not yet implemented.
         /// </summary>
-        public void Refresh()
+        internal void Refresh()
         {
             throw new NotImplementedException();
         }
@@ -467,7 +467,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Not yet implemented.
         /// </summary>
-        public void Assign()
+        internal void Assign()
         {
             throw new NotImplementedException();
         }
@@ -475,7 +475,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Not yet implemented.
         /// </summary>
-        public bool Merge()
+        internal bool Merge()
         {
             throw new NotImplementedException();
         }
@@ -483,7 +483,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Not yet implemented.
         /// </summary>
-        public ICollection<ValidationErrorInfo> Validate()
+        internal ICollection<ValidationErrorInfo> Validate()
         {
             throw new NotImplementedException();
         }
@@ -492,7 +492,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// Not yet implemented.
         /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix")]
-        public ICollection<ValidationErrorInfo> ValidateNew()
+        internal ICollection<ValidationErrorInfo> ValidateNew()
         {
             throw new NotImplementedException();
         }
@@ -500,7 +500,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Not yet implemented.
         /// </summary>
-        public ICollection<ValidationErrorInfo> ValidateFields()
+        internal ICollection<ValidationErrorInfo> ValidateFields()
         {
             throw new NotImplementedException();
         }
@@ -508,7 +508,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Not yet implemented.
         /// </summary>
-        public ICollection<ValidationErrorInfo> ValidateDelete()
+        internal ICollection<ValidationErrorInfo> ValidateDelete()
         {
             throw new NotImplementedException();
         }

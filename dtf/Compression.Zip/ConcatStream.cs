@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ConcatStream.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -31,7 +31,7 @@ namespace Microsoft.Deployment.Compression.Zip
         private long length;
         private Action<ConcatStream> nextStreamHandler;
 
-        public ConcatStream(Action<ConcatStream> nextStreamHandler)
+        internal ConcatStream(Action<ConcatStream> nextStreamHandler)
         {
             if (nextStreamHandler == null)
             {
@@ -42,28 +42,28 @@ namespace Microsoft.Deployment.Compression.Zip
             this.length = Int64.MaxValue;
         }
 
-        public Stream Source
+        internal Stream Source
         {
             get { return this.source; }
             set { this.source = value; }
         }
 
-        public override bool CanRead
+        internal override bool CanRead
         {
             get { return true; }
         }
 
-        public override bool CanWrite
+        internal override bool CanWrite
         {
             get { return true; }
         }
 
-        public override bool CanSeek
+        internal override bool CanSeek
         {
             get { return false; }
         }
 
-        public override long Length
+        internal override long Length
         {
             get
             {
@@ -71,13 +71,13 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        public override long Position
+        internal override long Position
         {
             get { return this.position; }
             set { throw new NotSupportedException(); }
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        internal override int Read(byte[] buffer, int offset, int count)
         {
             if (this.source == null)
             {
@@ -112,7 +112,7 @@ namespace Microsoft.Deployment.Compression.Zip
             return count;
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
+        internal override void Write(byte[] buffer, int offset, int count)
         {
             if (this.source == null)
             {
@@ -143,7 +143,7 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        public override void Flush()
+        internal override void Flush()
         {
             if (this.source != null)
             {
@@ -151,17 +151,17 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
+        internal override long Seek(long offset, SeekOrigin origin)
         {
             throw new NotSupportedException();
         }
 
-        public override void SetLength(long value)
+        internal override void SetLength(long value)
         {
             this.length = value;
         }
 
-        public override void Close()
+        internal override void Close()
         {
             if (this.source != null)
             {

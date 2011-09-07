@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="CrcStream.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -28,7 +28,7 @@ namespace Microsoft.Deployment.Compression.Zip
     /// The CRC algorithm matches that used in the standard ZIP file format.
     /// </remarks>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Crc")]
-    public class CrcStream : Stream
+    internal class CrcStream : Stream
     {
         private Stream source;
         private uint crc;
@@ -37,7 +37,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// Creates a new CrcStream instance from a source stream.
         /// </summary>
         /// <param name="source">Underlying stream where bytes will be read from or written to.</param>
-        public CrcStream(Stream source)
+        internal CrcStream(Stream source)
         {
             this.source = source;
         }
@@ -48,7 +48,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Crc")]
         [CLSCompliant(false)]
-        public uint Crc
+        internal uint Crc
         {
             get
             {
@@ -59,7 +59,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Gets the underlying stream that this stream reads from or writes to.
         /// </summary>
-        public Stream Source
+        internal Stream Source
         {
             get
             {
@@ -71,7 +71,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// Gets a value indicating whether the source stream supports reading.
         /// </summary>
         /// <value>true if the stream supports reading; otherwise, false.</value>
-        public override bool CanRead
+        internal override bool CanRead
         {
             get
             {
@@ -83,7 +83,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// Gets a value indicating whether the source stream supports writing.
         /// </summary>
         /// <value>true if the stream supports writing; otherwise, false.</value>
-        public override bool CanWrite
+        internal override bool CanWrite
         {
             get
             {
@@ -95,7 +95,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// Gets a value indicating whether the source stream supports seeking.
         /// </summary>
         /// <value>true if the stream supports seeking; otherwise, false.</value>
-        public override bool CanSeek
+        internal override bool CanSeek
         {
             get
             {
@@ -106,7 +106,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Gets the length of the source stream.
         /// </summary>
-        public override long Length
+        internal override long Length
         {
             get
             {
@@ -117,7 +117,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Gets or sets the position of the source stream.
         /// </summary>
-        public override long Position
+        internal override long Position
         {
             get
             {
@@ -141,7 +141,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// Note the CRC is only calculated over bytes that are actually read or
         /// written, so any bytes skipped by seeking will not contribute to the CRC.
         /// </remarks>
-        public override long Seek(long offset, SeekOrigin origin)
+        internal override long Seek(long offset, SeekOrigin origin)
         {
             return this.source.Seek(offset, origin);
         }
@@ -151,7 +151,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// </summary>
         /// <param name="value">The desired length of the
         /// stream in bytes.</param>
-        public override void SetLength(long value)
+        internal override void SetLength(long value)
         {
             this.source.SetLength(value);
         }
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <returns>The total number of bytes read into the buffer. This can be less
         /// than the number of bytes requested if that many bytes are not currently available,
         /// or zero (0) if the end of the stream has been reached.</returns>
-        public override int Read(byte[] buffer, int offset, int count)
+        internal override int Read(byte[] buffer, int offset, int count)
         {
             count = this.source.Read(buffer, offset, count);
             this.UpdateCrc(buffer, offset, count);
@@ -186,7 +186,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// to begin copying bytes to the current stream.</param>
         /// <param name="count">The number of bytes to be written to the
         /// current stream.</param>
-        public override void Write(byte[] buffer, int offset, int count)
+        internal override void Write(byte[] buffer, int offset, int count)
         {
             this.source.Write(buffer, offset, count);
             this.UpdateCrc(buffer, offset, count);
@@ -195,7 +195,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Flushes the source stream.
         /// </summary>
-        public override void Flush()
+        internal override void Flush()
         {
             this.source.Flush();
         }
@@ -203,7 +203,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Closes the underlying stream.
         /// </summary>
-        public override void Close()
+        internal override void Close()
         {
             this.source.Close();
             base.Close();

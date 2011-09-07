@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="InstallPackage.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -35,13 +35,13 @@ using Microsoft.Deployment.Compression.Cab;
 /// <example>
 /// <c>installPackage.Message += new InstallPackageMessageHandler(Console.WriteLine);</c>
 /// </example>
-public delegate void InstallPackageMessageHandler(string format, params object[] args);
+internal delegate void InstallPackageMessageHandler(string format, params object[] args);
 
 /// <summary>
 /// Provides access to powerful build, maintenance, and analysis operations on an
 /// installation package (.MSI or .MSM).
 /// </summary>
-public class InstallPackage : Database
+internal class InstallPackage : Database
 {
     private string cabName;
     private string cabMsg;
@@ -52,7 +52,7 @@ public class InstallPackage : Database
     /// </summary>
     /// <param name="packagePath">Path to the install package to be created or opened</param>
     /// <param name="openMode">Open mode for the database</param>
-    public InstallPackage(string packagePath, DatabaseOpenMode openMode)
+    internal InstallPackage(string packagePath, DatabaseOpenMode openMode)
         : this(packagePath, openMode, null, null)
     {
     }
@@ -72,7 +72,7 @@ public class InstallPackage : Database
     /// <remarks>If the source location is different than the working directory, then
     /// no files will be modified at the source location.
     /// </remarks>
-    public InstallPackage(string packagePath, DatabaseOpenMode openMode,
+    internal InstallPackage(string packagePath, DatabaseOpenMode openMode,
         string sourceDir, string workingDir) : base(packagePath, openMode)
     {
         this.sourceDir  = (sourceDir  != null ? sourceDir  : Path.GetDirectoryName(packagePath));
@@ -89,14 +89,14 @@ public class InstallPackage : Database
     /// <example>
     /// <c>installPackage.Message += new InstallPackageMessageHandler(Console.WriteLine);</c>
     /// </example>
-    public event InstallPackageMessageHandler Message;
+    internal event InstallPackageMessageHandler Message;
 
     /// <summary>
     /// Sends a message to the <see cref="Message"/> event-handler.
     /// </summary>
     /// <param name="format">Message string, containing 0 or more format items</param>
     /// <param name="args">Items to be formatted</param>
-    protected void LogMessage(string format, params object[] args)
+    internal void LogMessage(string format, params object[] args)
     {
         if(this.Message != null)
         {
@@ -110,7 +110,7 @@ public class InstallPackage : Database
     /// the location of an original copy of the package that is not meant
     /// to be modified.
     /// </summary>
-    public string SourceDirectory
+    internal string SourceDirectory
     {
         get { return this.sourceDir; }
         set { this.sourceDir = value; }
@@ -121,7 +121,7 @@ public class InstallPackage : Database
     /// Gets or sets the location where files will be extracted to/updated from. Also
     /// the location where a temporary folder is created during some operations.
     /// </summary>
-    public string WorkingDirectory
+    internal string WorkingDirectory
     {
         get { return this.workingDir; }
         set { this.workingDir = value; }
@@ -141,7 +141,7 @@ public class InstallPackage : Database
     /// <param name="longFileName">File name to search for (case-insensitive)</param>
     /// <returns>Array of file keys, or a 0-length array if none are found</returns>
     [SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase")]
-    public string[] FindFiles(string longFileName)
+    internal string[] FindFiles(string longFileName)
     {
         longFileName = longFileName.ToLowerInvariant();
         ArrayList fileList = new ArrayList();
@@ -162,7 +162,7 @@ public class InstallPackage : Database
     /// </summary>
     /// <param name="pattern">Regular expression search pattern</param>
     /// <returns>Array of file keys, or a 0-length array if none are found</returns>
-    public string[] FindFiles(Regex pattern)
+    internal string[] FindFiles(Regex pattern)
     {
         ArrayList fileList = new ArrayList();
         foreach (KeyValuePair<string, InstallPath> entry in this.Files)
@@ -181,7 +181,7 @@ public class InstallPackage : Database
     /// </summary>
     /// <remarks>If any files have the uncompressed attribute, they will be copied
     /// from the <see cref="SourceDirectory"/>.</remarks>
-    public void ExtractFiles()
+    internal void ExtractFiles()
     {
         this.ExtractFiles(null);
     }
@@ -192,7 +192,7 @@ public class InstallPackage : Database
     /// <param name="fileKeys">List of file key strings to extract</param>
     /// <remarks>If any files have the uncompressed attribute, they will be copied
     /// from the <see cref="SourceDirectory"/>.</remarks>
-    public void ExtractFiles(ICollection<string> fileKeys)
+    internal void ExtractFiles(ICollection<string> fileKeys)
     {
         this.ProcessFilesByMediaDisk(fileKeys,
             new ProcessFilesOnOneMediaDiskHandler(this.ExtractFilesOnOneMediaDisk));
@@ -428,7 +428,7 @@ public class InstallPackage : Database
     /// The cabinet compression level used during re-cabbing can be configured with the
     /// <see cref="CompressionLevel"/> property.
     /// </remarks>
-    public void UpdateFiles()
+    internal void UpdateFiles()
     {
         this.UpdateFiles(null);
     }
@@ -445,7 +445,7 @@ public class InstallPackage : Database
     /// <p>The cabinet compression level used during re-cabbing can be configured with the
     /// <see cref="CompressionLevel"/> property.</p>
     /// </remarks>
-    public void UpdateFiles(ICollection<string> fileKeys)
+    internal void UpdateFiles(ICollection<string> fileKeys)
     {
         this.ProcessFilesByMediaDisk(fileKeys,
             new ProcessFilesOnOneMediaDiskHandler(this.UpdateFilesOnOneMediaDisk));
@@ -599,7 +599,7 @@ public class InstallPackage : Database
     /// <p>The cabinet compression level used during re-cabbing can be configured with the
     /// <see cref="CompressionLevel"/> property.</p>
     /// </remarks>
-    public void Consolidate(string mediaCabinet)
+    internal void Consolidate(string mediaCabinet)
     {
         this.LogMessage("Consolidating package");
 
@@ -632,7 +632,7 @@ public class InstallPackage : Database
               "FROM `File` ORDER BY `Sequence`"))
         {
             fileView.Execute();
-            
+
             foreach (Record fileRec in fileView) using(fileRec)
             {
                 files.Add(fileRec[1]);
@@ -687,7 +687,7 @@ public class InstallPackage : Database
         using (View view = this.OpenView("SELECT `Cabinet` FROM `Media` WHERE `Cabinet` <> ''"))
         {
             view.Execute();
-            
+
             foreach (Record rec in view) using(rec)
             {
                 string cab = rec.GetString(1);
@@ -779,7 +779,7 @@ public class InstallPackage : Database
             {
                 patchView.Execute();
                 Hashtable extractedPatchCabs = new Hashtable();
-                
+
                 foreach (Record patchRec in patchView) using(patchRec)
                 {
                     string fileKey = (string) patchRec[1];
@@ -809,7 +809,7 @@ public class InstallPackage : Database
               "FROM `Media` ORDER BY `DiskId`"))
         {
             mediaView.Execute();
-            
+
             foreach (Record mediaRec in mediaView) using(mediaRec)
             {
                 int mediaMaxSequence = mediaRec.GetInteger(2);
@@ -869,7 +869,7 @@ public class InstallPackage : Database
     /// should be done after modifying the File, Component, or Directory
     /// tables, or else the cached information may no longer be accurate.
     /// </summary>
-    public void UpdateDirectories()
+    internal void UpdateDirectories()
     {
         this.dirPathMap = null;
         this.filePathMap = InstallPathMap.BuildFilePathMap(this,
@@ -883,7 +883,7 @@ public class InstallPackage : Database
     /// If the Directory table is modified, this mapping
     /// will be outdated until you call <see cref="UpdateDirectories"/>.
     /// </remarks>
-    public InstallPathMap Directories
+    internal InstallPathMap Directories
     {
         get
         {
@@ -903,7 +903,7 @@ public class InstallPackage : Database
     /// If the File, Component, or Directory tables are modified, this mapping
     /// may be outdated until you call <see cref="UpdateDirectories"/>.
     /// </remarks>
-    public InstallPathMap Files
+    internal InstallPathMap Files
     {
         get
         {
@@ -925,7 +925,7 @@ public class InstallPackage : Database
     /// If the Directory table is modified, this mapping will be outdated
     /// until you close and reopen the install package.
     /// </remarks>
-    public CompressionLevel CompressionLevel
+    internal CompressionLevel CompressionLevel
     {
         get { return this.compressionLevel; }
         set { this.compressionLevel = value; }
@@ -946,7 +946,7 @@ public class InstallPackage : Database
     /// <p>After calling this method you can use <see cref="Consolidate"/> to apply
     /// the file patches immediately and also discard any outdated files from the package.</p>
     /// </remarks>
-    public void ApplyPatch(PatchPackage patchPackage, string transform)
+    internal void ApplyPatch(PatchPackage patchPackage, string transform)
     {
         if(patchPackage == null) throw new ArgumentNullException("patchPackage");
 
@@ -1093,7 +1093,7 @@ public class InstallPackage : Database
                   "FROM `File` ORDER BY `Sequence`"))
             {
                 fileView.Execute();
-                
+
                 foreach (Record fileRec in fileView) using(fileRec)
                 {
                     int fileAttributes = fileRec.GetInteger(2);
@@ -1124,7 +1124,7 @@ public class InstallPackage : Database
     /// <summary>
     /// Accessor for getting and setting properties of the InstallPackage database.
     /// </summary>
-    public InstallPackageProperties Property
+    internal InstallPackageProperties Property
     {
         get
         {
@@ -1141,7 +1141,7 @@ public class InstallPackage : Database
 /// <summary>
 /// Accessor for getting and setting properties of the <see cref="InstallPackage"/> database.
 /// </summary>
-public class InstallPackageProperties
+internal class InstallPackageProperties
 {
     internal InstallPackageProperties(InstallPackage installPackage)
     {
@@ -1158,7 +1158,7 @@ public class InstallPackageProperties
     /// This has the same results as direct SQL queries on the Property table; it's only
     /// meant to be a more convenient way of access.
     /// </remarks>
-    public string this[string name]
+    internal string this[string name]
     {
         get
         {

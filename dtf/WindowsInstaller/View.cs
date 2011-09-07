@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="View.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -31,7 +31,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// it all replaceable parameters designated within the SQL query string.
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class View : InstallerHandle, IEnumerable<Record>
+    internal class View : InstallerHandle, IEnumerable<Record>
     {
         private Database database;
         private string sql;
@@ -48,7 +48,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the Database on which this View was opened.
         /// </summary>
-        public Database Database
+        internal Database Database
         {
             get { return this.database; }
         }
@@ -56,7 +56,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the SQL query string used to open this View.
         /// </summary>
-        public string QueryString
+        internal string QueryString
         {
             get { return this.sql; }
         }
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the set of tables that were included in the SQL query for this View.
         /// </summary>
-        public IList<TableInfo> Tables
+        internal IList<TableInfo> Tables
         {
             get
             {
@@ -143,7 +143,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewgetcolumninfo.asp">MsiViewGetColumnInfo</a>
         /// </p></remarks>
-        public ColumnCollection Columns
+        internal ColumnCollection Columns
         {
             get
             {
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Params"), SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public void Execute(Record executeParams)
+        internal void Execute(Record executeParams)
         {
             uint ret = RemotableNativeMethods.MsiViewExecute(
                 (int) this.Handle,
@@ -193,7 +193,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>
         /// </p></remarks>
-        public void Execute() { this.Execute(null); }
+        internal void Execute() { this.Execute(null); }
 
         /// <summary>
         /// Fetches the next sequential record from the view, or null if there are no more records.
@@ -208,7 +208,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public Record Fetch()
+        internal Record Fetch()
         {
             int recordHandle;
             uint ret = RemotableNativeMethods.MsiViewFetch((int) this.Handle, out recordHandle);
@@ -269,7 +269,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <seealso cref="ValidateFields"/>
         /// <seealso cref="ValidateDelete"/>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public void Modify(ViewModifyMode mode, Record record)
+        internal void Modify(ViewModifyMode mode, Record record)
         {
             if (record == null)
             {
@@ -302,7 +302,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
-        public void Refresh(Record record) { this.Modify(ViewModifyMode.Refresh, record); }
+        internal void Refresh(Record record) { this.Modify(ViewModifyMode.Refresh, record); }
 
         /// <summary>
         /// Inserts a Record into the view.
@@ -319,7 +319,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
-        public void Insert(Record record) { this.Modify(ViewModifyMode.Insert, record); }
+        internal void Insert(Record record) { this.Modify(ViewModifyMode.Insert, record); }
 
         /// <summary>
         /// Updates the View with new data from the Record.
@@ -336,7 +336,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
-        public void Update(Record record) { this.Modify(ViewModifyMode.Update, record); }
+        internal void Update(Record record) { this.Modify(ViewModifyMode.Update, record); }
 
         /// <summary>
         /// Updates or inserts a Record into the View.
@@ -353,7 +353,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
-        public void Assign(Record record) { this.Modify(ViewModifyMode.Assign, record); }
+        internal void Assign(Record record) { this.Modify(ViewModifyMode.Assign, record); }
 
         /// <summary>
         /// Updates or deletes and inserts a Record into the View.
@@ -371,7 +371,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
-        public void Replace(Record record) { this.Modify(ViewModifyMode.Replace, record); }
+        internal void Replace(Record record) { this.Modify(ViewModifyMode.Replace, record); }
 
         /// <summary>
         /// Deletes a Record from the View.
@@ -388,7 +388,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
-        public void Delete(Record record) { this.Modify(ViewModifyMode.Delete, record); }
+        internal void Delete(Record record) { this.Modify(ViewModifyMode.Delete, record); }
 
         /// <summary>
         /// Inserts a Record into the View.  The inserted data is not persistent.
@@ -405,7 +405,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
-        public void InsertTemporary(Record record) { this.Modify(ViewModifyMode.InsertTemporary, record); }
+        internal void InsertTemporary(Record record) { this.Modify(ViewModifyMode.InsertTemporary, record); }
 
         /// <summary>
         /// Refreshes the information in the supplied record without changing the position
@@ -426,7 +426,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public bool Seek(Record record)
+        internal bool Seek(Record record)
         {
             if (record == null)
             {
@@ -465,7 +465,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public bool Merge(Record record)
+        internal bool Merge(Record record)
         {
             if (record == null)
             {
@@ -503,7 +503,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewgeterror.asp">MsiViewGetError</a>
         /// </p></remarks>
-        public ICollection<ValidationErrorInfo> Validate(Record record) { return this.InternalValidate(ViewModifyMode.Validate, record); }
+        internal ICollection<ValidationErrorInfo> Validate(Record record) { return this.InternalValidate(ViewModifyMode.Validate, record); }
 
         /// <summary>
         /// Validates a new record, returning information about any errors.
@@ -525,7 +525,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewgeterror.asp">MsiViewGetError</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix")]
-        public ICollection<ValidationErrorInfo> ValidateNew(Record record) { return this.InternalValidate(ViewModifyMode.ValidateNew, record); }
+        internal ICollection<ValidationErrorInfo> ValidateNew(Record record) { return this.InternalValidate(ViewModifyMode.ValidateNew, record); }
 
         /// <summary>
         /// Validates fields of a fetched or new record, returning information about any errors.
@@ -546,7 +546,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewgeterror.asp">MsiViewGetError</a>
         /// </p></remarks>
-        public ICollection<ValidationErrorInfo> ValidateFields(Record record) { return this.InternalValidate(ViewModifyMode.ValidateField, record); }
+        internal ICollection<ValidationErrorInfo> ValidateFields(Record record) { return this.InternalValidate(ViewModifyMode.ValidateField, record); }
 
         /// <summary>
         /// Validates a record that will be deleted later, returning information about any errors.
@@ -567,7 +567,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewmodify.asp">MsiViewModify</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewgeterror.asp">MsiViewGetError</a>
         /// </p></remarks>
-        public ICollection<ValidationErrorInfo> ValidateDelete(Record record) { return this.InternalValidate(ViewModifyMode.ValidateDelete, record); }
+        internal ICollection<ValidationErrorInfo> ValidateDelete(Record record) { return this.InternalValidate(ViewModifyMode.ValidateDelete, record); }
 
         /// <summary>
         /// Enumerates over the Records retrieved by the View.
@@ -585,7 +585,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public IEnumerator<Record> GetEnumerator()
+        internal IEnumerator<Record> GetEnumerator()
         {
             Record rec;
             while ((rec = this.Fetch()) != null)
@@ -615,7 +615,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                         column.Capacity = (int) ++bufSize;
                         error = RemotableNativeMethods.MsiViewGetError((int) this.Handle, column, ref bufSize);
                     }
-                    
+
                     if (error == -3 /*MSIDBERROR_INVALIDARG*/)
                     {
                         throw InstallerException.ExceptionFromReturnCode((uint) NativeMethods.Error.INVALID_PARAMETER);

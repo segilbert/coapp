@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ArchiveInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -32,7 +32,7 @@ namespace Microsoft.Deployment.Compression
     /// provides access to file-based operations on the archive.
     /// </summary>
     [Serializable]
-    public abstract class ArchiveInfo : FileSystemInfo
+    internal abstract class ArchiveInfo : FileSystemInfo
     {
         /// <summary>
         /// Creates a new ArchiveInfo object representing an archive in a
@@ -40,14 +40,14 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <param name="path">The path to the archive. When creating an archive,
         /// this file does not necessarily exist yet.</param>
-        protected ArchiveInfo(string path) : base()
+        internal ArchiveInfo(string path) : base()
         {
             if (path == null)
             {
                 throw new ArgumentNullException("path");
             }
 
-            // protected instance members inherited from FileSystemInfo:
+            // internal instance members inherited from FileSystemInfo:
             this.OriginalPath = path;
             this.FullPath = Path.GetFullPath(path);
         }
@@ -59,7 +59,7 @@ namespace Microsoft.Deployment.Compression
         /// data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual
         /// information about the source or destination.</param>
-        protected ArchiveInfo(SerializationInfo info, StreamingContext context)
+        internal ArchiveInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
@@ -69,7 +69,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <value>A DirectoryInfo object representing the parent directory of the
         /// archive.</value>
-        public DirectoryInfo Directory
+        internal DirectoryInfo Directory
         {
             get
             {
@@ -81,7 +81,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the full path of the directory that contains the archive.
         /// </summary>
         /// <value>The full path of the directory that contains the archive.</value>
-        public string DirectoryName
+        internal string DirectoryName
         {
             get
             {
@@ -93,7 +93,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the size of the archive.
         /// </summary>
         /// <value>The size of the archive in bytes.</value>
-        public long Length
+        internal long Length
         {
             get
             {
@@ -105,7 +105,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the file name of the archive.
         /// </summary>
         /// <value>The file name of the archive, not including any path.</value>
-        public override string Name
+        internal override string Name
         {
             get
             {
@@ -117,7 +117,7 @@ namespace Microsoft.Deployment.Compression
         /// Checks if the archive exists.
         /// </summary>
         /// <value>True if the archive exists; else false.</value>
-        public override bool Exists
+        internal override bool Exists
         {
             get
             {
@@ -129,7 +129,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the full path of the archive.
         /// </summary>
         /// <returns>The full path of the archive.</returns>
-        public override string ToString()
+        internal override string ToString()
         {
             return this.FullName;
         }
@@ -137,7 +137,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Deletes the archive.
         /// </summary>
-        public override void Delete()
+        internal override void Delete()
         {
             File.Delete(this.FullName);
         }
@@ -147,7 +147,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <param name="destFileName">The destination file path.</param>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void CopyTo(string destFileName)
+        internal void CopyTo(string destFileName)
         {
             File.Copy(this.FullName, destFileName);
         }
@@ -160,17 +160,17 @@ namespace Microsoft.Deployment.Compression
         /// <param name="overwrite">If true, the destination file will be
         /// overwritten if it exists.</param>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void CopyTo(string destFileName, bool overwrite)
+        internal void CopyTo(string destFileName, bool overwrite)
         {
             File.Copy(this.FullName, destFileName, overwrite);
         }
-        
+
         /// <summary>
         /// Moves an existing archive to another location.
         /// </summary>
         /// <param name="destFileName">The destination file path.</param>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void MoveTo(string destFileName)
+        internal void MoveTo(string destFileName)
         {
             File.Move(this.FullName, destFileName);
             this.FullPath = Path.GetFullPath(destFileName);
@@ -180,7 +180,7 @@ namespace Microsoft.Deployment.Compression
         /// Checks if the archive contains a valid archive header.
         /// </summary>
         /// <returns>True if the file is a valid archive; false otherwise.</returns>
-        public bool IsValid()
+        internal bool IsValid()
         {
             using (Stream stream = File.OpenRead(this.FullName))
             {
@@ -196,7 +196,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <returns>A list of <see cref="ArchiveFileInfo"/> objects, each
         /// containing information about a file in the archive.</returns>
-        public IList<ArchiveFileInfo> GetFiles()
+        internal IList<ArchiveFileInfo> GetFiles()
         {
             return this.InternalGetFiles((Predicate<string>) null);
         }
@@ -208,7 +208,7 @@ namespace Microsoft.Deployment.Compression
         /// &quot;*.txt&quot;.</param>
         /// <returns>A list of <see cref="ArchiveFileInfo"/> objects, each containing
         /// information about a file in the archive.</returns>
-        public IList<ArchiveFileInfo> GetFiles(string searchPattern)
+        internal IList<ArchiveFileInfo> GetFiles(string searchPattern)
         {
             if (searchPattern == null)
             {
@@ -236,7 +236,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="destDirectory">Directory where the files are to be
         /// extracted.</param>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void Unpack(string destDirectory)
+        internal void Unpack(string destDirectory)
         {
             this.Unpack(destDirectory, null);
         }
@@ -250,7 +250,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="progressHandler">Handler for receiving progress
         /// information; this may be null if progress is not desired.</param>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void Unpack(
+        internal void Unpack(
             string destDirectory,
             EventHandler<ArchiveProgressEventArgs> progressHandler)
         {
@@ -275,7 +275,7 @@ namespace Microsoft.Deployment.Compression
         /// <remarks>If <paramref name="destFileName"/> already exists,
         /// it will be overwritten.</remarks>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void UnpackFile(string fileName, string destFileName)
+        internal void UnpackFile(string fileName, string destFileName)
         {
             if (fileName == null)
             {
@@ -311,7 +311,7 @@ namespace Microsoft.Deployment.Compression
         /// <paramref name="destFileNames"/> parameters cannot both be null.</p>
         /// </remarks>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void UnpackFiles(
+        internal void UnpackFiles(
             IList<string> fileNames,
             string destDirectory,
             IList<string> destFileNames)
@@ -340,7 +340,7 @@ namespace Microsoft.Deployment.Compression
         /// <paramref name="destFileNames"/> parameters cannot both be null.</p>
         /// </remarks>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void UnpackFiles(
+        internal void UnpackFiles(
             IList<string> fileNames,
             string destDirectory,
             IList<string> destFileNames,
@@ -384,7 +384,7 @@ namespace Microsoft.Deployment.Compression
         /// If any extracted files already exist on disk, they will be overwritten.
         /// </remarks>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void UnpackFileSet(
+        internal void UnpackFileSet(
             IDictionary<string, string> fileNames,
             string destDirectory)
         {
@@ -406,7 +406,7 @@ namespace Microsoft.Deployment.Compression
         /// If any extracted files already exist on disk, they will be overwritten.
         /// </remarks>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void UnpackFileSet(
+        internal void UnpackFileSet(
             IDictionary<string, string> fileNames,
             string destDirectory,
             EventHandler<ArchiveProgressEventArgs> progressHandler)
@@ -442,7 +442,7 @@ namespace Microsoft.Deployment.Compression
         /// A stream for reading directly from the packed file. Like any stream
         /// this should be closed/disposed as soon as it is no longer needed.
         /// </returns>
-        public Stream OpenRead(string fileName)
+        internal Stream OpenRead(string fileName)
         {
             Stream archiveStream = File.OpenRead(this.FullName);
             CompressionEngine compressionEngine = this.CreateCompressionEngine();
@@ -469,7 +469,7 @@ namespace Microsoft.Deployment.Compression
         /// <see cref="OpenRead" /> method and pass the returned stream to one of
         /// the <see cref="StreamReader" /> constructor overloads.
         /// </remarks>
-        public StreamReader OpenText(string fileName)
+        internal StreamReader OpenText(string fileName)
         {
             return new StreamReader(this.OpenRead(fileName));
         }
@@ -483,7 +483,7 @@ namespace Microsoft.Deployment.Compression
         /// <remarks>
         /// Uses maximum compression level.
         /// </remarks>
-        public void Pack(string sourceDirectory)
+        internal void Pack(string sourceDirectory)
         {
             this.Pack(sourceDirectory, false, CompressionLevel.Max, null);
         }
@@ -504,7 +504,7 @@ namespace Microsoft.Deployment.Compression
         /// The files are stored in the archive using their relative file paths in
         /// the directory tree, if supported by the archive file format.
         /// </remarks>
-        public void Pack(
+        internal void Pack(
             string sourceDirectory,
             bool includeSubdirectories,
             CompressionLevel compLevel,
@@ -534,7 +534,7 @@ namespace Microsoft.Deployment.Compression
         /// <p>Duplicate items in the <paramref name="fileNames"/> array will cause
         /// an <see cref="ArchiveException"/>.</p>
         /// </remarks>
-        public void PackFiles(
+        internal void PackFiles(
             string sourceDirectory,
             IList<string> sourceFileNames,
             IList<string> fileNames)
@@ -568,7 +568,7 @@ namespace Microsoft.Deployment.Compression
         /// Duplicate items in the <paramref name="fileNames"/> array will cause
         /// an <see cref="ArchiveException"/>.
         /// </remarks>
-        public void PackFiles(
+        internal void PackFiles(
             string sourceDirectory,
             IList<string> sourceFileNames,
             IList<string> fileNames,
@@ -620,7 +620,7 @@ namespace Microsoft.Deployment.Compression
         /// <remarks>
         /// Uses maximum compression level.
         /// </remarks>
-        public void PackFileSet(
+        internal void PackFileSet(
             string sourceDirectory,
             IDictionary<string, string> fileNames)
         {
@@ -640,7 +640,7 @@ namespace Microsoft.Deployment.Compression
         /// the archive.</param>
         /// <param name="progressHandler">Handler for receiving progress information;
         /// this may be null if progress is not desired.</param>
-        public void PackFileSet(
+        internal void PackFileSet(
             string sourceDirectory,
             IDictionary<string, string> fileNames,
             CompressionLevel compLevel,
@@ -709,7 +709,7 @@ namespace Microsoft.Deployment.Compression
         /// Each instance will be <see cref="CompressionEngine.Dispose()"/>d
         /// immediately after use.
         /// </remarks>
-        protected abstract CompressionEngine CreateCompressionEngine();
+        internal abstract CompressionEngine CreateCompressionEngine();
 
         /// <summary>
         /// Creates a case-insensitive dictionary mapping from one list of

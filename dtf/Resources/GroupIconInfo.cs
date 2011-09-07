@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="GroupIconInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -34,15 +34,15 @@ namespace Microsoft.Deployment.Resources
 
     internal struct GroupIconDirectoryInfo
     {
-        public byte width;
-        public byte height;
-        public byte colors;
-        public byte reserved;
-        public ushort planes;
-        public ushort bitsPerPixel;
-        public uint imageSize;
-        public uint imageOffset; // only valid when icon group is read from .ico file.
-        public ushort imageIndex; // only valid when icon group is read from PE resource.
+        internal byte width;
+        internal byte height;
+        internal byte colors;
+        internal byte reserved;
+        internal ushort planes;
+        internal ushort bitsPerPixel;
+        internal uint imageSize;
+        internal uint imageOffset; // only valid when icon group is read from .ico file.
+        internal ushort imageIndex; // only valid when icon group is read from PE resource.
     }
 
     internal class GroupIconInfo
@@ -51,20 +51,20 @@ namespace Microsoft.Deployment.Resources
         private GroupIconType type;
         private GroupIconDirectoryInfo[] images;
 
-        public GroupIconInfo()
+        internal GroupIconInfo()
         {
             this.images = new GroupIconDirectoryInfo[0];
         }
 
-        public GroupIconDirectoryInfo[] DirectoryInfo { get { return this.images; } }
+        internal GroupIconDirectoryInfo[] DirectoryInfo { get { return this.images; } }
 
-        public void ReadFromFile(Stream stream)
+        internal void ReadFromFile(Stream stream)
         {
             BinaryReader reader = new BinaryReader(stream);
             this.Read(reader, true);
         }
 
-        public void ReadFromResource(byte[] data)
+        internal void ReadFromResource(byte[] data)
         {
             using (BinaryReader reader = new BinaryReader(new MemoryStream(data, false)))
             {
@@ -72,7 +72,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public byte[] GetResourceData()
+        internal byte[] GetResourceData()
         {
             byte[] data = null;
 

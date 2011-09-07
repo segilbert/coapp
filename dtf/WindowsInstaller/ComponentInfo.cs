@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ComponentInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -25,7 +25,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Accessor for information about components within the context of an installation session.
     /// </summary>
-    public sealed class ComponentInfoCollection : ICollection<ComponentInfo>
+    internal sealed class ComponentInfoCollection : ICollection<ComponentInfo>
     {
         private Session session;
 
@@ -39,7 +39,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="component">name of the component</param>
         /// <returns>component object</returns>
-        public ComponentInfo this[string component]
+        internal ComponentInfo this[string component]
         {
             get
             {
@@ -62,7 +62,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="component">name of the component</param>
         /// <returns>true if the component is in the collection, else false</returns>
-        public bool Contains(string component)
+        internal bool Contains(string component)
         {
             return this.session.Database.CountRows(
                 "Component", "`Component` = '" + component + "'") == 1;
@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">array that receives the features</param>
         /// <param name="arrayIndex">offset into the array</param>
-        public void CopyTo(ComponentInfo[] array, int arrayIndex)
+        internal void CopyTo(ComponentInfo[] array, int arrayIndex)
         {
             foreach (ComponentInfo component in this)
             {
@@ -89,7 +89,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of components defined for the product.
         /// </summary>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Enumerates the components in the collection.
         /// </summary>
         /// <returns>an enumerator over all features in the collection</returns>
-        public IEnumerator<ComponentInfo> GetEnumerator()
+        internal IEnumerator<ComponentInfo> GetEnumerator()
         {
             using (View compView = this.session.Database.OpenView(
                 "SELECT `Component` FROM `Component`"))
@@ -138,7 +138,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Provides access to information about a component within the context of an installation session.
     /// </summary>
-    public class ComponentInfo
+    internal class ComponentInfo
     {
         private Session session;
         private string name;
@@ -152,7 +152,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the name of the component (primary key in the Component table).
         /// </summary>
-        public string Name
+        internal string Name
         {
             get
             {
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetcomponentstate.asp">MsiGetComponentState</a>
         /// </p></remarks>
-        public InstallState CurrentState
+        internal InstallState CurrentState
         {
             get
             {
@@ -201,7 +201,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetcomponentstate.asp">MsiGetComponentState</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetcomponentstate.asp">MsiSetComponentState</a>
         /// </p></remarks>
-        public InstallState RequestState
+        internal InstallState RequestState
         {
             get
             {
@@ -247,7 +247,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumcomponentcosts.asp">MsiEnumComponentCosts</a>
         /// </p></remarks>
-        public IList<InstallCost> GetCost(InstallState installState)
+        internal IList<InstallCost> GetCost(InstallState installState)
         {
             IList<InstallCost> costs = new List<InstallCost>();
             StringBuilder driveBuf = new StringBuilder(20);

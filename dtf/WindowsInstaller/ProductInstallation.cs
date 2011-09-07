@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ProductInstallation.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Represents a unique instance of a product that
     /// is either advertised, installed or unknown.
     /// </summary>
-    public class ProductInstallation : Installation
+    internal class ProductInstallation : Installation
     {
         /// <summary>
         /// Gets the set of all products with a specified upgrade code. This method lists the
@@ -40,7 +40,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumrelatedproducts.asp">MsiEnumRelatedProducts</a>
         /// </p></remarks>
-        public static IEnumerable<ProductInstallation> GetRelatedProducts(string upgradeCode)
+        internal static IEnumerable<ProductInstallation> GetRelatedProducts(string upgradeCode)
         {
             StringBuilder buf = new StringBuilder(40);
             for (uint i = 0; true; i++)
@@ -63,7 +63,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumproducts.asp">MsiEnumProducts</a>,
         /// </p></remarks>
-        public static IEnumerable<ProductInstallation> AllProducts
+        internal static IEnumerable<ProductInstallation> AllProducts
         {
             get
             {
@@ -92,7 +92,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumproductsex.asp">MsiEnumProductsEx</a>
         /// </p></remarks>
-        public static IEnumerable<ProductInstallation> GetProducts(
+        internal static IEnumerable<ProductInstallation> GetProducts(
             string productCode, string userSid, UserContexts context)
         {
             StringBuilder buf = new StringBuilder(40);
@@ -150,7 +150,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// All available user contexts will be queried.
         /// </p></remarks>
-        public ProductInstallation(string productCode)
+        internal ProductInstallation(string productCode)
             : this(productCode, null, UserContexts.All)
         {
         }
@@ -165,7 +165,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="context">The user context. The calling process must have administrative
         /// privileges to get information for a product installed for a user other than the
         /// current user.</param>
-        public ProductInstallation(string productCode, string userSid, UserContexts context)
+        internal ProductInstallation(string productCode, string userSid, UserContexts context)
             : base(productCode, userSid, context)
         {
             if (String.IsNullOrEmpty(productCode))
@@ -192,7 +192,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumfeatures.asp">MsiEnumFeatures</a>
         /// </p></remarks>
-        public IEnumerable<FeatureInstallation> Features
+        internal IEnumerable<FeatureInstallation> Features
         {
             get
             {
@@ -214,7 +214,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the ProductCode (GUID) of the product.
         /// </summary>
-        public string ProductCode
+        internal string ProductCode
         {
             get { return this.InstallationCode; }
         }
@@ -222,7 +222,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a value indicating whether this product is installed on the current system.
         /// </summary>
-        public override bool IsInstalled
+        internal override bool IsInstalled
         {
             get
             {
@@ -233,7 +233,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a value indicating whether this product is advertised on the current system.
         /// </summary>
-        public bool IsAdvertised
+        internal bool IsAdvertised
         {
             get
             {
@@ -250,7 +250,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Note that this property does not take into account policies such as AlwaysInstallElevated,
         /// but verifies that the local system owns the product's registry data.
         /// </p></remarks>
-        public bool IsElevated
+        internal bool IsElevated
         {
             get
             {
@@ -267,7 +267,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the source list of this product installation.
         /// </summary>
-        public override SourceList SourceList
+        internal override SourceList SourceList
         {
             get
             {
@@ -303,7 +303,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The support link.
         /// </summary>
-        public string HelpLink
+        internal string HelpLink
         {
             get
             {
@@ -314,7 +314,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The support telephone.
         /// </summary>
-        public string HelpTelephone
+        internal string HelpTelephone
         {
             get
             {
@@ -325,7 +325,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Date and time the product was installed.
         /// </summary>
-        public DateTime InstallDate
+        internal DateTime InstallDate
         {
             get
             {
@@ -344,7 +344,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The installed product name.
         /// </summary>
-        public string ProductName
+        internal string ProductName
         {
             get
             {
@@ -355,7 +355,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The installation location.
         /// </summary>
-        public string InstallLocation
+        internal string InstallLocation
         {
             get
             {
@@ -366,7 +366,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The installation source.
         /// </summary>
-        public string InstallSource
+        internal string InstallSource
         {
             get
             {
@@ -377,7 +377,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The local cached package.
         /// </summary>
-        public string LocalPackage
+        internal string LocalPackage
         {
             get
             {
@@ -388,7 +388,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The publisher.
         /// </summary>
-        public string Publisher
+        internal string Publisher
         {
             get
             {
@@ -399,7 +399,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// URL about information.
         /// </summary>
-        public Uri UrlInfoAbout
+        internal Uri UrlInfoAbout
         {
             get
             {
@@ -420,7 +420,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The URL update information.
         /// </summary>
-        public Uri UrlUpdateInfo
+        internal Uri UrlUpdateInfo
         {
             get
             {
@@ -441,7 +441,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The product version.
         /// </summary>
-        public Version ProductVersion
+        internal Version ProductVersion
         {
             get
             {
@@ -457,7 +457,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// For more information, see
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/productid.asp">ProductID</a>
         /// </p></remarks>
-        public string ProductId
+        internal string ProductId
         {
             get
             {
@@ -468,7 +468,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The company that is registered to use the product.
         /// </summary>
-        public string RegCompany
+        internal string RegCompany
         {
             get
             {
@@ -479,7 +479,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The owner who is registered to use the product.
         /// </summary>
-        public string RegOwner
+        internal string RegOwner
         {
             get
             {
@@ -490,7 +490,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Transforms.
         /// </summary>
-        public string AdvertisedTransforms
+        internal string AdvertisedTransforms
         {
             get
             {
@@ -501,7 +501,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Product language.
         /// </summary>
-        public string AdvertisedLanguage
+        internal string AdvertisedLanguage
         {
             get
             {
@@ -512,7 +512,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Human readable product name.
         /// </summary>
-        public string AdvertisedProductName
+        internal string AdvertisedProductName
         {
             get
             {
@@ -524,7 +524,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// True if the product is advertised per-machine;
         /// false if it is per-user or not advertised.
         /// </summary>
-        public bool AdvertisedPerMachine
+        internal bool AdvertisedPerMachine
         {
             get
             {
@@ -535,7 +535,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Identifier of the package that a product is installed from.
         /// </summary>
-        public string AdvertisedPackageCode
+        internal string AdvertisedPackageCode
         {
             get
             {
@@ -546,7 +546,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Version of the advertised product.
         /// </summary>
-        public Version AdvertisedVersion
+        internal Version AdvertisedVersion
         {
             get
             {
@@ -558,7 +558,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Primary icon for the package.
         /// </summary>
-        public string AdvertisedProductIcon
+        internal string AdvertisedProductIcon
         {
             get
             {
@@ -569,7 +569,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Name of the installation package for the advertised product.
         /// </summary>
-        public string AdvertisedPackageName
+        internal string AdvertisedPackageName
         {
             get
             {
@@ -581,7 +581,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// True if the advertised product can be serviced by
         /// non-administrators without elevation.
         /// </summary>
-        public bool PrivilegedPatchingAuthorized
+        internal bool PrivilegedPatchingAuthorized
         {
             get
             {
@@ -590,7 +590,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
 
         /// <summary>
-        /// Gets information about an installation of a product. 
+        /// Gets information about an installation of a product.
         /// </summary>
         /// <param name="propertyName">Name of the property being retrieved.</param>
         /// <exception cref="ArgumentOutOfRangeException">An unknown product or property was requested</exception>
@@ -600,7 +600,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetproductinfo.asp">MsiGetProductInfo</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetproductinfoex.asp">MsiGetProductInfoEx</a>
         /// </p></remarks>
-        public override string this[string propertyName]
+        internal override string this[string propertyName]
         {
             get
             {
@@ -680,7 +680,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiqueryfeaturestate.asp">MsiQueryFeatureState</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiqueryfeaturestateex.asp">MsiQueryFeatureStateEx</a>
         /// </p></remarks>
-        public InstallState GetFeatureState(string feature)
+        internal InstallState GetFeatureState(string feature)
         {
             if (this.properties != null)
             {
@@ -714,7 +714,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiquerycomponnetstate.asp">MsiQueryComponentState</a>
         /// </p></remarks>
-        public InstallState GetComponentState(string component)
+        internal InstallState GetComponentState(string component)
         {
             if (this.properties != null)
             {
@@ -754,7 +754,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msicollectuserinfo.asp">MsiCollectUserInfo</a>
         /// </p></remarks>
-        public void CollectUserInfo()
+        internal void CollectUserInfo()
         {
             if (this.properties == null)
             {

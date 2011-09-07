@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ColumnInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines a single column of a table in an installer database.
     /// </summary>
     /// <remarks>Once created, a ColumnInfo object is immutable.</remarks>
-    public class ColumnInfo
+    internal class ColumnInfo
     {
         private string name;
         private Type type;
@@ -42,7 +42,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="name">name of the column</param>
         /// <param name="columnDefinition">column definition string</param>
         /// <seealso cref="ColumnDefinitionString"/>
-        public ColumnInfo(string name, string columnDefinition)
+        internal ColumnInfo(string name, string columnDefinition)
             : this(name, typeof(String), 0, false, false, false)
         {
             if (name == null)
@@ -91,7 +91,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="size">the maximum number of characters for String columns;
         /// ignored for other column types</param>
         /// <param name="isRequired">true if the column is required to have a non-null value</param>
-        public ColumnInfo(string name, Type type, int size, bool isRequired)
+        internal ColumnInfo(string name, Type type, int size, bool isRequired)
             : this(name, type, size, isRequired, false, false)
         {
         }
@@ -109,7 +109,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// not persisted with the database</param>
         /// <param name="isLocalizable">for String columns, indicates the column
         /// is localizable; ignored for other column types</param>
-        public ColumnInfo(string name, Type type, int size, bool isRequired, bool isTemporary, bool isLocalizable)
+        internal ColumnInfo(string name, Type type, int size, bool isRequired, bool isTemporary, bool isLocalizable)
         {
             if (name == null)
             {
@@ -150,7 +150,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the name of the column.
         /// </summary>
         /// <value>name of the column</value>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }
@@ -160,7 +160,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <value>type of the column</value>
         [SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods")]
-        public Type Type
+        internal Type Type
         {
             get { return this.type; }
         }
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the type of the column as an integer that can be cast to a System.Data.DbType.  This is one of the following: Int16, Int32, String, or Binary
         /// </summary>
         /// <value>equivalent DbType of the column as an integer</value>
-        public int DBType
+        internal int DBType
         {
             get
             {
@@ -185,7 +185,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <value>The size of integer columns this is either 2 or 4.  For string columns this is the maximum
         /// recommended length of the string, or 0 for unlimited length.  For stream columns, 0 is returned.</value>
-        public int Size
+        internal int Size
         {
             get { return this.size; }
         }
@@ -194,7 +194,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a value indicating whether the column must be non-null when inserting a record.
         /// </summary>
         /// <value>required status of the column</value>
-        public bool IsRequired
+        internal bool IsRequired
         {
             get { return this.isRequired; }
         }
@@ -204,7 +204,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// when the database is saved to disk.
         /// </summary>
         /// <value>temporary status of the column</value>
-        public bool IsTemporary
+        internal bool IsTemporary
         {
             get { return this.isTemporary; }
         }
@@ -213,7 +213,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a value indicating whether the column is a string column that is localizable.
         /// </summary>
         /// <value>localizable status of the column</value>
-        public bool IsLocalizable
+        internal bool IsLocalizable
         {
             get { return this.isLocalizable; }
         }
@@ -232,7 +232,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <item>OBJECT</item>
         /// </list>
         /// </p></remarks>
-        public string SqlCreateString
+        internal string SqlCreateString
         {
             get
             {
@@ -250,7 +250,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
 
         /// <summary>
-        /// Gets a short string defining the type and size of the column. 
+        /// Gets a short string defining the type and size of the column.
         /// </summary>
         /// <value>
         /// The definition string consists
@@ -272,7 +272,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <item>l0 - Localizable string, variable length</item>
         /// </list>
         /// </p></remarks>
-        public string ColumnDefinitionString
+        internal string ColumnDefinitionString
         {
             get
             {
@@ -301,7 +301,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the name of the column.
         /// </summary>
         /// <returns>Name of the column.</returns>
-        public override string ToString()
+        internal override string ToString()
         {
             return this.Name;
         }

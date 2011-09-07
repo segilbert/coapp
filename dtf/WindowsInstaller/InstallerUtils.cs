@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="InstallerUtils.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,12 +27,12 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System.Runtime.InteropServices;
     using System.Diagnostics.CodeAnalysis;
 
-    public static partial class Installer
+    internal static partial class Installer
     {
         /// <summary>
         /// Gets the current version of the installer.
         /// </summary>
-        public static Version Version
+        internal static Version Version
         {
             get
             {
@@ -44,7 +44,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 {
                     Marshal.ThrowExceptionForHR(hr);
                 }
-                
+
                 return new Version((int) dllVersionInfo[1], (int) dllVersionInfo[2], (int) dllVersionInfo[3]);
             }
         }
@@ -73,7 +73,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Error numbers greater than 2000 refer to MSI "internal" errors, and are always
         /// returned in English.
         /// </p></remarks>
-        public static string GetErrorMessage(int errorNumber)
+        internal static string GetErrorMessage(int errorNumber)
         {
             return Installer.GetErrorMessage(errorNumber, null);
         }
@@ -92,7 +92,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// returned in English.
         /// </p></remarks>
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        public static string GetErrorMessage(int errorNumber, CultureInfo culture)
+        internal static string GetErrorMessage(int errorNumber, CultureInfo culture)
         {
             if (culture == null)
             {
@@ -200,7 +200,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Error numbers greater than 2000 refer to MSI "internal" errors, and are always
         /// returned in English.
         /// </p></remarks>
-        public static string GetErrorMessage(Record errorRecord) { return Installer.GetErrorMessage(errorRecord, null); }
+        internal static string GetErrorMessage(Record errorRecord) { return Installer.GetErrorMessage(errorRecord, null); }
 
         /// <summary>
         /// Gets a formatted Windows Installer error message in a specified language.
@@ -213,7 +213,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Error numbers greater than 2000 refer to MSI "internal" errors, and are always
         /// returned in English.
         /// </p></remarks>
-        public static string GetErrorMessage(Record errorRecord, CultureInfo culture)
+        internal static string GetErrorMessage(Record errorRecord, CultureInfo culture)
         {
             if (errorRecord == null)
             {
@@ -246,7 +246,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfileversion.asp">MsiGetFileVersion</a>
         /// </p></remarks>
-        public static string GetFileVersion(string path)
+        internal static string GetFileVersion(string path)
         {
             StringBuilder version = new StringBuilder(20);
             uint verBufSize = 0, langBufSize = 0;
@@ -284,7 +284,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfileversion.asp">MsiGetFileVersion</a>
         /// </p></remarks>
-        public static string GetFileLanguage(string path)
+        internal static string GetFileLanguage(string path)
         {
             StringBuilder language = new StringBuilder("", 10);
             uint verBufSize = 0, langBufSize = 0;
@@ -322,7 +322,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfilehash.asp">MsiGetFileHash</a>
         /// </p></remarks>
-        public static void GetFileHash(string path, int[] hash)
+        internal static void GetFileHash(string path, int[] hash)
         {
             if (hash == null)
             {
@@ -360,7 +360,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetshortcuttarget.asp">MsiGetShortcutTarget</a>
         /// </p></remarks>
-        public static ShortcutTarget GetShortcutTarget(string shortcut)
+        internal static ShortcutTarget GetShortcutTarget(string shortcut)
         {
             StringBuilder productBuf = new StringBuilder(40);
             StringBuilder featureBuf = new StringBuilder(40);
@@ -388,7 +388,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiverifypackage.asp">MsiVerifyPackage</a>
         /// </p></remarks>
-        public static bool VerifyPackage(string packagePath)
+        internal static bool VerifyPackage(string packagePath)
         {
             if (String.IsNullOrEmpty(packagePath))
             {
@@ -425,7 +425,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetpatchfilelist.asp">MsiGetPatchFileList</a>
         /// </p></remarks>
-        public static IList<string> GetPatchFileList(string productCode, IList<string> patches)
+        internal static IList<string> GetPatchFileList(string productCode, IList<string> patches)
         {
             if (String.IsNullOrEmpty(productCode))
             {

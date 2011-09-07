@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="SourceList.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// A list of sources for an installed product or patch.
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class SourceList : ICollection<string>
+    internal class SourceList : ICollection<string>
     {
         private Installation installation;
         private SourceMediaList mediaList;
@@ -41,7 +41,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the list of disks registered for the media source of
         /// the patch or product installation.
         /// </summary>
-        public SourceMediaList MediaList
+        internal SourceMediaList MediaList
         {
             get
             {
@@ -56,7 +56,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of network and URL sources in the list.
         /// </summary>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -75,7 +75,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// A SourceList is never read-only.
         /// </summary>
         /// <value>read-only status of the list</value>
-        public bool IsReadOnly
+        internal bool IsReadOnly
         {
             get { return false; }
         }
@@ -87,7 +87,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// expected to contain only the path without the filename.</param>
         /// <remarks><p>
         /// If this method is called with a new source, the installer adds the source
-        /// to the end of the source list. 
+        /// to the end of the source list.
         /// </p><p>
         /// If this method is called with a source already existing in the source
         /// list, it has no effect.
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistaddsourceex.asp">MsiSourceListAddSourceEx</a>
         /// </p></remarks>
         /// <seealso cref="Insert"/>
-        public void Add(string item)
+        internal void Add(string item)
         {
             if (!this.Contains(item))
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// will be inserted</param>
         /// <remarks><p>
         /// If this method is called with a new source and <paramref name="index"/>
-        /// is set to 0, the installer adds the source to the end of the source list. 
+        /// is set to 0, the installer adds the source to the end of the source list.
         /// </p><p>
         /// If this method is called with a source already existing in the source
         /// list and <paramref name="index"/> is set to 0, the installer retains the
@@ -139,7 +139,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistaddsourceex.asp">MsiSourceListAddSourceEx</a>
         /// </p></remarks>
-        public void Insert(string item, int index)
+        internal void Insert(string item, int index)
         {
             if (item == null)
             {
@@ -168,7 +168,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearall.asp">MsiSourceListClearAll</a>
         /// </p></remarks>
-        public void Clear()
+        internal void Clear()
         {
             this.ClearSourceType(NativeMethods.SourceType.Url);
             this.ClearSourceType(NativeMethods.SourceType.Network);
@@ -182,7 +182,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearallex.asp">MsiSourceListClearAllEx</a>
         /// </p></remarks>
-        public void ClearNetworkSources()
+        internal void ClearNetworkSources()
         {
             this.ClearSourceType(NativeMethods.SourceType.Network);
         }
@@ -194,7 +194,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearallex.asp">MsiSourceListClearAllEx</a>
         /// </p></remarks>
-        public void ClearUrlSources()
+        internal void ClearUrlSources()
         {
             this.ClearSourceType(NativeMethods.SourceType.Url);
         }
@@ -204,7 +204,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="item">case-insensitive source to look for</param>
         /// <returns>true if the source exists in the list, false otherwise</returns>
-        public bool Contains(string item)
+        internal bool Contains(string item)
         {
             if (String.IsNullOrEmpty(item))
             {
@@ -226,7 +226,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">destination array to be filed</param>
         /// <param name="arrayIndex">offset into the destination array where copying begins</param>
-        public void CopyTo(string[] array, int arrayIndex)
+        internal void CopyTo(string[] array, int arrayIndex)
         {
             foreach (string source in this)
             {
@@ -241,7 +241,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearsource.asp">MsiSourceListClearSource</a>
         /// </p></remarks>
-        public bool Remove(string item)
+        internal bool Remove(string item)
         {
             if (String.IsNullOrEmpty(item))
             {
@@ -271,7 +271,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistenumsources.asp">MsiSourceListEnumSources</a>
         /// </p></remarks>
-        public IEnumerator<string> GetEnumerator()
+        internal IEnumerator<string> GetEnumerator()
         {
             StringBuilder sourceBuf = new StringBuilder(256);
             uint sourceBufSize = (uint) sourceBuf.Capacity;
@@ -326,7 +326,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistforceresolution.asp">MsiSourceListForceResolution</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistforceresolutionex.asp">MsiSourceListForceResolutionEx</a>
         /// </p></remarks>
-        public void ForceResolution()
+        internal void ForceResolution()
         {
             uint ret = NativeMethods.MsiSourceListForceResolutionEx(
                 this.installation.InstallationCode,
@@ -342,7 +342,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets or sets the path relative to the root of the installation media.
         /// </summary>
-        public string MediaPackagePath
+        internal string MediaPackagePath
         {
             get
             {
@@ -358,7 +358,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets or sets the prompt template that is used when prompting the user
         /// for installation media.
         /// </summary>
-        public string DiskPrompt
+        internal string DiskPrompt
         {
             get
             {
@@ -373,7 +373,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets or sets the most recently used source location for the product.
         /// </summary>
-        public string LastUsedSource
+        internal string LastUsedSource
         {
             get
             {
@@ -389,7 +389,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets or sets the name of the Windows Installer package or patch package
         /// on the source.
         /// </summary>
-        public string PackageName
+        internal string PackageName
         {
             get
             {
@@ -412,7 +412,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <li>(empty string) = no last used source</li>
         /// </ul>
         /// </p></remarks>
-        public string LastUsedType
+        internal string LastUsedType
         {
             get
             {
@@ -429,7 +429,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistgetinfo.asp">MsiSourceListGetInfo</a>
         /// </p></remarks>
-        public string this[string property]
+        internal string this[string property]
         {
             get
             {

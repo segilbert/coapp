@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ZipInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -30,14 +30,14 @@ namespace Microsoft.Deployment.Compression.Zip
     /// stream-based interfaces provided by the <see cref="ZipEngine"/> class.
     /// </remarks>
     [Serializable]
-    public class ZipInfo : ArchiveInfo
+    internal class ZipInfo : ArchiveInfo
     {
         /// <summary>
         /// Creates a new CabinetInfo object representing a zip file in a specified path.
         /// </summary>
         /// <param name="path">The path to the zip file. When creating a zip file, this file does not
         /// necessarily exist yet.</param>
-        public ZipInfo(string path)
+        internal ZipInfo(string path)
             : base(path)
         {
         }
@@ -47,7 +47,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected ZipInfo(SerializationInfo info, StreamingContext context)
+        internal ZipInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
@@ -61,7 +61,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// Each instance will be <see cref="CompressionEngine.Dispose()"/>d
         /// immediately after use.
         /// </remarks>
-        protected override CompressionEngine CreateCompressionEngine()
+        internal override CompressionEngine CreateCompressionEngine()
         {
             return new ZipEngine();
         }
@@ -71,7 +71,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// </summary>
         /// <returns>A list of <see cref="ZipFileInfo"/> objects, each
         /// containing information about a file in the archive.</returns>
-        public new IList<ZipFileInfo> GetFiles()
+        internal new IList<ZipFileInfo> GetFiles()
         {
             IList<ArchiveFileInfo> files = base.GetFiles();
             List<ZipFileInfo> zipFiles = new List<ZipFileInfo>(files.Count);
@@ -86,7 +86,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// &quot;*.txt&quot;.</param>
         /// <returns>A list of <see cref="ZipFileInfo"/> objects, each containing
         /// information about a file in the archive.</returns>
-        public new IList<ZipFileInfo> GetFiles(string searchPattern)
+        internal new IList<ZipFileInfo> GetFiles(string searchPattern)
         {
             IList<ArchiveFileInfo> files = base.GetFiles(searchPattern);
             List<ZipFileInfo> zipFiles = new List<ZipFileInfo>(files.Count);

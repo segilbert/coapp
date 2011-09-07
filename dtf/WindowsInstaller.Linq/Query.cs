@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="Query.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -66,11 +66,11 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             this.projectionDelegates = new List<Delegate>();
         }
 
-        public IEnumerator<T> GetEnumerator()
+        internal IEnumerator<T> GetEnumerator()
         {
             if (this.selectColumns.Count == 0)
             {
-                AddAllColumns(this.tables[0], this.selectColumns);                
+                AddAllColumns(this.tables[0], this.selectColumns);
             }
 
             string query = this.CompileQuery();
@@ -255,7 +255,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             return ((IEnumerable<T>) this).GetEnumerator();
         }
 
-        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+        internal IQueryable<TElement> CreateQuery<TElement>(Expression expression)
         {
             if (expression == null)
             {
@@ -315,7 +315,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             return q;
         }
 
-        public IQueryable CreateQuery(Expression expression)
+        internal IQueryable CreateQuery(Expression expression)
         {
             return this.CreateQuery<T>(expression);
         }
@@ -326,7 +326,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             return (LambdaExpression) unaryExpression.Operand;
         }
 
-        public TResult Execute<TResult>(Expression expression)
+        internal TResult Execute<TResult>(Expression expression)
         {
             throw new NotSupportedException(
                 "Direct method calls not supported -- use AsEnumerable() instead.");
@@ -338,7 +338,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
                 "Direct method calls not supported -- use AsEnumerable() instead.");
         }
 
-        public IQueryProvider Provider
+        internal IQueryProvider Provider
         {
             get
             {
@@ -346,7 +346,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             }
         }
 
-        public Type ElementType
+        internal Type ElementType
         {
             get
             {
@@ -354,7 +354,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             }
         }
 
-        public Expression Expression
+        internal Expression Expression
         {
             get
             {
@@ -568,7 +568,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
                 case ExpressionType.GreaterThanOrEqual:
                     queryBuilder.Append(" >= ");
                     break;
-                
+
                 default:
                     throw new NotSupportedException(
                         "Unsupported query expression type: " + expressionType);
@@ -995,13 +995,13 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
 
     internal class TableColumn
     {
-        public TableColumn(TableInfo table, ColumnInfo column)
+        internal TableColumn(TableInfo table, ColumnInfo column)
         {
             this.Table = table;
             this.Column = column;
         }
 
-        public TableInfo Table { get; set; }
-        public ColumnInfo Column { get; set; }
+        internal TableInfo Table { get; set; }
+        internal ColumnInfo Column { get; set; }
     }
 }

@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ShortcutTarget.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -20,7 +20,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Holds information about the target of a shortcut file.
     /// </summary>
-    public struct ShortcutTarget
+    internal struct ShortcutTarget
     {
         private string productCode;
         private string feature;
@@ -36,7 +36,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the target product code of the shortcut, or null if not available.
         /// </summary>
-        public string ProductCode
+        internal string ProductCode
         {
             get
             {
@@ -47,7 +47,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the name of the target feature of the shortcut, or null if not available.
         /// </summary>
-        public string Feature
+        internal string Feature
         {
             get
             {
@@ -58,7 +58,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the target component code of the shortcut, or null if not available.
         /// </summary>
-        public string ComponentCode
+        internal string ComponentCode
         {
             get
             {
@@ -72,7 +72,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="st1">The first shortcut target to compare.</param>
         /// <param name="st2">The second shortcut target to compare.</param>
         /// <returns>True if all parts of the targets are the same, else false.</returns>
-        public static bool operator ==(ShortcutTarget st1, ShortcutTarget st2)
+        internal static bool operator ==(ShortcutTarget st1, ShortcutTarget st2)
         {
             return st1.Equals(st2);
         }
@@ -83,7 +83,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="st1">The first shortcut target to compare.</param>
         /// <param name="st2">The second shortcut target to compare.</param>
         /// <returns>True if any parts of the targets are different, else false.</returns>
-        public static bool operator !=(ShortcutTarget st1, ShortcutTarget st2)
+        internal static bool operator !=(ShortcutTarget st1, ShortcutTarget st2)
         {
             return !st1.Equals(st2);
         }
@@ -93,7 +93,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="obj">The shortcut target to compare to the current object.</param>
         /// <returns>True if <paramref name="obj"/> is a shortcut target and all parts of the targets are the same, else false.</returns>
-        public override bool Equals(object obj)
+        internal override bool Equals(object obj)
         {
             if (obj == null || obj.GetType() != typeof(ShortcutTarget))
             {
@@ -109,7 +109,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Generates a hash code using all parts of the shortcut target.
         /// </summary>
         /// <returns>An integer suitable for hashing the shortcut target.</returns>
-        public override int GetHashCode()
+        internal override int GetHashCode()
         {
             return (this.productCode != null ? this.productCode.GetHashCode() : 0)
                 ^ (this.feature != null ? this.feature.GetHashCode() : 0)

@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="Database.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -32,23 +32,23 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// rollback upon object destruction.
     /// </p><p>
     /// The client can use the following procedure for data access:<list type="number">
-    /// <item><description>Obtain a Database object using one of the Database constructors.</description></item> 
+    /// <item><description>Obtain a Database object using one of the Database constructors.</description></item>
     /// <item><description>Initiate a query using a SQL string by calling the <see cref="OpenView"/>
-    ///		method of the Database.</description></item> 
+    ///		method of the Database.</description></item>
     /// <item><description>Set query parameters in a <see cref="Record"/> and execute the database
     ///		query by calling the <see cref="View.Execute(Record)"/> method of the <see cref="View"/>. This
-    ///		produces a result that can be fetched or updated.</description></item> 
+    ///		produces a result that can be fetched or updated.</description></item>
     /// <item><description>Call the <see cref="View.Fetch"/> method of the View repeatedly to return
-    ///		Records.</description></item> 
+    ///		Records.</description></item>
     /// <item><description>Update database rows of a Record object obtained by the Fetch method using
-    ///		one of the <see cref="View.Modify"/> methods of the View.</description></item> 
+    ///		one of the <see cref="View.Modify"/> methods of the View.</description></item>
     /// <item><description>Release the query and any unfetched records by calling the <see cref="InstallerHandle.Close"/>
-    ///		method of the View.</description></item> 
+    ///		method of the View.</description></item>
     /// <item><description>Persist any database updates by calling the Commit method of the Database.
-    ///		</description></item> 
+    ///		</description></item>
     /// </list>
     /// </p></remarks>
-    public partial class Database : InstallerHandle
+    internal partial class Database : InstallerHandle
     {
         private string filePath;
         private DatabaseOpenMode openMode;
@@ -72,7 +72,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopendatabase.asp">MsiOpenDatabase</a>
         /// </p></remarks>
-        public Database(string filePath)
+        internal Database(string filePath)
             : this(filePath, DatabaseOpenMode.ReadOnly)
         {
         }
@@ -100,7 +100,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopendatabase.asp">MsiOpenDatabase</a>
         /// </p></remarks>
-        public Database(string filePath, string outputPath)
+        internal Database(string filePath, string outputPath)
             : this((IntPtr) Database.Open(filePath, outputPath), true, outputPath, DatabaseOpenMode.CreateDirect)
         {
         }
@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopendatabase.asp">MsiOpenDatabase</a>
         /// </p></remarks>
-        public Database(string filePath, DatabaseOpenMode mode)
+        internal Database(string filePath, DatabaseOpenMode mode)
             : this((IntPtr) Database.Open(filePath, mode), true, filePath, mode)
         {
         }
@@ -143,7 +143,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// when the database object is disposed</param>
         /// <param name="filePath">Path of the database file, if known</param>
         /// <param name="openMode">Mode the handle was originally opened in</param>
-        protected internal Database(
+        internal internal Database(
             IntPtr handle, bool ownsHandle, string filePath, DatabaseOpenMode openMode)
             : base(handle, ownsHandle)
         {
@@ -154,7 +154,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the file path the Database was originally opened from, or null if not known.
         /// </summary>
-        public String FilePath
+        internal String FilePath
         {
             get
             {
@@ -165,7 +165,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the open mode for the database.
         /// </summary>
-        public DatabaseOpenMode OpenMode
+        internal DatabaseOpenMode OpenMode
         {
             get
             {
@@ -180,7 +180,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetdatabasestate.asp">MsiGetDatabaseState</a>
         /// </p></remarks>
-        public bool IsReadOnly
+        internal bool IsReadOnly
         {
             get
             {
@@ -197,7 +197,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the collection of tables in the Database.
         /// </summary>
-        public TableCollection Tables
+        internal TableCollection Tables
         {
             get
             {
@@ -218,7 +218,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Getting or setting the code page is a slow operation because it involves an export or import
         /// of the codepage data to/from a temporary file.
         /// </p></remarks>
-        public int CodePage
+        internal int CodePage
         {
             get
             {
@@ -274,7 +274,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetsummaryinformation.asp">MsiGetSummaryInformation</a>
         /// </p></remarks>
-        public SummaryInfo SummaryInfo
+        internal SummaryInfo SummaryInfo
         {
             get
             {
@@ -305,11 +305,11 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// This method is only provided for interop purposes.  A Database object
         /// should normally be obtained from <see cref="Session.Database"/> or
-        /// a public Database constructor.
+        /// a internal Database constructor.
         /// </p></remarks>
         /// <param name="handle">Integer database handle</param>
         /// <param name="ownsHandle">true to close the handle when this object is disposed</param>
-        public static Database FromHandle(IntPtr handle, bool ownsHandle)
+        internal static Database FromHandle(IntPtr handle, bool ownsHandle)
         {
             return new Database(
                 handle,
@@ -332,7 +332,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Files which are read-only or otherwise locked cannot be deleted,
         /// but they will not cause an exception to be thrown.
         /// </p></remarks>
-        public void DeleteOnClose(string path)
+        internal void DeleteOnClose(string path)
         {
             if (this.deleteOnClose == null)
             {
@@ -381,7 +381,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabasemerge.asp">MsiDatabaseMerge</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public void Merge(Database otherDatabase, string errorTable)
+        internal void Merge(Database otherDatabase, string errorTable)
         {
             if (otherDatabase == null)
             {
@@ -437,7 +437,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabasemerge.asp">MsiDatabaseMerge</a>
         /// </p></remarks>
-        public void Merge(Database otherDatabase) { this.Merge(otherDatabase, null); }
+        internal void Merge(Database otherDatabase) { this.Merge(otherDatabase, null); }
 
         /// <summary>
         /// Checks whether a table exists and is persistent in the database.
@@ -453,7 +453,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseistablepersistent.asp">MsiDatabaseIsTablePersistent</a>
         /// </p></remarks>
-        public bool IsTablePersistent(string table)
+        internal bool IsTablePersistent(string table)
         {
             if (String.IsNullOrEmpty(table))
             {
@@ -479,7 +479,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// To check whether a column exists regardless of persistence,
         /// use <see cref="ColumnCollection.Contains"/>.
         /// </p></remarks>
-        public bool IsColumnPersistent(string table, string column)
+        internal bool IsColumnPersistent(string table, string column)
         {
             if (String.IsNullOrEmpty(table))
             {
@@ -507,7 +507,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <returns>The count of all rows in the table</returns>
         /// <exception cref="InstallerException">the View could not be executed</exception>
         /// <exception cref="InvalidHandleException">the Database handle is invalid</exception>
-        public int CountRows(string table)
+        internal int CountRows(string table)
         {
             return this.CountRows(table, null);
         }
@@ -521,7 +521,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <exception cref="BadQuerySyntaxException">the SQL WHERE syntax is invalid</exception>
         /// <exception cref="InstallerException">the View could not be executed</exception>
         /// <exception cref="InvalidHandleException">the Database handle is invalid</exception>
-        public int CountRows(string table, string where)
+        internal int CountRows(string table, string where)
         {
             if (String.IsNullOrEmpty(table))
             {
@@ -577,7 +577,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabasecommit.asp">MsiDatabaseCommit</a>
         /// </p></remarks>
-        public void Commit()
+        internal void Commit()
         {
             if (this.summaryInfo != null && !this.summaryInfo.IsClosed)
             {
@@ -603,7 +603,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseexport.asp">MsiDatabaseExport</a>
         /// </p></remarks>
-        public void Export(string table, string exportFilePath)
+        internal void Export(string table, string exportFilePath)
         {
             if (table == null)
             {
@@ -628,7 +628,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Imports a database table from a text archive file, dropping any existing table.
         /// </summary>
-        /// <param name="importFilePath">Path to the file to be imported. 
+        /// <param name="importFilePath">Path to the file to be imported.
         /// The table name is specified within the file.</param>
         /// <exception cref="FileNotFoundException">the file path is invalid</exception>
         /// <exception cref="InvalidHandleException">the Database handle is invalid</exception>
@@ -636,7 +636,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseimport.asp">MsiDatabaseImport</a>
         /// </p></remarks>
-        public void Import(string importFilePath)
+        internal void Import(string importFilePath)
         {
             if (String.IsNullOrEmpty(importFilePath))
             {
@@ -670,7 +670,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseexport.asp">MsiDatabaseExport</a>
         /// </p></remarks>
-        public void ExportAll(string directoryPath)
+        internal void ExportAll(string directoryPath)
         {
             if (String.IsNullOrEmpty(directoryPath))
             {
@@ -711,7 +711,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                     if (stream.EndsWith("SummaryInformation", StringComparison.Ordinal)) continue;
 
                     int i = stream.IndexOf('.');
-                    if (i >= 0) 
+                    if (i >= 0)
                     {
                         if (File.Exists(Path.Combine(
                             directoryPath,
@@ -735,7 +735,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseimport.asp">MsiDatabaseImport</a>
         /// </p></remarks>
-        public void ImportAll(string directoryPath)
+        internal void ImportAll(string directoryPath)
         {
             if (String.IsNullOrEmpty(directoryPath))
             {
@@ -801,7 +801,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msicreaterecord.asp">MsiCreateRecord</a>
         /// </p></remarks>
-        public Record CreateRecord(int fieldCount)
+        internal Record CreateRecord(int fieldCount)
         {
             int hRecord = RemotableNativeMethods.MsiCreateRecord((uint) fieldCount, (int) this.Handle);
             return new Record((IntPtr) hRecord, true, (View) null);
@@ -810,7 +810,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Returns the file path of this database, or the handle value if a file path was not specified.
         /// </summary>
-        public override string ToString()
+        internal override string ToString()
         {
             if (this.FilePath != null)
             {
@@ -828,7 +828,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="disposing">If true, the method has been called directly or
         /// indirectly by a user's code, so managed and unmanaged resources will be
         /// disposed. If false, only unmanaged resources will be disposed.</param>
-        protected override void Dispose(bool disposing)
+        internal override void Dispose(bool disposing)
         {
             if (!this.IsClosed &&
                 (this.OpenMode == DatabaseOpenMode.CreateDirect ||
@@ -926,7 +926,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Returns the value of the specified property.
         /// </summary>
         /// <param name="property">Name of the property to retrieve.</param>
-        public string ExecutePropertyQuery(string property)
+        internal string ExecutePropertyQuery(string property)
         {
             IList<string> values = this.ExecuteStringQuery("SELECT `Value` FROM `Property` WHERE `Property` = '{0}'", property);
             return (values.Count > 0 ? values[0] : null);

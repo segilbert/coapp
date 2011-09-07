@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="MediaDisk.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -24,7 +24,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Represents a media disk source of a product or a patch.
     /// </summary>
     [SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
-    public struct MediaDisk
+    internal struct MediaDisk
     {
         private int diskId;
         private string volumeLabel;
@@ -36,7 +36,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="diskId"></param>
         /// <param name="volumeLabel"></param>
         /// <param name="diskPrompt"></param>
-        public MediaDisk(int diskId, string volumeLabel, string diskPrompt)
+        internal MediaDisk(int diskId, string volumeLabel, string diskPrompt)
         {
             this.diskId = diskId;
             this.volumeLabel = volumeLabel;
@@ -46,7 +46,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets or sets the disk id of the media disk.
         /// </summary>
-        public int DiskId
+        internal int DiskId
         {
             get { return this.diskId; }
             set { this.diskId = value; }
@@ -55,7 +55,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets or sets the volume label of the media disk.
         /// </summary>
-        public string VolumeLabel
+        internal string VolumeLabel
         {
             get { return this.volumeLabel; }
             set { this.volumeLabel = value; }
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets or sets the disk prompt of the media disk.
         /// </summary>
-        public string DiskPrompt
+        internal string DiskPrompt
         {
             get { return this.diskPrompt; }
             set { this.diskPrompt = value; }

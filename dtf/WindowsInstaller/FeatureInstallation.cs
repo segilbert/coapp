@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="FeatureInstallation.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -26,14 +26,14 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Represents an instance of a feature of an installed product.
     /// </summary>
-    public class FeatureInstallation : InstallationPart
+    internal class FeatureInstallation : InstallationPart
     {
         /// <summary>
         /// Creates a new FeatureInstallation instance for a feature of a product.
         /// </summary>
         /// <param name="featureName">feature name</param>
         /// <param name="productCode">ProductCode GUID</param>
-        public FeatureInstallation(string featureName, string productCode)
+        internal FeatureInstallation(string featureName, string productCode)
             : base(featureName, productCode)
         {
             if (String.IsNullOrEmpty(featureName))
@@ -45,7 +45,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the name of the feature.
         /// </summary>
-        public string FeatureName
+        internal string FeatureName
         {
             get
             {
@@ -60,7 +60,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiqueryfeaturestate.asp">MsiQueryFeatureState</a>
         /// </p></remarks>
-        public override InstallState State
+        internal override InstallState State
         {
             get
             {
@@ -77,7 +77,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Invocation of this property may be slightly costly for products with many features,
         /// because it involves an enumeration of all the features in the product.
         /// </remarks>
-        public FeatureInstallation Parent
+        internal FeatureInstallation Parent
         {
             get
             {
@@ -118,7 +118,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfeatureusage.asp">MsiGetFeatureUsage</a>
         /// </p></remarks>
-        public FeatureInstallation.UsageData Usage
+        internal FeatureInstallation.UsageData Usage
         {
             get
             {
@@ -153,7 +153,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         [SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible")]
         [SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
-        public struct UsageData
+        internal struct UsageData
         {
             private int useCount;
             private DateTime lastUsedDate;
@@ -167,7 +167,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             /// <summary>
             /// Gets count of the number of times the feature has been used.
             /// </summary>
-            public int UseCount
+            internal int UseCount
             {
                 get
                 {
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             /// <summary>
             /// Gets the date the feature was last used.
             /// </summary>
-            public DateTime LastUsedDate
+            internal DateTime LastUsedDate
             {
                 get
                 {

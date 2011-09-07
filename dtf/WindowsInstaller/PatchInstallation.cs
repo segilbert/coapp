@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="PatchInstallation.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// The Patch object represents a unique instance of a patch that has been
     /// registered or applied.
     /// </summary>
-    public class PatchInstallation : Installation
+    internal class PatchInstallation : Installation
     {
         /// <summary>
         /// Enumerates all patch installations on the system.
@@ -37,7 +37,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumpatches.asp">MsiEnumPatches</a>
         /// </p></remarks>
-        public static IEnumerable<PatchInstallation> AllPatches
+        internal static IEnumerable<PatchInstallation> AllPatches
         {
             get
             {
@@ -69,7 +69,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI APIs:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumpatchesex.asp">MsiEnumPatchesEx</a>
         /// </p></remarks>
-        public static IEnumerable<PatchInstallation> GetPatches(
+        internal static IEnumerable<PatchInstallation> GetPatches(
             string patchCode,
             string targetProductCode,
             string userSid,
@@ -144,7 +144,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// All available user contexts will be queried.
         /// </p></remarks>
-        public PatchInstallation(string patchCode, string productCode)
+        internal PatchInstallation(string patchCode, string productCode)
             : this(patchCode, productCode, null, UserContexts.All)
         {
         }
@@ -166,7 +166,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// If the <paramref name="productCode"/> is null, the Patch object may
         /// only be used to read and update the patch's SourceList information.
         /// </p></remarks>
-        public PatchInstallation(string patchCode, string productCode, string userSid, UserContexts context)
+        internal PatchInstallation(string patchCode, string productCode, string userSid, UserContexts context)
             : base(patchCode, userSid, context)
         {
             if (String.IsNullOrEmpty(patchCode))
@@ -180,7 +180,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the patch code (GUID) of the patch.
         /// </summary>
-        public string PatchCode
+        internal string PatchCode
         {
             get
             {
@@ -191,7 +191,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the ProductCode (GUID) of the product.
         /// </summary>
-        public string ProductCode
+        internal string ProductCode
         {
             get
             {
@@ -202,7 +202,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a value indicating whether this patch is currently installed.
         /// </summary>
-        public override bool IsInstalled
+        internal override bool IsInstalled
         {
             get
             {
@@ -214,7 +214,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a value indicating whether this patch is marked as obsolte.
         /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Obsoleted")]
-        public bool IsObsoleted
+        internal bool IsObsoleted
         {
             get
             {
@@ -226,7 +226,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a value indicating whether this patch is present but has been
         /// superseded by a more recent installed patch.
         /// </summary>
-        public bool IsSuperseded
+        internal bool IsSuperseded
         {
             get
             {
@@ -248,7 +248,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <exception cref="ArgumentException">An unknown patch was requested</exception>
         /// <exception cref="InstallerException">The installer configuration data is corrupt</exception>
-        public PatchStates State
+        internal PatchStates State
         {
             get
             {
@@ -260,7 +260,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the cached patch file that the product uses.
         /// </summary>
-        public string LocalPackage
+        internal string LocalPackage
         {
             get
             {
@@ -276,7 +276,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// This value may not be available for per-user, non-managed applications
         /// if the user is not logged on.
         /// </p></remarks>
-        public string Transforms
+        internal string Transforms
         {
             get
             {
@@ -288,7 +288,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the date and time when the patch is applied to the product.
         /// </summary>
-        public DateTime InstallDate
+        internal DateTime InstallDate
         {
             get
             {
@@ -313,7 +313,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// cannot be uninstalled.
         /// </p></remarks>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Uninstallable")]
-        public bool Uninstallable
+        internal bool Uninstallable
         {
             get
             {
@@ -324,7 +324,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Get the registered display name for the patch.
         /// </summary>
-        public string DisplayName
+        internal string DisplayName
         {
             get
             {
@@ -335,7 +335,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the registered support information URL for the patch.
         /// </summary>
-        public Uri MoreInfoUrl
+        internal Uri MoreInfoUrl
         {
             get
             {
@@ -354,7 +354,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
 
         /// <summary>
-        /// Gets information about a specific patch installation. 
+        /// Gets information about a specific patch installation.
         /// </summary>
         /// <param name="propertyName">The property being retrieved; see remarks for valid properties.</param>
         /// <returns>The property value, or an empty string if the property is not set for the patch.</returns>
@@ -365,7 +365,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetpatchinfo.asp">MsiGetPatchInfo</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetpatchinfoex.asp">MsiGetPatchInfoEx</a>
         /// </p></remarks>
-        public override string this[string propertyName]
+        internal override string this[string propertyName]
         {
             get
             {

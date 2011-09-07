@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="CabPacker.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -62,7 +62,7 @@ namespace Microsoft.Deployment.Compression.Cab
         private bool dontUseTempFiles;
         private IList<Stream> tempStreams;
 
-        public CabPacker(CabEngine cabEngine)
+        internal CabPacker(CabEngine cabEngine)
             : base(cabEngine)
         {
             this.fciAllocMemHandler    = this.CabAllocMem;
@@ -82,7 +82,7 @@ namespace Microsoft.Deployment.Compression.Cab
             this.compressionLevel = CompressionLevel.Normal;
         }
 
-        public bool UseTempFiles
+        internal bool UseTempFiles
         {
             get
             {
@@ -95,7 +95,7 @@ namespace Microsoft.Deployment.Compression.Cab
             }
         }
 
-        public CompressionLevel CompressionLevel
+        internal CompressionLevel CompressionLevel
         {
             get
             {
@@ -165,7 +165,7 @@ namespace Microsoft.Deployment.Compression.Cab
         [SuppressMessage("Microsoft.Security", "CA2106:SecureAsserts")]
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Pack(
+        internal void Pack(
             IPackStreamContext streamContext,
             IEnumerable<string> files,
             long maxArchiveSize)
@@ -432,10 +432,10 @@ namespace Microsoft.Deployment.Compression.Cab
         /// Disposes of resources allocated by the cabinet engine.
         /// </summary>
         /// <param name="disposing">If true, the method has been called directly or indirectly by a user's code,
-        /// so managed and unmanaged resources will be disposed. If false, the method has been called by the 
+        /// so managed and unmanaged resources will be disposed. If false, the method has been called by the
         /// runtime from inside the finalizer, and only unmanaged resources will be disposed.</param>
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        protected override void Dispose(bool disposing) 
+        internal override void Dispose(bool disposing)
         {
             try
             {

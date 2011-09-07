@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="OffsetStream.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -28,7 +28,7 @@ namespace Microsoft.Deployment.Compression
     /// into reading or writing at an offset into a file, primarily for
     /// self-extracting packages.
     /// </remarks>
-    public class OffsetStream : Stream
+    internal class OffsetStream : Stream
     {
         private Stream source;
         private long sourceOffset;
@@ -39,7 +39,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <param name="source">Underlying stream for which all calls will be offset.</param>
         /// <param name="offset">Positive or negative number of bytes to offset.</param>
-        public OffsetStream(Stream source, long offset)
+        internal OffsetStream(Stream source, long offset)
         {
             if (source == null)
             {
@@ -55,7 +55,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets the underlying stream that this OffsetStream calls into.
         /// </summary>
-        public Stream Source
+        internal Stream Source
         {
             get { return this.source; }
         }
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the number of bytes to offset all calls before
         /// redirecting to the underlying stream.
         /// </summary>
-        public long Offset
+        internal long Offset
         {
             get { return this.sourceOffset; }
         }
@@ -73,7 +73,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports reading.
         /// </summary>
         /// <value>true if the stream supports reading; otherwise, false.</value>
-        public override bool CanRead
+        internal override bool CanRead
         {
             get
             {
@@ -85,7 +85,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports writing.
         /// </summary>
         /// <value>true if the stream supports writing; otherwise, false.</value>
-        public override bool CanWrite
+        internal override bool CanWrite
         {
             get
             {
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports seeking.
         /// </summary>
         /// <value>true if the stream supports seeking; otherwise, false.</value>
-        public override bool CanSeek
+        internal override bool CanSeek
         {
             get
             {
@@ -109,16 +109,16 @@ namespace Microsoft.Deployment.Compression
         /// Gets the effective length of the stream, which is equal to
         /// the length of the source stream minus the offset.
         /// </summary>
-        public override long Length
+        internal override long Length
         {
-            get { return this.source.Length - this.sourceOffset; } 
+            get { return this.source.Length - this.sourceOffset; }
         }
 
         /// <summary>
         /// Gets or sets the effective position of the stream, which
         /// is equal to the position of the source stream minus the offset.
         /// </summary>
-        public override long Position
+        internal override long Position
         {
             get { return this.source.Position - this.sourceOffset; }
             set { this.source.Position = value + this.sourceOffset; }
@@ -137,7 +137,7 @@ namespace Microsoft.Deployment.Compression
         /// <returns>The total number of bytes read into the buffer. This can be less
         /// than the number of bytes requested if that many bytes are not currently available,
         /// or zero (0) if the end of the stream has been reached.</returns>
-        public override int Read(byte[] buffer, int offset, int count)
+        internal override int Read(byte[] buffer, int offset, int count)
         {
             return this.source.Read(buffer, offset, count);
         }
@@ -152,7 +152,7 @@ namespace Microsoft.Deployment.Compression
         /// to begin copying bytes to the current stream.</param>
         /// <param name="count">The number of bytes to be written to the
         /// current stream.</param>
-        public override void Write(byte[] buffer, int offset, int count)
+        internal override void Write(byte[] buffer, int offset, int count)
         {
             this.source.Write(buffer, offset, count);
         }
@@ -163,7 +163,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <returns>The unsigned byte cast to an Int32, or -1 if at the
         /// end of the stream.</returns>
-        public override int ReadByte()
+        internal override int ReadByte()
         {
             return this.source.ReadByte();
         }
@@ -173,7 +173,7 @@ namespace Microsoft.Deployment.Compression
         /// advances the position within the stream by one byte.
         /// </summary>
         /// <param name="value">The byte to write to the stream.</param>
-        public override void WriteByte(byte value)
+        internal override void WriteByte(byte value)
         {
             this.source.WriteByte(value);
         }
@@ -181,7 +181,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Flushes the source stream.
         /// </summary>
-        public override void Flush()
+        internal override void Flush()
         {
             this.source.Flush();
         }
@@ -194,7 +194,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="origin">A value of type SeekOrigin indicating
         /// the reference point used to obtain the new position.</param>
         /// <returns>The new position within the current stream.</returns>
-        public override long Seek(long offset, SeekOrigin origin)
+        internal override long Seek(long offset, SeekOrigin origin)
         {
             return this.source.Seek(offset + (origin == SeekOrigin.Begin ? this.sourceOffset : 0), origin) - this.sourceOffset;
         }
@@ -205,7 +205,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <param name="value">The desired length of the
         /// current stream in bytes.</param>
-        public override void SetLength(long value)
+        internal override void SetLength(long value)
         {
             this.source.SetLength(value + this.sourceOffset);
         }
@@ -213,7 +213,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Closes the underlying stream.
         /// </summary>
-        public override void Close()
+        internal override void Close()
         {
             this.source.Close();
         }

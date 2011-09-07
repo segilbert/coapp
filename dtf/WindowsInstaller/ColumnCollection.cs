@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ColumnCollection.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -28,7 +28,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Collection of column information related to a <see cref="TableInfo"/> or
     /// <see cref="View"/>.
     /// </summary>
-    public sealed class ColumnCollection : ICollection<ColumnInfo>
+    internal sealed class ColumnCollection : ICollection<ColumnInfo>
     {
         private IList<ColumnInfo> columns;
         private string formatString;
@@ -37,7 +37,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Creates a new ColumnCollection based on a specified list of columns.
         /// </summary>
         /// <param name="columns">columns to be added to the new collection</param>
-        public ColumnCollection(ICollection<ColumnInfo> columns)
+        internal ColumnCollection(ICollection<ColumnInfo> columns)
         {
             if (columns == null)
             {
@@ -65,7 +65,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the number of columns in the collection.
         /// </summary>
         /// <value>number of columns in the collection</value>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -79,7 +79,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// or a read-only <see cref="Database"/>.
         /// </summary>
         /// <value>read-only status of the collection</value>
-        public bool IsReadOnly
+        internal bool IsReadOnly
         {
             get
             {
@@ -93,7 +93,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="columnIndex">1-based index into the column collection</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="columnIndex"/> is less
         /// than 1 or greater than the number of columns in the collection</exception>
-        public ColumnInfo this[int columnIndex]
+        internal ColumnInfo this[int columnIndex]
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="columnName">case-sensitive name of a column collection</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="columnName"/> does
         /// not exist in the collection</exception>
-        public ColumnInfo this[string columnName]
+        internal ColumnInfo this[string columnName]
         {
             get
             {
@@ -140,7 +140,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="item">information about the column being added</param>
         /// <exception cref="InvalidOperationException">the collection is read-only</exception>
-        public void Add(ColumnInfo item)
+        internal void Add(ColumnInfo item)
         {
             throw new InvalidOperationException();
         }
@@ -149,7 +149,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Not supported because the collection is read-only.
         /// </summary>
         /// <exception cref="InvalidOperationException">the collection is read-only</exception>
-        public void Clear()
+        internal void Clear()
         {
             throw new InvalidOperationException();
         }
@@ -159,7 +159,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="columnName">case-sensitive name of the column to look for</param>
         /// <returns>true if the column exists in the collection, false otherwise</returns>
-        public bool Contains(string columnName)
+        internal bool Contains(string columnName)
         {
             return this.IndexOf(columnName) >= 0;
         }
@@ -179,7 +179,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="columnName">case-sensitive name of the column to look for</param>
         /// <returns>0-based index of the column, or -1 if not found</returns>
-        public int IndexOf(string columnName)
+        internal int IndexOf(string columnName)
         {
             if (String.IsNullOrEmpty(columnName))
             {
@@ -201,7 +201,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">destination array to be filed</param>
         /// <param name="arrayIndex">offset into the destination array where copying begins</param>
-        public void CopyTo(ColumnInfo[] array, int arrayIndex)
+        internal void CopyTo(ColumnInfo[] array, int arrayIndex)
         {
             if (array == null)
             {
@@ -228,7 +228,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets an enumerator over the columns in the collection.
         /// </summary>
         /// <returns>An enumerator of ColumnInfo objects.</returns>
-        public IEnumerator<ColumnInfo> GetEnumerator()
+        internal IEnumerator<ColumnInfo> GetEnumerator()
         {
             return this.columns.GetEnumerator();
         }
@@ -236,7 +236,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a string suitable for printing all the values of a record containing these columns.
         /// </summary>
-        public string FormatString
+        internal string FormatString
         {
             get
             {
@@ -328,7 +328,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 int count = rec.FieldCount;
                 IList<string> columnsList = new List<string>(count);
 
-                // Since we must be getting all strings of limited length, 
+                // Since we must be getting all strings of limited length,
                 // this code is faster than calling rec.GetString(field).
                 for (int field = 1; field <= count; field++)
                 {

@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="InstallTransaction.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -32,7 +32,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msijointransaction.asp">MsiJoinTransaction</a>
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiendtransaction.asp">MsiEndTransaction</a>
     /// </p></remarks>
-    public class Transaction : InstallerHandle
+    internal class Transaction : InstallerHandle
     {
         private string name;
         private IntPtr ownerChangeEvent;
@@ -48,7 +48,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msibegintransaction.asp">MsiBeginTransaction</a>
         /// </p></remarks>
-        public Transaction(string name, TransactionAttributes attributes)
+        internal Transaction(string name, TransactionAttributes attributes)
             : this(name, Transaction.Begin(name, attributes), true)
         {
         }
@@ -72,7 +72,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="handle">Integer transaction handle</param>
         /// <param name="ownsHandle">true to close the handle when this object is disposed</param>
-        public static Transaction FromHandle(IntPtr handle, bool ownsHandle)
+        internal static Transaction FromHandle(IntPtr handle, bool ownsHandle)
         {
             return new Transaction(handle.ToString(), new IntPtr[] { handle, IntPtr.Zero }, ownsHandle);
         }
@@ -80,7 +80,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the name of the transaction.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get
             {
@@ -91,7 +91,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Notifies listeners when the process that owns the transaction changed.
         /// </summary>
-        public event EventHandler<EventArgs> OwnerChanged
+        internal event EventHandler<EventArgs> OwnerChanged
         {
             add
             {
@@ -140,7 +140,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msijointransaction.asp">MsiJoinTransaction</a>
         /// </p></remarks>
-        public void Join(TransactionAttributes attributes)
+        internal void Join(TransactionAttributes attributes)
         {
             IntPtr hChangeOfOwnerEvent;
             uint ret = NativeMethods.MsiJoinTransaction((int) this.Handle, (int) attributes, out hChangeOfOwnerEvent);
@@ -170,7 +170,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiendtransaction.asp">MsiEndTransaction</a>
         /// </p></remarks>
-        public void Commit()
+        internal void Commit()
         {
             this.End(true);
         }
@@ -185,7 +185,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiendtransaction.asp">MsiEndTransaction</a>
         /// </p></remarks>
-        public void Rollback()
+        internal void Rollback()
         {
             this.End(false);
         }

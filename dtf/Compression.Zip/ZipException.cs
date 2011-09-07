@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ZipException.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -28,7 +28,7 @@ namespace Microsoft.Deployment.Compression.Zip
     /// Exception class for zip operations.
     /// </summary>
     [Serializable]
-    public class ZipException : ArchiveException
+    internal class ZipException : ArchiveException
     {
         /// <summary>
         /// Creates a new ZipException with a specified error message and a reference to the
@@ -38,20 +38,20 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <param name="innerException">The exception that is the cause of the current exception. If the
         /// innerException parameter is not a null reference (Nothing in Visual Basic), the current exception
         /// is raised in a catch block that handles the inner exception.</param>
-        public ZipException(string message, Exception innerException)
+        internal ZipException(string message, Exception innerException)
             : base(message, innerException) { }
 
         /// <summary>
         /// Creates a new ZipException with a specified error message.
         /// </summary>
         /// <param name="message">The message that describes the error.</param>
-        public ZipException(string message)
+        internal ZipException(string message)
             : this(message, null) { }
 
         /// <summary>
         /// Creates a new ZipException.
         /// </summary>
-        public ZipException()
+        internal ZipException()
             : this(null, null) { }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected ZipException(SerializationInfo info, StreamingContext context) : base(info, context)
+        internal ZipException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
 
@@ -69,7 +69,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter=true)]
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
         }

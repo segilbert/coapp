@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="CargoStream.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -24,7 +24,7 @@ namespace Microsoft.Deployment.Compression
     /// <summary>
     /// Wraps a source stream and carries additional items that are disposed when the stream is closed.
     /// </summary>
-    public class CargoStream : Stream
+    internal class CargoStream : Stream
     {
         private Stream source;
         private List<IDisposable> cargo;
@@ -35,7 +35,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="source">source of the stream</param>
         /// <param name="cargo">List of additional items that are disposed when the stream is closed.
         /// The order of the list is the order in which the items are disposed.</param>
-        public CargoStream(Stream source, params IDisposable[] cargo)
+        internal CargoStream(Stream source, params IDisposable[] cargo)
         {
             if (source == null)
             {
@@ -49,7 +49,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets the source stream of the cargo stream.
         /// </summary>
-        public Stream Source
+        internal Stream Source
         {
             get
             {
@@ -61,7 +61,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the list of additional items that are disposed when the stream is closed.
         /// The order of the list is the order in which the items are disposed. The contents can be modified any time.
         /// </summary>
-        public IList<IDisposable> Cargo
+        internal IList<IDisposable> Cargo
         {
             get
             {
@@ -73,7 +73,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports reading.
         /// </summary>
         /// <value>true if the stream supports reading; otherwise, false.</value>
-        public override bool CanRead
+        internal override bool CanRead
         {
             get
             {
@@ -85,7 +85,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports writing.
         /// </summary>
         /// <value>true if the stream supports writing; otherwise, false.</value>
-        public override bool CanWrite
+        internal override bool CanWrite
         {
             get
             {
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports seeking.
         /// </summary>
         /// <value>true if the stream supports seeking; otherwise, false.</value>
-        public override bool CanSeek
+        internal override bool CanSeek
         {
             get
             {
@@ -108,7 +108,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets the length of the source stream.
         /// </summary>
-        public override long Length
+        internal override long Length
         {
             get
             {
@@ -119,7 +119,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets or sets the position of the source stream.
         /// </summary>
-        public override long Position
+        internal override long Position
         {
             get
             {
@@ -135,7 +135,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Flushes the source stream.
         /// </summary>
-        public override void Flush()
+        internal override void Flush()
         {
             this.source.Flush();
         }
@@ -144,7 +144,7 @@ namespace Microsoft.Deployment.Compression
         /// Sets the length of the source stream.
         /// </summary>
         /// <param name="value">The desired length of the stream in bytes.</param>
-        public override void SetLength(long value)
+        internal override void SetLength(long value)
         {
             this.source.SetLength(value);
         }
@@ -152,7 +152,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Closes the source stream and also closes the additional objects that are carried.
         /// </summary>
-        public override void Close()
+        internal override void Close()
         {
             this.source.Close();
 
@@ -174,7 +174,7 @@ namespace Microsoft.Deployment.Compression
         /// <returns>The total number of bytes read into the buffer. This can be less
         /// than the number of bytes requested if that many bytes are not currently available,
         /// or zero (0) if the end of the stream has been reached.</returns>
-        public override int Read(byte[] buffer, int offset, int count)
+        internal override int Read(byte[] buffer, int offset, int count)
         {
             return this.source.Read(buffer, offset, count);
         }
@@ -187,7 +187,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="offset">The zero-based byte offset in buffer at which
         /// to begin copying bytes to the stream.</param>
         /// <param name="count">The number of bytes to be written to the stream.</param>
-        public override void Write(byte[] buffer, int offset, int count)
+        internal override void Write(byte[] buffer, int offset, int count)
         {
             this.source.Write(buffer, offset, count);
         }
@@ -199,7 +199,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="origin">A value of type SeekOrigin indicating the reference
         /// point used to obtain the new position.</param>
         /// <returns>The new position within the stream.</returns>
-        public override long Seek(long offset, SeekOrigin origin)
+        internal override long Seek(long offset, SeekOrigin origin)
         {
             return this.source.Seek(offset, origin);
         }

@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="DuplicateStream.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.Compression
     /// WARNING: duplicate streams are not thread-safe with respect to each other or the original stream.
     /// If multiple threads use duplicate copies of the same stream, they must synchronize for any operations.
     /// </remarks>
-    public class DuplicateStream : Stream
+    internal class DuplicateStream : Stream
     {
         private Stream source;
         private long position;
@@ -36,7 +36,7 @@ namespace Microsoft.Deployment.Compression
         /// Creates a new duplicate of a stream.
         /// </summary>
         /// <param name="source">source of the duplicate</param>
-        public DuplicateStream(Stream source)
+        internal DuplicateStream(Stream source)
         {
             if (source == null)
             {
@@ -49,7 +49,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets the original stream that was used to create the duplicate.
         /// </summary>
-        public Stream Source
+        internal Stream Source
         {
             get
             {
@@ -61,7 +61,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports reading.
         /// </summary>
         /// <value>true if the stream supports reading; otherwise, false.</value>
-        public override bool CanRead
+        internal override bool CanRead
         {
             get
             {
@@ -73,7 +73,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports writing.
         /// </summary>
         /// <value>true if the stream supports writing; otherwise, false.</value>
-        public override bool CanWrite
+        internal override bool CanWrite
         {
             get
             {
@@ -85,7 +85,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports seeking.
         /// </summary>
         /// <value>true if the stream supports seeking; otherwise, false.</value>
-        public override bool CanSeek
+        internal override bool CanSeek
         {
             get
             {
@@ -96,7 +96,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets the length of the source stream.
         /// </summary>
-        public override long Length
+        internal override long Length
         {
             get
             {
@@ -108,7 +108,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets or sets the position of the current stream,
         /// ignoring the position of the source stream.
         /// </summary>
-        public override long Position
+        internal override long Position
         {
             get
             {
@@ -127,7 +127,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="stream">Possible duplicate stream.</param>
         /// <returns>If the stream is a DuplicateStream, returns
         /// the duplicate's source; otherwise returns the same stream.</returns>
-        public static Stream OriginalStream(Stream stream)
+        internal static Stream OriginalStream(Stream stream)
         {
             DuplicateStream dupStream = stream as DuplicateStream;
             return dupStream != null ? dupStream.Source : stream;
@@ -136,7 +136,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Flushes the source stream.
         /// </summary>
-        public override void Flush()
+        internal override void Flush()
         {
             this.source.Flush();
         }
@@ -145,15 +145,15 @@ namespace Microsoft.Deployment.Compression
         /// Sets the length of the source stream.
         /// </summary>
         /// <param name="value">The desired length of the stream in bytes.</param>
-        public override void SetLength(long value)
-        { 
+        internal override void SetLength(long value)
+        {
             this.source.SetLength(value);
         }
 
         /// <summary>
         /// Closes the underlying stream, effectively closing ALL duplicates.
         /// </summary>
-        public override void Close()
+        internal override void Close()
         {
             this.source.Close();
         }
@@ -171,7 +171,7 @@ namespace Microsoft.Deployment.Compression
         /// <returns>The total number of bytes read into the buffer. This can be less
         /// than the number of bytes requested if that many bytes are not currently available,
         /// or zero (0) if the end of the stream has been reached.</returns>
-        public override int Read(byte[] buffer, int offset, int count)
+        internal override int Read(byte[] buffer, int offset, int count)
         {
             long saveSourcePosition = this.source.Position;
             this.source.Position = this.position;
@@ -191,7 +191,7 @@ namespace Microsoft.Deployment.Compression
         /// to begin copying bytes to the current stream.</param>
         /// <param name="count">The number of bytes to be written to the
         /// current stream.</param>
-        public override void Write(byte[] buffer, int offset, int count)
+        internal override void Write(byte[] buffer, int offset, int count)
         {
             long saveSourcePosition = this.source.Position;
             this.source.Position = this.position;
@@ -208,7 +208,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="origin">A value of type SeekOrigin indicating the reference
         /// point used to obtain the new position.</param>
         /// <returns>The new position within the current stream.</returns>
-        public override long Seek(long offset, SeekOrigin origin)
+        internal override long Seek(long offset, SeekOrigin origin)
         {
             long originPosition = 0;
             if (origin == SeekOrigin.Current)

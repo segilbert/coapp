@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="CabWorker.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -47,23 +47,23 @@ namespace Microsoft.Deployment.Compression.Cab
         private byte[] buf;
 
         // Progress data
-        protected string currentFileName;
-        protected int    currentFileNumber;
-        protected int    totalFiles;
-        protected long   currentFileBytesProcessed;
-        protected long   currentFileTotalBytes;
-        protected short  currentFolderNumber;
-        protected long   currentFolderTotalBytes;
-        protected string currentArchiveName;
-        protected short  currentArchiveNumber;
-        protected short  totalArchives;
-        protected long   currentArchiveBytesProcessed;
-        protected long   currentArchiveTotalBytes;
-        protected long   fileBytesProcessed;
-        protected long   totalFileBytes;
+        internal string currentFileName;
+        internal int    currentFileNumber;
+        internal int    totalFiles;
+        internal long   currentFileBytesProcessed;
+        internal long   currentFileTotalBytes;
+        internal short  currentFolderNumber;
+        internal long   currentFolderTotalBytes;
+        internal string currentArchiveName;
+        internal short  currentArchiveNumber;
+        internal short  totalArchives;
+        internal long   currentArchiveBytesProcessed;
+        internal long   currentArchiveTotalBytes;
+        internal long   fileBytesProcessed;
+        internal long   totalFileBytes;
 
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        protected CabWorker(CabEngine cabEngine)
+        internal CabWorker(CabEngine cabEngine)
         {
             this.cabEngine = cabEngine;
             this.streamHandles = new HandleManager<Stream>();
@@ -81,7 +81,7 @@ namespace Microsoft.Deployment.Compression.Cab
             this.Dispose(false);
         }
 
-        public CabEngine CabEngine
+        internal CabEngine CabEngine
         {
             get
             {
@@ -173,13 +173,13 @@ namespace Microsoft.Deployment.Compression.Cab
             }
         }
 
-        public void Dispose() 
+        internal void Dispose()
         {
             this.Dispose(true);
-            GC.SuppressFinalize(this); 
+            GC.SuppressFinalize(this);
         }
 
-        protected void ResetProgressData()
+        internal void ResetProgressData()
         {
             this.currentFileName = null;
             this.currentFileNumber = 0;
@@ -197,7 +197,7 @@ namespace Microsoft.Deployment.Compression.Cab
             this.totalFileBytes = 0;
         }
 
-        protected void OnProgress(ArchiveProgressType progressType)
+        internal void OnProgress(ArchiveProgressType progressType)
         {
             if (!this.suppressProgressEvents)
             {
@@ -312,12 +312,12 @@ namespace Microsoft.Deployment.Compression.Cab
         /// Disposes of resources allocated by the cabinet engine.
         /// </summary>
         /// <param name="disposing">If true, the method has been called directly or indirectly by a user's code,
-        /// so managed and unmanaged resources will be disposed. If false, the method has been called by the 
+        /// so managed and unmanaged resources will be disposed. If false, the method has been called by the
         /// runtime from inside the finalizer, and only unmanaged resources will be disposed.</param>
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        protected virtual void Dispose(bool disposing) 
+        internal virtual void Dispose(bool disposing)
         {
-            if (disposing) 
+            if (disposing)
             {
                 if (this.cabStream != null)
                 {
@@ -338,7 +338,7 @@ namespace Microsoft.Deployment.Compression.Cab
             }
         }
 
-        protected void CheckError(bool extracting)
+        internal void CheckError(bool extracting)
         {
             if (this.Erf.Error)
             {

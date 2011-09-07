@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="Resource.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -33,7 +33,7 @@ namespace Microsoft.Deployment.Resources
     /// The resource is of type <see cref="ResourceType.Version"/> (RT_VERSION).
     /// </remarks>
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public sealed class VersionResource : Resource, ICollection<VersionStringTable>
+    internal sealed class VersionResource : Resource, ICollection<VersionStringTable>
     {
         internal bool dirty;
         private VersionInfo rawVersionInfo;
@@ -44,7 +44,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="name">Name of the resource. For a numeric resource identifier, prefix the decimal number with a "#".</param>
         /// <param name="locale">Locale of the resource</param>
-        public VersionResource(string name, int locale)
+        internal VersionResource(string name, int locale)
             : this(name, locale, null)
         {
         }
@@ -55,7 +55,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="name">Name of the resource. For a numeric resource identifier, prefix the decimal number with a "#".</param>
         /// <param name="locale">Locale of the resource</param>
         /// <param name="data">Raw resource data</param>
-        public VersionResource(string name, int locale, byte[] data)
+        internal VersionResource(string name, int locale, byte[] data)
             : base(ResourceType.Version, name, locale, data)
         {
             this.RefreshVersionInfo(data);
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the raw data of the resource.  The data is in the format of the VS_VERSIONINFO structure.
         /// </summary>
-        public override byte[] Data
+        internal override byte[] Data
         {
             get
             {
@@ -102,7 +102,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the binary locale-independent file version of the version resource.
         /// </summary>
-        public Version FileVersion
+        internal Version FileVersion
         {
             get
             {
@@ -118,7 +118,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the binary locale-independent product version of the version resource.
         /// </summary>
-        public Version ProductVersion
+        internal Version ProductVersion
         {
             get
             {
@@ -134,7 +134,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets a bitmask that specifies the build types of the file.
         /// </summary>
-        public VersionBuildTypes BuildTypes
+        internal VersionBuildTypes BuildTypes
         {
             get
             {
@@ -152,7 +152,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the general type of the file.
         /// </summary>
-        public VersionFileType FileType
+        internal VersionFileType FileType
         {
             get
             {
@@ -168,7 +168,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the specific type of the file.
         /// </summary>
-        public VersionFileSubtype FileSubtype
+        internal VersionFileSubtype FileSubtype
         {
             get
             {
@@ -184,7 +184,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the binary creation date and time.
         /// </summary>
-        public DateTime Timestamp
+        internal DateTime Timestamp
         {
             get
             {
@@ -202,7 +202,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <seealso cref="Add(int)"/>
         /// <seealso cref="Remove(int)"/>
-        public VersionStringTable this[int locale]
+        internal VersionStringTable this[int locale]
         {
             get
             {
@@ -227,7 +227,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="locale">Locale of the table</param>
         /// <returns>The new string table, or the existing table if the locale already existed.</returns>
-        public VersionStringTable Add(int locale)
+        internal VersionStringTable Add(int locale)
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi == null)
@@ -277,7 +277,7 @@ namespace Microsoft.Deployment.Resources
         /// Removes a version string table for a locale.
         /// </summary>
         /// <param name="locale">Locale of the table</param>
-        public void Remove(int locale)
+        internal void Remove(int locale)
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi != null)
@@ -331,7 +331,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="locale">Locale to search for</param>
         /// <returns>True if a string table was found for the locale; false otherwise.</returns>
-        public bool Contains(int locale)
+        internal bool Contains(int locale)
         {
             return this[locale] != null;
         }
@@ -339,7 +339,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the number string tables in the version resource.
         /// </summary>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -351,7 +351,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Removes all string tables from the version resource.
         /// </summary>
-        public void Clear()
+        internal void Clear()
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi != null)
@@ -390,7 +390,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="array">The one-dimensional Array that is the destination of the elements copied
         /// from the collection. The Array must have zero-based indexing.</param>
         /// <param name="arrayIndex">The zero-based index in array at which copying begins.</param>
-        public void CopyTo(VersionStringTable[] array, int arrayIndex)
+        internal void CopyTo(VersionStringTable[] array, int arrayIndex)
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi != null)
@@ -406,7 +406,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets an enumerator that can iterate over the version string tables in the collection.
         /// </summary>
         /// <returns>An enumerator that returns <see cref="VersionStringTable"/> objects.</returns>
-        public IEnumerator<VersionStringTable> GetEnumerator()
+        internal IEnumerator<VersionStringTable> GetEnumerator()
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi != null)

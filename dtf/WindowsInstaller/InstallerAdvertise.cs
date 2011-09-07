@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="InstallerAdvertise.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -26,7 +26,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
 
-    public static partial class Installer
+    internal static partial class Installer
     {
         /// <summary>
         /// Advertises a product to the local computer.
@@ -42,7 +42,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiadvertiseproduct.asp">MsiAdvertiseProduct</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiadvertiseproductex.asp">MsiAdvertiseProductEx</a>
         /// </p></remarks>
-        public static void AdvertiseProduct(string packagePath, bool perUser, string transforms, int locale)
+        internal static void AdvertiseProduct(string packagePath, bool perUser, string transforms, int locale)
         {
             if (String.IsNullOrEmpty(packagePath))
             {
@@ -62,7 +62,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
 
         /// <summary>
-        /// Generates an advertise script. The method enables the installer to write to a 
+        /// Generates an advertise script. The method enables the installer to write to a
         /// script the registry and shortcut information used to assign or publish a product.
         /// </summary>
         /// <param name="packagePath">Path to the package of the product being advertised</param>
@@ -76,7 +76,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiadvertiseproduct.asp">MsiAdvertiseProduct</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiadvertiseproductex.asp">MsiAdvertiseProductEx</a>
         /// </p></remarks>
-        public static void GenerateAdvertiseScript(string packagePath, string scriptFilePath, string transforms, int locale)
+        internal static void GenerateAdvertiseScript(string packagePath, string scriptFilePath, string transforms, int locale)
         {
             if (String.IsNullOrEmpty(packagePath))
             {
@@ -96,7 +96,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
 
         /// <summary>
-        /// Generates an advertise script. The method enables the installer to write to a 
+        /// Generates an advertise script. The method enables the installer to write to a
         /// script the registry and shortcut information used to assign or publish a product.
         /// </summary>
         /// <param name="packagePath">Path to the package of the product being advertised</param>
@@ -113,7 +113,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiadvertiseproduct.asp">MsiAdvertiseProduct</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiadvertiseproductex.asp">MsiAdvertiseProductEx</a>
         /// </p></remarks>
-        public static void GenerateAdvertiseScript(
+        internal static void GenerateAdvertiseScript(
             string packagePath,
             string scriptFilePath,
             string transforms,
@@ -171,7 +171,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// user, the application is advertised to all users for installation with elevated privileges.
         /// </p></remarks>
         [SuppressMessage("Microsoft.Naming", "CA1726:UsePreferredTerms", MessageId = "flags")]
-        public static void AdvertiseScript(string scriptFile, int flags, bool removeItems)
+        internal static void AdvertiseScript(string scriptFile, int flags, bool removeItems)
         {
             uint ret = NativeMethods.MsiAdvertiseScript(scriptFile, (uint) flags, IntPtr.Zero, removeItems);
             if (ret != 0)
@@ -198,7 +198,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprocessadvertisescript.asp">MsiProcessAdvertiseScript</a>
         /// </p></remarks>
-        public static void ProcessAdvertiseScript(string scriptFile, string iconFolder, bool shortcuts, bool removeItems)
+        internal static void ProcessAdvertiseScript(string scriptFile, string iconFolder, bool shortcuts, bool removeItems)
         {
             uint ret = NativeMethods.MsiProcessAdvertiseScript(scriptFile, iconFolder, IntPtr.Zero, shortcuts, removeItems);
             if (ret != 0)
@@ -226,7 +226,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetproductinfofromscript.asp">MsiGetProductInfoFromScript</a>
         /// </p></remarks>
-        public static ProductInstallation GetProductInfoFromScript(string scriptFile)
+        internal static ProductInstallation GetProductInfoFromScript(string scriptFile)
         {
             if (String.IsNullOrEmpty(scriptFile))
             {

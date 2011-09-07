@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="VersionEnums.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.Resources
     /// Identifies build types of a versioned file.
     /// </summary>
     [Flags]
-    public enum VersionBuildTypes : int
+    internal enum VersionBuildTypes : int
     {
         None         = 0x00,
         Debug        = 0x01,
@@ -62,7 +62,7 @@ namespace Microsoft.Deployment.Resources
     /// Identifies the type of a versioned file.
     /// </summary>
     [SuppressMessage("Microsoft.Design", "CA1027:MarkEnumsWithFlags")]
-    public enum VersionFileType : int
+    internal enum VersionFileType : int
     {
         Unknown       = 0,
         Application   = 1,
@@ -76,7 +76,7 @@ namespace Microsoft.Deployment.Resources
     /// <summary>
     /// Identifies the sub-type of a versioned file.
     /// </summary>
-    public enum VersionFileSubtype : int
+    internal enum VersionFileSubtype : int
     {
         Unknown                = 0,
         PrinterDriver          = 1,

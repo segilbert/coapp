@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ArchiveFileInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -29,7 +29,7 @@ namespace Microsoft.Deployment.Compression
     /// the file.
     /// </summary>
     [Serializable]
-    public abstract class ArchiveFileInfo : FileSystemInfo
+    internal abstract class ArchiveFileInfo : FileSystemInfo
     {
         private ArchiveInfo archiveInfo;
         private string name;
@@ -51,7 +51,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="filePath">The path to the file within the archive.
         /// Usually, this is a simple file name, but if the archive contains
         /// a directory structure this may include the directory.</param>
-        protected ArchiveFileInfo(ArchiveInfo archiveInfo, string filePath)
+        internal ArchiveFileInfo(ArchiveInfo archiveInfo, string filePath)
             : base()
         {
             if (filePath == null)
@@ -80,7 +80,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="lastWriteTime">The stored last write time of the
         /// file.</param>
         /// <param name="length">The uncompressed size of the file.</param>
-        protected ArchiveFileInfo(
+        internal ArchiveFileInfo(
             string filePath,
             int archiveNumber,
             FileAttributes attributes,
@@ -104,7 +104,7 @@ namespace Microsoft.Deployment.Compression
         /// object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual
         /// information about the source or destination.</param>
-        protected ArchiveFileInfo(SerializationInfo info, StreamingContext context)
+        internal ArchiveFileInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
             this.archiveInfo = (ArchiveInfo) info.GetValue(
@@ -124,7 +124,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the name of the file.
         /// </summary>
         /// <value>The name of the file, not including any path.</value>
-        public override string Name
+        internal override string Name
         {
             get
             {
@@ -137,7 +137,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <value>The internal path of the file in the archive, not including
         /// the file name.</value>
-        public string Path
+        internal string Path
         {
             get
             {
@@ -154,12 +154,12 @@ namespace Microsoft.Deployment.Compression
         /// For example, the path <c>"C:\archive.cab\file.txt"</c> refers to
         /// a file "file.txt" inside the archive "archive.cab".
         /// </remarks>
-        public override string FullName
+        internal override string FullName
         {
             get
             {
                 string fullName = System.IO.Path.Combine(this.Path, this.Name);
-                
+
                 if (this.Archive != null)
                 {
                     fullName = System.IO.Path.Combine(this.ArchiveName, fullName);
@@ -177,7 +177,7 @@ namespace Microsoft.Deployment.Compression
         /// may be null if the ArchiveFileInfo object was returned directly from
         /// a stream.
         /// </value>
-        public ArchiveInfo Archive
+        internal ArchiveInfo Archive
         {
             get
             {
@@ -188,7 +188,7 @@ namespace Microsoft.Deployment.Compression
             {
                 this.archiveInfo = value;
 
-                // protected instance members inherited from FileSystemInfo:
+                // internal instance members inherited from FileSystemInfo:
                 this.OriginalPath = (value != null ? value.FullName : null);
                 this.FullPath = this.OriginalPath;
             }
@@ -198,7 +198,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the full path of the archive that contains this file.
         /// </summary>
         /// <value>The full path of the archive that contains this file.</value>
-        public string ArchiveName
+        internal string ArchiveName
         {
             get
             {
@@ -212,7 +212,7 @@ namespace Microsoft.Deployment.Compression
         /// <value>The number of the archive where this file starts.</value>
         /// <remarks>A single archive or the first archive in a chain is
         /// numbered 0.</remarks>
-        public int ArchiveNumber
+        internal int ArchiveNumber
         {
             get
             {
@@ -224,7 +224,7 @@ namespace Microsoft.Deployment.Compression
         /// Checks if the file exists within the archive.
         /// </summary>
         /// <value>True if the file exists, false otherwise.</value>
-        public override bool Exists
+        internal override bool Exists
         {
             get
             {
@@ -241,7 +241,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the uncompressed size of the file.
         /// </summary>
         /// <value>The uncompressed size of the file in bytes.</value>
-        public long Length
+        internal long Length
         {
             get
             {
@@ -258,7 +258,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the attributes of the file.
         /// </summary>
         /// <value>The attributes of the file as stored in the archive.</value>
-        public new FileAttributes Attributes
+        internal new FileAttributes Attributes
         {
             get
             {
@@ -276,7 +276,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <value>The last modification time of the file as stored in the
         /// archive.</value>
-        public new DateTime LastWriteTime
+        internal new DateTime LastWriteTime
         {
             get
             {
@@ -297,7 +297,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="context">The StreamingContext that contains contextual
         /// information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-        public override void GetObjectData(
+        internal override void GetObjectData(
             SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
@@ -316,7 +316,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the full path to the file.
         /// </summary>
         /// <returns>The same as <see cref="FullName"/></returns>
-        public override string ToString()
+        internal override string ToString()
         {
             return this.FullName;
         }
@@ -326,7 +326,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <exception cref="NotSupportedException">Files cannot be deleted
         /// from an existing archive.</exception>
-        public override void Delete()
+        internal override void Delete()
         {
             throw new NotSupportedException();
         }
@@ -335,7 +335,7 @@ namespace Microsoft.Deployment.Compression
         /// Refreshes the attributes and other cached information about the file,
         /// by re-reading the information from the archive.
         /// </summary>
-        public new void Refresh()
+        internal new void Refresh()
         {
             base.Refresh();
 
@@ -359,7 +359,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="destFileName">The destination path where the file
         /// will be extracted.</param>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void CopyTo(string destFileName)
+        internal void CopyTo(string destFileName)
         {
             this.CopyTo(destFileName, false);
         }
@@ -374,7 +374,7 @@ namespace Microsoft.Deployment.Compression
         /// <exception cref="IOException"><paramref name="overwrite"/> is false
         /// and <paramref name="destFileName"/> exists.</exception>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "dest")]
-        public void CopyTo(string destFileName, bool overwrite)
+        internal void CopyTo(string destFileName, bool overwrite)
         {
             if (destFileName == null)
             {
@@ -403,7 +403,7 @@ namespace Microsoft.Deployment.Compression
         /// A stream for reading directly from the packed file. Like any stream
         /// this should be closed/disposed as soon as it is no longer needed.
         /// </returns>
-        public Stream OpenRead()
+        internal Stream OpenRead()
         {
             return this.Archive.OpenRead(System.IO.Path.Combine(this.Path, this.Name));
         }
@@ -421,7 +421,7 @@ namespace Microsoft.Deployment.Compression
         /// <see cref="OpenRead" /> method and pass the returned stream to one of
         /// the <see cref="StreamReader" /> constructor overloads.
         /// </remarks>
-        public StreamReader OpenText()
+        internal StreamReader OpenText()
         {
             return this.Archive.OpenText(System.IO.Path.Combine(this.Path, this.Name));
         }
@@ -436,7 +436,7 @@ namespace Microsoft.Deployment.Compression
         /// Subclasses may override this method to refresh sublcass fields.
         /// However they should always call the base implementation first.
         /// </remarks>
-        protected virtual void Refresh(ArchiveFileInfo newFileInfo)
+        internal virtual void Refresh(ArchiveFileInfo newFileInfo)
         {
             this.exists = newFileInfo.exists;
             this.length = newFileInfo.length;

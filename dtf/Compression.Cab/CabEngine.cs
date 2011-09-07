@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="CabEngine.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -24,7 +24,7 @@ namespace Microsoft.Deployment.Compression.Cab
     /// <summary>
     /// Engine capable of packing and unpacking archives in the cabinet format.
     /// </summary>
-    public class CabEngine : CompressionEngine
+    internal class CabEngine : CompressionEngine
     {
         private CabPacker packer;
         private CabUnpacker unpacker;
@@ -32,7 +32,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <summary>
         /// Creates a new instance of the cabinet engine.
         /// </summary>
-        public CabEngine()
+        internal CabEngine()
             : base()
         {
         }
@@ -45,7 +45,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// will be disposed. If false, the method has been called by the runtime
         /// from inside the finalizer, and only unmanaged resources will be
         /// disposed.</param>
-        protected override void Dispose(bool disposing)
+        internal override void Dispose(bool disposing)
         {
             if (disposing)
             {
@@ -108,7 +108,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <para>Smaller folder sizes can make it more efficient to extract
         /// individual files out of large cabinet packages.</para>
         /// </remarks>
-        public override void Pack(
+        internal override void Pack(
             IPackStreamContext streamContext,
             IEnumerable<string> files,
             long maxArchiveSize)
@@ -125,7 +125,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <param name="stream">Stream for reading the cabinet file.</param>
         /// <returns>True if the stream is a valid cabinet file
         /// (with no offset); false otherwise.</returns>
-        public override bool IsArchive(Stream stream)
+        internal override bool IsArchive(Stream stream)
         {
             return this.Unpacker.IsArchive(stream);
         }
@@ -144,7 +144,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// The <paramref name="fileFilter"/> predicate takes an internal file
         /// path and returns true to include the file or false to exclude it.
         /// </remarks>
-        public override IList<ArchiveFileInfo> GetFileInfo(
+        internal override IList<ArchiveFileInfo> GetFileInfo(
             IUnpackStreamContext streamContext,
             Predicate<string> fileFilter)
         {
@@ -164,7 +164,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// The <paramref name="fileFilter"/> predicate takes an internal file
         /// path and returns true to include the file or false to exclude it.
         /// </remarks>
-        public override void Unpack(
+        internal override void Unpack(
             IUnpackStreamContext streamContext,
             Predicate<string> fileFilter)
         {

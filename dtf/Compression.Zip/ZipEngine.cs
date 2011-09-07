@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ZipEngine.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.Compression.Zip
     /// <summary>
     /// Engine capable of packing and unpacking archives in the zip format.
     /// </summary>
-    public partial class ZipEngine : CompressionEngine
+    internal partial class ZipEngine : CompressionEngine
     {
         private static Dictionary<ZipCompressionMethod, Converter<Stream, Stream>>
             compressionStreamCreators;
@@ -106,7 +106,7 @@ namespace Microsoft.Deployment.Compression.Zip
         ///                return new DeflateStream(stream, CompressionMode.Decompress, true);
         ///            });
         /// </code></example>
-        public static void RegisterCompressionStreamCreator(
+        internal static void RegisterCompressionStreamCreator(
             ZipCompressionMethod compressionMethod,
             CompressionMode compressionMode,
             Converter<Stream, Stream> creator)
@@ -141,7 +141,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Creates a new instance of the zip engine.
         /// </summary>
-        public ZipEngine()
+        internal ZipEngine()
             : base()
         {
             ZipEngine.InitCompressionStreamCreators();
@@ -151,7 +151,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// Gets the comment from the last-examined archive,
         /// or sets the comment to be added to any created archives.
         /// </summary>
-        public string ArchiveComment
+        internal string ArchiveComment
         {
             get
             {
@@ -170,7 +170,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <param name="stream">Stream for reading the archive file.</param>
         /// <returns>True if the stream is a valid zip archive
         /// (with no offset); false otherwise.</returns>
-        public override bool IsArchive(Stream stream)
+        internal override bool IsArchive(Stream stream)
         {
             if (stream == null)
             {
@@ -205,7 +205,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <returns>The offset in bytes of the archive,
         /// or -1 if no archive is found in the Stream.</returns>
         /// <remarks>The archive must begin on a 4-byte boundary.</remarks>
-        public override long FindArchiveOffset(Stream stream)
+        internal override long FindArchiveOffset(Stream stream)
         {
             long offset = base.FindArchiveOffset(stream);
             if (offset > 0)
@@ -248,7 +248,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// The <paramref name="fileFilter"/> predicate takes an internal file
         /// path and returns true to include the file or false to exclude it.
         /// </remarks>
-        public override IList<ArchiveFileInfo> GetFileInfo(
+        internal override IList<ArchiveFileInfo> GetFileInfo(
             IUnpackStreamContext streamContext,
             Predicate<string> fileFilter)
         {

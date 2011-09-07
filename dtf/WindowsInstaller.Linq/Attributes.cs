@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="Attributes.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -29,13 +29,13 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
     /// optional underscore suffix is stripped.)
     /// </remarks>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    public class DatabaseTableAttribute : Attribute
+    internal class DatabaseTableAttribute : Attribute
     {
         /// <summary>
         /// Creates a new DatabaseTableAttribute for the specified table.
         /// </summary>
         /// <param name="table">name of the table associated with the record type</param>
-        public DatabaseTableAttribute(string table)
+        internal DatabaseTableAttribute(string table)
         {
             this.Table = table;
         }
@@ -43,7 +43,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Gets or sets the table associated with the record type.
         /// </summary>
-        public string Table { get; set; }
+        internal string Table { get; set; }
     }
 
     /// <summary>
@@ -55,14 +55,14 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
     /// column name will be the same as the property name.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public class DatabaseColumnAttribute : Attribute
+    internal class DatabaseColumnAttribute : Attribute
     {
         /// <summary>
         /// Creates a new DatabaseColumnAttribute which maps a
         /// record property to a column.
         /// </summary>
         /// <param name="column">name of the column associated with the property</param>
-        public DatabaseColumnAttribute(string column)
+        internal DatabaseColumnAttribute(string column)
         {
             this.Column = column;
         }
@@ -70,6 +70,6 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Gets or sets the column associated with the record property.
         /// </summary>
-        public string Column { get; set; }
+        internal string Column { get; set; }
     }
 }

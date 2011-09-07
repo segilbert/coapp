@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="Enums.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -25,7 +25,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Specifies a return status value for custom actions.
     /// </summary>
-    public enum ActionResult : int
+    internal enum ActionResult : int
     {
         /// <summary>Action completed successfully.</summary>
         Success = 0,
@@ -46,7 +46,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Specifies the open mode for a <see cref="Database"/>.
     /// </summary>
-    public enum DatabaseOpenMode : int
+    internal enum DatabaseOpenMode : int
     {
         /// <summary>Open a database read-only, no persistent changes.</summary>
         ReadOnly = 0,
@@ -69,7 +69,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// and <see cref="Installer.SetExternalUI(ExternalUIHandler,InstallLogModes)"/>.
     /// </summary>
     [Flags]
-    public enum InstallLogModes : int
+    internal enum InstallLogModes : int
     {
         /// <summary>Disable logging.</summary>
         None           = 0,
@@ -165,7 +165,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <see cref="ExternalUIHandler"/>, or <see cref="ExternalUIRecordHandler"/>.
     /// </summary>
     [SuppressMessage("Microsoft.Design", "CA1027:MarkEnumsWithFlags")]
-    public enum InstallMessage : int
+    internal enum InstallMessage : int
     {
         /// <summary>Premature termination, possibly fatal OOM.</summary>
         FatalExit      = 0x00000000,
@@ -225,7 +225,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Specifies the install mode for <see cref="Installer.ProvideComponent"/> or <see cref="Installer.ProvideQualifiedComponent"/>.
     /// </summary>
-    public enum InstallMode : int
+    internal enum InstallMode : int
     {
         /// <summary>Provide the component only if the feature's installation state is <see cref="InstallState.Local"/>.</summary>
         NoSourceResolution = -3,
@@ -244,7 +244,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Specifies the run mode for <see cref="Session.GetMode"/>.
     /// </summary>
     [SuppressMessage("Microsoft.Design", "CA1027:MarkEnumsWithFlags")]
-    public enum InstallRunMode : int
+    internal enum InstallRunMode : int
     {
         /// <summary>The administrative mode is installing, or the product is installing.</summary>
         Admin           = 0,
@@ -309,7 +309,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Installed state of a Component or Feature.
     /// </summary>
-    public enum InstallState : int
+    internal enum InstallState : int
     {
         /// <summary>The component is disabled.</summary>
         NotUsed        = -7,
@@ -357,7 +357,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Specifies the type of installation for <see cref="Installer.ApplyPatch(string,string,InstallType,string)"/>.
     /// </summary>
-    public enum InstallType : int
+    internal enum InstallType : int
     {
         /// <summary>Searches system for products to patch.</summary>
         Default = 0,
@@ -375,7 +375,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// </summary>
     [SuppressMessage("Microsoft.Design", "CA1008:EnumsShouldHaveZeroValue")]
     [Flags]
-    public enum InstallUIOptions : int
+    internal enum InstallUIOptions : int
     {
         /// <summary>Does not change UI level.</summary>
         NoChange     = 0,
@@ -429,7 +429,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Specifies a return status value for message handlers.  These values are returned by
     /// <see cref="Session.Message"/>, <see cref="ExternalUIHandler"/>, and <see cref="IEmbeddedUI.ProcessMessage"/>.
     /// </summary>
-    public enum MessageResult : int
+    internal enum MessageResult : int
     {
         /// <summary>An error was found in the message handler.</summary>
         Error  = -1,
@@ -464,7 +464,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Specifies constants defining which buttons to display for a message. This can be cast to
     /// the MessageBoxButtons enum in System.Windows.Forms and System.Windows.
     /// </summary>
-    public enum MessageButtons
+    internal enum MessageButtons
     {
         /// <summary>
         /// The message contains an OK button.
@@ -501,7 +501,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Specifies constants defining which information to display. This can be cast to
     /// the MessageBoxIcon enum in System.Windows.Forms and System.Windows.
     /// </summary>
-    public enum MessageIcon
+    internal enum MessageIcon
     {
         /// <summary>
         /// The message contain no symbols.
@@ -553,7 +553,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Specifies constants defining the default button on a message. This can be cast to
     /// the MessageBoxDefaultButton enum in System.Windows.Forms and System.Windows.
     /// </summary>
-    public enum MessageDefaultButton
+    internal enum MessageDefaultButton
     {
         /// <summary>
         /// The first button on the message is the default button.
@@ -593,7 +593,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Specifies the different patch states for <see cref="PatchInstallation.GetPatches(string, string, string, UserContexts, PatchStates)"/>.
     /// </summary>
     [Flags]
-    public enum PatchStates : int
+    internal enum PatchStates : int
     {
         /// <summary>Invalid value.</summary>
         None = 0,
@@ -619,7 +619,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Specifies the reinstall mode for <see cref="Installer.ReinstallFeature"/> or <see cref="Installer.ReinstallProduct"/>.
     /// </summary>
     [Flags]
-    public enum ReinstallModes : int
+    internal enum ReinstallModes : int
     {
         /// <summary>Reinstall only if file is missing.</summary>
         FileMissing      = 0x00000002,
@@ -656,7 +656,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Attributes for <see cref="Transaction"/> methods.
     /// </summary>
     [Flags]
-    public enum TransactionAttributes : int
+    internal enum TransactionAttributes : int
     {
         /// <summary>No attributes.</summary>
         None                   = 0x00000000,
@@ -673,7 +673,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <see cref="Database.ApplyTransform(string,TransformErrors)"/>.
     /// </summary>
     [Flags]
-    public enum TransformErrors : int
+    internal enum TransformErrors : int
     {
         /// <summary>No error conditions.</summary>
         None             = 0x0000,
@@ -704,7 +704,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Transform validation flags available for <see cref="Database.CreateTransformSummaryInfo"/>.
     /// </summary>
     [Flags]
-    public enum TransformValidations : int
+    internal enum TransformValidations : int
     {
         /// <summary>Validate no properties.</summary>
         None                       = 0x0000,
@@ -749,7 +749,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <see cref="Installer.DetermineApplicablePatches(string,string[],InapplicablePatchHandler,string,UserContexts)"/>
     /// </summary>
     [Flags]
-    public enum UserContexts : int
+    internal enum UserContexts : int
     {
         /// <summary>Not installed.</summary>
         None           = 0,
@@ -774,7 +774,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines the type of error encountered by the <see cref="View.Validate"/>, <see cref="View.ValidateNew"/>,
     /// or <see cref="View.ValidateFields"/> methods of the <see cref="View"/> class.
     /// </summary>
-    public enum ValidationError : int
+    internal enum ValidationError : int
     {
         /*
         InvalidArg        = -3,
@@ -876,7 +876,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Specifies the modify mode for <see cref="View.Modify"/>.
     /// </summary>
-    public enum ViewModifyMode : int
+    internal enum ViewModifyMode : int
     {
         /// <summary>
         /// Refreshes the information in the supplied record without changing the position

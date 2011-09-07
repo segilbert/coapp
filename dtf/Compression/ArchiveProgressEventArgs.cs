@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ArchiveProgressEventArgs.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -24,7 +24,7 @@ using System.Text;
     /// <summary>
     /// Contains the data reported in an archive progress event.
     /// </summary>
-    public class ArchiveProgressEventArgs : EventArgs
+    internal class ArchiveProgressEventArgs : EventArgs
     {
         private ArchiveProgressType progressType;
 
@@ -59,7 +59,7 @@ using System.Text;
         /// <param name="currentArchiveTotalBytes">total number of compressed bytes to be processed during an extraction</param>
         /// <param name="fileBytesProcessed">number of uncompressed file bytes processed so far</param>
         /// <param name="totalFileBytes">total number of uncompressed file bytes to be processed</param>
-        public ArchiveProgressEventArgs(
+        internal ArchiveProgressEventArgs(
             ArchiveProgressType progressType,
             string currentFileName,
             int currentFileNumber,
@@ -99,7 +99,7 @@ using System.Text;
         /// compressed/extracted, it can ignore events that
         /// are not of type <see cref="ArchiveProgressType.FinishFile"/>.
         /// </remarks>
-        public ArchiveProgressType ProgressType
+        internal ArchiveProgressType ProgressType
         {
             get
             {
@@ -115,7 +115,7 @@ using System.Text;
         /// </summary>
         /// <value>The name of the file currently being processed, or null if processing
         /// is currently at the stream or archive level.</value>
-        public string CurrentFileName
+        internal string CurrentFileName
         {
             get
             {
@@ -130,7 +130,7 @@ using System.Text;
         /// </summary>
         /// <value>The number of the file currently being processed, or the most recent
         /// file processed if processing is currently at the stream or archive level.</value>
-        public int CurrentFileNumber
+        internal int CurrentFileNumber
         {
             get
             {
@@ -142,7 +142,7 @@ using System.Text;
         /// Gets the total number of files to be processed.  Valid for all message types.
         /// </summary>
         /// <value>The total number of files to be processed that are known so far.</value>
-        public int TotalFiles
+        internal int TotalFiles
         {
             get
             {
@@ -157,7 +157,7 @@ using System.Text;
         /// </summary>
         /// <value>The number of uncompressed bytes processed so far for the current file,
         /// or 0 if processing is currently at the stream or archive level.</value>
-        public long CurrentFileBytesProcessed
+        internal long CurrentFileBytesProcessed
         {
             get
             {
@@ -171,7 +171,7 @@ using System.Text;
         /// </summary>
         /// <value>The uncompressed size of the current file being processed,
         /// or 0 if processing is currently at the stream or archive level.</value>
-        public long CurrentFileTotalBytes
+        internal long CurrentFileTotalBytes
         {
             get
             {
@@ -184,7 +184,7 @@ using System.Text;
         /// Valid for all message types.
         /// </summary>
         /// <value>The name of the current archive, or an empty string if no name was specified.</value>
-        public string CurrentArchiveName
+        internal string CurrentArchiveName
         {
             get
             {
@@ -198,7 +198,7 @@ using System.Text;
         /// <value>The number of the current archive.</value>
         /// <remarks>The first archive is number 0, and the last archive is
         /// <see cref="TotalArchives"/>-1.</remarks>
-        public int CurrentArchiveNumber
+        internal int CurrentArchiveNumber
         {
             get
             {
@@ -214,7 +214,7 @@ using System.Text;
         /// When using the compression option to auto-split into multiple archives based on data size,
         /// this value will not be accurate until the end.
         /// </remarks>
-        public int TotalArchives
+        internal int TotalArchives
         {
             get
             {
@@ -228,7 +228,7 @@ using System.Text;
         /// </summary>
         /// <value>The number of compressed bytes processed so far during extraction
         /// of the current archive.</value>
-        public long CurrentArchiveBytesProcessed
+        internal long CurrentArchiveBytesProcessed
         {
             get
             {
@@ -242,7 +242,7 @@ using System.Text;
         /// </summary>
         /// <value>The total number of compressed bytes to be processed during extraction
         /// of the current archive.</value>
-        public long CurrentArchiveTotalBytes
+        internal long CurrentArchiveTotalBytes
         {
             get
             {
@@ -251,13 +251,13 @@ using System.Text;
         }
 
         /// <summary>
-        /// Gets the number of uncompressed bytes processed so far among all files. Valid for all message types.  
+        /// Gets the number of uncompressed bytes processed so far among all files. Valid for all message types.
         /// </summary>
         /// <value>The number of uncompressed file bytes processed so far among all files.</value>
         /// <remarks>
         /// When compared to <see cref="TotalFileBytes"/>, this can be used as a measure of overall progress.
         /// </remarks>
-        public long FileBytesProcessed
+        internal long FileBytesProcessed
         {
             get
             {
@@ -269,7 +269,7 @@ using System.Text;
         /// Gets the total number of uncompressed file bytes to be processed.  Valid for all message types.
         /// </summary>
         /// <value>The total number of uncompressed bytes to be processed among all files.</value>
-        public long TotalFileBytes
+        internal long TotalFileBytes
         {
             get
             {
@@ -283,7 +283,7 @@ using System.Text;
     /// Creates a string representation of the progress event.
     /// </summary>
     /// <returns>a listing of all event parameters and values</returns>
-    public override string ToString()
+    internal override string ToString()
     {
         string formatString =
             "{0}\n" +

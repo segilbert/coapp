@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="Exceptions.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -30,7 +30,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Base class for Windows Installer exceptions.
     /// </summary>
     [Serializable]
-    public class InstallerException : SystemException
+    internal class InstallerException : SystemException
     {
         private int errorCode;
         private object[] errorData;
@@ -43,7 +43,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="innerException">The exception that is the cause of the current exception. If the
         /// innerException parameter is not a null reference (Nothing in Visual Basic), the current exception
         /// is raised in a catch block that handles the inner exception.</param>
-        public InstallerException(string msg, Exception innerException)
+        internal InstallerException(string msg, Exception innerException)
             : this(0, msg, innerException)
         {
         }
@@ -52,7 +52,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Creates a new InstallerException with a specified error message.
         /// </summary>
         /// <param name="msg">The message that describes the error.</param>
-        public InstallerException(string msg)
+        internal InstallerException(string msg)
             : this(0, msg)
         {
         }
@@ -60,7 +60,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Creates a new InstallerException.
         /// </summary>
-        public InstallerException()
+        internal InstallerException()
             : this(0, null)
         {
         }
@@ -82,7 +82,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected InstallerException(SerializationInfo info, StreamingContext context) : base(info, context)
+        internal InstallerException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             if (info == null)
             {
@@ -95,7 +95,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the system error code that resulted in this exception, or 0 if not applicable.
         /// </summary>
-        public int ErrorCode
+        internal int ErrorCode
         {
             get
             {
@@ -107,7 +107,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a message that describes the exception.  This message may contain detailed
         /// formatted error data if it was available.
         /// </summary>
-        public override String Message
+        internal override String Message
         {
             get
             {
@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter=true)]
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
             {
@@ -208,7 +208,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetlasterrorrecord.asp">MsiGetLastErrorRecord</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
-        public Record GetErrorRecord()
+        internal Record GetErrorRecord()
         {
             return this.errorData != null ? new Record(this.errorData) : null;
         }
@@ -225,26 +225,26 @@ namespace Microsoft.Deployment.WindowsInstaller
             {
                 case (uint) NativeMethods.Error.FILE_NOT_FOUND:
                 case (uint) NativeMethods.Error.PATH_NOT_FOUND: return new FileNotFoundException(msg);
-                
+
                 case (uint) NativeMethods.Error.INVALID_PARAMETER:
                 case (uint) NativeMethods.Error.DIRECTORY:
                 case (uint) NativeMethods.Error.UNKNOWN_PROPERTY:
                 case (uint) NativeMethods.Error.UNKNOWN_PRODUCT:
                 case (uint) NativeMethods.Error.UNKNOWN_FEATURE:
                 case (uint) NativeMethods.Error.UNKNOWN_COMPONENT: return new ArgumentException(msg);
-                
+
                 case (uint) NativeMethods.Error.BAD_QUERY_SYNTAX: return new BadQuerySyntaxException(msg);
-                
+
                 case (uint) NativeMethods.Error.INVALID_HANDLE_STATE:
                 case (uint) NativeMethods.Error.INVALID_HANDLE:
                     InvalidHandleException ihex = new InvalidHandleException(msg);
                     ihex.errorCode = (int) errorCode;
                     return ihex;
-                
+
                 case (uint) NativeMethods.Error.INSTALL_USEREXIT: return new InstallCanceledException(msg);
-                
+
                 case (uint) NativeMethods.Error.CALL_NOT_IMPLEMENTED: return new NotImplementedException(msg);
-                
+
                 default: return new InstallerException((int) errorCode, msg);
             }
         }
@@ -307,7 +307,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// User Canceled the installation.
     /// </summary>
     [Serializable]
-    public class InstallCanceledException : InstallerException
+    internal class InstallCanceledException : InstallerException
     {
         /// <summary>
         /// Creates a new InstallCanceledException with a specified error message and a reference to the
@@ -317,7 +317,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="innerException">The exception that is the cause of the current exception. If the
         /// innerException parameter is not a null reference (Nothing in Visual Basic), the current exception
         /// is raised in a catch block that handles the inner exception.</param>
-        public InstallCanceledException(string msg, Exception innerException)
+        internal InstallCanceledException(string msg, Exception innerException)
             : base((int) NativeMethods.Error.INSTALL_USEREXIT, msg, innerException)
         {
         }
@@ -326,7 +326,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Creates a new InstallCanceledException with a specified error message.
         /// </summary>
         /// <param name="msg">The message that describes the error.</param>
-        public InstallCanceledException(string msg)
+        internal InstallCanceledException(string msg)
             : this(msg, null)
         {
         }
@@ -334,7 +334,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Creates a new InstallCanceledException.
         /// </summary>
-        public InstallCanceledException()
+        internal InstallCanceledException()
             : this(null, null)
         {
         }
@@ -344,7 +344,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected InstallCanceledException(SerializationInfo info, StreamingContext context)
+        internal InstallCanceledException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
@@ -354,7 +354,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// A bad SQL query string was passed to <see cref="Database.OpenView"/> or <see cref="Database.Execute(string,object[])"/>.
     /// </summary>
     [Serializable]
-    public class BadQuerySyntaxException : InstallerException
+    internal class BadQuerySyntaxException : InstallerException
     {
         /// <summary>
         /// Creates a new BadQuerySyntaxException with a specified error message and a reference to the
@@ -364,7 +364,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="innerException">The exception that is the cause of the current exception. If the
         /// innerException parameter is not a null reference (Nothing in Visual Basic), the current exception
         /// is raised in a catch block that handles the inner exception.</param>
-        public BadQuerySyntaxException(string msg, Exception innerException)
+        internal BadQuerySyntaxException(string msg, Exception innerException)
             : base((int) NativeMethods.Error.BAD_QUERY_SYNTAX, msg, innerException)
         {
         }
@@ -373,7 +373,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Creates a new BadQuerySyntaxException with a specified error message.
         /// </summary>
         /// <param name="msg">The message that describes the error.</param>
-        public BadQuerySyntaxException(string msg)
+        internal BadQuerySyntaxException(string msg)
             : this(msg, null)
         {
         }
@@ -381,7 +381,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Creates a new BadQuerySyntaxException.
         /// </summary>
-        public BadQuerySyntaxException()
+        internal BadQuerySyntaxException()
             : this(null, null)
         {
         }
@@ -391,7 +391,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected BadQuerySyntaxException(SerializationInfo info, StreamingContext context)
+        internal BadQuerySyntaxException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
@@ -401,7 +401,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// A method was called on an invalid installer handle.  The handle may have been already closed.
     /// </summary>
     [Serializable]
-    public class InvalidHandleException : InstallerException
+    internal class InvalidHandleException : InstallerException
     {
         /// <summary>
         /// Creates a new InvalidHandleException with a specified error message and a reference to the
@@ -411,7 +411,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="innerException">The exception that is the cause of the current exception. If the
         /// innerException parameter is not a null reference (Nothing in Visual Basic), the current exception
         /// is raised in a catch block that handles the inner exception.</param>
-        public InvalidHandleException(string msg, Exception innerException)
+        internal InvalidHandleException(string msg, Exception innerException)
             : base((int) NativeMethods.Error.INVALID_HANDLE, msg, innerException)
         {
         }
@@ -420,7 +420,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Creates a new InvalidHandleException with a specified error message.
         /// </summary>
         /// <param name="msg">The message that describes the error.</param>
-        public InvalidHandleException(string msg)
+        internal InvalidHandleException(string msg)
             : this(msg, null)
         {
         }
@@ -428,7 +428,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Creates a new InvalidHandleException.
         /// </summary>
-        public InvalidHandleException()
+        internal InvalidHandleException()
             : this(null, null)
         {
         }
@@ -438,7 +438,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected InvalidHandleException(SerializationInfo info, StreamingContext context)
+        internal InvalidHandleException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
@@ -449,7 +449,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// details about the merge conflict.
     /// </summary>
     [Serializable]
-    public class MergeException : InstallerException
+    internal class MergeException : InstallerException
     {
         private IList<string> conflictTables;
         private IList<int> conflictCounts;
@@ -462,7 +462,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="innerException">The exception that is the cause of the current exception. If the
         /// innerException parameter is not a null reference (Nothing in Visual Basic), the current exception
         /// is raised in a catch block that handles the inner exception.</param>
-        public MergeException(string msg, Exception innerException)
+        internal MergeException(string msg, Exception innerException)
             : base(msg, innerException)
         {
         }
@@ -471,7 +471,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Creates a new MergeException with a specified error message.
         /// </summary>
         /// <param name="msg">The message that describes the error.</param>
-        public MergeException(string msg)
+        internal MergeException(string msg)
             : base(msg)
         {
         }
@@ -479,7 +479,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Creates a new MergeException.
         /// </summary>
-        public MergeException()
+        internal MergeException()
             : base()
         {
         }
@@ -513,7 +513,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected MergeException(SerializationInfo info, StreamingContext context) : base(info, context)
+        internal MergeException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             if (info == null)
             {
@@ -528,7 +528,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the number of merge conflicts in each table, corresponding to the tables returned by
         /// <see cref="ConflictTables"/>.
         /// </summary>
-        public IList<int> ConflictCounts
+        internal IList<int> ConflictCounts
         {
             get
             {
@@ -539,7 +539,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the list of tables containing merge conflicts.
         /// </summary>
-        public IList<string> ConflictTables
+        internal IList<string> ConflictTables
         {
             get
             {
@@ -550,7 +550,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a message that describes the merge conflits.
         /// </summary>
-        public override String Message
+        internal override String Message
         {
             get
             {
@@ -576,7 +576,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter=true)]
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
             {

@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="TransformInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -24,13 +24,13 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
     /// <summary>
     /// Contains properties of a transform package (.MST).
     /// </summary>
-    public class TransformInfo
+    internal class TransformInfo
     {
         /// <summary>
         /// Reads transform information from a transform package.
         /// </summary>
         /// <param name="mstFile">Path to a transform package (.MST file).</param>
-        public TransformInfo(string mstFile)
+        internal TransformInfo(string mstFile)
         {
             this.name = Path.GetFileName(mstFile);
             using (SummaryInfo transformSummInfo = new SummaryInfo(mstFile, false))
@@ -44,7 +44,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// </summary>
         /// <param name="name">Filename of the transform (optional).</param>
         /// <param name="transformSummaryInfo">Handle to the summary information of a transform package (.MST file).</param>
-        public TransformInfo(string name, SummaryInfo transformSummaryInfo)
+        internal TransformInfo(string name, SummaryInfo transformSummaryInfo)
         {
             this.name = name;
             this.DecodeSummaryInfo(transformSummaryInfo);
@@ -80,7 +80,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the filename of the transform.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get { return this.name; }
         }
@@ -89,7 +89,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the target product code of the transform.
         /// </summary>
-        public string TargetProductCode
+        internal string TargetProductCode
         {
             get { return this.targetProductCode; }
         }
@@ -98,7 +98,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the target product version of the transform.
         /// </summary>
-        public string TargetProductVersion
+        internal string TargetProductVersion
         {
             get { return this.targetProductVersion; }
         }
@@ -107,7 +107,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the upgrade product code of the transform.
         /// </summary>
-        public string UpgradeProductCode
+        internal string UpgradeProductCode
         {
             get { return this.upgradeProductCode; }
         }
@@ -116,7 +116,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the upgrade product version of the transform.
         /// </summary>
-        public string UpgradeProductVersion
+        internal string UpgradeProductVersion
         {
             get { return this.upgradeProductVersion; }
         }
@@ -125,7 +125,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the upgrade code of the transform.
         /// </summary>
-        public string UpgradeCode
+        internal string UpgradeCode
         {
             get { return this.upgradeCode; }
         }
@@ -134,7 +134,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the target platform of the transform.
         /// </summary>
-        public string TargetPlatform
+        internal string TargetPlatform
         {
             get { return this.targetPlatform; }
         }
@@ -143,7 +143,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the target language of the transform, or 0 if the transform is language-neutral.
         /// </summary>
-        public int TargetLanguage
+        internal int TargetLanguage
         {
             get { return this.targetLanguage; }
         }
@@ -152,7 +152,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the validation flags specified when the transform was generated.
         /// </summary>
-        public TransformValidations Validations
+        internal TransformValidations Validations
         {
             get { return this.validateFlags; }
         }
@@ -161,7 +161,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Returns the name of the transform.
         /// </summary>
-        public override string ToString()
+        internal override string ToString()
         {
             return (this.Name != null ? this.Name : "MST");
         }

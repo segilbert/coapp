@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="EmbeddedUIProxy.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -57,14 +57,14 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </remarks>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        public static int Initialize(int sessionHandle, string uiClass, int internalUILevel)
+        internal static int Initialize(int sessionHandle, string uiClass, int internalUILevel)
         {
             Session session = null;
 
             try
             {
                 session = new Session((IntPtr) sessionHandle, false);
-                
+
                 if (String.IsNullOrEmpty(uiClass))
                 {
                     throw new ArgumentNullException("uiClass");
@@ -136,7 +136,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <returns>Return value returned by the UI class.</returns>
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public static int ProcessMessage(int messageType, int recordHandle)
+        internal static int ProcessMessage(int messageType, int recordHandle)
         {
             if (EmbeddedUIProxy.uiInstance != null)
             {
@@ -177,7 +177,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public static void Shutdown()
+        internal static void Shutdown()
         {
             if (EmbeddedUIProxy.uiInstance != null)
             {

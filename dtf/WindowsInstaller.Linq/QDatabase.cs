@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="QDatabase.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -24,7 +24,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
     /// <summary>
     /// Allows any Database instance to be converted into a queryable database.
     /// </summary>
-    public static class Queryable
+    internal static class Queryable
     {
         /// <summary>
         /// Converts any Database instance into a queryable database.
@@ -39,7 +39,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// carries the same MSI handle, only one of the instances needs to be
         /// closed, not both.
         /// </remarks>
-        public static QDatabase AsQueryable(this Database db)
+        internal static QDatabase AsQueryable(this Database db)
         {
             QDatabase qdb = db as QDatabase;
             if (qdb == null && db != null)
@@ -55,7 +55,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
     /// LINQ query functionality along with predefined entity types
     /// for common tables.
     /// </summary>
-    public class QDatabase : Database
+    internal class QDatabase : Database
     {
         /// <summary>
         /// Opens an existing database in read-only mode.
@@ -70,7 +70,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// nature of finalization it is best that the handle be closed manually as soon as it is no
         /// longer needed, as leaving lots of unused handles open can degrade performance.</para>
         /// </remarks>
-        public QDatabase(string filePath)
+        internal QDatabase(string filePath)
             : base(filePath)
         {
         }
@@ -92,7 +92,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// nature of finalization it is best that the handle be closed manually as soon as it is no
         /// longer needed, as leaving lots of unused handles open can degrade performance.</para>
         /// </remarks>
-        public QDatabase(string filePath, string outputPath)
+        internal QDatabase(string filePath, string outputPath)
             : base(filePath, outputPath)
         {
         }
@@ -117,7 +117,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// nature of finalization it is best that the handle be closed manually as soon as it is no
         /// longer needed, as leaving lots of unused handles open can degrade performance.</para>
         /// </remarks>
-        public QDatabase(string filePath, DatabaseOpenMode mode)
+        internal QDatabase(string filePath, DatabaseOpenMode mode)
             : base(filePath, mode)
         {
         }
@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// when the database object is disposed</param>
         /// <param name="filePath">Path of the database file, if known</param>
         /// <param name="openMode">Mode the handle was originally opened in</param>
-        protected internal QDatabase(
+        internal internal QDatabase(
             IntPtr handle, bool ownsHandle, string filePath, DatabaseOpenMode openMode)
             : base(handle, ownsHandle, filePath, openMode)
         {
@@ -142,13 +142,13 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <remarks>
         /// The log can be useful for debugging, or simply to watch the LINQ magic in action.
         /// </remarks>
-        public TextWriter Log { get; set; }
+        internal TextWriter Log { get; set; }
 
         /// <summary>
         /// Gets a queryable table from the datbaase.
         /// </summary>
         /// <param name="table">name of the table</param>
-        public QTable<QRecord> this[string table]
+        internal QTable<QRecord> this[string table]
         {
             get
             {
@@ -160,67 +160,67 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         #region Queryable tables
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<Component_> Components
+        internal QTable<Component_> Components
         { get { return new QTable<Component_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<CreateFolder_> CreateFolders
+        internal QTable<CreateFolder_> CreateFolders
         { get { return new QTable<CreateFolder_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<CustomAction_> CustomActions
+        internal QTable<CustomAction_> CustomActions
         { get { return new QTable<CustomAction_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<Directory_> Directories
+        internal QTable<Directory_> Directories
         { get { return new QTable<Directory_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<DuplicateFile_> DuplicateFiles
+        internal QTable<DuplicateFile_> DuplicateFiles
         { get { return new QTable<DuplicateFile_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<Feature_> Features
+        internal QTable<Feature_> Features
         { get { return new QTable<Feature_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<FeatureComponent_> FeatureComponents
+        internal QTable<FeatureComponent_> FeatureComponents
         { get { return new QTable<FeatureComponent_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<File_> Files
+        internal QTable<File_> Files
         { get { return new QTable<File_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<FileHash_> FileHashes
+        internal QTable<FileHash_> FileHashes
         { get { return new QTable<FileHash_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<InstallSequence_> InstallExecuteSequences
+        internal QTable<InstallSequence_> InstallExecuteSequences
         { get { return new QTable<InstallSequence_>(this, "InstallExecuteSequence"); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<InstallSequence_> InstallUISequences
+        internal QTable<InstallSequence_> InstallUISequences
         { get { return new QTable<InstallSequence_>(this, "InstallUISequence"); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<LaunchCondition_> LaunchConditions
+        internal QTable<LaunchCondition_> LaunchConditions
         { get { return new QTable<LaunchCondition_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<Media_> Medias
+        internal QTable<Media_> Medias
         { get { return new QTable<Media_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<Property_> Properties
+        internal QTable<Property_> Properties
         { get { return new QTable<Property_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<Registry_> Registries
+        internal QTable<Registry_> Registries
         { get { return new QTable<Registry_>(this); } }
 
         /// <summary>Queryable standard table with predefined specialized record type.</summary>
-        public QTable<RemoveFile_> RemoveFiles
+        internal QTable<RemoveFile_> RemoveFiles
         { get { return new QTable<RemoveFile_>(this); } }
 
         #endregion // Queryable tables

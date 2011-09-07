@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ZipFormat.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -46,40 +46,40 @@ namespace Microsoft.Deployment.Compression.Zip
 
     internal class ZipFileHeader
     {
-        public const uint LFHSIG = 0x04034B50;
-        public const uint CFHSIG = 0x02014B50;
+        internal const uint LFHSIG = 0x04034B50;
+        internal const uint CFHSIG = 0x02014B50;
 
-        public const uint SPANSIG  = 0x08074b50;
-        public const uint SPANSIG2 = 0x30304b50;
-        
-        public const uint LFH_FIXEDSIZE = 30;
-        public const uint CFH_FIXEDSIZE = 46;
+        internal const uint SPANSIG  = 0x08074b50;
+        internal const uint SPANSIG2 = 0x30304b50;
 
-        public ushort versionMadeBy;
-        public ushort versionNeeded;
-        public ZipFileFlags flags;
-        public ZipCompressionMethod compressionMethod;
-        public short lastModTime;
-        public short lastModDate;
-        public uint crc32;
-        public uint compressedSize;
-        public uint uncompressedSize;
-        public ushort diskStart;
-        public ushort internalFileAttrs;
-        public uint externalFileAttrs;
-        public uint localHeaderOffset;
-        public string fileName;
-        public ZipExtraFileField[] extraFields;
-        public string fileComment;
-        public bool zip64;
+        internal const uint LFH_FIXEDSIZE = 30;
+        internal const uint CFH_FIXEDSIZE = 46;
 
-        public ZipFileHeader()
+        internal ushort versionMadeBy;
+        internal ushort versionNeeded;
+        internal ZipFileFlags flags;
+        internal ZipCompressionMethod compressionMethod;
+        internal short lastModTime;
+        internal short lastModDate;
+        internal uint crc32;
+        internal uint compressedSize;
+        internal uint uncompressedSize;
+        internal ushort diskStart;
+        internal ushort internalFileAttrs;
+        internal uint externalFileAttrs;
+        internal uint localHeaderOffset;
+        internal string fileName;
+        internal ZipExtraFileField[] extraFields;
+        internal string fileComment;
+        internal bool zip64;
+
+        internal ZipFileHeader()
         {
             this.versionMadeBy = 20;
             this.versionNeeded = 20;
         }
 
-        public ZipFileHeader(ZipFileInfo fileInfo, bool zip64)
+        internal ZipFileHeader(ZipFileInfo fileInfo, bool zip64)
             : this()
         {
             this.flags = ZipFileFlags.None;
@@ -117,7 +117,7 @@ namespace Microsoft.Deployment.Compression.Zip
         [SuppressMessage("Microsoft.Maintainability", "CA1500:VariableNamesShouldNotMatchFieldNames", MessageId = "uncompressedSize")]
         [SuppressMessage("Microsoft.Maintainability", "CA1500:VariableNamesShouldNotMatchFieldNames", MessageId = "crc32")]
         [SuppressMessage("Microsoft.Maintainability", "CA1500:VariableNamesShouldNotMatchFieldNames", MessageId = "localHeaderOffset")]
-        public void Update(
+        internal void Update(
             long compressedSize,
             long uncompressedSize,
             uint crc32,
@@ -157,7 +157,7 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        public bool Read(Stream stream, bool central)
+        internal bool Read(Stream stream, bool central)
         {
             long startPos = stream.Position;
 
@@ -191,7 +191,7 @@ namespace Microsoft.Deployment.Compression.Zip
             this.crc32 = reader.ReadUInt32();
             this.compressedSize = reader.ReadUInt32();
             this.uncompressedSize = reader.ReadUInt32();
-            
+
             this.zip64 = this.uncompressedSize == UInt32.MaxValue;
 
             int fileNameLength = reader.ReadUInt16();
@@ -250,7 +250,7 @@ namespace Microsoft.Deployment.Compression.Zip
             return true;
         }
 
-        public void Write(Stream stream, bool central)
+        internal void Write(Stream stream, bool central)
         {
             byte[] fileNameBytes = (this.fileName != null
                 ? Encoding.UTF8.GetBytes(this.fileName) : new byte[0]);
@@ -278,7 +278,7 @@ namespace Microsoft.Deployment.Compression.Zip
             writer.Write(this.crc32);
             writer.Write(this.compressedSize);
             writer.Write(this.uncompressedSize);
-            
+
             ushort extraFieldLength = 0;
             if (this.extraFields != null)
             {
@@ -327,7 +327,7 @@ namespace Microsoft.Deployment.Compression.Zip
         [SuppressMessage("Microsoft.Maintainability", "CA1500:VariableNamesShouldNotMatchFieldNames", MessageId = "uncompressedSize")]
         [SuppressMessage("Microsoft.Maintainability", "CA1500:VariableNamesShouldNotMatchFieldNames", MessageId = "crc32")]
         [SuppressMessage("Microsoft.Maintainability", "CA1500:VariableNamesShouldNotMatchFieldNames", MessageId = "localHeaderOffset")]
-        public void GetZip64Fields(
+        internal void GetZip64Fields(
             out long compressedSize,
             out long uncompressedSize,
             out long localHeaderOffset,
@@ -353,10 +353,10 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        public ZipFileInfo ToZipFileInfo()
+        internal ZipFileInfo ToZipFileInfo()
         {
             string name = this.fileName;
-            
+
             long compressedSizeL;
             long uncompressedSizeL;
             long localHeaderOffsetL;
@@ -381,7 +381,7 @@ namespace Microsoft.Deployment.Compression.Zip
                 uncompressedSizeL, compressedSizeL, this.compressionMethod);
         }
 
-        public bool IsDirectory
+        internal bool IsDirectory
         {
             get
             {
@@ -391,7 +391,7 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        public int GetSize(bool central)
+        internal int GetSize(bool central)
         {
             int size = 30;
 
@@ -425,10 +425,10 @@ namespace Microsoft.Deployment.Compression.Zip
 
     internal class ZipExtraFileField
     {
-        public ZipExtraFileFieldType fieldType;
-        public byte[] data;
+        internal ZipExtraFileFieldType fieldType;
+        internal byte[] data;
 
-        public bool Read(Stream stream, ref int bytesRemaining)
+        internal bool Read(Stream stream, ref int bytesRemaining)
         {
             if (bytesRemaining < 4)
             {
@@ -452,7 +452,7 @@ namespace Microsoft.Deployment.Compression.Zip
             return true;
         }
 
-        public void Write(Stream stream)
+        internal void Write(Stream stream)
         {
             BinaryWriter writer = new BinaryWriter(stream);
             writer.Write((ushort) this.fieldType);
@@ -462,7 +462,7 @@ namespace Microsoft.Deployment.Compression.Zip
             writer.Write(dataBytes);
         }
 
-        public bool GetZip64Data(
+        internal bool GetZip64Data(
             out long compressedSize,
             out long uncompressedSize,
             out long localHeaderOffset,
@@ -491,7 +491,7 @@ namespace Microsoft.Deployment.Compression.Zip
             return true;
         }
 
-        public bool SetZip64Data(
+        internal bool SetZip64Data(
             long compressedSize,
             long uncompressedSize,
             long localHeaderOffset,
@@ -518,30 +518,30 @@ namespace Microsoft.Deployment.Compression.Zip
 
     internal class ZipEndOfCentralDirectory
     {
-        public const uint EOCDSIG = 0x06054B50;
-        public const uint EOCD64SIG = 0x06064B50;
+        internal const uint EOCDSIG = 0x06054B50;
+        internal const uint EOCD64SIG = 0x06064B50;
 
-        public const uint EOCD_RECORD_FIXEDSIZE = 22;
-        public const uint EOCD64_RECORD_FIXEDSIZE = 56;
+        internal const uint EOCD_RECORD_FIXEDSIZE = 22;
+        internal const uint EOCD64_RECORD_FIXEDSIZE = 56;
 
-        public ushort versionMadeBy;
-        public ushort versionNeeded;
-        public uint diskNumber;
-        public uint dirStartDiskNumber;
-        public long entriesOnDisk;
-        public long totalEntries;
-        public long dirSize;
-        public long dirOffset;
-        public string comment;
-        public bool zip64;
+        internal ushort versionMadeBy;
+        internal ushort versionNeeded;
+        internal uint diskNumber;
+        internal uint dirStartDiskNumber;
+        internal long entriesOnDisk;
+        internal long totalEntries;
+        internal long dirSize;
+        internal long dirOffset;
+        internal string comment;
+        internal bool zip64;
 
-        public ZipEndOfCentralDirectory()
+        internal ZipEndOfCentralDirectory()
         {
             this.versionMadeBy = 20;
             this.versionNeeded = 20;
         }
 
-        public bool Read(Stream stream)
+        internal bool Read(Stream stream)
         {
             long startPos = stream.Position;
 
@@ -618,7 +618,7 @@ namespace Microsoft.Deployment.Compression.Zip
             return true;
         }
 
-        public void Write(Stream stream)
+        internal void Write(Stream stream)
         {
             BinaryWriter writer = new BinaryWriter(stream);
 
@@ -652,7 +652,7 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        public int GetSize(bool zip64Size)
+        internal int GetSize(bool zip64Size)
         {
             if (zip64Size)
             {
@@ -669,15 +669,15 @@ namespace Microsoft.Deployment.Compression.Zip
 
     internal class Zip64EndOfCentralDirectoryLocator
     {
-        public const uint EOCDL64SIG = 0x07064B50;
+        internal const uint EOCDL64SIG = 0x07064B50;
 
-        public const uint EOCDL64_SIZE = 20;
+        internal const uint EOCDL64_SIZE = 20;
 
-        public uint dirStartDiskNumber;
-        public long dirOffset;
-        public uint totalDisks;
+        internal uint dirStartDiskNumber;
+        internal long dirOffset;
+        internal uint totalDisks;
 
-        public bool Read(Stream stream)
+        internal bool Read(Stream stream)
         {
             long startPos = stream.Position;
             if (stream.Length - startPos < EOCDL64_SIZE)
@@ -700,7 +700,7 @@ namespace Microsoft.Deployment.Compression.Zip
             return true;
         }
 
-        public void Write(Stream stream)
+        internal void Write(Stream stream)
         {
             BinaryWriter writer = new BinaryWriter(stream);
             writer.Write(EOCDL64SIG);

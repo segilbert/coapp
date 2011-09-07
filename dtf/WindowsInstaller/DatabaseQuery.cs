@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="DatabaseQuery.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -23,7 +23,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System.Globalization;
     using System.Diagnostics.CodeAnalysis;
 
-    public partial class Database
+    internal partial class Database
     {
         /// <summary>
         /// Gets a View object representing the query specified by a SQL string.
@@ -43,7 +43,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseopenview.asp">MsiDatabaseOpenView</a>
         /// </p></remarks>
-        public View OpenView(string sqlFormat, params object[] args)
+        internal View OpenView(string sqlFormat, params object[] args)
         {
             if (String.IsNullOrEmpty(sqlFormat))
             {
@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseopenview.asp">MsiDatabaseOpenView</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>
         /// </p></remarks>
-        public void Execute(string sqlFormat, params object[] args)
+        internal void Execute(string sqlFormat, params object[] args)
         {
             if (String.IsNullOrEmpty(sqlFormat))
             {
@@ -105,7 +105,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseopenview.asp">MsiDatabaseOpenView</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>
         /// </p></remarks>
-        public void Execute(string sql, Record record)
+        internal void Execute(string sql, Record record)
         {
             if (String.IsNullOrEmpty(sql))
             {
@@ -138,7 +138,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public IList ExecuteQuery(string sqlFormat, params object[] args)
+        internal IList ExecuteQuery(string sqlFormat, params object[] args)
         {
             if (String.IsNullOrEmpty(sqlFormat))
             {
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public IList ExecuteQuery(string sql, Record record)
+        internal IList ExecuteQuery(string sql, Record record)
         {
             if (String.IsNullOrEmpty(sql))
             {
@@ -215,7 +215,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public IList<int> ExecuteIntegerQuery(string sqlFormat, params object[] args)
+        internal IList<int> ExecuteIntegerQuery(string sqlFormat, params object[] args)
         {
             if (String.IsNullOrEmpty(sqlFormat))
             {
@@ -246,7 +246,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public IList<int> ExecuteIntegerQuery(string sql, Record record)
+        internal IList<int> ExecuteIntegerQuery(string sql, Record record)
         {
             if (String.IsNullOrEmpty(sql))
             {
@@ -292,7 +292,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public IList<string> ExecuteStringQuery(string sqlFormat, params object[] args)
+        internal IList<string> ExecuteStringQuery(string sqlFormat, params object[] args)
         {
             if (String.IsNullOrEmpty(sqlFormat))
             {
@@ -323,7 +323,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public IList<string> ExecuteStringQuery(string sql, Record record)
+        internal IList<string> ExecuteStringQuery(string sql, Record record)
         {
             if (String.IsNullOrEmpty(sql))
             {
@@ -368,7 +368,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public object ExecuteScalar(string sqlFormat, params object[] args)
+        internal object ExecuteScalar(string sqlFormat, params object[] args)
         {
             if (String.IsNullOrEmpty(sqlFormat))
             {
@@ -398,7 +398,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewexecute.asp">MsiViewExecute</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        public object ExecuteScalar(string sql, Record record)
+        internal object ExecuteScalar(string sql, Record record)
         {
             if (String.IsNullOrEmpty(sql))
             {

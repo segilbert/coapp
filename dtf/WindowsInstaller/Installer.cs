@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="Installer.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -32,7 +32,7 @@ namespace Microsoft.Deployment.WindowsInstaller
 /// <see cref="Installer.DetermineApplicablePatches(string,string[],InapplicablePatchHandler,string,UserContexts)"/>
 /// indicating the reason a particular patch is not applicable to a product.
 /// </summary>
-/// <param name="patch">MSP file path, XML file path, or XML blob that was passed to 
+/// <param name="patch">MSP file path, XML file path, or XML blob that was passed to
 /// <see cref="Installer.DetermineApplicablePatches(string,string[],InapplicablePatchHandler,string,UserContexts)"/></param>
 /// <param name="exception">exception indicating the reason the patch is not applicable</param>
 /// <remarks><p>
@@ -43,12 +43,12 @@ namespace Microsoft.Deployment.WindowsInstaller
 /// The <paramref name="exception"/> could also be a FileNotFoundException if the
 /// patch string was a file path.
 /// </p></remarks>
-public delegate void InapplicablePatchHandler(string patch, Exception exception);
+internal delegate void InapplicablePatchHandler(string patch, Exception exception);
 
 /// <summary>
 /// Provides static methods for installing and configuring products and patches.
 /// </summary>
-public static partial class Installer
+internal static partial class Installer
 {
     private static bool rebootRequired;
     private static bool rebootInitiated;
@@ -57,7 +57,7 @@ public static partial class Installer
     /// <summary>
     /// Indicates whether a system reboot is required after running an installation or configuration operation.
     /// </summary>
-    public static bool RebootRequired
+    internal static bool RebootRequired
     {
         get
         {
@@ -68,7 +68,7 @@ public static partial class Installer
     /// <summary>
     /// Indicates whether a system reboot has been initiated after running an installation or configuration operation.
     /// </summary>
-    public static bool RebootInitiated
+    internal static bool RebootInitiated
     {
         get
         {
@@ -89,11 +89,11 @@ public static partial class Installer
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetinternalui.asp">MsiSetInternalUI</a>
     /// </p></remarks>
     [SuppressMessage("Microsoft.Design", "CA1045:DoNotPassTypesByReference")]
-    public static InstallUIOptions SetInternalUI(InstallUIOptions uiOptions, ref IntPtr windowHandle)
+    internal static InstallUIOptions SetInternalUI(InstallUIOptions uiOptions, ref IntPtr windowHandle)
     {
         return (InstallUIOptions) NativeMethods.MsiSetInternalUI((uint) uiOptions, ref windowHandle);
     }
-    
+
     /// <summary>
     /// Enables the installer's internal user interface. Then this user interface is used
     /// for all subsequent calls to user-interface-generating installer functions in this process.
@@ -105,7 +105,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetinternalui.asp">MsiSetInternalUI</a>
     /// </p></remarks>
-    public static InstallUIOptions SetInternalUI(InstallUIOptions uiOptions)
+    internal static InstallUIOptions SetInternalUI(InstallUIOptions uiOptions)
     {
         return (InstallUIOptions) NativeMethods.MsiSetInternalUI((uint) uiOptions, IntPtr.Zero);
     }
@@ -120,7 +120,7 @@ public static partial class Installer
     /// <exception cref="ArgumentException">an invalid log mode was specified</exception>
     /// <remarks>This method takes effect on any new installation processes.  Calling this
     /// method from within a custom action will not start logging for that installation.</remarks>
-    public static void EnableLog(InstallLogModes logModes, string logFile)
+    internal static void EnableLog(InstallLogModes logModes, string logFile)
     {
         Installer.EnableLog(logModes, logFile, false, true);
     }
@@ -144,7 +144,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienablelog.asp">MsiEnableLog</a>
     /// </p></remarks>
-    public static void EnableLog(InstallLogModes logModes, string logFile, bool append, bool flushEveryLine)
+    internal static void EnableLog(InstallLogModes logModes, string logFile, bool append, bool flushEveryLine)
     {
         uint ret = NativeMethods.MsiEnableLog((uint) logModes, logFile, (append ? (uint) 1 : 0) + (flushEveryLine ? (uint) 2 : 0));
         if (ret != 0 && ret != (uint) NativeMethods.Error.FILE_INVALID)
@@ -170,7 +170,7 @@ public static partial class Installer
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiusefeature.asp">MsiUseFeature</a>,
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiusefeatureex.asp">MsiUseFeatureEx</a>
     /// </p></remarks>
-    public static InstallState UseFeature(string productCode, string feature, InstallMode installMode)
+    internal static InstallState UseFeature(string productCode, string feature, InstallMode installMode)
     {
         int installState = NativeMethods.MsiUseFeatureEx(productCode, feature, unchecked ((uint) installMode), 0);
         return (InstallState) installState;
@@ -203,7 +203,7 @@ public static partial class Installer
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopenpackage.asp">MsiOpenPackage</a>,
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopenpackageex.asp">MsiOpenPackageEx</a>
     /// </p></remarks>
-    public static Session OpenPackage(string packagePath, bool ignoreMachineState)
+    internal static Session OpenPackage(string packagePath, bool ignoreMachineState)
     {
         int sessionHandle;
         uint ret = NativeMethods.MsiOpenPackageEx(packagePath, ignoreMachineState ? (uint) 1 : 0, out sessionHandle);
@@ -242,7 +242,7 @@ public static partial class Installer
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopenpackageex.asp">MsiOpenPackageEx</a>
     /// </p></remarks>
     [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-    public static Session OpenPackage(Database database, bool ignoreMachineState)
+    internal static Session OpenPackage(Database database, bool ignoreMachineState)
     {
         if (database == null)
         {
@@ -274,7 +274,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopenproduct.asp">MsiOpenProduct</a>
     /// </p></remarks>
-    public static Session OpenProduct(string productCode)
+    internal static Session OpenProduct(string productCode)
     {
         int sessionHandle;
         uint ret = NativeMethods.MsiOpenProduct(productCode, out sessionHandle);
@@ -305,7 +305,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprovidecomponent.asp">MsiProvideComponent</a>
     /// </p></remarks>
-    public static string ProvideComponent(string product, string feature, string component, InstallMode installMode)
+    internal static string ProvideComponent(string product, string feature, string component, InstallMode installMode)
     {
         StringBuilder pathBuf = new StringBuilder(512);
         uint pathBufSize = (uint) pathBuf.Capacity;
@@ -340,7 +340,7 @@ public static partial class Installer
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprovidequalifiedcomponent.asp">MsiProvideQualifiedComponent</a>
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprovidequalifiedcomponentex.asp">MsiProvideQualifiedComponentEx</a>
     /// </p></remarks>
-    public static string ProvideQualifiedComponent(string component, string qualifier, InstallMode installMode, string product)
+    internal static string ProvideQualifiedComponent(string component, string qualifier, InstallMode installMode, string product)
     {
         StringBuilder pathBuf = new StringBuilder(512);
         uint pathBufSize = (uint) pathBuf.Capacity;
@@ -373,7 +373,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprovideassembly.asp">MsiProvideAssembly</a>
     /// </p></remarks>
-    public static string ProvideAssembly(string assemblyName, string appContext, InstallMode installMode, bool isWin32Assembly)
+    internal static string ProvideAssembly(string assemblyName, string appContext, InstallMode installMode, bool isWin32Assembly)
     {
         StringBuilder pathBuf = new StringBuilder(512);
         uint pathBufSize = (uint) pathBuf.Capacity;
@@ -402,7 +402,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiinstallmissingcomponent.asp">MsiInstallMissingComponent</a>
     /// </p></remarks>
-    public static void InstallMissingComponent(string product, string component, InstallState installState)
+    internal static void InstallMissingComponent(string product, string component, InstallState installState)
     {
         uint ret = NativeMethods.MsiInstallMissingComponent(product, component, (int) installState);
         if (ret != 0)
@@ -421,7 +421,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiinstallmissingfile.asp">MsiInstallMissingFile</a>
     /// </p></remarks>
-    public static void InstallMissingFile(string product, string file)
+    internal static void InstallMissingFile(string product, string file)
     {
         uint ret = NativeMethods.MsiInstallMissingFile(product, file);
         if (ret != 0)
@@ -441,7 +441,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msireinstallfeature.asp">MsiReinstallFeature</a>
     /// </p></remarks>
-    public static void ReinstallFeature(string product, string feature, ReinstallModes reinstallModes)
+    internal static void ReinstallFeature(string product, string feature, ReinstallModes reinstallModes)
     {
         uint ret = NativeMethods.MsiReinstallFeature(product, feature, (uint) reinstallModes);
         if (ret != 0)
@@ -460,7 +460,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msireinstallproduct.asp">MsiReinstallProduct</a>
     /// </p></remarks>
-    public static void ReinstallProduct(string product, ReinstallModes reinstallModes)
+    internal static void ReinstallProduct(string product, ReinstallModes reinstallModes)
     {
         uint ret = NativeMethods.MsiReinstallProduct(product, (uint) reinstallModes);
         if (ret != 0)
@@ -489,7 +489,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiinstallproduct.asp">MsiInstallProduct</a>
     /// </p></remarks>
-    public static void InstallProduct(string packagePath, string commandLine)
+    internal static void InstallProduct(string packagePath, string commandLine)
     {
         uint ret = NativeMethods.MsiInstallProduct(packagePath, commandLine);
         Installer.CheckInstallResult(ret);
@@ -522,7 +522,7 @@ public static partial class Installer
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiconfigureproduct.asp">MsiConfigureProduct</a>,
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiconfigureproductex.asp">MsiConfigureProductEx</a>
     /// </p></remarks>
-    public static void ConfigureProduct(string productCode, int installLevel, InstallState installState, string commandLine)
+    internal static void ConfigureProduct(string productCode, int installLevel, InstallState installState, string commandLine)
     {
         uint ret = NativeMethods.MsiConfigureProductEx(productCode, installLevel, (int) installState, commandLine);
         Installer.CheckInstallResult(ret);
@@ -542,7 +542,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiconfigurefeature.asp">MsiConfigureFeature</a>
     /// </p></remarks>
-    public static void ConfigureFeature(string productCode, string feature, InstallState installState)
+    internal static void ConfigureFeature(string productCode, string feature, InstallState installState)
     {
         uint ret = NativeMethods.MsiConfigureFeature(productCode, feature, (int) installState);
         Installer.CheckInstallResult(ret);
@@ -562,7 +562,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiapplypatch.asp">MsiApplyPatch</a>
     /// </p></remarks>
-    public static void ApplyPatch(string patchPackage, string commandLine)
+    internal static void ApplyPatch(string patchPackage, string commandLine)
     {
         Installer.ApplyPatch(patchPackage, null, InstallType.Default, commandLine);
     }
@@ -584,7 +584,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiapplypatch.asp">MsiApplyPatch</a>
     /// </p></remarks>
-    public static void ApplyPatch(string patchPackage, string installPackage, InstallType installType, string commandLine)
+    internal static void ApplyPatch(string patchPackage, string installPackage, InstallType installType, string commandLine)
     {
         uint ret = NativeMethods.MsiApplyPatch(patchPackage, installPackage, (int) installType, commandLine);
         Installer.CheckInstallResult(ret);
@@ -607,7 +607,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiremovepatches.asp">MsiRemovePatches</a>
     /// </p></remarks>
-    public static void RemovePatches(IList<string> patches, string productCode, string commandLine)
+    internal static void RemovePatches(IList<string> patches, string productCode, string commandLine)
     {
         if (patches == null || patches.Count == 0)
         {
@@ -664,7 +664,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidetermineapplicablepatches.asp">MsiDetermineApplicablePatches</a>
     /// </p></remarks>
-    public static IList<string> DetermineApplicablePatches(
+    internal static IList<string> DetermineApplicablePatches(
         string productPackage,
         string[] patches,
         InapplicablePatchHandler errorHandler)
@@ -709,7 +709,7 @@ public static partial class Installer
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidetermineapplicablepatches.asp">MsiDetermineApplicablePatches</a>
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msideterminepatchsequence.asp">MsiDeterminePatchSequence</a>
     /// </p></remarks>
-    public static IList<string> DetermineApplicablePatches(
+    internal static IList<string> DetermineApplicablePatches(
         string product,
         string[] patches,
         InapplicablePatchHandler errorHandler,
@@ -739,7 +739,7 @@ public static partial class Installer
             sequenceData[i].dwOrder = -1;
             sequenceData[i].dwStatus = 0;
         }
-        
+
         uint ret;
         if (context == UserContexts.None)
         {
@@ -794,7 +794,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiapplymultiplepatches.asp">MsiApplyMultiplePatches</a>
     /// </p></remarks>
-    public static void ApplyMultiplePatches(
+    internal static void ApplyMultiplePatches(
         IList<string> patchPackages, string productCode, string commandLine)
     {
         if (patchPackages == null || patchPackages.Count == 0)
@@ -837,7 +837,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiextractpatchxmldata.asp">MsiExtractPatchXMLData</a>
     /// </p></remarks>
-    public static string ExtractPatchXmlData(string patchPath)
+    internal static string ExtractPatchXmlData(string patchPath)
     {
         StringBuilder buf = new StringBuilder("");
         uint bufSize = 0;
@@ -864,7 +864,7 @@ public static partial class Installer
     /// Win32 MSI API:
     /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msinotifysidchange.asp">MsiNotifySidChange</a>
     /// </p></remarks>
-    public static void NotifySidChange(string oldSid, string newSid)
+    internal static void NotifySidChange(string oldSid, string newSid)
     {
         uint ret = NativeMethods.MsiNotifySidChange(oldSid, newSid);
         if (ret != 0)

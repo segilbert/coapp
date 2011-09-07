@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="GroupIconResource.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -32,7 +32,7 @@ namespace Microsoft.Deployment.Resources
     /// <remarks>
     /// The resource is of type <see cref="ResourceType.GroupIcon"/> (RT_GROUPICON).
     /// </remarks>
-    public sealed class GroupIconResource : Resource
+    internal sealed class GroupIconResource : Resource
     {
         internal bool dirty;
         private GroupIconInfo rawGroupIconInfo;
@@ -43,7 +43,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="name">Name of the resource. For a numeric resource identifier, prefix the decimal number with a "#".</param>
         /// <param name="locale">Locale of the resource</param>
-        public GroupIconResource(string name, int locale)
+        internal GroupIconResource(string name, int locale)
             : this(name, locale, null)
         {
         }
@@ -54,7 +54,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="name">Name of the resource. For a numeric resource identifier, prefix the decimal number with a "#".</param>
         /// <param name="locale">Locale of the resource</param>
         /// <param name="data">Raw resource data</param>
-        public GroupIconResource(string name, int locale, byte[] data)
+        internal GroupIconResource(string name, int locale, byte[] data)
             : base(ResourceType.GroupIcon, name, locale, data)
         {
             this.RefreshIconGroupInfo(data);
@@ -63,7 +63,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the raw data of the resource.  The data is in the format of the RT_GROUPICON resource structure.
         /// </summary>
-        public override byte[] Data
+        internal override byte[] Data
         {
             get
             {
@@ -87,13 +87,13 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Enumerates the the icons in the icon group.
         /// </summary>
-        public IEnumerable<Resource> Icons { get { return this.icons; } }
+        internal IEnumerable<Resource> Icons { get { return this.icons; } }
 
         /// <summary>
         /// Reads the icon group from a .ico file.
         /// </summary>
         /// <param name="path">Path to an icon file (.ico).</param>
-        public void ReadFromFile(string path)
+        internal void ReadFromFile(string path)
         {
             this.rawGroupIconInfo = new GroupIconInfo();
             this.icons = new List<Resource>();

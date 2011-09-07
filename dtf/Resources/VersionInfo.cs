@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="VersionInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -32,7 +32,7 @@ namespace Microsoft.Deployment.Resources
         private byte[] data;
         private List<VersionInfo> children;
 
-        public VersionInfo(string key)
+        internal VersionInfo(string key)
             : base()
         {
             if (key == null)
@@ -44,7 +44,7 @@ namespace Microsoft.Deployment.Resources
             this.children = new List<VersionInfo>();
         }
 
-        public string Key
+        internal string Key
         {
             get
             {
@@ -62,20 +62,20 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public bool IsString
+        internal bool IsString
         {
             get
             {
                 return this.isString;
             }
-            
+
             set
             {
                 this.isString = value;
             }
         }
 
-        public byte[] Data
+        internal byte[] Data
         {
             get
             {
@@ -89,7 +89,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public void Read(BinaryReader reader)
+        internal void Read(BinaryReader reader)
         {
             long basePosition = reader.BaseStream.Position;
             int verInfoSize = (int) reader.ReadUInt16();
@@ -124,7 +124,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public void Write(BinaryWriter writer)
+        internal void Write(BinaryWriter writer)
         {
             long basePosition = writer.BaseStream.Position;
             writer.Write((ushort) this.Length);
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public static explicit operator VersionInfo(byte[] bytesValue)
+        internal static explicit operator VersionInfo(byte[] bytesValue)
         {
             VersionInfo viValue = new VersionInfo("");
             using (BinaryReader reader = new BinaryReader(new MemoryStream(bytesValue, false)))
@@ -188,7 +188,7 @@ namespace Microsoft.Deployment.Resources
             return viValue;
         }
 
-        public static explicit operator byte[](VersionInfo viValue)
+        internal static explicit operator byte[](VersionInfo viValue)
         {
             byte[] bytesValue = new byte[viValue.Length];
             using (BinaryWriter writer = new BinaryWriter(new MemoryStream(bytesValue, true)))
@@ -198,7 +198,7 @@ namespace Microsoft.Deployment.Resources
             return bytesValue;
         }
 
-        public VersionInfo this[string itemKey]
+        internal VersionInfo this[string itemKey]
         {
             get
             {
@@ -208,17 +208,17 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public void Add(VersionInfo item)
+        internal void Add(VersionInfo item)
         {
             this.children.Add(item);
         }
 
-        public bool Remove(VersionInfo item)
+        internal bool Remove(VersionInfo item)
         {
             return this.children.Remove(item);
         }
 
-        public bool Remove(string itemKey)
+        internal bool Remove(string itemKey)
         {
             int index = this.IndexOf(itemKey);
             if (index >= 0)
@@ -241,22 +241,22 @@ namespace Microsoft.Deployment.Resources
             return -1;
         }
 
-        public bool Contains(VersionInfo item)
+        internal bool Contains(VersionInfo item)
         {
             return this.children.Contains(item);
         }
 
-        public void CopyTo(VersionInfo[] array, int index)
+        internal void CopyTo(VersionInfo[] array, int index)
         {
             this.children.CopyTo(array, index);
         }
 
-        public void Clear()
+        internal void Clear()
         {
             this.children.Clear();
         }
 
-        public int Count
+        internal int Count
         {
             get
             {
@@ -264,7 +264,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public bool IsReadOnly
+        internal bool IsReadOnly
         {
             get
             {
@@ -272,7 +272,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        public IEnumerator<VersionInfo> GetEnumerator()
+        internal IEnumerator<VersionInfo> GetEnumerator()
         {
             return this.children.GetEnumerator();
         }

@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ComponentInstallation.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -25,7 +25,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Represents an instance of a registered component.
     /// </summary>
-    public class ComponentInstallation : InstallationPart
+    internal class ComponentInstallation : InstallationPart
     {
         /// <summary>
         /// Gets the set of installed components for all products.
@@ -35,7 +35,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumcomponents.asp">MsiEnumComponents</a>
         /// </p></remarks>
-        public static IEnumerable<ComponentInstallation> AllComponents
+        internal static IEnumerable<ComponentInstallation> AllComponents
         {
             get
             {
@@ -61,7 +61,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/dd407947.aspx">MsiEnumComponentsEx</a>
         /// </p></remarks>
-        public static IEnumerable<ComponentInstallation> Components(string szUserSid, UserContexts dwContext)
+        internal static IEnumerable<ComponentInstallation> Components(string szUserSid, UserContexts dwContext)
         {
             uint pcchSid = 32;
             StringBuilder szSid = new StringBuilder((int)pcchSid);
@@ -110,7 +110,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetproductcode.asp">MsiGetProductCode</a>
         /// </p></remarks>
-        public ComponentInstallation(string componentCode)
+        internal ComponentInstallation(string componentCode)
             : this(componentCode, ComponentInstallation.GetProductCode(componentCode))
         {
         }
@@ -122,7 +122,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="componentCode">component GUID</param>
         /// <param name="szUserSid">context user SID</param>
         /// <param name="dwContext">user contexts</param>
-        public ComponentInstallation(string componentCode, string szUserSid, UserContexts dwContext)
+        internal ComponentInstallation(string componentCode, string szUserSid, UserContexts dwContext)
             : this(componentCode, ComponentInstallation.GetProductCode(componentCode, szUserSid, dwContext), szUserSid, dwContext)
         {
         }
@@ -133,7 +133,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="componentCode">component GUID</param>
         /// <param name="productCode">ProductCode GUID</param>
-        public ComponentInstallation(string componentCode, string productCode)
+        internal ComponentInstallation(string componentCode, string productCode)
             : this(componentCode, productCode, null, UserContexts.All)
         {
         }
@@ -146,7 +146,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="productCode">ProductCode GUID</param>
         /// <param name="szUserSid">context user SID</param>
         /// <param name="dwContext">user contexts</param>
-        public ComponentInstallation(string componentCode, string productCode, string szUserSid, UserContexts dwContext)
+        internal ComponentInstallation(string componentCode, string productCode, string szUserSid, UserContexts dwContext)
             : base(componentCode, productCode, szUserSid, dwContext)
         {
             if (string.IsNullOrEmpty(componentCode))
@@ -158,7 +158,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the component code (GUID) of the component.
         /// </summary>
-        public string ComponentCode
+        internal string ComponentCode
         {
             get
             {
@@ -179,7 +179,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumclients.asp">MsiEnumClients</a>,
         /// <a href="http://msdn.microsoft.com/library/dd407946.aspx">MsiEnumClientsEx</a>
         /// </p></remarks>
-        public IEnumerable<ProductInstallation> ClientProducts
+        internal IEnumerable<ProductInstallation> ClientProducts
         {
             get
             {
@@ -212,7 +212,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetcomponentpath.asp">MsiGetComponentPath</a>,
         /// <a href="http://msdn.microsoft.com/library/dd408006.aspx">MsiGetComponentPathEx</a>
         /// </p></remarks>
-        public override InstallState State
+        internal override InstallState State
         {
             get
             {
@@ -252,7 +252,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/dd408006.aspx">MsiGetComponentPathEx</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msilocatecomponent.asp">MsiLocateComponent</a>
         /// </p></remarks>
-        public string Path
+        internal string Path
         {
             get
             {
@@ -314,7 +314,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumcomponentqualifiers.asp">MsiEnumComponentQualifiers</a>
         /// </p></remarks>
-        public IEnumerable<ComponentInstallation.Qualifier> Qualifiers
+        internal IEnumerable<ComponentInstallation.Qualifier> Qualifiers
         {
             get
             {
@@ -360,7 +360,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible")]
         [SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
-        public struct Qualifier
+        internal struct Qualifier
         {
             private string qualifierCode;
             private string data;
@@ -374,7 +374,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             /// <summary>
             /// Gets the qualifier code.
             /// </summary>
-            public string QualifierCode
+            internal string QualifierCode
             {
                 get
                 {
@@ -385,7 +385,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             /// <summary>
             /// Gets the qualifier data.
             /// </summary>
-            public string Data
+            internal string Data
             {
                 get
                 {

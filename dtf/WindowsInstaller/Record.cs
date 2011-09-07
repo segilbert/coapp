@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="Record.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -35,7 +35,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Record is directly returned from a query on a database. For other records, attempting
     /// to access a field by name will result in an InvalidOperationException.
     /// </p></remarks>
-    public class Record : InstallerHandle
+    internal class Record : InstallerHandle
     {
         private View view;
         private bool isFormatStringInvalid;
@@ -44,7 +44,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// IsFormatStringInvalid is set from several View methods that invalidate the FormatString
         /// and used to determine behavior during Record.ToString().
         /// </summary>
-        internal protected bool IsFormatStringInvalid
+        internal internal bool IsFormatStringInvalid
         {
             set { this.isFormatStringInvalid = value; }
 
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msicreaterecord.asp">MsiCreateRecord</a>
         /// </p></remarks>
-        public Record(int fieldCount)
+        internal Record(int fieldCount)
             : this((IntPtr) RemotableNativeMethods.MsiCreateRecord((uint) fieldCount, 0), true, (View) null)
         {
         }
@@ -81,7 +81,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msicreaterecord.asp">MsiCreateRecord</a>
         /// </p></remarks>
-        public Record(params object[] fields)
+        internal Record(params object[] fields)
             : this(fields.Length)
         {
             for (int i = 0; i < fields.Length; i++)
@@ -103,7 +103,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordgetfieldcount.asp">MsiRecordGetFieldCount</a>
         /// </p></remarks>
-        public int FieldCount
+        internal int FieldCount
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets or sets field 0 of the Record, which is the format string.
         /// </summary>
-        public string FormatString
+        internal string FormatString
         {
             get { return this.GetString(0); }
             set { this.SetString(0, value); }
@@ -134,7 +134,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// the object provided will determine the type of the Record field. The object should be one of:
         /// Int16, Int32, String, Stream, or null.
         /// </p></remarks>
-        public object this[string fieldName]
+        internal object this[string fieldName]
         {
             get
             {
@@ -177,7 +177,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordsetinteger.asp">MsiRecordSetInteger</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordsetstring.asp">MsiRecordSetString</a>
         /// </p></remarks>
-        public object this[int field]
+        internal object this[int field]
         {
             get
             {
@@ -256,11 +256,11 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         /// <param name="handle">Integer record handle</param>
         /// <param name="ownsHandle">true to close the handle when this object is disposed or finalized</param>
-        public static Record FromHandle(IntPtr handle, bool ownsHandle)
+        internal static Record FromHandle(IntPtr handle, bool ownsHandle)
         {
             return new Record(handle, ownsHandle, (View) null);
         }
-        
+
         /// <summary>
         /// Sets all fields in a record to null.
         /// </summary>
@@ -268,7 +268,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordcleardata.asp">MsiRecordClearData</a>
         /// </p></remarks>
-        public void Clear()
+        internal void Clear()
         {
             uint ret = RemotableNativeMethods.MsiRecordClearData((int) this.Handle);
             if (ret != 0)
@@ -288,7 +288,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordisnull.asp">MsiRecordIsNull</a>
         /// </p></remarks>
-        public bool IsNull(int field)
+        internal bool IsNull(int field)
         {
             this.CheckRange(field);
             return RemotableNativeMethods.MsiRecordIsNull((int) this.Handle, (uint) field);
@@ -301,7 +301,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <returns>True if the field is null, false otherwise.</returns>
         /// <exception cref="ArgumentOutOfRangeException">The field name does not match any
         /// of the named fields in the Record.</exception>
-        public bool IsNull(string fieldName)
+        internal bool IsNull(string fieldName)
         {
             int field = this.FindColumn(fieldName);
             return this.IsNull(field);
@@ -327,7 +327,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecorddatasize.asp">MsiRecordDataSize</a>
         /// </p></remarks>
-        public int GetDataSize(int field)
+        internal int GetDataSize(int field)
         {
             this.CheckRange(field);
             return (int) RemotableNativeMethods.MsiRecordDataSize((int) this.Handle, (uint) field);
@@ -350,7 +350,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p><p>
         /// If the data is in stream format, the property returns the byte count.
         /// </p></remarks>
-        public int GetDataSize(string fieldName)
+        internal int GetDataSize(string fieldName)
         {
             int field = this.FindColumn(fieldName);
             return this.GetDataSize(field);
@@ -369,7 +369,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         /// <seealso cref="GetNullableInteger(int)"/>
         [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "integer")]
-        public int GetInteger(int field)
+        internal int GetInteger(int field)
         {
             this.CheckRange(field);
 
@@ -390,7 +390,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// of the named fields in the Record.</exception>
         /// <seealso cref="GetNullableInteger(string)"/>
         [SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "integer")]
-        public int GetInteger(string fieldName)
+        internal int GetInteger(string fieldName)
         {
             int field = this.FindColumn(fieldName);
             return this.GetInteger(field);
@@ -408,7 +408,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordgetinteger.asp">MsiRecordGetInteger</a>
         /// </p></remarks>
         /// <seealso cref="GetInteger(int)"/>
-        public int? GetNullableInteger(int field)
+        internal int? GetNullableInteger(int field)
         {
             this.CheckRange(field);
 
@@ -428,7 +428,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <exception cref="ArgumentOutOfRangeException">The field name does not match any
         /// of the named fields in the Record.</exception>
         /// <seealso cref="GetInteger(string)"/>
-        public int? GetNullableInteger(string fieldName)
+        internal int? GetNullableInteger(string fieldName)
         {
             int field = this.FindColumn(fieldName);
             return this.GetInteger(field);
@@ -446,7 +446,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordsetinteger.asp">MsiRecordSetInteger</a>
         /// </p></remarks>
         /// <seealso cref="SetNullableInteger(int,int?)"/>
-        public void SetInteger(int field, int value)
+        internal void SetInteger(int field, int value)
         {
             this.CheckRange(field);
 
@@ -465,7 +465,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <exception cref="ArgumentOutOfRangeException">The field name does not match any
         /// of the named fields in the Record.</exception>
         /// <seealso cref="SetNullableInteger(string,int?)"/>
-        public void SetInteger(string fieldName, int value)
+        internal void SetInteger(string fieldName, int value)
         {
             int field = this.FindColumn(fieldName);
             this.SetInteger(field, value);
@@ -483,7 +483,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordsetinteger.asp">MsiRecordSetInteger</a>
         /// </p></remarks>
         /// <seealso cref="SetInteger(int,int)"/>
-        public void SetNullableInteger(int field, int? value)
+        internal void SetNullableInteger(int field, int? value)
         {
             this.CheckRange(field);
 
@@ -505,7 +505,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <exception cref="ArgumentOutOfRangeException">The field name does not match any
         /// of the named fields in the Record.</exception>
         /// <seealso cref="SetInteger(string,int)"/>
-        public void SetNullableInteger(string fieldName, int? value)
+        internal void SetNullableInteger(string fieldName, int? value)
         {
             int field = this.FindColumn(fieldName);
             this.SetNullableInteger(field, value);
@@ -522,7 +522,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordgetstring.asp">MsiRecordGetString</a>
         /// </p></remarks>
-        public string GetString(int field)
+        internal string GetString(int field)
         {
             this.CheckRange(field);
 
@@ -548,7 +548,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <returns>String value of the field, or an empty string if the field is null.</returns>
         /// <exception cref="ArgumentOutOfRangeException">The field name does not match any
         /// of the named fields in the Record.</exception>
-        public string GetString(string fieldName)
+        internal string GetString(string fieldName)
         {
             int field = this.FindColumn(fieldName);
             return this.GetString(field);
@@ -565,7 +565,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordsetstring.asp">MsiRecordSetString</a>
         /// </p></remarks>
-        public void SetString(int field, string value)
+        internal void SetString(int field, string value)
         {
             this.CheckRange(field);
 
@@ -594,7 +594,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="value">new value of the field</param>
         /// <exception cref="ArgumentOutOfRangeException">The field name does not match any
         /// of the named fields in the Record.</exception>
-        public void SetString(string fieldName, string value)
+        internal void SetString(string fieldName, string value)
         {
             int field = this.FindColumn(fieldName);
             this.SetString(field, value);
@@ -617,7 +617,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordreadstream.asp">MsiRecordReadStream</a>
         /// </p></remarks>
-        public void GetStream(int field, string filePath)
+        internal void GetStream(int field, string filePath)
         {
             if (String.IsNullOrEmpty(filePath))
             {
@@ -686,7 +686,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// `Name` and `Data` column of the `_Storages` table, then get the stream of the `Data` field.
         /// However, substorages may only be extracted from a database that is open in read-only mode.
         /// </p></remarks>
-        public void GetStream(string fieldName, string filePath)
+        internal void GetStream(string fieldName, string filePath)
         {
             int field = this.FindColumn(fieldName);
             this.GetStream(field, filePath);
@@ -706,7 +706,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordreadstream.asp">MsiRecordReadStream</a>
         /// </p></remarks>
-        public Stream GetStream(int field)
+        internal Stream GetStream(int field)
         {
             this.CheckRange(field);
 
@@ -724,7 +724,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// This method is not capable of reading substorages. To extract a substorage,
         /// use <see cref="GetStream(string,string)"/>.
         /// </p></remarks>
-        public Stream GetStream(string fieldName)
+        internal Stream GetStream(string fieldName)
         {
             int field = this.FindColumn(fieldName);
             return this.GetStream(field);
@@ -750,7 +750,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordsetstream.asp">MsiRecordsetStream</a>
         /// </p></remarks>
-        public void SetStream(int field, string filePath)
+        internal void SetStream(int field, string filePath)
         {
             this.CheckRange(field);
 
@@ -782,7 +782,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Setting a stream with this method is more efficient than setting a field to a
         /// FileStream object.
         /// </p></remarks>
-        public void SetStream(string fieldName, string filePath)
+        internal void SetStream(string fieldName, string filePath)
         {
             int field = this.FindColumn(fieldName);
             this.SetStream(field, filePath);
@@ -801,7 +801,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msirecordsetstream.asp">MsiRecordsetStream</a>
         /// </p></remarks>
-        public void SetStream(int field, Stream stream)
+        internal void SetStream(int field, Stream stream)
         {
             this.CheckRange(field);
 
@@ -866,7 +866,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// The stream persists if the Record is inserted into the Database and the Database is committed.
         /// </p></remarks>
-        public void SetStream(string fieldName, Stream stream)
+        internal void SetStream(string fieldName, Stream stream)
         {
             int field = this.FindColumn(fieldName);
             this.SetStream(field, stream);
@@ -884,7 +884,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         /// <seealso cref="FormatString"/>
         /// <seealso cref="Session.FormatRecord(Record)"/>
-        public override string ToString()
+        internal override string ToString()
         {
             return this.ToString((IFormatProvider) null);
         }
@@ -903,7 +903,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         /// <seealso cref="FormatString"/>
         /// <seealso cref="Session.FormatRecord(Record)"/>
-        public string ToString(IFormatProvider provider)
+        internal string ToString(IFormatProvider provider)
         {
             if (this.IsFormatStringInvalid) // Format string is invalid
             {
@@ -941,7 +941,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         [Obsolete("This method is obsolete because it has undesirable side-effects. As an alternative, set the FormatString " +
             "property separately before calling the ToString() override that takes no parameters.")]
-        public string ToString(string format)
+        internal string ToString(string format)
         {
             return this.ToString(format, null);
         }
@@ -962,7 +962,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <seealso cref="Session.FormatRecord(Record)"/>
         [Obsolete("This method is obsolete because it has undesirable side-effects. As an alternative, set the FormatString " +
             "property separately before calling the ToString() override that takes just a format provider.")]
-        public string ToString(string format, IFormatProvider provider)
+        internal string ToString(string format, IFormatProvider provider)
         {
             if (format == null)
             {

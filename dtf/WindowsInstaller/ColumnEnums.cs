@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ColumnEnums.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -26,10 +26,10 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Available values for the Attributes column of the Component table.
     /// </summary>
     [Flags]
-    public enum ComponentAttributes : int
+    internal enum ComponentAttributes : int
     {
         /// <summary>
-        /// Local only - Component cannot be run from source. 
+        /// Local only - Component cannot be run from source.
         /// </summary>
         /// <remarks><p>
         /// Set this value for all components belonging to a feature to prevent the feature from being run-from-network or
@@ -145,7 +145,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines flags for the Attributes column of the Control table.
     /// </summary>
     [Flags]
-    public enum ControlAttributes : int
+    internal enum ControlAttributes : int
     {
         /// <summary>If this bit is set, the control is visible on the dialog box.</summary>
         Visible           = 0x00000001,
@@ -173,7 +173,7 @@ namespace Microsoft.Deployment.WindowsInstaller
 
         /// <summary>This is a combination of the RightToLeftReadingOrder, RightAligned, and LeftScroll attributes.</summary>
         Bidirectional     = RightToLeftReadingOrder | RightAligned | LeftScroll,
-    
+
         /// <summary>If this bit is set on a text control, the control is displayed transparently with the background showing through the control where there are no characters.</summary>
         Transparent       = 0x00010000,
 
@@ -194,10 +194,10 @@ namespace Microsoft.Deployment.WindowsInstaller
 
         /// <summary>This attribute creates an edit control for entering passwords. The control displays each character as an asterisk (*) as they are typed into the control.</summary>
         PasswordInput     = 0x00200000,
-    
+
         /// <summary>If this bit is set on a ProgressBar control, the bar is drawn as a series of small rectangles in Microsoft Windows 95-style. Otherwise it is drawn as a single continuous rectangle.</summary>
         Progress95        = 0x00010000,
-    
+
         /// <summary>If this bit is set, the control shows removable volumes.</summary>
         RemovableVolume   = 0x00010000,
 
@@ -216,16 +216,16 @@ namespace Microsoft.Deployment.WindowsInstaller
 
         /// <summary>If this bit is set, the control shows floppy volumes.</summary>
         FloppyVolume      = 0x00200000,
-        
+
         /// <summary>Specifies whether or not the rollback backup files are included in the costs displayed by the VolumeCostList control.</summary>
         ShowRollbackCost  = 0x00400000,
-    
+
         /// <summary>If this bit is set, the items listed in the control are displayed in a specified order. Otherwise, items are displayed in alphabetical order.</summary>
         Sorted            = 0x00010000,
 
         /// <summary>If this bit is set on a combo box, the edit field is replaced by a static text field. This prevents a user from entering a new value and requires the user to choose only one of the predefined values.</summary>
         ComboList         = 0x00020000,
-    
+
         //ImageHandle       = 0x00010000,
 
         /// <summary>If this bit is set on a check box or a radio button group, the button is drawn with the appearance of a push button, but its logic stays the same.</summary>
@@ -261,7 +261,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// </summary>
     [SuppressMessage("Microsoft.Usage", "CA2217:DoNotMarkEnumsWithFlags")]
     [Flags]
-    public enum CustomActionTypes : int
+    internal enum CustomActionTypes : int
     {
         /// <summary>Unspecified custom action type.</summary>
         None               = 0x0000,
@@ -337,7 +337,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines flags for the Attributes column of the Dialog table.
     /// </summary>
     [Flags]
-    public enum DialogAttributes : int
+    internal enum DialogAttributes : int
     {
         /// <summary>If this bit is set, the dialog is originally created as visible, otherwise it is hidden.</summary>
         Visible          = 0x00000001,
@@ -380,7 +380,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Available values for the Attributes column of the Feature table.
     /// </summary>
     [Flags]
-    public enum FeatureAttributes : int
+    internal enum FeatureAttributes : int
     {
         /// <summary>
         /// Favor local - Components of this feature that are not marked for installation from source are installed locally.
@@ -462,7 +462,7 @@ namespace Microsoft.Deployment.WindowsInstaller
 
         /// <summary>
         /// Set this attribute and advertising is disabled for the feature if the operating system shell does not
-        /// support Windows Installer descriptors. 
+        /// support Windows Installer descriptors.
         /// </summary>
         NoUnsupportedAdvertise = 0x0020,
     }
@@ -471,7 +471,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Available values for the Attributes column of the File table.
     /// </summary>
     [Flags]
-    public enum FileAttributes : int
+    internal enum FileAttributes : int
     {
         /// <summary>No attributes.</summary>
         None          = 0x0000,
@@ -513,7 +513,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines values for the Action column of the IniFile and RemoveIniFile tables.
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Ini")]
-    public enum IniFileAction : int
+    internal enum IniFileAction : int
     {
         /// <summary>Creates or updates a .ini entry.</summary>
         AddLine    = 0,
@@ -536,7 +536,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// </summary>
     [Flags]
     [SuppressMessage("Microsoft.Design", "CA1008:EnumsShouldHaveZeroValue")]
-    public enum LocatorTypes : int
+    internal enum LocatorTypes : int
     {
         /// <summary>Key path is a directory.</summary>
         Directory    = 0x00000000,
@@ -554,7 +554,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Defines values for the Root column of the Registry, RemoveRegistry, and RegLocator tables.
     /// </summary>
-    public enum RegistryRoot : int
+    internal enum RegistryRoot : int
     {
         /// <summary>HKEY_CURRENT_USER for a per-user installation,
         /// or HKEY_LOCAL_MACHINE for a per-machine installation.</summary>
@@ -577,7 +577,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines values for the InstallMode column of the RemoveFile table.
     /// </summary>
     [Flags]
-    public enum RemoveFileModes : int
+    internal enum RemoveFileModes : int
     {
         /// <summary>Never remove.</summary>
         None      = 0,
@@ -593,7 +593,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines values for the ServiceType, StartType, and ErrorControl columns of the ServiceInstall table.
     /// </summary>
     [Flags]
-    public enum ServiceAttributes : int
+    internal enum ServiceAttributes : int
     {
         /// <summary>No flags.</summary>
         None = 0,
@@ -634,7 +634,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines values for the Event column of the ServiceControl table.
     /// </summary>
     [Flags]
-    public enum ServiceControlEvents : int
+    internal enum ServiceControlEvents : int
     {
         /// <summary>No control events.</summary>
         None            = 0x0000,
@@ -662,7 +662,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines values for the StyleBits column of the TextStyle table.
     /// </summary>
     [Flags]
-    public enum TextStyles : int
+    internal enum TextStyles : int
     {
         /// <summary>Bold</summary>
         Bold      = 0x0001,
@@ -681,7 +681,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Defines values for the Attributes column of the Upgrade table.
     /// </summary>
     [Flags]
-    public enum UpgradeAttributes : int
+    internal enum UpgradeAttributes : int
     {
         /// <summary>Migrates feature states by enabling the logic in the MigrateFeatureStates action.</summary>
         MigrateFeatures     = 0x0001,

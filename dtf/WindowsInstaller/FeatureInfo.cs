@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="FeatureInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -25,7 +25,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Accessor for information about features within the context of an installation session.
     /// </summary>
-    public sealed class FeatureInfoCollection : ICollection<FeatureInfo>
+    internal sealed class FeatureInfoCollection : ICollection<FeatureInfo>
     {
         private Session session;
 
@@ -39,7 +39,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="feature">name of the feature</param>
         /// <returns>feature object</returns>
-        public FeatureInfo this[string feature]
+        internal FeatureInfo this[string feature]
         {
             get
             {
@@ -62,7 +62,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="feature">name of the feature</param>
         /// <returns>true if the feature is in the collection, else false</returns>
-        public bool Contains(string feature)
+        internal bool Contains(string feature)
         {
             return this.session.Database.CountRows(
                 "Feature", "`Feature` = '" + feature + "'") == 1;
@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">array that receives the features</param>
         /// <param name="arrayIndex">offset into the array</param>
-        public void CopyTo(FeatureInfo[] array, int arrayIndex)
+        internal void CopyTo(FeatureInfo[] array, int arrayIndex)
         {
             foreach (FeatureInfo feature in this)
             {
@@ -89,7 +89,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of features defined for the product.
         /// </summary>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Enumerates the features in the collection.
         /// </summary>
         /// <returns>an enumerator over all features in the collection</returns>
-        public IEnumerator<FeatureInfo> GetEnumerator()
+        internal IEnumerator<FeatureInfo> GetEnumerator()
         {
             using (View featureView = this.session.Database.OpenView(
                 "SELECT `Feature` FROM `Feature`"))
@@ -138,7 +138,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Provides access to information about a feature within the context of an installation session.
     /// </summary>
-    public class FeatureInfo
+    internal class FeatureInfo
     {
         private Session session;
         private string name;
@@ -152,7 +152,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the name of the feature (primary key in the Feature table).
         /// </summary>
-        public string Name
+        internal string Name
         {
             get
             {
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfeaturestate.asp">MsiGetFeatureState</a>
         /// </p></remarks>
-        public InstallState CurrentState
+        internal InstallState CurrentState
         {
             get
             {
@@ -209,7 +209,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfeaturestate.asp">MsiGetFeatureState</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetfeaturestate.asp">MsiSetFeatureState</a>
         /// </p></remarks>
-        public InstallState RequestState
+        internal InstallState RequestState
         {
             get
             {
@@ -255,7 +255,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfeaturevalidstates.asp">MsiGetFeatureValidStates</a>
         /// </p></remarks>
-        public ICollection<InstallState> ValidStates
+        internal ICollection<InstallState> ValidStates
         {
             get
             {
@@ -300,12 +300,12 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// does not contain an equivalent flag for <see cref="FeatureAttributes.UIDisallowAbsent"/>, this flag will
         /// not be retrieved.
         /// </p><p>
-        /// Since the dwAttributes parameter of 
+        /// Since the dwAttributes parameter of
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetfeatureattributes.asp">MsiSetFeatureAttributes</a>
         /// does not contain an equivalent flag for <see cref="FeatureAttributes.UIDisallowAbsent"/>, the presence
         /// of this flag will be ignored.
         /// </p></remarks>
-        public FeatureAttributes Attributes
+        internal FeatureAttributes Attributes
         {
             get
             {
@@ -327,13 +327,13 @@ namespace Microsoft.Deployment.WindowsInstaller
                     throw InstallerException.ExceptionFromReturnCode(ret);
                 }
 
-                // Values for attributes that MsiGetFeatureInfo returns are 
+                // Values for attributes that MsiGetFeatureInfo returns are
                 // double the values in the Attributes column of the Feature Table.
                 attributes = (FeatureAttributes) (attr >> 1);
 
-                // MsiGetFeatureInfo MSDN documentation indicates 
+                // MsiGetFeatureInfo MSDN documentation indicates
                 // NOUNSUPPORTEDADVERTISE is 32.  Conversion above changes this to 16
-                // which is UIDisallowAbsent.  MsiGetFeatureInfo isn't documented to 
+                // which is UIDisallowAbsent.  MsiGetFeatureInfo isn't documented to
                 // return an attribute for 'UIDisallowAbsent', so if UIDisallowAbsent
                 // is set, change it to NoUnsupportedAdvertise which then maps correctly
                 // to NOUNSUPPORTEDADVERTISE.
@@ -353,11 +353,11 @@ namespace Microsoft.Deployment.WindowsInstaller
                 FeatureAttributes attributes = value;
                 attributes &= ~FeatureAttributes.UIDisallowAbsent;
 
-                // Values for attributes that MsiSetFeatureAttributes uses are 
+                // Values for attributes that MsiSetFeatureAttributes uses are
                 // double the values in the Attributes column of the Feature Table.
                 uint attr = ((uint) attributes) << 1;
 
-                // MsiSetFeatureAttributes MSDN documentation indicates 
+                // MsiSetFeatureAttributes MSDN documentation indicates
                 // NOUNSUPPORTEDADVERTISE is 32.  Conversion above changes this to 64
                 // which is undefined.  Change this back to 32.
                 uint noUnsupportedAdvertiseDbl = ((uint)FeatureAttributes.NoUnsupportedAdvertise) << 1;
@@ -368,7 +368,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 }
 
                 uint ret = RemotableNativeMethods.MsiSetFeatureAttributes((int) this.session.Handle, this.name, attr);
-                
+
                 if (ret != (uint)NativeMethods.Error.SUCCESS)
                 {
                     if (ret == (uint)NativeMethods.Error.UNKNOWN_FEATURE)
@@ -392,7 +392,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfeatureinfo.asp">MsiGetFeatureInfo</a>
         /// </p></remarks>
-        public string Title
+        internal string Title
         {
             get
             {
@@ -440,7 +440,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfeatureinfo.asp">MsiGetFeatureInfo</a>
         /// </p></remarks>
-        public string Description
+        internal string Description
         {
             get
             {
@@ -490,7 +490,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetfeaturecost.asp">MsiGetFeatureCost</a>
         /// </p></remarks>
-        public long GetCost(bool includeParents, bool includeChildren, InstallState installState)
+        internal long GetCost(bool includeParents, bool includeChildren, InstallState installState)
         {
             const int MSICOSTTREE_CHILDREN = 1;
             const int MSICOSTTREE_PARENTS = 2;

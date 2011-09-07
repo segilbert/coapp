@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="Session.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -39,7 +39,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// </p><p>
     /// Note that only one Session object can be opened by a single process.
     /// </p></remarks>
-    public sealed class Session : InstallerHandle, IFormatProvider
+    internal sealed class Session : InstallerHandle, IFormatProvider
     {
         private Database database;
         private CustomActionData customActionData;
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetactivedatabase.asp">MsiGetActiveDatabase</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1065:DoNotRaiseExceptionsInUnexpectedLocations")]
-        public Database Database
+        internal Database Database
         {
             get
             {
@@ -96,7 +96,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetlanguage.asp">MsiGetLanguage</a>
         /// </p></remarks>
-        public int Language
+        internal int Language
         {
             get
             {
@@ -115,7 +115,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetproperty.asp">MsiGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetproperty.asp">MsiSetProperty</a>
         /// </p></remarks>
-        public string this[string property]
+        internal string this[string property]
         {
             get
             {
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// should normally be obtained by calling <see cref="Installer.OpenPackage(Database,bool)"/>
         /// or <see cref="Installer.OpenProduct"/>.
         /// </p></remarks>
-        public static Session FromHandle(IntPtr handle, bool ownsHandle)
+        internal static Session FromHandle(IntPtr handle, bool ownsHandle)
         {
             return new Session(handle, ownsHandle);
         }
@@ -215,7 +215,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprocessmessage.asp">MsiProcessMessage</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public MessageResult Message(InstallMessage messageType, Record record)
+        internal MessageResult Message(InstallMessage messageType, Record record)
         {
             if (record == null)
             {
@@ -242,7 +242,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprocessmessage.asp">MsiProcessMessage</a>
         /// </p></remarks>
-        public void Log(string msg)
+        internal void Log(string msg)
         {
             if (msg == null)
             {
@@ -265,7 +265,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiprocessmessage.asp">MsiProcessMessage</a>
         /// </p></remarks>
-        public void Log(string format, params object[] args)
+        internal void Log(string format, params object[] args)
         {
             this.Log(String.Format(CultureInfo.InvariantCulture, format, args));
         }
@@ -282,7 +282,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msievaluatecondition.asp">MsiEvaluateCondition</a>
         /// </p></remarks>
-        public bool EvaluateCondition(string condition)
+        internal bool EvaluateCondition(string condition)
         {
             if (String.IsNullOrEmpty(condition))
             {
@@ -317,7 +317,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msievaluatecondition.asp">MsiEvaluateCondition</a>
         /// </p></remarks>
-        public bool EvaluateCondition(string condition, bool defaultValue)
+        internal bool EvaluateCondition(string condition, bool defaultValue)
         {
             if (condition == null)
             {
@@ -345,7 +345,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiformatrecord.asp">MsiFormatRecord</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Naming", "CA1719:ParameterNamesShouldNotMatchMemberNames")]
-        public string Format(string format)
+        internal string Format(string format)
         {
             if (format == null)
             {
@@ -370,7 +370,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiformatrecord.asp">MsiFormatRecord</a>
         /// </p></remarks>
-        public string FormatRecord(Record record)
+        internal string FormatRecord(Record record)
         {
             if (record == null)
             {
@@ -393,7 +393,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         [Obsolete("This method is obsolete because it has undesirable side-effects. As an alternative, set the Record's " +
             "FormatString property separately before calling the FormatRecord() override that takes only the Record parameter.")]
-        public string FormatRecord(Record record, string format)
+        internal string FormatRecord(Record record, string format)
         {
             if (record == null)
             {
@@ -414,7 +414,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetproductproperty.asp">MsiGetProductProperty</a>
         /// </p></remarks>
-        public string GetProductProperty(string property)
+        internal string GetProductProperty(string property)
         {
             if (String.IsNullOrEmpty(property))
             {
@@ -426,7 +426,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             StringBuilder buf = new StringBuilder();
             uint bufSize = (uint) buf.Capacity;
             uint ret = NativeMethods.MsiGetProductProperty((int) this.Handle, property, buf, ref bufSize);
-            
+
             if (ret == (uint) NativeMethods.Error.MORE_DATA)
             {
                 buf.Capacity = (int) ++bufSize;
@@ -443,7 +443,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets an accessor for components in the current session.
         /// </summary>
-        public ComponentInfoCollection Components
+        internal ComponentInfoCollection Components
         {
             get
             {
@@ -455,7 +455,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets an accessor for features in the current session.
         /// </summary>
-        public FeatureInfoCollection Features
+        internal FeatureInfoCollection Features
         {
             get
             {
@@ -472,7 +472,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiverifydiskspace.asp">MsiVerifyDiskSpace</a>
         /// </p></remarks>
-        public bool VerifyDiskSpace()
+        internal bool VerifyDiskSpace()
         {
             this.ValidateSessionAccess();
 
@@ -497,7 +497,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumcomponentcosts.asp">MsiEnumComponentCosts</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]
-        public IList<InstallCost> GetTotalCost()
+        internal IList<InstallCost> GetTotalCost()
         {
             this.ValidateSessionAccess();
 
@@ -558,7 +558,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetmode.asp">MsiGetMode</a>
         /// </p></remarks>
-        public bool GetMode(InstallRunMode mode)
+        internal bool GetMode(InstallRunMode mode)
         {
             return RemotableNativeMethods.MsiGetMode((int) this.Handle, (uint) mode);
         }
@@ -575,7 +575,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetmode.asp">MsiSetMode</a>
         /// </p></remarks>
-        public void SetMode(InstallRunMode mode, bool value)
+        internal void SetMode(InstallRunMode mode, bool value)
         {
             this.ValidateSessionAccess();
 
@@ -602,7 +602,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetsourcepath.asp">MsiGetSourcePath</a>
         /// </p></remarks>
-        public string GetSourcePath(string directory)
+        internal string GetSourcePath(string directory)
         {
             if (String.IsNullOrEmpty(directory))
             {
@@ -643,7 +643,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigettargetpath.asp">MsiGetTargetPath</a>
         /// </p></remarks>
-        public string GetTargetPath(string directory)
+        internal string GetTargetPath(string directory)
         {
             if (String.IsNullOrEmpty(directory))
             {
@@ -698,7 +698,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisettargetpath.asp">MsiSetTargetPath</a>
         /// </p></remarks>
-        public void SetTargetPath(string directory, string value)
+        internal void SetTargetPath(string directory, string value)
         {
             if (String.IsNullOrEmpty(directory))
             {
@@ -747,7 +747,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetinstalllevel.asp">MsiSetInstallLevel</a>
         /// </p></remarks>
-        public void SetInstallLevel(int installLevel)
+        internal void SetInstallLevel(int installLevel)
         {
             this.ValidateSessionAccess();
 
@@ -781,7 +781,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidoaction.asp">MsiDoAction</a>
         /// </p></remarks>
-        public void DoAction(string action)
+        internal void DoAction(string action)
         {
             this.DoAction(action, null);
         }
@@ -814,7 +814,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidoaction.asp">MsiDoAction</a>
         /// </p></remarks>
-        public void DoAction(string action, CustomActionData actionData)
+        internal void DoAction(string action, CustomActionData actionData)
         {
             if (String.IsNullOrEmpty(action))
             {
@@ -855,7 +855,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisequence.asp">MsiSequence</a>
         /// </p></remarks>
-        public void DoActionSequence(string sequenceTable)
+        internal void DoActionSequence(string sequenceTable)
         {
             if (String.IsNullOrEmpty(sequenceTable))
             {
@@ -875,7 +875,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets custom action data for the session that was supplied by the caller.
         /// </summary>
         /// <seealso cref="DoAction(string,CustomActionData)"/>
-        public CustomActionData CustomActionData
+        internal CustomActionData CustomActionData
         {
             get
             {
@@ -906,7 +906,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="disposing">If true, the method has been called directly
         /// or indirectly by a user's code, so managed and unmanaged resources will
         /// be disposed. If false, only unmanaged resources will be disposed.</param>
-        protected override void Dispose(bool disposing)
+        internal override void Dispose(bool disposing)
         {
             try
             {

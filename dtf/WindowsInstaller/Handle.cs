@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="Handle.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -29,7 +29,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// hold unmanaged resources (MSI handles) that should be properly disposed
     /// when no longer needed.
     /// </p></remarks>
-    public abstract class InstallerHandle : MarshalByRefObject, IDisposable
+    internal abstract class InstallerHandle : MarshalByRefObject, IDisposable
     {
         private NativeMethods.MsiHandle handle;
 
@@ -38,7 +38,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="handle">Native integer handle.</param>
         /// <param name="ownsHandle">true to close the handle when this object is disposed or finalized</param>
-        protected InstallerHandle(IntPtr handle, bool ownsHandle)
+        internal InstallerHandle(IntPtr handle, bool ownsHandle)
         {
             if (handle == IntPtr.Zero)
             {
@@ -52,7 +52,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the native integer handle.
         /// </summary>
         [SuppressMessage("Microsoft.Design", "CA1065:DoNotRaiseExceptionsInUnexpectedLocations")]
-        public IntPtr Handle
+        internal IntPtr Handle
         {
             get
             {
@@ -68,7 +68,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Checks if the handle is closed. When closed, method calls on the handle object may throw an <see cref="InvalidHandleException"/>.
         /// </summary>
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        public bool IsClosed
+        internal bool IsClosed
         {
             get
             {
@@ -90,10 +90,10 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiclosehandle.asp">MsiCloseHandle</a>
         /// </p></remarks>
         /// <seealso cref="Close"/>
-        public void Dispose() 
+        internal void Dispose()
         {
             this.Dispose(true);
-            GC.SuppressFinalize(this); 
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiclosehandle.asp">MsiCloseHandle</a>
         /// </p></remarks>
-        public void Close()
+        internal void Close()
         {
             this.Dispose();
         }
@@ -122,7 +122,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="obj">The handle object to compare with the current handle object.</param>
         /// <returns>true if the specified handle object is equal to the current handle object; otherwise false</returns>
-        public override bool Equals(object obj)
+        internal override bool Equals(object obj)
         {
             return (obj != null && this.GetType() == obj.GetType() &&
                 this.Handle == ((InstallerHandle) obj).Handle);
@@ -135,7 +135,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// The hash code is derived from the native integer handle.
         /// </p></remarks>
-        public override int GetHashCode()
+        internal override int GetHashCode()
         {
             return this.Handle.GetHashCode();
         }
@@ -155,12 +155,12 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Closes the handle.  After closing a handle, further method calls may throw an <see cref="InvalidHandleException"/>.
         /// </summary>
         /// <param name="disposing">If true, the method has been called directly or indirectly by a user's code,
-        /// so managed and unmanaged resources will be disposed. If false, the method has been called by the 
+        /// so managed and unmanaged resources will be disposed. If false, the method has been called by the
         /// runtime from inside the finalizer, and only unmanaged resources will be disposed.</param>
         [SuppressMessage("Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands")]
-        protected virtual void Dispose(bool disposing) 
+        internal virtual void Dispose(bool disposing)
         {
-            if (disposing) 
+            if (disposing)
             {
                 this.handle.Dispose();
             }

@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ExternalUIHandler.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -26,7 +26,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Defines a callback function that the installer calls for progress notification and error messages.
     /// </summary>
-    public delegate MessageResult ExternalUIHandler(
+    internal delegate MessageResult ExternalUIHandler(
         InstallMessage messageType,
         string message,
         MessageButtons buttons,
@@ -36,7 +36,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// [MSI 3.1] Defines a callback function that the installer calls for record-based progress notification and error messages.
     /// </summary>
-    public delegate MessageResult ExternalUIRecordHandler(
+    internal delegate MessageResult ExternalUIRecordHandler(
         InstallMessage messageType,
         Record messageRecord,
         MessageButtons buttons,
@@ -56,13 +56,13 @@ namespace Microsoft.Deployment.WindowsInstaller
             this.handler = handler;
         }
 
-        public ExternalUIHandler Handler
+        internal ExternalUIHandler Handler
         {
             get { return this.handler; }
         }
 
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public int ProxyHandler(IntPtr contextPtr, int messageType, [MarshalAs(UnmanagedType.LPWStr)] string message)
+        internal int ProxyHandler(IntPtr contextPtr, int messageType, [MarshalAs(UnmanagedType.LPWStr)] string message)
         {
             try
             {
@@ -94,13 +94,13 @@ namespace Microsoft.Deployment.WindowsInstaller
             this.handler = handler;
         }
 
-        public ExternalUIRecordHandler Handler
+        internal ExternalUIRecordHandler Handler
         {
             get { return this.handler; }
         }
 
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public int ProxyHandler(IntPtr contextPtr, int messageType, int recordHandle)
+        internal int ProxyHandler(IntPtr contextPtr, int messageType, int recordHandle)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 int buttons   = messageType & 0x0000000F;
                 int icon      = messageType & 0x000000F0;
                 int defButton = messageType & 0x00000F00;
-                
+
                 Record msgRec = (recordHandle != 0 ? Record.FromHandle((IntPtr) recordHandle, false) : null);
                 using (msgRec)
                 {
@@ -127,7 +127,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
     }
 
-    public static partial class Installer
+    internal static partial class Installer
     {
         private static IList externalUIHandlers = ArrayList.Synchronized(new ArrayList());
 
@@ -160,7 +160,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetexternalui.asp">MsiSetExternalUI</a>
         /// </p></remarks>
-        public static ExternalUIHandler SetExternalUI(ExternalUIHandler uiHandler, InstallLogModes messageFilter)
+        internal static ExternalUIHandler SetExternalUI(ExternalUIHandler uiHandler, InstallLogModes messageFilter)
         {
             NativeExternalUIHandler nativeHandler = null;
             if (uiHandler != null)
@@ -209,7 +209,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisetexternaluirecord.asp">MsiSetExternalUIRecord</a>
         /// </p></remarks>
-        public static ExternalUIRecordHandler SetExternalUI(ExternalUIRecordHandler uiHandler, InstallLogModes messageFilter)
+        internal static ExternalUIRecordHandler SetExternalUI(ExternalUIRecordHandler uiHandler, InstallLogModes messageFilter)
         {
             NativeExternalUIRecordHandler nativeHandler = null;
             if (uiHandler != null)

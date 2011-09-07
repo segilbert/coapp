@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="InstallCost.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -23,7 +23,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// Represents a per-drive disk space cost for an installation.
     /// </summary>
     [SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
-    public struct InstallCost
+    internal struct InstallCost
     {
         private string driveName;
         private long cost;
@@ -45,7 +45,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The name of the drive this cost data applies to.
         /// </summary>
-        public string DriveName
+        internal string DriveName
         {
             get
             {
@@ -56,7 +56,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// The installation cost on this drive, as a number of bytes.
         /// </summary>
-        public long Cost
+        internal long Cost
         {
             get
             {
@@ -71,7 +71,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// This temporary space requirement is space needed only for the duration
         /// of the installation, over the final footprint on disk.
         /// </p></remarks>
-        public long TempCost
+        internal long TempCost
         {
             get
             {

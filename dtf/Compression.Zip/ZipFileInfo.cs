@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ZipFileInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.Compression.Zip
     /// the file properties and extracting the file.
     /// </summary>
     [Serializable]
-    public class ZipFileInfo : ArchiveFileInfo
+    internal class ZipFileInfo : ArchiveFileInfo
     {
         private long compressedLength;
         private ZipCompressionMethod compressionMethod;
@@ -38,7 +38,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <param name="zipInfo">An object representing the zip archive containing the file.</param>
         /// <param name="filePath">The path to the file within the zip archive. Usually, this is a simple file
         /// name, but if the zip archive contains a directory structure this may include the directory.</param>
-        public ZipFileInfo(ZipInfo zipInfo, string filePath)
+        internal ZipFileInfo(ZipInfo zipInfo, string filePath)
             : base(zipInfo, filePath)
         {
             if (zipInfo == null)
@@ -77,7 +77,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// </summary>
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
-        protected ZipFileInfo(SerializationInfo info, StreamingContext context)
+        internal ZipFileInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
             this.compressedLength = info.GetInt64("compressedLength");
@@ -86,7 +86,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Gets the compressed size of the file in bytes.
         /// </summary>
-        public long CompressedLength
+        internal long CompressedLength
         {
             get
             {
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <summary>
         /// Gets the method used to compress this file.
         /// </summary>
-        public ZipCompressionMethod CompressionMethod
+        internal ZipCompressionMethod CompressionMethod
         {
             get
             {
@@ -112,7 +112,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// <param name="context">The StreamingContext that contains contextual information
         /// about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
             info.AddValue("compressedLength", this.compressedLength);

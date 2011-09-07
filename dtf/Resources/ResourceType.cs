@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ResourceType.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -24,35 +24,35 @@ namespace Microsoft.Deployment.Resources
     /// <summary>
     /// Represents either a standard integer resource type or a custom resource type name.
     /// </summary>
-    public class ResourceType
+    internal class ResourceType
     {
         // Silence warnings about doc-comments
         #pragma warning disable 1591
 
-        public static ResourceType None          { get { return "#0"; } }
-        public static ResourceType Cursor        { get { return "#1"; } }
-        public static ResourceType Bitmap        { get { return "#2"; } }
-        public static ResourceType Icon          { get { return "#3"; } }
-        public static ResourceType Menu          { get { return "#4"; } }
-        public static ResourceType Dialog        { get { return "#5"; } }
-        public static ResourceType String        { get { return "#6"; } }
-        public static ResourceType FontDir       { get { return "#7"; } }
-        public static ResourceType Font          { get { return "#8"; } }
-        public static ResourceType Accelerator   { get { return "#9"; } }
-        public static ResourceType RCData        { get { return "#10"; } }
-        public static ResourceType MessageTable  { get { return "#11"; } }
-        public static ResourceType GroupCursor   { get { return "#12"; } }
-        public static ResourceType GroupIcon     { get { return "#14"; } }
-        public static ResourceType Version       { get { return "#16"; } }
-        public static ResourceType DialogInclude { get { return "#17"; } }
-        public static ResourceType PlugPlay      { get { return "#19"; } }
-        public static ResourceType Vxd           { get { return "#20"; } }
+        internal static ResourceType None          { get { return "#0"; } }
+        internal static ResourceType Cursor        { get { return "#1"; } }
+        internal static ResourceType Bitmap        { get { return "#2"; } }
+        internal static ResourceType Icon          { get { return "#3"; } }
+        internal static ResourceType Menu          { get { return "#4"; } }
+        internal static ResourceType Dialog        { get { return "#5"; } }
+        internal static ResourceType String        { get { return "#6"; } }
+        internal static ResourceType FontDir       { get { return "#7"; } }
+        internal static ResourceType Font          { get { return "#8"; } }
+        internal static ResourceType Accelerator   { get { return "#9"; } }
+        internal static ResourceType RCData        { get { return "#10"; } }
+        internal static ResourceType MessageTable  { get { return "#11"; } }
+        internal static ResourceType GroupCursor   { get { return "#12"; } }
+        internal static ResourceType GroupIcon     { get { return "#14"; } }
+        internal static ResourceType Version       { get { return "#16"; } }
+        internal static ResourceType DialogInclude { get { return "#17"; } }
+        internal static ResourceType PlugPlay      { get { return "#19"; } }
+        internal static ResourceType Vxd           { get { return "#20"; } }
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Ani")]
-        public static ResourceType AniCursor     { get { return "#21"; } }
+        internal static ResourceType AniCursor     { get { return "#21"; } }
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Ani")]
-        public static ResourceType AniIcon       { get { return "#22"; } }
-        public static ResourceType Html          { get { return "#23"; } }
-        public static ResourceType Manifest      { get { return "#24"; } }
+        internal static ResourceType AniIcon       { get { return "#22"; } }
+        internal static ResourceType Html          { get { return "#23"; } }
+        internal static ResourceType Manifest      { get { return "#24"; } }
 
         #pragma warning restore 1591
 
@@ -63,7 +63,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="resourceType">String resource name,
         /// or an integer resource type prefixed by a #.</param>
-        public ResourceType(string resourceType)
+        internal ResourceType(string resourceType)
         {
             if (string.IsNullOrEmpty(resourceType))
             {
@@ -82,7 +82,7 @@ namespace Microsoft.Deployment.Resources
         /// Creates a new integer resource type.
         /// </summary>
         /// <param name="resourceType">Integer value of a well-known resource type.</param>
-        public ResourceType(int resourceType)
+        internal ResourceType(int resourceType)
             : this("#" + resourceType)
         {
         }
@@ -90,7 +90,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets a flag indicating whether the resource type is an integer type.
         /// </summary>
-        public bool IsInteger
+        internal bool IsInteger
         {
             get
             {
@@ -101,7 +101,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the integer value of the resource type, or -1 if the resource type is not an integer.
         /// </summary>
-        public int IntegerValue
+        internal int IntegerValue
         {
             get
             {
@@ -120,7 +120,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets a string representation of the resource type.
         /// </summary>
         /// <returns>The custom resource name, or the name of a well-known resource type.</returns>
-        public override string ToString()
+        internal override string ToString()
         {
             if (this.IsInteger)
             {
@@ -159,7 +159,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="obj">Other object.</param>
         /// <returns>True if equal, else false.</returns>
-        public override bool Equals(object obj)
+        internal override bool Equals(object obj)
         {
             return this.Equals(obj as ResourceType);
         }
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="otherType">Other resource type.</param>
         /// <returns>True if equal, else false.</returns>
-        public bool Equals(ResourceType otherType)
+        internal bool Equals(ResourceType otherType)
         {
             return otherType != null && this.resourceType.Equals(otherType.resourceType, StringComparison.Ordinal);
         }
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets a hash code suitable for using the resource type as a dictionary key.
         /// </summary>
         /// <returns>Hash code based on the resource type string.</returns>
-        public override int GetHashCode()
+        internal override int GetHashCode()
         {
             return this.resourceType.GetHashCode();
         }
@@ -188,7 +188,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="resourceType">String resource type to convert.</param>
         /// <returns>ResourceType object.</returns>
-        public static implicit operator ResourceType(string resourceType)
+        internal static implicit operator ResourceType(string resourceType)
         {
             return new ResourceType(resourceType);
         }
@@ -204,7 +204,7 @@ namespace Microsoft.Deployment.Resources
         /// the returned string is suitable for passing directly to Win32
         /// resource APIs that accept resource type strings.
         /// </remarks>
-        public static explicit operator string(ResourceType resourceType)
+        internal static explicit operator string(ResourceType resourceType)
         {
             return resourceType.resourceType;
         }

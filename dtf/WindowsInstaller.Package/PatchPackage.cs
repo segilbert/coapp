@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="PatchPackage.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -27,7 +27,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
     /// <summary>
     /// Provides access to convenient properties and operations on a patch package (.MSP).
     /// </summary>
-    public class PatchPackage : Database
+    internal class PatchPackage : Database
     {
         /// <summary>
         /// Creates a new patch package object; opening the patch database in read-only mode.
@@ -35,7 +35,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <param name="packagePath">Path to the patch package (.MSP)</param>
         /// <remarks>The PatchPackage object only opens the patch database in read-only mode, because
         /// transforms (sub-storages) cannot be read if the database is open in read-write mode.</remarks>
-        public PatchPackage(string packagePath)
+        internal PatchPackage(string packagePath)
             : base(packagePath, (DatabaseOpenMode) ((int) DatabaseOpenMode.ReadOnly | 32))
             // TODO: figure out what to do about DatabaseOpenMode.Patch
         {
@@ -47,14 +47,14 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <example>
         /// <c>patchPackage.Message += new InstallPackageMessageHandler(Console.WriteLine);</c>
         /// </example>
-        public event InstallPackageMessageHandler Message;
+        internal event InstallPackageMessageHandler Message;
 
         /// <summary>
         /// Sends a message to the <see cref="Message"/> event-handler.
         /// </summary>
         /// <param name="format">Message string, containing 0 or more format items</param>
         /// <param name="args">Items to be formatted</param>
-        protected void LogMessage(string format, params object[] args)
+        internal void LogMessage(string format, params object[] args)
         {
             if(this.Message != null)
             {
@@ -68,7 +68,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// The patch code is stored in the RevisionNumber field of the patch summary information.
         /// </remarks>
-        public string PatchCode
+        internal string PatchCode
         {
             get
             {
@@ -84,7 +84,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// The list of replaced patch codes is stored in the RevisionNumber field of the patch summary information.
         /// </remarks>
-        public string[] GetReplacedPatchCodes()
+        internal string[] GetReplacedPatchCodes()
         {
             ArrayList patchCodeList = new ArrayList();
             string guids = this.SummaryInfo.RevisionNumber;
@@ -106,7 +106,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// The list of target product codes is stored in the Template field of the patch summary information.
         /// </remarks>
-        public string[] GetTargetProductCodes()
+        internal string[] GetTargetProductCodes()
         {
             string productList = this.SummaryInfo.Template;
             return productList.Split(';');
@@ -120,7 +120,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// The returned list does not include the &quot;patch special transforms&quot; that are prefixed with &quot;#&quot;
         /// <p>The list of transform names is stored in the LastSavedBy field of the patch summary information.</p>
         /// </remarks>
-        public string[] GetTransforms()
+        internal string[] GetTransforms()
         {
             return this.GetTransforms(false);
         }
@@ -133,7 +133,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// The list of transform names is stored in the LastSavedBy field of the patch summary information.
         /// </remarks>
-        public string[] GetTransforms(bool includeSpecialTransforms)
+        internal string[] GetTransforms(bool includeSpecialTransforms)
         {
             ArrayList transformArray = new ArrayList();
             string transformList = this.SummaryInfo.LastSavedBy;
@@ -154,7 +154,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// The returned info does not include the &quot;patch special transforms&quot; that are prefixed with &quot;#&quot;
         /// </remarks>
-        public TransformInfo[] GetTransformsInfo()
+        internal TransformInfo[] GetTransformsInfo()
         {
             return this.GetTransformsInfo(false);
         }
@@ -165,7 +165,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <param name="includeSpecialTransforms">Specifies whether to include the
         /// &quot;patch special transforms&quot; that are prefixed with &quot;#&quot;</param>
         /// <returns>Array containing information about each transform</returns>
-        public TransformInfo[] GetTransformsInfo(bool includeSpecialTransforms)
+        internal TransformInfo[] GetTransformsInfo(bool includeSpecialTransforms)
         {
             string[] transforms = this.GetTransforms(includeSpecialTransforms);
             ArrayList transformInfoArray = new ArrayList(transforms.Length);
@@ -182,7 +182,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <param name="transform">Name of the transform to extract; this may optionally be a
         /// special transform prefixed by &quot;#&quot;</param>
         /// <returns>Information about the transform</returns>
-        public TransformInfo GetTransformInfo(string transform)
+        internal TransformInfo GetTransformInfo(string transform)
         {
             string tempTransformFile = null;
             try
@@ -214,7 +214,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// are prefixed with &quot;#&quot; If a transform is valid, then its corresponding
         /// special transform is assumed to be valid as well.
         /// </remarks>
-        public string[] GetValidTransforms(InstallPackage installPackage)
+        internal string[] GetValidTransforms(InstallPackage installPackage)
         {
             ArrayList transformArray = new ArrayList();
             string transformList = this.SummaryInfo.LastSavedBy;
@@ -238,7 +238,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
                     {
                         if(tempTransformFile != null && File.Exists(tempTransformFile))
                         {
-                            try { File.Delete(tempTransformFile); } 
+                            try { File.Delete(tempTransformFile); }
                             catch(IOException) { }
                         }
                     }
@@ -253,7 +253,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <param name="transform">Name of the transform to extract; this may optionally be a
         /// special transform prefixed by &quot;#&quot;</param>
         /// <param name="extractFile">Location where the transform will be extracted</param>
-        public void ExtractTransform(string transform, string extractFile)
+        internal void ExtractTransform(string transform, string extractFile)
         {
             using(View stgView = this.OpenView("SELECT `Name`, `Data` FROM `_Storages` WHERE `Name` = '{0}'", transform))
             {

@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="ArchiveFileStreamContext.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -29,7 +29,7 @@ namespace Microsoft.Deployment.Compression
     /// <remarks>
     /// This class can also handle creating or extracting chained archive packages.
     /// </remarks>
-    public class ArchiveFileStreamContext
+    internal class ArchiveFileStreamContext
         : IPackStreamContext, IUnpackStreamContext
     {
         private IList<string> archiveFiles;
@@ -46,7 +46,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <param name="archiveFile">The path to a archive file that will be
         /// created or extracted.</param>
-        public ArchiveFileStreamContext(string archiveFile)
+        internal ArchiveFileStreamContext(string archiveFile)
             : this(archiveFile, null, null)
         {
         }
@@ -71,7 +71,7 @@ namespace Microsoft.Deployment.Compression
         /// used, see <see cref="OpenFileReadStream"/> and
         /// <see cref="OpenFileWriteStream"/>.</para>
         /// </remarks>
-        public ArchiveFileStreamContext(
+        internal ArchiveFileStreamContext(
             string archiveFile,
             string directory,
             IDictionary<string, string> files)
@@ -108,7 +108,7 @@ namespace Microsoft.Deployment.Compression
         /// see <see cref="OpenFileReadStream"/> and
         /// <see cref="OpenFileWriteStream"/>.</para>
         /// </remarks>
-        public ArchiveFileStreamContext(
+        internal ArchiveFileStreamContext(
             IList<string> archiveFiles,
             string directory,
             IDictionary<string, string> files)
@@ -131,7 +131,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets or sets the list of archive files that are created or extracted.
         /// </summary>
         /// <value>The list of archive files that are created or extracted.</value>
-        public IList<string> ArchiveFiles
+        internal IList<string> ArchiveFiles
         {
             get
             {
@@ -147,7 +147,7 @@ namespace Microsoft.Deployment.Compression
         /// For details about how the default directory is used,
         /// see <see cref="OpenFileReadStream"/> and <see cref="OpenFileWriteStream"/>.
         /// </remarks>
-        public string Directory
+        internal string Directory
         {
             get
             {
@@ -163,7 +163,7 @@ namespace Microsoft.Deployment.Compression
         /// For details about how the files mapping is used,
         /// see <see cref="OpenFileReadStream"/> and <see cref="OpenFileWriteStream"/>.
         /// </remarks>
-        public IDictionary<string, string> Files
+        internal IDictionary<string, string> Files
         {
             get
             {
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.Compression
         /// <value>True to prevent overwriting newer files that already exist
         /// during extraction; false to always extract from the archive regardless
         /// of existing files.</value>
-        public bool ExtractOnlyNewerFiles
+        internal bool ExtractOnlyNewerFiles
         {
             get
             {
@@ -199,7 +199,7 @@ namespace Microsoft.Deployment.Compression
         /// <value>True to search an existing package file for an archive offset
         /// or the end of the file;/ false to always create or open a plain
         /// archive file.</value>
-        public bool EnableOffsetOpen
+        internal bool EnableOffsetOpen
         {
             get
             {
@@ -227,7 +227,7 @@ namespace Microsoft.Deployment.Compression
         /// <see cref="archiveFiles"/> list with the specified index, or an empty
         /// string if the archive number is outside the bounds of the list. The
         /// file name should not include any directory path.</remarks>
-        public virtual string GetArchiveName(int archiveNumber)
+        internal virtual string GetArchiveName(int archiveNumber)
         {
             if (archiveNumber < this.archiveFiles.Count)
             {
@@ -259,7 +259,7 @@ namespace Microsoft.Deployment.Compression
         /// will seek to the start of any existing archive in the file, or to the
         /// end of the file if the existing file is not an archive.</para>
         /// </remarks>
-        public virtual Stream OpenArchiveWriteStream(
+        internal virtual Stream OpenArchiveWriteStream(
             int archiveNumber,
             string archiveName,
             bool truncate,
@@ -308,7 +308,7 @@ namespace Microsoft.Deployment.Compression
                 // Truncate the stream, in case a larger old archive starts here.
                 stream.SetLength(0);
             }
-            
+
             return stream;
         }
 
@@ -321,7 +321,7 @@ namespace Microsoft.Deployment.Compression
         /// returned by <see cref="GetArchiveName"/>.</param>
         /// <param name="stream">A stream that was previously returned by
         /// <see cref="OpenArchiveWriteStream"/> and is now ready to be closed.</param>
-        public virtual void CloseArchiveWriteStream(
+        internal virtual void CloseArchiveWriteStream(
             int archiveNumber,
             string archiveName,
             Stream stream)
@@ -381,7 +381,7 @@ namespace Microsoft.Deployment.Compression
         /// exists, the file is skipped.</item>
         /// </list>
         /// </remarks>
-        public virtual Stream OpenFileReadStream(
+        internal virtual Stream OpenFileReadStream(
             string path, out FileAttributes attributes, out DateTime lastWriteTime)
         {
             string filePath = this.TranslateFilePath(path);
@@ -405,7 +405,7 @@ namespace Microsoft.Deployment.Compression
         /// the path provided when the stream was opened.</param>
         /// <param name="stream">A stream that was previously returned by
         /// <see cref="OpenFileReadStream"/> and is now ready to be closed.</param>
-        public virtual void CloseFileReadStream(string path, Stream stream)
+        internal virtual void CloseFileReadStream(string path, Stream stream)
         {
             if (stream != null)
             {
@@ -425,7 +425,7 @@ namespace Microsoft.Deployment.Compression
         /// This implementation does not handle any options. Subclasses may override
         /// this method to allow for non-default behavior.
         /// </remarks>
-        public virtual object GetOption(string optionName, object[] parameters)
+        internal virtual object GetOption(string optionName, object[] parameters)
         {
             return null;
         }
@@ -452,7 +452,7 @@ namespace Microsoft.Deployment.Compression
         /// seek to the start of any existing archive in the file, or to the end of
         /// the file if the existing file is not an archive.</para>
         /// </remarks>
-        public virtual Stream OpenArchiveReadStream(
+        internal virtual Stream OpenArchiveReadStream(
             int archiveNumber, string archiveName, CompressionEngine compressionEngine)
         {
             if (archiveNumber >= this.archiveFiles.Count)
@@ -489,7 +489,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="archiveName">The name of the archive being closed.</param>
         /// <param name="stream">The stream that was previously returned by
         /// <see cref="OpenArchiveReadStream"/> and is now ready to be closed.</param>
-        public virtual void CloseArchiveReadStream(
+        internal virtual void CloseArchiveReadStream(
             int archiveNumber, string archiveName, Stream stream)
         {
             if (stream != null)
@@ -532,7 +532,7 @@ namespace Microsoft.Deployment.Compression
         /// is skipped if a file currently exists in the same path with an equal
         /// or newer write time.</para>
         /// </remarks>
-        public virtual Stream OpenFileWriteStream(
+        internal virtual Stream OpenFileWriteStream(
             string path,
             long fileSize,
             DateTime lastWriteTime)
@@ -586,7 +586,7 @@ namespace Microsoft.Deployment.Compression
         /// After closing the extracted file stream, this method applies the date
         /// and attributes to that file.
         /// </remarks>
-        public virtual void CloseFileWriteStream(
+        internal virtual void CloseFileWriteStream(
             string path,
             Stream stream,
             FileAttributes attributes,

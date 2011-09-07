@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="DatabaseTransform.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -22,7 +22,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System.Globalization;
     using System.Diagnostics.CodeAnalysis;
 
-    public partial class Database
+    internal partial class Database
     {
         /// <summary>
         /// Creates a transform that, when applied to the object database, results in the reference database.
@@ -47,7 +47,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabasegeneratetransform.asp">MsiDatabaseGenerateTransform</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public bool GenerateTransform(Database referenceDatabase, string transformFile)
+        internal bool GenerateTransform(Database referenceDatabase, string transformFile)
         {
             if (referenceDatabase == null)
             {
@@ -89,7 +89,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msicreatetransformsummaryinfo.asp">MsiCreateTransformSummaryInfo</a>
         /// </p></remarks>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
-        public void CreateTransformSummaryInfo(
+        internal void CreateTransformSummaryInfo(
             Database referenceDatabase,
             string transformFile,
             TransformErrors errors,
@@ -127,7 +127,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseapplytransform.asp">MsiDatabaseApplyTransform</a>
         /// </p></remarks>
-        public void ViewTransform(string transformFile)
+        internal void ViewTransform(string transformFile)
         {
             TransformErrors transformErrors =
                 TransformErrors.AddExistingRow |
@@ -151,7 +151,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseapplytransform.asp">MsiDatabaseApplyTransform</a>
         /// </p></remarks>
-        public void ApplyTransform(string transformFile)
+        internal void ApplyTransform(string transformFile)
         {
             if (String.IsNullOrEmpty(transformFile))
             {
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msidatabaseapplytransform.asp">MsiDatabaseApplyTransform</a>
         /// </p></remarks>
-        public void ApplyTransform(string transformFile, TransformErrors errorConditionsToSuppress)
+        internal void ApplyTransform(string transformFile, TransformErrors errorConditionsToSuppress)
         {
             if (String.IsNullOrEmpty(transformFile))
             {
@@ -199,7 +199,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <returns>true if the transform can be validly applied to this Database; false otherwise</returns>
         /// <exception cref="InstallerException">the transform could not be applied</exception>
         /// <exception cref="InvalidHandleException">the Database handle is invalid</exception>
-        public bool IsTransformValid(string transformFile)
+        internal bool IsTransformValid(string transformFile)
         {
             if (String.IsNullOrEmpty(transformFile))
             {
@@ -219,7 +219,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <returns>true if the transform can be validly applied to this Database; false otherwise</returns>
         /// <exception cref="InstallerException">error processing summary info</exception>
         /// <exception cref="InvalidHandleException">the Database or SummaryInfo handle is invalid</exception>
-        public bool IsTransformValid(SummaryInfo transformSummaryInfo)
+        internal bool IsTransformValid(SummaryInfo transformSummaryInfo)
         {
             if (transformSummaryInfo == null)
             {

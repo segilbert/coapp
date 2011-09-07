@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="TableInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -25,7 +25,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Defines a table in an installation database.
     /// </summary>
-    public class TableInfo
+    internal class TableInfo
     {
         private string name;
         private ColumnCollection columns;
@@ -37,7 +37,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="name">Name of the table.</param>
         /// <param name="columns">Columns in the table.</param>
         /// <param name="primaryKeys">The primary keys of the table.</param>
-        public TableInfo(string name, ICollection<ColumnInfo> columns, IList<string> primaryKeys)
+        internal TableInfo(string name, ICollection<ColumnInfo> columns, IList<string> primaryKeys)
         {
             if (String.IsNullOrEmpty(name))
             {
@@ -92,7 +92,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the name of the table.
         /// </summary>
-        public string Name
+        internal string Name
         {
             get
             {
@@ -108,7 +108,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// to ensure the returned values are up-to-date. For best performance,
         /// hold onto the returned collection if using it more than once.
         /// </p></remarks>
-        public ColumnCollection Columns
+        internal ColumnCollection Columns
         {
             get
             {
@@ -119,7 +119,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the names of the columns that are primary keys of the table.
         /// </summary>
-        public IList<string> PrimaryKeys
+        internal IList<string> PrimaryKeys
         {
             get
             {
@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets an SQL CREATE string that can be used to create the table.
         /// </summary>
-        public string SqlCreateString
+        internal string SqlCreateString
         {
             get
             {
@@ -169,7 +169,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// The values are expressed as question-mark tokens, to be supplied by the record.
         /// </p></remarks>
-        public string SqlInsertString
+        internal string SqlInsertString
         {
             get
             {
@@ -209,7 +209,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// The columns are listed explicitly in the SELECT string, as opposed to using "SELECT *".
         /// </p></remarks>
-        public string SqlSelectString
+        internal string SqlSelectString
         {
             get
             {
@@ -230,7 +230,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a string representation of the table.
         /// </summary>
         /// <returns>The name of the table.</returns>
-        public override string ToString()
+        internal override string ToString()
         {
             return this.name;
         }

@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="SummaryInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -26,7 +26,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Provides access to summary information of a Windows Installer database.
     /// </summary>
-    public class SummaryInfo : InstallerHandle
+    internal class SummaryInfo : InstallerHandle
     {
         internal const int MAX_PROPERTIES = 20;
 
@@ -46,7 +46,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetsummaryinformation.asp">MsiGetSummaryInformation</a>
         /// </p></remarks>
-        public SummaryInfo(string packagePath, bool enableWrite)
+        internal SummaryInfo(string packagePath, bool enableWrite)
             : base((IntPtr) SummaryInfo.OpenSummaryInfo(packagePath, enableWrite), true)
         {
         }
@@ -64,7 +64,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string Title
+        internal string Title
         {
             get { return this[2]; }
             set { this[2] = value; }
@@ -81,7 +81,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string Subject
+        internal string Subject
         {
             get { return this[3]; }
             set { this[3] = value; }
@@ -96,7 +96,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string Author
+        internal string Author
         {
             get { return this[4]; }
             set { this[4] = value; }
@@ -112,7 +112,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string Keywords
+        internal string Keywords
         {
             get { return this[5]; }
             set { this[5] = value; }
@@ -132,7 +132,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string Comments
+        internal string Comments
         {
             get { return this[6]; }
             set { this[6] = value; }
@@ -180,7 +180,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string Template
+        internal string Template
         {
             get { return this[7]; }
             set { this[7] = value; }
@@ -200,7 +200,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string LastSavedBy
+        internal string LastSavedBy
         {
             get { return this[8]; }
             set { this[8] = value; }
@@ -209,7 +209,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>Gets or sets the RevisionNumber summary information property.</summary>
         /// <remarks><p>
         /// The Revision Number summary information property contains the package code for the installer package. The
-        /// package code is a unique identifier of the installer package. 
+        /// package code is a unique identifier of the installer package.
         /// </p><p>
         /// The Revision Number summary information  property of a patch package specifies the GUID patch code for
         /// the patch. This is followed by a list of patch code GUIDs for obsolete patches that are removed when this
@@ -227,7 +227,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string RevisionNumber
+        internal string RevisionNumber
         {
             get { return this[9]; }
             set { this[9] = value; }
@@ -242,7 +242,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public string CreatingApp
+        internal string CreatingApp
         {
             get { return this[18]; }
             set { this[18] = value; }
@@ -258,8 +258,8 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public DateTime LastPrintTime
-        { 
+        internal DateTime LastPrintTime
+        {
             get { return (DateTime) this[11, typeof(DateTime)]; }
             set { this[11, typeof(DateTime)] = value; }
         }
@@ -272,7 +272,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public DateTime CreateTime
+        internal DateTime CreateTime
         {
             get { return (DateTime) this[12, typeof(DateTime)]; }
             set { this[12, typeof(DateTime)] = value; }
@@ -289,7 +289,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public DateTime LastSaveTime
+        internal DateTime LastSaveTime
         {
             get { return (DateTime) this[13, typeof(DateTime)]; }
             set { this[13, typeof(DateTime)] = value; }
@@ -308,7 +308,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public short CodePage
+        internal short CodePage
         {
             get { return (short) this[1, typeof(short)]; }
             set { this[1, typeof(short)] = value; }
@@ -332,7 +332,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public int PageCount
+        internal int PageCount
         {
             get { return (int) this[14, typeof(int)]; }
             set { this[14, typeof(int)] = value; }
@@ -384,7 +384,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public int WordCount
+        internal int WordCount
         {
             get { return (int) this[15, typeof(int)]; }
             set { this[15, typeof(int)] = value; }
@@ -400,7 +400,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public int CharacterCount
+        internal int CharacterCount
         {
             get { return (int) this[16, typeof(int)]; }
             set { this[16, typeof(int)] = value; }
@@ -424,7 +424,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfogetproperty.asp">MsiSummaryInfoGetProperty</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfosetproperty.asp">MsiSummaryInfoSetProperty</a>
         /// </p></remarks>
-        public int Security
+        internal int Security
         {
             get { return (int) this[19, typeof(int)]; }
             set { this[19, typeof(int)] = value; }
@@ -591,7 +591,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisummaryinfopersist.asp">MsiSummaryInfoPersist</a>
         /// </p></remarks>
-        public void Persist()
+        internal void Persist()
         {
             uint ret = NativeMethods.MsiSummaryInfoPersist((int) this.Handle);
             if (ret != 0)

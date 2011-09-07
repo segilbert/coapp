@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="Resource.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -30,7 +30,7 @@ namespace Microsoft.Deployment.Resources
     /// <summary>
     /// Represents a Win32 resource which can be loaded from and saved to a PE file.
     /// </summary>
-    public class Resource
+    internal class Resource
     {
         private ResourceType type;
         private string name;
@@ -43,7 +43,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="type">Type of the resource; may be one of the ResourceType constants or a user-defined type.</param>
         /// <param name="name">Name of the resource. For a numeric resource identifier, prefix the decimal number with a "#".</param>
         /// <param name="locale">Locale of the resource</param>
-        public Resource(ResourceType type, string name, int locale)
+        internal Resource(ResourceType type, string name, int locale)
             : this(type, name, locale, null)
         {
         }
@@ -55,7 +55,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="name">Name of the resource. For a numeric resource identifier, prefix the decimal number with a "#".</param>
         /// <param name="locale">Locale of the resource</param>
         /// <param name="data">Raw resource data</param>
-        public Resource(ResourceType type, string name, int locale, byte[] data)
+        internal Resource(ResourceType type, string name, int locale, byte[] data)
         {
             if (name == null)
             {
@@ -72,7 +72,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets or sets the type of the resource.  This may be one of the ResourceType constants
         /// or a user-defined type name.
         /// </summary>
-        public ResourceType ResourceType
+        internal ResourceType ResourceType
         {
             get { return this.type; }
             set { this.type = value; }
@@ -81,7 +81,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the name of the resource.  For a numeric resource identifier, the decimal number is prefixed with a "#".
         /// </summary>
-        public string Name
+        internal string Name
         {
             get
             {
@@ -102,7 +102,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the locale of the resource.
         /// </summary>
-        public int Locale
+        internal int Locale
         {
             get { return this.locale; }
             set { this.locale = value; }
@@ -112,7 +112,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets or sets the raw data of the resource.
         /// </summary>
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public virtual byte[] Data
+        internal virtual byte[] Data
         {
             get { return this.data; }
             set { this.data = value; }
@@ -124,7 +124,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="file">Win32 PE file containing the resource</param>
         [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Load(string file)
+        internal void Load(string file)
         {
             new FileIOPermission(FileIOPermissionAccess.Read, file).Demand();
 
@@ -163,7 +163,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="file">Win32 PE file to contain the resource</param>
         [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Save(string file)
+        internal void Save(string file)
         {
             new FileIOPermission(FileIOPermissionAccess.AllAccess, file).Demand();
 
@@ -230,7 +230,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="obj">Resource object to be compared</param>
         /// <returns>True if the objects represent the same resource; false otherwise.</returns>
-        public override bool Equals(object obj)
+        internal override bool Equals(object obj)
         {
             Resource res = obj as Resource;
             if (res == null) return false;
@@ -241,7 +241,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets a hash code for this Resource object.
         /// </summary>
         /// <returns>Hash code generated from the resource type, name, and locale.</returns>
-        public override int GetHashCode()
+        internal override int GetHashCode()
         {
             return this.ResourceType.GetHashCode() ^ this.Name.GetHashCode() ^ this.Locale.GetHashCode();
         }

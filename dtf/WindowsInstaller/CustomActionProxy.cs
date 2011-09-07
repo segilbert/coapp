@@ -1,13 +1,13 @@
 //---------------------------------------------------------------------
 // <copyright file="CustomActionProxy.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -33,14 +33,14 @@ namespace Microsoft.Deployment.WindowsInstaller
     internal static class CustomActionProxy
     {
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        public static int InvokeCustomAction32(int sessionHandle, string entryPoint,
+        internal static int InvokeCustomAction32(int sessionHandle, string entryPoint,
             int remotingDelegatePtr)
         {
             return CustomActionProxy.InvokeCustomAction(sessionHandle, entryPoint, new IntPtr(remotingDelegatePtr));
         }
 
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        public static int InvokeCustomAction64(int sessionHandle, string entryPoint,
+        internal static int InvokeCustomAction64(int sessionHandle, string entryPoint,
             long remotingDelegatePtr)
         {
             return CustomActionProxy.InvokeCustomAction(sessionHandle, entryPoint, new IntPtr(remotingDelegatePtr));
@@ -60,7 +60,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// or ERROR_INSTALL_FAILURE if the custom action could not be invoked.</returns>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        public static int InvokeCustomAction(int sessionHandle, string entryPoint,
+        internal static int InvokeCustomAction(int sessionHandle, string entryPoint,
             IntPtr remotingDelegatePtr)
         {
             Session session = null;

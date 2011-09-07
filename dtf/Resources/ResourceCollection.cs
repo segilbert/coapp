@@ -1,13 +1,13 @@
 ﻿//---------------------------------------------------------------------
 // <copyright file="ResourceCollection.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
+//
 //    The use and distribution terms for this software are covered by the
 //    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
-//    
+//
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
@@ -42,14 +42,14 @@ namespace Microsoft.Deployment.Resources
     /// Resource class, or save them all at once (more efficient) with the <see cref="Save"/> method of the ResourceCollection.</item>
     /// </list>
     /// </remarks>
-    public class ResourceCollection : ICollection<Resource>
+    internal class ResourceCollection : ICollection<Resource>
     {
         private List<Resource> resources;
 
         /// <summary>
         /// Creates a new, empty ResourceCollection.
         /// </summary>
-        public ResourceCollection()
+        internal ResourceCollection()
         {
             this.resources = new List<Resource>();
         }
@@ -62,7 +62,7 @@ namespace Microsoft.Deployment.Resources
         /// <exception cref="IOException">resources could not be read from the file</exception>
         [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Find(string resFile)
+        internal void Find(string resFile)
         {
             new FileIOPermission(FileIOPermissionAccess.Read, resFile).Demand();
 
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.Resources
         /// <exception cref="IOException">resources could not be read from the file</exception>
         [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Find(string resFile, ResourceType type)
+        internal void Find(string resFile, ResourceType type)
         {
             new FileIOPermission(FileIOPermissionAccess.Read, resFile).Demand();
 
@@ -128,7 +128,7 @@ namespace Microsoft.Deployment.Resources
         /// <exception cref="IOException">resources could not be read from the file</exception>
         [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Find(string resFile, ResourceType type, string name)
+        internal void Find(string resFile, ResourceType type, string name)
         {
             new FileIOPermission(FileIOPermissionAccess.Read, resFile).Demand();
 
@@ -207,7 +207,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="file">The file from which resources are loaded.</param>
         [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Load(string file)
+        internal void Load(string file)
         {
             new FileIOPermission(FileIOPermissionAccess.Read, file).Demand();
 
@@ -231,7 +231,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="file">The file to which resources are saved.</param>
         [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity")]
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        public void Save(string file)
+        internal void Save(string file)
         {
             new FileIOPermission(FileIOPermissionAccess.AllAccess, file).Demand();
 
@@ -262,7 +262,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets or sets the element at the specified index.
         /// </summary>
-        public Resource this[int index]
+        internal Resource this[int index]
         {
             get
             {
@@ -278,7 +278,7 @@ namespace Microsoft.Deployment.Resources
         /// Adds a new item to the collection.
         /// </summary>
         /// <param name="item">The Resource to add.</param>
-        public void Add(Resource item)
+        internal void Add(Resource item)
         {
             this.resources.Add(item);
         }
@@ -287,7 +287,7 @@ namespace Microsoft.Deployment.Resources
         /// Removes an item to the collection.
         /// </summary>
         /// <param name="item">The Resource to remove.</param>
-        public bool Remove(Resource item)
+        internal bool Remove(Resource item)
         {
             return this.resources.Remove(item);
         }
@@ -297,7 +297,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="item">The Resource to search for.</param>
         /// <returns>The index of the item, or -1 if not found.</returns>
-        public int IndexOf(Resource item)
+        internal int IndexOf(Resource item)
         {
             return this.resources.IndexOf(item);
         }
@@ -307,7 +307,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="index">The insertion index.</param>
         /// <param name="item">The Resource to insert.</param>
-        public void Insert(int index, Resource item)
+        internal void Insert(int index, Resource item)
         {
             this.resources.Insert(index, item);
         }
@@ -317,7 +317,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="item">The Resource to search for.</param>
         /// <returns>true if the item is found; false otherwise</returns>
-        public bool Contains(Resource item)
+        internal bool Contains(Resource item)
         {
             return this.resources.Contains(item);
         }
@@ -327,7 +327,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="array">The array to copy into.</param>
         /// <param name="arrayIndex">The starting index in the destination array.</param>
-        public void CopyTo(Resource[] array, int arrayIndex)
+        internal void CopyTo(Resource[] array, int arrayIndex)
         {
             this.resources.CopyTo(array, arrayIndex);
         }
@@ -335,7 +335,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Removes all resources from the collection.
         /// </summary>
-        public void Clear()
+        internal void Clear()
         {
             this.resources.Clear();
         }
@@ -343,7 +343,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the number of resources in the collection.
         /// </summary>
-        public int Count
+        internal int Count
         {
             get
             {
@@ -355,7 +355,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets an enumerator over all resources in the collection.
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<Resource> GetEnumerator()
+        internal IEnumerator<Resource> GetEnumerator()
         {
             return this.resources.GetEnumerator();
         }
