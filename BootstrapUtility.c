@@ -80,36 +80,6 @@ wchar_t* DuplicateString( const wchar_t* text ) {
 	return result;
 }
 
-wchar_t* DuplicateAndTrimString(const wchar_t* text ) {
-	wchar_t* result;
-	size_t length;
-	wchar_t* p;
-
-	while( *text == L'\r' || *text == L'\n' || *text == L' ' || *text == L'\t' ) {
-		text++;
-	}
-
-	result = DuplicateString(text);
-	if( result ) {
-		length = SafeStringLengthInCharacters(result);
-		p = result + length -1;
-		while( *p== L'\r' || *p== L'\n' || *p== L' ' || *p== L'\t' ) {
-			*p = 0;
-			p--;
-		}
-	}
-	return result;	
-}
-
-size_t SafeStringLengthInBytes(const wchar_t* text) {
-	size_t stringLength;
-
-	if( SUCCEEDED( StringCbLengthW(text, BUFSIZE * sizeof(wchar_t), &stringLength )) ) {
-		return stringLength;
-	}
-	return -1;
-}
-
 size_t SafeStringLengthInCharacters(const wchar_t* text ) {
 	size_t stringLength;
 
@@ -117,11 +87,6 @@ size_t SafeStringLengthInCharacters(const wchar_t* text ) {
 		return stringLength;
 	}
 	return -1;
-}
-
-BOOL IsPathURL(const wchar_t* serverPath) {
-	ASSERT_NOT_NULL(serverPath);
-	return ( _wcsnicmp(serverPath, L"http://" , 7 ) == 0  || _wcsnicmp(serverPath, L"https://" , 7 ) == 0 );
 }
 
 BOOL IsNullOrEmpty(const wchar_t* text) {
@@ -142,26 +107,6 @@ BOOL IsNullOrEmpty(const wchar_t* text) {
 	}
 
 	return Sprintf(L"%s%c%s" , path, seperator, name );
-}
-
-
-///
-/// <summary> 
-///		creates a temporary name for a file 
-///		caller must free the memory for the string returned.
-///		returns NULL on error.
-/// </summary>
- wchar_t* TempFileName(const wchar_t* name) {
-	DWORD returnValue = 0;
-	wchar_t tempFolderPath[BUFSIZE];
-
-	returnValue = GetTempPath(BUFSIZE,  tempFolderPath); 
-	
-	if (returnValue > BUFSIZE || (returnValue == 0)) {
-		TerminateApplicationWithError(EXIT_UNABLE_TO_FIND_TEMPDIR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
-	}
-
-	return UrlOrPathCombine( tempFolderPath, name , L'\\' );
 }
 
 ///
@@ -242,44 +187,6 @@ Cleanup:
     return fIsRunAsAdmin;
 }
 
-void SetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, const wchar_t* value ) {
-	LSTATUS status;
-	HKEY key;
-/*
-    DWORD version;
-    DWORD major;
-    DWORD flags;
-
-    version = GetVersion();
-    major = LOBYTE(LOWORD(version));
-
-    //
-    // Windows XP and below don't support WOW64 flags, despite the MSDN documentation.
-    // Will produce INVALID_PARAMETER HRESULT. - RR
-    //
-    if(major == 5)
-        flags = KEY_WRITE;
-    else
-        flags = KEY_WRITE | KEY_WOW64_64KEY;
-
-	status = RegCreateKeyEx( HKEY_LOCAL_MACHINE, keyname, 0,NULL, REG_OPTION_NON_VOLATILE,  flags, NULL , &key, NULL );
-	*/
-
-	status = RegCreateKeyEx( HKEY_LOCAL_MACHINE, keyname, 0,NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_WOW64_64KEY, NULL , &key, NULL );
-
-	if( status != ERROR_SUCCESS ) {
-		goto done;
-	}
-
-	if(IsNullOrEmpty(value)) {
-		 RegDeleteValue(key, valueName);
-	} else {
-		RegSetValueEx( key, valueName, 0 , REG_SZ, (const BYTE*)(void*)value , SafeStringLengthInBytes(value) +2 );
-	}
-
-done:
-	RegCloseKey(key);
-}
 
 void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD expectedDataType  ) {
 	LSTATUS status;
@@ -290,25 +197,6 @@ void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD ex
 	DWORD nameSize = BUFSIZE;
 	DWORD valueSize = BUFSIZE;
 	DWORD dataType;
-	/*
-	DWORD version;
-    DWORD major;
-    DWORD flags;
-
-    version = GetVersion();
-    major = LOBYTE(LOWORD(version));
-
-    //
-    // Windows XP and below don't support WOW64 flags, despite the MSDN documentation.
-    // Will produce INVALID_PARAMETER HRESULT. - RR
-    //
-    if(major == 5)
-        flags = KEY_READ;
-    else
-        flags = KEY_READ | KEY_WOW64_64KEY;
-
-	status = RegOpenKeyEx( HKEY_LOCAL_MACHINE, keyname, 0, flags , &key );
-	*/
 
 	status = RegOpenKeyEx( HKEY_LOCAL_MACHINE, keyname, 0, KEY_READ | KEY_WOW64_64KEY , &key );
 
@@ -386,18 +274,10 @@ wchar_t* GetFolderFromPath( const wchar_t* path ) {
 	return result;
 }
 
-// returns the full path for a given module
+///
 wchar_t* GetModuleFullPath( HMODULE module ) {
 	wchar_t* result = NewString();
 	GetModuleFileName(module, result, BUFSIZE);
-	return result;
-}
-
-// returns the folder containing a given module
-wchar_t* GetModuleFolder( HMODULE module ) {
-	wchar_t* modulePath = GetModuleFullPath(module);
-	wchar_t* result = GetFolderFromPath(modulePath);
-	free(modulePath);
 	return result;
 }
 
@@ -406,7 +286,7 @@ wchar_t* GetModuleFolder( HMODULE module ) {
 ///		Downloads a file from a URL 
 ///		returns file size on success, -1 on error.
 /// </summary>
-int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const wchar_t* cosmeticName) {
+int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename) {
 
 	URL_COMPONENTS urlComponents;
 
@@ -487,7 +367,7 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 	
 	// Keep checking for data until there is nothing left.
 	do  {
-		SetStatusMessage(L"Downloading [%d%%]: %s ",(int)(totalBytesDownloaded*100/contentLength ),cosmeticName);
+		SetStatusMessage(L"Downloading [%d%%]: .NET installer ",(int)(totalBytesDownloaded*100/contentLength ));
 
 		// Check for available data.
 		bytesAvailable = 0;
@@ -514,7 +394,7 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 		
 		WriteFile( localFile, pszOutBuffer, bytesDownloaded, &bytesWritten, NULL ); 
 		totalBytesDownloaded+=bytesDownloaded;
-		SetProgressValue( (int)(totalBytesDownloaded*100/contentLength ));
+		SetProgressValue( (int)(totalBytesDownloaded*10/contentLength ));
 		
 		// Free the memory allocated to the buffer.
 		free(pszOutBuffer);
@@ -526,7 +406,8 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const w
 				
 	} while (bytesAvailable > 0);
 
-	SetStatusMessage(L"Downloading [100%%]: %s ",cosmeticName);
+	SetStatusMessage(L".NET Installer Downloaded");
+
 	fin:
 	// Close any open handles.
 	if (localFile)
@@ -550,29 +431,6 @@ BOOL FileExists(const wchar_t* filePath) {
     return GetFileAttributesEx( filePath, GetFileExInfoStandard, &fileData);
 }
 
-__int64 GetFileVersion(const wchar_t* filename)  {
-	DWORD dataSize, handle;
-	void *data;
-	UINT len;
-	VS_FIXEDFILEINFO *pFileInfo;
-	__int64 result = 0;
-	
-	if( FileExists( filename ) ) {
-		dataSize = GetFileVersionInfoSize(filename, &handle);
-		if( dataSize > 0 ) {
-			data = malloc(dataSize);
-			if(GetFileVersionInfo(filename, 0, dataSize, data) ) {
-				if( VerQueryValue( data, L"\\", (void**)&pFileInfo, &len ) ) {
-					result = (((__int64)pFileInfo->dwFileVersionMS)<<32) + ((__int64)pFileInfo->dwFileVersionLS);
-				}
-			}
-			free(data);
-		}
-	}
-
-	return result;
-}
-
 BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
 {
     LONG lStatus;
@@ -583,6 +441,9 @@ BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
     WINTRUST_FILE_INFO FileData;
     GUID WVTPolicyGUID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     WINTRUST_DATA WinTrustData;
+
+	if( !FileExists(pwszSourceFile) )
+		return FALSE;
 
     memset(&FileData, 0, sizeof(FileData));
     FileData.cbStruct = sizeof(WINTRUST_FILE_INFO);
@@ -735,7 +596,7 @@ void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... )
 
 	va_start(args, format);
 	StringCbVPrintf(message,BUFSIZE,format, args);
-	StringCbPrintf( fullMessage, BUFSIZE,L"%s \r\n\r\nFor troubleshooting on this error please visit http://coapp.org/help/%d \r\n\r\nDebug Info:\r\n\r\n   MsiFile:[%s]\r\n   MsiDirectory:[%s]\r\n   ManifestFilename:[%s]\r\n", message, errorLevel ,MsiFile, 	MsiDirectory, ManifestFilename);
+	StringCbPrintf( fullMessage, BUFSIZE,L"%s \r\n\r\nFor troubleshooting on this error please visit http://coapp.org/help/%d \r\n\r\nDebug Info:\r\n\r\n   MsiFile:[%s]\r\n   MsiDirectory:[%s]\r\n", message, errorLevel ,MsiFile, 	MsiDirectory);
 
 	MessageBox(NULL,fullMessage,caption, MB_ICONERROR );
 

@@ -13,7 +13,6 @@
 
 extern LPWSTR MsiFile;
 extern LPWSTR MsiDirectory;
-extern LPWSTR ManifestFilename;
 
 #define BUFSIZE 8192
 
@@ -21,9 +20,9 @@ extern LPWSTR ManifestFilename;
 #define WIDEN(x) WIDEN2(x)
 #define __WFUNCTION__ WIDEN(__FUNCTION__)
 
-#define EXIT_UNABLE_TO_DOWNLOAD_REQUIRED_PACKAGE 1
+#define EXIT_UNABLE_TO_DOWNLOAD_DOTNET           1
 #define EXIT_PACKAGE_FAILED_SIGNATURE_VALIDATION 2
-#define EXIT_BOOTSTRAP_MANIFEST_PARSE_FAILURE    3
+#define EXIT_ERROR_EXTRACTING_NEXT_BOOTSTRAP     3
 #define EXIT_NULL_POINTER						 4
 #define EXIT_ADMIN_RIGHTS_REQUIRED				 5
 #define EXIT_MEMORY_ALLOCATION_FAILURE			 6
@@ -32,7 +31,6 @@ extern LPWSTR ManifestFilename;
 #define EXIT_UNABLE_TO_FIND_TEMPDIR			     9
 #define EXIT_UNKNOWN_COMPONENT_TYPE			     10
 #define EXIT_NO_MSI_COMMANDLINE					 11
-#define EXIT_BOOTSTRAP_DIDNT_INSTALL_COAPP		 12
 #define EXIT_UNABLE_TO_CREATE_DIRECTORY			 13
 
 #define ASSERT_NOT_NULL( pointer ) { if(!pointer) { TerminateApplicationWithError(EXIT_NULL_POINTER,L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__); } }
@@ -43,25 +41,22 @@ wchar_t* Sprintf(const wchar_t* format, ... );
 wchar_t* NewString();
 void DeleteString(wchar_t** string);
 wchar_t* DuplicateString( const wchar_t* text );
-wchar_t* DuplicateAndTrimString(const wchar_t* text );
 size_t SafeStringLengthInCharacters(const wchar_t* text);
-size_t SafeStringLengthInBytes(const wchar_t* text);
-BOOL IsPathURL(const wchar_t* serverPath);
 BOOL IsNullOrEmpty(const wchar_t* text);
 wchar_t* UrlOrPathCombine(const wchar_t* path, const wchar_t* name, wchar_t seperator);
 wchar_t* GetModuleFolder( HMODULE module );
 wchar_t* GetModuleFullPath( HMODULE module );
-wchar_t* TempFileName(const wchar_t* name);
+
 wchar_t* UniqueTempFileName(const wchar_t* name,const wchar_t* extension);
 BOOL IsRunAsAdmin();
 void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, DWORD expectedDataType );
 BOOL RegistryKeyPresent(const wchar_t* regkey);
 wchar_t* GetFolderFromPath( const wchar_t* path );
-int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, const wchar_t* cosmeticName);
+int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename);
 BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile);
 void TerminateApplicationWithError(int errorLevel , const wchar_t* errorMessage, ... ); 
 BOOL FileExists(const wchar_t* installerPath);
-__int64 GetFileVersion(const wchar_t* filename);
-void SetRegistryValue(const wchar_t* keyname, const wchar_t* valueName, const wchar_t* value );
 
+HRESULT MonitorChainer( HANDLE process, void (*OnProgress)(wchar_t* step,unsigned int progress));
+void AbortChain();
 

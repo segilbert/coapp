@@ -176,6 +176,8 @@
     </Manifest>
     <PostBuildEvent>
       <Command>REM mt -manifest $(ProjectDir)BootstrapInstaller.manifest.xml -outputresource:$(TargetPath);1100
+REM if we want to compress the bootstrapper:
+REM $(SolutionDir)..\solution\tools\upx.exe -9 "$(TargetPath)"
 $(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe --sign-only "$(TargetPath)"
 copy "$(TargetPath)" "$(SolutionDir)..\solution\ext\lib\bootstrap.exe"
 </Command>
@@ -214,17 +216,13 @@ copy "$(TargetPath)" "$(SolutionDir)..\solution\ext\lib\bootstrap.exe"
     <ClCompile Include="BootstrapUtility.c">
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">XYZ</UndefinePreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="chainer.c" />
     <ClCompile Include="CoAppBootstrap.c">
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">XYZ</UndefinePreprocessorDefinitions>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bitmap1.bmp" />
-    <None Include="bitmap1.png" />
     <None Include="bitmap4.bmp" />
-    <None Include="BootstrapInstaller.manifest.xml">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="CoAppBootstrap.manifest.xml">
       <SubType>Designer</SubType>
     </None>
@@ -232,6 +230,7 @@ copy "$(TargetPath)" "$(SolutionDir)..\solution\ext\lib\bootstrap.exe"
   <ItemGroup>
     <ClInclude Include="BootstrapGUI.h" />
     <ClInclude Include="BootstrapUtility.h" />
+    <ClInclude Include="chainer.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

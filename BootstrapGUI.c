@@ -25,16 +25,8 @@
 
 #define BUFSIZE				8192
 
-HWND StatusDialog = 0;
+HWND StatusDialog = NULL;
 BOOL Ready = FALSE;
-
-int overall_percentage =0;
-int TaskCount = 11;
-int CurrentTask = 0;
-
-void SetProgressNextTask() {
-	SetOverallProgressValue( (++CurrentTask)*100/TaskCount );
-}
 
 void SetStatusMessage(  const wchar_t* format, ... ) {
 	va_list args;
@@ -47,7 +39,6 @@ void SetStatusMessage(  const wchar_t* format, ... ) {
 	PostMessage(StatusDialog, SETSTATUSMESSAGE, 0, (LPARAM)text );
 	Sleep(20);
 }
-
 
 void SetLargeMessageText(const wchar_t* ps_text) {
 	POINT point;
@@ -77,19 +68,15 @@ void SetProgressValue( int percentage ) {
 	if( percentage > 100 ) {
 		percentage = 100;
 	}
-	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)(overall_percentage+ (percentage/TaskCount)),0 );
+	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)(percentage),0 );
 	Sleep(20);
-}
-
-void SetOverallProgressValue( int percentage ) {
-	overall_percentage = percentage;
-	SetProgressValue( 0 );
 }
 
 INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lParam) {
 	HDC staticControl;
 	
 	switch (message) {
+
 		case SETSTATUSMESSAGE: 
 			SendMessage( GetDlgItem( hwnd, IDC_STATICTEXT1), WM_SETTEXT, wParam, lParam );
 			free((void*)lParam); // caller allocated the message, we need to free.
@@ -102,7 +89,6 @@ INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lP
 		case WM_CTLCOLORSTATIC: {
 
 			staticControl = (HDC) wParam;
-
 			// SetTextColor(staticControl, RGB(255,255,255));
 			if( lParam == (LPARAM)GetDlgItem( hwnd, IDC_STATICTEXT1) ||  lParam == (LPARAM)GetDlgItem( hwnd, IDC_STATICTEXT2) ) {
 				SetBkColor(staticControl, RGB(255,255,255));
@@ -115,18 +101,17 @@ INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lP
 			return (INT_PTR)GetStockObject(NULL_BRUSH);
 		}
 
+		case WM_DESTROY:
+		case WM_COMMAND:
+			PostQuitMessage(0);
+			PostQuitMessage(0);
+			return TRUE;
+
+		case WM_CLOSE:
+			DestroyWindow (hwnd);
 		case WM_INITDIALOG:
 			return TRUE;
 			break;
-		case WM_COMMAND:
-			PostQuitMessage(0);
-			return TRUE;
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			return TRUE;
-		case WM_CLOSE:
-			DestroyWindow (hwnd);
-			return TRUE;
 	}
 	return FALSE;
 }
