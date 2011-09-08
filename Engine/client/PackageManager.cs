@@ -193,7 +193,13 @@ namespace CoApp.Toolkit.Engine.Client {
                     .ToArray();
 
             // return a task that is the sum of all the tasks.
-            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => tasks.SelectMany(each => each.Result).Distinct(),
+            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => {
+               if( tasks.Where(each => each.IsFaulted || each.IsCanceled).Any() ) {
+                   throw new Exception("A task had an exception. TODO: Find out which task.");
+               }
+
+               return tasks.SelectMany(each => each.Result).Distinct();
+            },
                 TaskContinuationOptions.AttachedToParent);
         }
 

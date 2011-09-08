@@ -138,7 +138,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// Enumerates over all records in the table.
         /// </summary>
         /// <returns></returns>
-        internal IEnumerator<TRecord> GetEnumerator()
+        public IEnumerator<TRecord> GetEnumerator()
         {
             string query = this.tableInfo.SqlSelectString;
 

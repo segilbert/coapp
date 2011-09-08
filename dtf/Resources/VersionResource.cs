@@ -339,7 +339,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the number string tables in the version resource.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -351,7 +351,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Removes all string tables from the version resource.
         /// </summary>
-        internal void Clear()
+        public void Clear()
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi != null)
@@ -390,7 +390,7 @@ namespace Microsoft.Deployment.Resources
         /// <param name="array">The one-dimensional Array that is the destination of the elements copied
         /// from the collection. The Array must have zero-based indexing.</param>
         /// <param name="arrayIndex">The zero-based index in array at which copying begins.</param>
-        internal void CopyTo(VersionStringTable[] array, int arrayIndex)
+        public void CopyTo(VersionStringTable[] array, int arrayIndex)
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi != null)
@@ -406,7 +406,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets an enumerator that can iterate over the version string tables in the collection.
         /// </summary>
         /// <returns>An enumerator that returns <see cref="VersionStringTable"/> objects.</returns>
-        internal IEnumerator<VersionStringTable> GetEnumerator()
+        public IEnumerator<VersionStringTable> GetEnumerator()
         {
             VersionInfo svi = this.rawVersionInfo["StringFileInfo"];
             if (svi != null)

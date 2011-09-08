@@ -48,22 +48,22 @@ namespace Microsoft.Deployment.Compression.Zip
             set { this.source = value; }
         }
 
-        internal override bool CanRead
+        public override bool CanRead
         {
             get { return true; }
         }
 
-        internal override bool CanWrite
+        public override bool CanWrite
         {
             get { return true; }
         }
 
-        internal override bool CanSeek
+        public override bool CanSeek
         {
             get { return false; }
         }
 
-        internal override long Length
+        public override long Length
         {
             get
             {
@@ -71,13 +71,13 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        internal override long Position
+        public override long Position
         {
             get { return this.position; }
             set { throw new NotSupportedException(); }
         }
 
-        internal override int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             if (this.source == null)
             {
@@ -112,7 +112,7 @@ namespace Microsoft.Deployment.Compression.Zip
             return count;
         }
 
-        internal override void Write(byte[] buffer, int offset, int count)
+        public override void Write(byte[] buffer, int offset, int count)
         {
             if (this.source == null)
             {
@@ -143,7 +143,7 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        internal override void Flush()
+        public override void Flush()
         {
             if (this.source != null)
             {
@@ -151,17 +151,17 @@ namespace Microsoft.Deployment.Compression.Zip
             }
         }
 
-        internal override long Seek(long offset, SeekOrigin origin)
+        public override long Seek(long offset, SeekOrigin origin)
         {
             throw new NotSupportedException();
         }
 
-        internal override void SetLength(long value)
+        public override void SetLength(long value)
         {
             this.length = value;
         }
 
-        internal override void Close()
+        public override void Close()
         {
             if (this.source != null)
             {

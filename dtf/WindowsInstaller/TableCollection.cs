@@ -36,7 +36,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of tables in the database.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -49,7 +49,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// A TableCollection is read-only when the database is read-only.
         /// </summary>
         /// <value>read-only status of the collection</value>
-        internal bool IsReadOnly
+        public bool IsReadOnly
         {
             get
             {
@@ -85,7 +85,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="item">information about the table to be added</param>
         /// <exception cref="InvalidOperationException">a table with the same name already exists in the database</exception>
-        internal void Add(TableInfo item)
+        public void Add(TableInfo item)
         {
             if (item == null)
             {
@@ -103,7 +103,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Removes all tables (and all data) from the database.
         /// </summary>
-        internal void Clear()
+        public void Clear()
         {
             foreach (string table in this.GetTables())
             {
@@ -140,7 +140,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">destination array to be filed</param>
         /// <param name="arrayIndex">offset into the destination array where copying begins</param>
-        internal void CopyTo(TableInfo[] array, int arrayIndex)
+        public void CopyTo(TableInfo[] array, int arrayIndex)
         {
             if (array == null)
             {
@@ -186,7 +186,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Enumerates the tables in the database.
         /// </summary>
-        internal IEnumerator<TableInfo> GetEnumerator()
+        public IEnumerator<TableInfo> GetEnumerator()
         {
             foreach (string table in this.GetTables())
             {

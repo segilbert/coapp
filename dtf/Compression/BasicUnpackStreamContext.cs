@@ -58,7 +58,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="archiveName">The name of the archive being opened.</param>
         /// <param name="compressionEngine">Instance of the compression engine doing the operations.</param>
         /// <returns>A stream from which archive bytes are read.</returns>
-        internal Stream OpenArchiveReadStream(int archiveNumber, string archiveName, CompressionEngine compressionEngine)
+        public Stream OpenArchiveReadStream(int archiveNumber, string archiveName, CompressionEngine compressionEngine)
         {
             return new DuplicateStream(this.archiveStream);
         }
@@ -70,7 +70,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="archiveNumber">The archive number of the stream to close.</param>
         /// <param name="archiveName">The name of the archive being closed.</param>
         /// <param name="stream">The stream being closed.</param>
-        internal void CloseArchiveReadStream(int archiveNumber, string archiveName, Stream stream)
+        public void CloseArchiveReadStream(int archiveNumber, string archiveName, Stream stream)
         {
             // Do nothing.
         }
@@ -83,7 +83,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="fileSize">The uncompressed size of the file to be extracted.</param>
         /// <param name="lastWriteTime">The last write time of the file.</param>
         /// <returns>A stream where extracted file bytes are to be written.</returns>
-        internal Stream OpenFileWriteStream(string path, long fileSize, DateTime lastWriteTime)
+        public Stream OpenFileWriteStream(string path, long fileSize, DateTime lastWriteTime)
         {
             this.fileStream = new MemoryStream(new byte[fileSize], 0, (int) fileSize, true, true);
             return this.fileStream;
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="stream">The file stream to be closed.</param>
         /// <param name="attributes">The attributes of the extracted file.</param>
         /// <param name="lastWriteTime">The last write time of the file.</param>
-        internal void CloseFileWriteStream(string path, Stream stream, FileAttributes attributes, DateTime lastWriteTime)
+        public void CloseFileWriteStream(string path, Stream stream, FileAttributes attributes, DateTime lastWriteTime)
         {
             // Do nothing.
         }

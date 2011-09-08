@@ -173,7 +173,7 @@ internal static class NativeMethods
             /// <summary>
             /// Checks if the handle is invalid. An FCI handle is invalid when it is zero.
             /// </summary>
-            internal override bool IsInvalid
+            public override bool IsInvalid
             {
                 get
                 {
@@ -186,7 +186,7 @@ internal static class NativeMethods
             /// </summary>
             /// <returns>True if the release succeeded.</returns>
             [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-            internal override bool ReleaseHandle()
+            protected override bool ReleaseHandle()
             {
                 return FCI.Destroy(this.handle);
             }
@@ -329,7 +329,7 @@ internal static class NativeMethods
             /// <summary>
             /// Checks if the handle is invalid. An FDI handle is invalid when it is zero.
             /// </summary>
-            internal override bool IsInvalid
+            public override bool IsInvalid
             {
                 get
                 {
@@ -341,7 +341,7 @@ internal static class NativeMethods
             /// Releases the handle by calling FDIDestroy().
             /// </summary>
             /// <returns>True if the release succeeded.</returns>
-            internal override bool ReleaseHandle()
+            protected override bool ReleaseHandle()
             {
                 return FDI.Destroy(this.handle);
             }

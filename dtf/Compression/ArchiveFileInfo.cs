@@ -124,7 +124,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the name of the file.
         /// </summary>
         /// <value>The name of the file, not including any path.</value>
-        internal override string Name
+        public override string Name
         {
             get
             {
@@ -154,7 +154,7 @@ namespace Microsoft.Deployment.Compression
         /// For example, the path <c>"C:\archive.cab\file.txt"</c> refers to
         /// a file "file.txt" inside the archive "archive.cab".
         /// </remarks>
-        internal override string FullName
+        public override string FullName
         {
             get
             {
@@ -184,7 +184,7 @@ namespace Microsoft.Deployment.Compression
                 return (ArchiveInfo) this.archiveInfo;
             }
 
-            internal set
+            set
             {
                 this.archiveInfo = value;
 
@@ -224,7 +224,7 @@ namespace Microsoft.Deployment.Compression
         /// Checks if the file exists within the archive.
         /// </summary>
         /// <value>True if the file exists, false otherwise.</value>
-        internal override bool Exists
+        public override bool Exists
         {
             get
             {
@@ -297,7 +297,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="context">The StreamingContext that contains contextual
         /// information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-        internal override void GetObjectData(
+        public override void GetObjectData(
             SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
@@ -316,7 +316,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the full path to the file.
         /// </summary>
         /// <returns>The same as <see cref="FullName"/></returns>
-        internal override string ToString()
+        public override string ToString()
         {
             return this.FullName;
         }
@@ -326,7 +326,7 @@ namespace Microsoft.Deployment.Compression
         /// </summary>
         /// <exception cref="NotSupportedException">Files cannot be deleted
         /// from an existing archive.</exception>
-        internal override void Delete()
+        public override void Delete()
         {
             throw new NotSupportedException();
         }

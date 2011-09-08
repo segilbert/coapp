@@ -88,7 +88,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <param name="context">The StreamingContext that contains contextual information
         /// about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
             info.AddValue("cabFolder", this.cabFolder);

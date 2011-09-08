@@ -173,7 +173,7 @@ namespace Microsoft.Deployment.Compression.Cab
             }
         }
 
-        internal void Dispose()
+        public void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);

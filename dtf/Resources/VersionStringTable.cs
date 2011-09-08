@@ -61,7 +61,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets or sets a string value.
         /// </summary>
         /// <param name="key">Name of the string.</param>
-        internal string this[string key]
+        public string this[string key]
         {
             get
             {
@@ -170,7 +170,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Removes all strings from the string table.
         /// </summary>
-        internal void Clear()
+        public void Clear()
         {
             this.rawStringVersionInfo.Clear();
         }
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets a collection of all the names of the strings in the table.
         /// </summary>
-        internal ICollection<string> Keys
+        public ICollection<string> Keys
         {
             get
             {
@@ -194,7 +194,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets a collection of all the values in the table.
         /// </summary>
-        internal ICollection<string> Values
+        public ICollection<string> Values
         {
             get
             {
@@ -210,7 +210,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the number of strings in the table.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -230,7 +230,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets an enumeration over all strings in the table.
         /// </summary>
         /// <returns>Enumeration of string name and value pairs</returns>
-        internal IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
             foreach (VersionInfo verValue in this.rawStringVersionInfo)
             {

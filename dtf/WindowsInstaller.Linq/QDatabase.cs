@@ -55,7 +55,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
     /// LINQ query functionality along with predefined entity types
     /// for common tables.
     /// </summary>
-    internal class QDatabase : Database
+    public class QDatabase : Database
     {
         /// <summary>
         /// Opens an existing database in read-only mode.
@@ -70,7 +70,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// nature of finalization it is best that the handle be closed manually as soon as it is no
         /// longer needed, as leaving lots of unused handles open can degrade performance.</para>
         /// </remarks>
-        internal QDatabase(string filePath)
+        public QDatabase(string filePath)
             : base(filePath)
         {
         }
@@ -92,7 +92,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// nature of finalization it is best that the handle be closed manually as soon as it is no
         /// longer needed, as leaving lots of unused handles open can degrade performance.</para>
         /// </remarks>
-        internal QDatabase(string filePath, string outputPath)
+        public QDatabase(string filePath, string outputPath)
             : base(filePath, outputPath)
         {
         }
@@ -117,7 +117,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// nature of finalization it is best that the handle be closed manually as soon as it is no
         /// longer needed, as leaving lots of unused handles open can degrade performance.</para>
         /// </remarks>
-        internal QDatabase(string filePath, DatabaseOpenMode mode)
+        public QDatabase(string filePath, DatabaseOpenMode mode)
             : base(filePath, mode)
         {
         }
@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// when the database object is disposed</param>
         /// <param name="filePath">Path of the database file, if known</param>
         /// <param name="openMode">Mode the handle was originally opened in</param>
-        internal internal QDatabase(
+        protected internal QDatabase(
             IntPtr handle, bool ownsHandle, string filePath, DatabaseOpenMode openMode)
             : base(handle, ownsHandle, filePath, openMode)
         {

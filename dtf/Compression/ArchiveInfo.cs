@@ -105,7 +105,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the file name of the archive.
         /// </summary>
         /// <value>The file name of the archive, not including any path.</value>
-        internal override string Name
+        public override string Name
         {
             get
             {
@@ -117,7 +117,7 @@ namespace Microsoft.Deployment.Compression
         /// Checks if the archive exists.
         /// </summary>
         /// <value>True if the archive exists; else false.</value>
-        internal override bool Exists
+        public override bool Exists
         {
             get
             {
@@ -129,7 +129,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets the full path of the archive.
         /// </summary>
         /// <returns>The full path of the archive.</returns>
-        internal override string ToString()
+        public override string ToString()
         {
             return this.FullName;
         }
@@ -137,7 +137,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Deletes the archive.
         /// </summary>
-        internal override void Delete()
+        public override void Delete()
         {
             File.Delete(this.FullName);
         }

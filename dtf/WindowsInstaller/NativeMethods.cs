@@ -303,7 +303,7 @@ internal static class NativeMethods
         {
         }
 
-        internal override bool IsInvalid
+        public override bool IsInvalid
         {
             get
             {
@@ -311,13 +311,13 @@ internal static class NativeMethods
             }
         }
 
-        internal static implicit operator IntPtr(MsiHandle msiHandle)
+        public static implicit operator IntPtr(MsiHandle msiHandle)
         {
             return msiHandle.handle;
         }
 
         [SecurityPermission(SecurityAction.Assert, UnmanagedCode = true)]
-        internal override bool ReleaseHandle()
+        protected override bool ReleaseHandle()
         {
             return RemotableNativeMethods.MsiCloseHandle((int) this.handle) == 0;
         }

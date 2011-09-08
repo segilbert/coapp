@@ -242,7 +242,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// Gets the full source path.
         /// </summary>
         /// <returns><see cref="SourcePath"/></returns>
-        internal override String ToString()
+        public override String ToString()
         {
             return SourcePath;
         }
@@ -265,7 +265,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets or sets the element at the specified index.
         /// </summary>
-        internal InstallPath this[int index]
+        public InstallPath this[int index]
         {
             get
             {
@@ -282,7 +282,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// Adds a new child path to the collection.
         /// </summary>
         /// <param name="item">The InstallPath to add.</param>
-        internal void Add(InstallPath item)
+        public void Add(InstallPath item)
         {
             this.OnInsert(item);
             this.items.Add(item);
@@ -292,7 +292,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// Removes a child path to the collection.
         /// </summary>
         /// <param name="item">The InstallPath to remove.</param>
-        internal bool Remove(InstallPath item)
+        public bool Remove(InstallPath item)
         {
             int index = this.items.IndexOf(item);
             if (index >= 0)
@@ -312,7 +312,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// </summary>
         /// <param name="item">The InstallPath to search for.</param>
         /// <returns>The index of the item, or -1 if not found.</returns>
-        internal int IndexOf(InstallPath item)
+        public int IndexOf(InstallPath item)
         {
             return this.items.IndexOf(item);
         }
@@ -322,7 +322,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// </summary>
         /// <param name="index">The insertion index.</param>
         /// <param name="item">The InstallPath to insert.</param>
-        internal void Insert(int index, InstallPath item)
+        public void Insert(int index, InstallPath item)
         {
             this.OnInsert(item);
             this.items.Insert(index, item);
@@ -333,7 +333,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// </summary>
         /// <param name="item">The InstallPath to search for.</param>
         /// <returns>true if the item is found; false otherwise</returns>
-        internal bool Contains(InstallPath item)
+        public bool Contains(InstallPath item)
         {
             return this.items.Contains(item);
         }
@@ -343,7 +343,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// </summary>
         /// <param name="array">The array to copy into.</param>
         /// <param name="index">The starting index in the destination array.</param>
-        internal void CopyTo(InstallPath[] array, int index)
+        public void CopyTo(InstallPath[] array, int index)
         {
             this.items.CopyTo(array, index);
         }
@@ -373,7 +373,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// Removes an item from the collection.
         /// </summary>
         /// <param name="index">The index of the item to remove.</param>
-        internal void RemoveAt(int index)
+        public void RemoveAt(int index)
         {
             this.OnRemove(this[index]);
             this.items.RemoveAt(index);
@@ -382,7 +382,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Removes all items from the collection.
         /// </summary>
-        internal void Clear()
+        public void Clear()
         {
             foreach (InstallPath item in this)
             {
@@ -395,7 +395,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the number of items in the collection.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -415,7 +415,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// Gets an enumerator over all items in the collection.
         /// </summary>
         /// <returns>An enumerator for the collection.</returns>
-        internal IEnumerator<InstallPath> GetEnumerator()
+        public IEnumerator<InstallPath> GetEnumerator()
         {
             return this.items.GetEnumerator();
         }
@@ -646,7 +646,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// Changing an install path does not modify the Database used to generate this InstallPathMap.
         /// </remarks>
-        internal InstallPath this[string key]
+        public InstallPath this[string key]
         {
             get
             {
@@ -664,7 +664,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// Gets the collection of keys in the InstallPathMap. Depending on the type of InstallPathMap,
         /// they are all directory, component, or file key strings.
         /// </summary>
-        internal ICollection<string> Keys
+        public ICollection<string> Keys
         {
             get
             {
@@ -675,7 +675,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the collection of InstallPath values in the InstallPathMap.
         /// </summary>
-        internal ICollection<InstallPath> Values
+        public ICollection<InstallPath> Values
         {
             get
             {
@@ -692,7 +692,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// Changing an install path does not modify the Database used to generate this InstallPathMap.
         /// </remarks>
-        internal void Add(string key, InstallPath installPath)
+        public void Add(string key, InstallPath installPath)
         {
             this.items.Add(key, installPath);
         }
@@ -706,7 +706,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <remarks>
         /// Changing an install path does not modify the Database used to generate this InstallPathMap.
         /// </remarks>
-        internal bool Remove(string key)
+        public bool Remove(string key)
         {
             return this.items.Remove(key);
         }
@@ -717,7 +717,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <param name="key">Depending on the type of InstallPathMap, this is the primary key from the
         /// either the Directory, Component, or File table.</param>
         /// <returns>true if the key is found; false otherwise</returns>
-        internal bool ContainsKey(string key)
+        public bool ContainsKey(string key)
         {
             return this.items.ContainsKey(key);
         }
@@ -741,7 +741,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <param name="key">The key to lookup.</param>
         /// <param name="value">Receives the value, or null if they key was not found.</param>
         /// <returns>True if the value was found, else false.</returns>
-        internal bool TryGetValue(string key, out InstallPath value)
+        public bool TryGetValue(string key, out InstallPath value)
         {
             return this.items.TryGetValue(key, out value);
         }
@@ -754,7 +754,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Removes all entries from the dictionary.
         /// </summary>
-        internal void Clear()
+        public void Clear()
         {
             this.items.Clear();
         }
@@ -772,7 +772,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Gets the number of entries in the dictionary.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -797,7 +797,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// Gets an enumerator over all entries in the dictionary.
         /// </summary>
         /// <returns>An enumerator for the dictionary.</returns>
-        internal IEnumerator<KeyValuePair<string, InstallPath>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, InstallPath>> GetEnumerator()
         {
             return this.items.GetEnumerator();
         }
@@ -821,17 +821,17 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             this.map = map;
         }
 
-        internal void Add(string key, string value)
+        public void Add(string key, string value)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal bool ContainsKey(string key)
+        public bool ContainsKey(string key)
         {
             return this.map.ContainsKey(key);
         }
 
-        internal ICollection<string> Keys
+        public ICollection<string> Keys
         {
             get
             {
@@ -839,12 +839,12 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal bool Remove(string key)
+        public bool Remove(string key)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal bool TryGetValue(string key, out string value)
+        public bool TryGetValue(string key, out string value)
         {
             InstallPath installPath;
             if (this.map.TryGetValue(key, out installPath))
@@ -859,7 +859,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal ICollection<string> Values
+        public ICollection<string> Values
         {
             get
             {
@@ -872,7 +872,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal string this[string key]
+        public string this[string key]
         {
             get
             {
@@ -886,23 +886,23 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal void Add(KeyValuePair<string, string> item)
+        public void Add(KeyValuePair<string, string> item)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal void Clear()
+        public void Clear()
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal bool Contains(KeyValuePair<string, string> item)
+        public bool Contains(KeyValuePair<string, string> item)
         {
             string value = this[item.Key];
             return value == item.Value;
         }
 
-        internal void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
         {
             foreach (KeyValuePair<string, string> entry in this)
             {
@@ -911,7 +911,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal int Count
+        public int Count
         {
             get
             {
@@ -919,7 +919,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal bool IsReadOnly
+        public bool IsReadOnly
         {
             get
             {
@@ -927,12 +927,12 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal bool Remove(KeyValuePair<string, string> item)
+        public bool Remove(KeyValuePair<string, string> item)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
             foreach (KeyValuePair<string, InstallPath> entry in this.map)
             {
@@ -960,17 +960,17 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             this.map = map;
         }
 
-        internal void Add(string key, string value)
+        public void Add(string key, string value)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal bool ContainsKey(string key)
+        public bool ContainsKey(string key)
         {
             return this.map.ContainsKey(key);
         }
 
-        internal ICollection<string> Keys
+        public ICollection<string> Keys
         {
             get
             {
@@ -978,12 +978,12 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal bool Remove(string key)
+        public bool Remove(string key)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal bool TryGetValue(string key, out string value)
+        public bool TryGetValue(string key, out string value)
         {
             InstallPath installPath;
             if (this.map.TryGetValue(key, out installPath))
@@ -998,7 +998,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal ICollection<string> Values
+        public ICollection<string> Values
         {
             get
             {
@@ -1011,7 +1011,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal string this[string key]
+        public string this[string key]
         {
             get
             {
@@ -1025,23 +1025,23 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal void Add(KeyValuePair<string, string> item)
+        public void Add(KeyValuePair<string, string> item)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal void Clear()
+        public void Clear()
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal bool Contains(KeyValuePair<string, string> item)
+        public bool Contains(KeyValuePair<string, string> item)
         {
             string value = this[item.Key];
             return value == item.Value;
         }
 
-        internal void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
         {
             foreach (KeyValuePair<string, string> entry in this)
             {
@@ -1050,7 +1050,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal int Count
+        public int Count
         {
             get
             {
@@ -1058,7 +1058,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal bool IsReadOnly
+        public bool IsReadOnly
         {
             get
             {
@@ -1066,12 +1066,12 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
             }
         }
 
-        internal bool Remove(KeyValuePair<string, string> item)
+        public bool Remove(KeyValuePair<string, string> item)
         {
             throw new InvalidOperationException(RO_MSG);
         }
 
-        internal IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
             foreach (KeyValuePair<string, InstallPath> entry in this.map)
             {

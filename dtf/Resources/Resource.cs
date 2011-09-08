@@ -230,7 +230,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="obj">Resource object to be compared</param>
         /// <returns>True if the objects represent the same resource; false otherwise.</returns>
-        internal override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             Resource res = obj as Resource;
             if (res == null) return false;
@@ -241,7 +241,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets a hash code for this Resource object.
         /// </summary>
         /// <returns>Hash code generated from the resource type, name, and locale.</returns>
-        internal override int GetHashCode()
+        public override int GetHashCode()
         {
             return this.ResourceType.GetHashCode() ^ this.Name.GetHashCode() ^ this.Locale.GetHashCode();
         }

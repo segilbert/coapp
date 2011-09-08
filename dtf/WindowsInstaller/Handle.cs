@@ -29,7 +29,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// hold unmanaged resources (MSI handles) that should be properly disposed
     /// when no longer needed.
     /// </p></remarks>
-    internal abstract class InstallerHandle : MarshalByRefObject, IDisposable
+    public abstract class InstallerHandle : MarshalByRefObject, IDisposable
     {
         private NativeMethods.MsiHandle handle;
 
@@ -90,7 +90,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiclosehandle.asp">MsiCloseHandle</a>
         /// </p></remarks>
         /// <seealso cref="Close"/>
-        internal void Dispose()
+        public void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
@@ -122,7 +122,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="obj">The handle object to compare with the current handle object.</param>
         /// <returns>true if the specified handle object is equal to the current handle object; otherwise false</returns>
-        internal override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             return (obj != null && this.GetType() == obj.GetType() &&
                 this.Handle == ((InstallerHandle) obj).Handle);
@@ -135,7 +135,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <remarks><p>
         /// The hash code is derived from the native integer handle.
         /// </p></remarks>
-        internal override int GetHashCode()
+        public override int GetHashCode()
         {
             return this.Handle.GetHashCode();
         }

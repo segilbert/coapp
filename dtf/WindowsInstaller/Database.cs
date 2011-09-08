@@ -48,7 +48,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     ///		</description></item>
     /// </list>
     /// </p></remarks>
-    internal partial class Database : InstallerHandle
+    public partial class Database : InstallerHandle
     {
         private string filePath;
         private DatabaseOpenMode openMode;
@@ -72,7 +72,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopendatabase.asp">MsiOpenDatabase</a>
         /// </p></remarks>
-        internal Database(string filePath)
+        public Database(string filePath)
             : this(filePath, DatabaseOpenMode.ReadOnly)
         {
         }
@@ -100,7 +100,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopendatabase.asp">MsiOpenDatabase</a>
         /// </p></remarks>
-        internal Database(string filePath, string outputPath)
+        public Database(string filePath, string outputPath)
             : this((IntPtr) Database.Open(filePath, outputPath), true, outputPath, DatabaseOpenMode.CreateDirect)
         {
         }
@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiopendatabase.asp">MsiOpenDatabase</a>
         /// </p></remarks>
-        internal Database(string filePath, DatabaseOpenMode mode)
+        public Database(string filePath, DatabaseOpenMode mode)
             : this((IntPtr) Database.Open(filePath, mode), true, filePath, mode)
         {
         }
@@ -143,7 +143,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// when the database object is disposed</param>
         /// <param name="filePath">Path of the database file, if known</param>
         /// <param name="openMode">Mode the handle was originally opened in</param>
-        internal internal Database(
+        internal Database(
             IntPtr handle, bool ownsHandle, string filePath, DatabaseOpenMode openMode)
             : base(handle, ownsHandle)
         {
@@ -810,7 +810,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Returns the file path of this database, or the handle value if a file path was not specified.
         /// </summary>
-        internal override string ToString()
+        public override string ToString()
         {
             if (this.FilePath != null)
             {

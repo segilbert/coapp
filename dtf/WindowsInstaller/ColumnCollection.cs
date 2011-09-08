@@ -65,7 +65,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the number of columns in the collection.
         /// </summary>
         /// <value>number of columns in the collection</value>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -79,7 +79,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// or a read-only <see cref="Database"/>.
         /// </summary>
         /// <value>read-only status of the collection</value>
-        internal bool IsReadOnly
+        public bool IsReadOnly
         {
             get
             {
@@ -140,7 +140,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="item">information about the column being added</param>
         /// <exception cref="InvalidOperationException">the collection is read-only</exception>
-        internal void Add(ColumnInfo item)
+        public void Add(ColumnInfo item)
         {
             throw new InvalidOperationException();
         }
@@ -149,7 +149,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Not supported because the collection is read-only.
         /// </summary>
         /// <exception cref="InvalidOperationException">the collection is read-only</exception>
-        internal void Clear()
+        public void Clear()
         {
             throw new InvalidOperationException();
         }
@@ -201,7 +201,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">destination array to be filed</param>
         /// <param name="arrayIndex">offset into the destination array where copying begins</param>
-        internal void CopyTo(ColumnInfo[] array, int arrayIndex)
+        public void CopyTo(ColumnInfo[] array, int arrayIndex)
         {
             if (array == null)
             {
@@ -228,7 +228,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets an enumerator over the columns in the collection.
         /// </summary>
         /// <returns>An enumerator of ColumnInfo objects.</returns>
-        internal IEnumerator<ColumnInfo> GetEnumerator()
+        public IEnumerator<ColumnInfo> GetEnumerator()
         {
             return this.columns.GetEnumerator();
         }

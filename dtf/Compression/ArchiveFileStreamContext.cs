@@ -227,7 +227,7 @@ namespace Microsoft.Deployment.Compression
         /// <see cref="archiveFiles"/> list with the specified index, or an empty
         /// string if the archive number is outside the bounds of the list. The
         /// file name should not include any directory path.</remarks>
-        internal virtual string GetArchiveName(int archiveNumber)
+        public virtual string GetArchiveName(int archiveNumber)
         {
             if (archiveNumber < this.archiveFiles.Count)
             {
@@ -259,7 +259,7 @@ namespace Microsoft.Deployment.Compression
         /// will seek to the start of any existing archive in the file, or to the
         /// end of the file if the existing file is not an archive.</para>
         /// </remarks>
-        internal virtual Stream OpenArchiveWriteStream(
+        public virtual Stream OpenArchiveWriteStream(
             int archiveNumber,
             string archiveName,
             bool truncate,
@@ -321,7 +321,7 @@ namespace Microsoft.Deployment.Compression
         /// returned by <see cref="GetArchiveName"/>.</param>
         /// <param name="stream">A stream that was previously returned by
         /// <see cref="OpenArchiveWriteStream"/> and is now ready to be closed.</param>
-        internal virtual void CloseArchiveWriteStream(
+        public virtual void CloseArchiveWriteStream(
             int archiveNumber,
             string archiveName,
             Stream stream)
@@ -381,7 +381,7 @@ namespace Microsoft.Deployment.Compression
         /// exists, the file is skipped.</item>
         /// </list>
         /// </remarks>
-        internal virtual Stream OpenFileReadStream(
+        public virtual Stream OpenFileReadStream(
             string path, out FileAttributes attributes, out DateTime lastWriteTime)
         {
             string filePath = this.TranslateFilePath(path);
@@ -405,7 +405,7 @@ namespace Microsoft.Deployment.Compression
         /// the path provided when the stream was opened.</param>
         /// <param name="stream">A stream that was previously returned by
         /// <see cref="OpenFileReadStream"/> and is now ready to be closed.</param>
-        internal virtual void CloseFileReadStream(string path, Stream stream)
+        public virtual void CloseFileReadStream(string path, Stream stream)
         {
             if (stream != null)
             {
@@ -425,7 +425,7 @@ namespace Microsoft.Deployment.Compression
         /// This implementation does not handle any options. Subclasses may override
         /// this method to allow for non-default behavior.
         /// </remarks>
-        internal virtual object GetOption(string optionName, object[] parameters)
+        public virtual object GetOption(string optionName, object[] parameters)
         {
             return null;
         }
@@ -452,7 +452,7 @@ namespace Microsoft.Deployment.Compression
         /// seek to the start of any existing archive in the file, or to the end of
         /// the file if the existing file is not an archive.</para>
         /// </remarks>
-        internal virtual Stream OpenArchiveReadStream(
+        public virtual Stream OpenArchiveReadStream(
             int archiveNumber, string archiveName, CompressionEngine compressionEngine)
         {
             if (archiveNumber >= this.archiveFiles.Count)
@@ -489,7 +489,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="archiveName">The name of the archive being closed.</param>
         /// <param name="stream">The stream that was previously returned by
         /// <see cref="OpenArchiveReadStream"/> and is now ready to be closed.</param>
-        internal virtual void CloseArchiveReadStream(
+        public virtual void CloseArchiveReadStream(
             int archiveNumber, string archiveName, Stream stream)
         {
             if (stream != null)
@@ -532,7 +532,7 @@ namespace Microsoft.Deployment.Compression
         /// is skipped if a file currently exists in the same path with an equal
         /// or newer write time.</para>
         /// </remarks>
-        internal virtual Stream OpenFileWriteStream(
+        public virtual Stream OpenFileWriteStream(
             string path,
             long fileSize,
             DateTime lastWriteTime)
@@ -586,7 +586,7 @@ namespace Microsoft.Deployment.Compression
         /// After closing the extracted file stream, this method applies the date
         /// and attributes to that file.
         /// </remarks>
-        internal virtual void CloseFileWriteStream(
+        public virtual void CloseFileWriteStream(
             string path,
             Stream stream,
             FileAttributes attributes,

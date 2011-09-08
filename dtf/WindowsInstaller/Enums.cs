@@ -46,7 +46,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     /// <summary>
     /// Specifies the open mode for a <see cref="Database"/>.
     /// </summary>
-    internal enum DatabaseOpenMode : int
+    public enum DatabaseOpenMode : int
     {
         /// <summary>Open a database read-only, no persistent changes.</summary>
         ReadOnly = 0,

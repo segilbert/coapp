@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="value">Data value (may be null).</param>
         /// <exception cref="ArgumentException">the key does not consist solely of letters,
         /// numbers, and the period, underscore, and space characters.</exception>
-        internal void Add(string key, string value)
+        public void Add(string key, string value)
         {
             CustomActionData.ValidateKey(key);
             this.data.Add(key, value);
@@ -149,7 +149,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="key">Case-sensitive data key.</param>
         /// <returns>true if the data contains an item with the key; otherwise, false</returns>
-        internal bool ContainsKey(string key)
+        public bool ContainsKey(string key)
         {
             return this.data.ContainsKey(key);
         }
@@ -157,7 +157,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a collection object containing all the keys of the data.
         /// </summary>
-        internal ICollection<string> Keys
+        public ICollection<string> Keys
         {
             get
             {
@@ -171,7 +171,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="key">Case-sensitive data key.</param>
         /// <returns>true if the item was successfully removed from the data;
         /// false if an item with the specified key was not found</returns>
-        internal bool Remove(string key)
+        public bool Remove(string key)
         {
             return this.data.Remove(key);
         }
@@ -183,7 +183,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="value">Value associated with the specified key, or
         /// null if an item with the specified key was not found</param>
         /// <returns>true if the data contains an item with the specified key; otherwise, false.</returns>
-        internal bool TryGetValue(string key, out string value)
+        public bool TryGetValue(string key, out string value)
         {
             return this.data.TryGetValue(key, out value);
         }
@@ -191,7 +191,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a collection containing all the values of the data.
         /// </summary>
-        internal ICollection<string> Values
+        public ICollection<string> Values
         {
             get
             {
@@ -205,7 +205,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="key">Case-sensitive data key.</param>
         /// <exception cref="ArgumentException">the key does not consist solely of letters,
         /// numbers, and the period, underscore, and space characters.</exception>
-        internal string this[string key]
+        public string this[string key]
         {
             get
             {
@@ -224,7 +224,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="item">Case-sensitive data key, with a data value that may be null.</param>
         /// <exception cref="ArgumentException">the key does not consist solely of letters,
         /// numbers, and the period, underscore, and space characters.</exception>
-        internal void Add(KeyValuePair<string, string> item)
+        public void Add(KeyValuePair<string, string> item)
         {
             CustomActionData.ValidateKey(item.Key);
             this.data.Add(item);
@@ -233,7 +233,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Removes all items from the data.
         /// </summary>
-        internal void Clear()
+        public void Clear()
         {
             if (this.data.Count > 0)
             {
@@ -246,7 +246,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="item">The data item to locate.</param>
         /// <returns>true if the data contains the item; otherwise, false</returns>
-        internal bool Contains(KeyValuePair<string, string> item)
+        public bool Contains(KeyValuePair<string, string> item)
         {
             return this.data.Contains(item);
         }
@@ -256,7 +256,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">Destination array.</param>
         /// <param name="arrayIndex">Index in the array at which copying begins.</param>
-        internal void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
         {
             this.data.CopyTo(array, arrayIndex);
         }
@@ -264,7 +264,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of items in the data.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -275,7 +275,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a value indicating whether the data is read-only.
         /// </summary>
-        internal bool IsReadOnly
+        public bool IsReadOnly
         {
             get
             {
@@ -289,7 +289,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="item">The item to remove.</param>
         /// <returns>true if the item was successfully removed from the data;
         /// false if the item was not found</returns>
-        internal bool Remove(KeyValuePair<string, string> item)
+        public bool Remove(KeyValuePair<string, string> item)
         {
             return this.data.Remove(item);
         }
@@ -298,7 +298,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        internal IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
             return this.data.GetEnumerator();
         }
@@ -316,7 +316,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a string representation of the data suitable for persisting in a property.
         /// </summary>
         /// <returns>Data string in the form "Key1=Value1;Key2=Value2"</returns>
-        internal override string ToString()
+        public override string ToString()
         {
             StringBuilder buf = new StringBuilder();
 

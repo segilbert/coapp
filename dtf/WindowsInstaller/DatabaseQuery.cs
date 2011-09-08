@@ -23,7 +23,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System.Globalization;
     using System.Diagnostics.CodeAnalysis;
 
-    internal partial class Database
+    public partial class Database
     {
         /// <summary>
         /// Gets a View object representing the query specified by a SQL string.

@@ -53,7 +53,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// will throw a NullReferenceException.</para>
         /// </remarks>
         /// <seealso cref="QTable&lt;TRecord&gt;.NewRecord()"/>
-        internal QRecord()
+        public QRecord()
         {
         }
 
@@ -168,7 +168,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
         /// <summary>
         /// Dumps all record fields to a string.
         /// </summary>
-        internal override string ToString()
+        public override string ToString()
         {
             StringBuilder buf = new StringBuilder(this.GetType().Name);
             buf.Append(" {");

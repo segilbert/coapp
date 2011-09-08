@@ -33,11 +33,11 @@ namespace Microsoft.Deployment.WindowsInstaller
             this.field = field;
         }
 
-        internal override bool CanRead { get { return true; } }
-        internal override bool CanWrite { get { return false; } }
-        internal override bool CanSeek { get { return false; } }
+        public override bool CanRead { get { return true; } }
+        public override bool CanWrite { get { return false; } }
+        public override bool CanSeek { get { return false; } }
 
-        internal override long Length
+        public override long Length
         {
             get
             {
@@ -45,7 +45,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
         }
 
-        internal override long Position
+        public override long Position
         {
             get
             {
@@ -58,22 +58,22 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
         }
 
-        internal override long Seek(long offset, SeekOrigin origin)
+        public override long Seek(long offset, SeekOrigin origin)
         {
             throw new NotSupportedException();
         }
 
-        internal override void SetLength(long value)
+        public override void SetLength(long value)
         {
             throw new NotSupportedException();
         }
 
-        internal override void Flush()
+        public override void Flush()
         {
             throw new NotSupportedException();
         }
 
-        internal override int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             if (count > 0)
             {
@@ -94,12 +94,12 @@ namespace Microsoft.Deployment.WindowsInstaller
             return count;
         }
 
-        internal override void Write(byte[] array, int offset, int count)
+        public override void Write(byte[] array, int offset, int count)
         {
             throw new NotSupportedException();
         }
 
-        internal override string ToString()
+        public override string ToString()
         {
             return "[Binary data]";
         }

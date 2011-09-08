@@ -301,7 +301,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets the name of the column.
         /// </summary>
         /// <returns>Name of the column.</returns>
-        internal override string ToString()
+        public override string ToString()
         {
             return this.Name;
         }

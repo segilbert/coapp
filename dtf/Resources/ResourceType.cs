@@ -120,7 +120,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets a string representation of the resource type.
         /// </summary>
         /// <returns>The custom resource name, or the name of a well-known resource type.</returns>
-        internal override string ToString()
+        public override string ToString()
         {
             if (this.IsInteger)
             {
@@ -159,7 +159,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="obj">Other object.</param>
         /// <returns>True if equal, else false.</returns>
-        internal override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             return this.Equals(obj as ResourceType);
         }
@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets a hash code suitable for using the resource type as a dictionary key.
         /// </summary>
         /// <returns>Hash code based on the resource type string.</returns>
-        internal override int GetHashCode()
+        public override int GetHashCode()
         {
             return this.resourceType.GetHashCode();
         }
@@ -188,7 +188,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="resourceType">String resource type to convert.</param>
         /// <returns>ResourceType object.</returns>
-        internal static implicit operator ResourceType(string resourceType)
+        public static implicit operator ResourceType(string resourceType)
         {
             return new ResourceType(resourceType);
         }
@@ -204,7 +204,7 @@ namespace Microsoft.Deployment.Resources
         /// the returned string is suitable for passing directly to Win32
         /// resource APIs that accept resource type strings.
         /// </remarks>
-        internal static explicit operator string(ResourceType resourceType)
+        public static explicit operator string(ResourceType resourceType)
         {
             return resourceType.resourceType;
         }

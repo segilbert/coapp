@@ -56,7 +56,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of network and URL sources in the list.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -75,7 +75,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// A SourceList is never read-only.
         /// </summary>
         /// <value>read-only status of the list</value>
-        internal bool IsReadOnly
+        public bool IsReadOnly
         {
             get { return false; }
         }
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistaddsourceex.asp">MsiSourceListAddSourceEx</a>
         /// </p></remarks>
         /// <seealso cref="Insert"/>
-        internal void Add(string item)
+        public void Add(string item)
         {
             if (!this.Contains(item))
             {
@@ -168,7 +168,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearall.asp">MsiSourceListClearAll</a>
         /// </p></remarks>
-        internal void Clear()
+        public void Clear()
         {
             this.ClearSourceType(NativeMethods.SourceType.Url);
             this.ClearSourceType(NativeMethods.SourceType.Network);
@@ -204,7 +204,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="item">case-insensitive source to look for</param>
         /// <returns>true if the source exists in the list, false otherwise</returns>
-        internal bool Contains(string item)
+        public bool Contains(string item)
         {
             if (String.IsNullOrEmpty(item))
             {
@@ -226,7 +226,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">destination array to be filed</param>
         /// <param name="arrayIndex">offset into the destination array where copying begins</param>
-        internal void CopyTo(string[] array, int arrayIndex)
+        public void CopyTo(string[] array, int arrayIndex)
         {
             foreach (string source in this)
             {
@@ -241,7 +241,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistclearsource.asp">MsiSourceListClearSource</a>
         /// </p></remarks>
-        internal bool Remove(string item)
+        public bool Remove(string item)
         {
             if (String.IsNullOrEmpty(item))
             {
@@ -271,7 +271,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msisourcelistenumsources.asp">MsiSourceListEnumSources</a>
         /// </p></remarks>
-        internal IEnumerator<string> GetEnumerator()
+        public IEnumerator<string> GetEnumerator()
         {
             StringBuilder sourceBuf = new StringBuilder(256);
             uint sourceBufSize = (uint) sourceBuf.Capacity;

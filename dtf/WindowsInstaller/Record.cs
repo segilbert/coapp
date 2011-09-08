@@ -44,7 +44,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// IsFormatStringInvalid is set from several View methods that invalidate the FormatString
         /// and used to determine behavior during Record.ToString().
         /// </summary>
-        internal internal bool IsFormatStringInvalid
+        internal bool IsFormatStringInvalid
         {
             set { this.isFormatStringInvalid = value; }
 
@@ -884,7 +884,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p></remarks>
         /// <seealso cref="FormatString"/>
         /// <seealso cref="Session.FormatRecord(Record)"/>
-        internal override string ToString()
+        public override string ToString()
         {
             return this.ToString((IFormatProvider) null);
         }

@@ -72,7 +72,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="st1">The first shortcut target to compare.</param>
         /// <param name="st2">The second shortcut target to compare.</param>
         /// <returns>True if all parts of the targets are the same, else false.</returns>
-        internal static bool operator ==(ShortcutTarget st1, ShortcutTarget st2)
+        public static bool operator ==(ShortcutTarget st1, ShortcutTarget st2)
         {
             return st1.Equals(st2);
         }
@@ -83,7 +83,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="st1">The first shortcut target to compare.</param>
         /// <param name="st2">The second shortcut target to compare.</param>
         /// <returns>True if any parts of the targets are different, else false.</returns>
-        internal static bool operator !=(ShortcutTarget st1, ShortcutTarget st2)
+        public static bool operator !=(ShortcutTarget st1, ShortcutTarget st2)
         {
             return !st1.Equals(st2);
         }
@@ -93,7 +93,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="obj">The shortcut target to compare to the current object.</param>
         /// <returns>True if <paramref name="obj"/> is a shortcut target and all parts of the targets are the same, else false.</returns>
-        internal override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             if (obj == null || obj.GetType() != typeof(ShortcutTarget))
             {
@@ -109,7 +109,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Generates a hash code using all parts of the shortcut target.
         /// </summary>
         /// <returns>An integer suitable for hashing the shortcut target.</returns>
-        internal override int GetHashCode()
+        public override int GetHashCode()
         {
             return (this.productCode != null ? this.productCode.GetHashCode() : 0)
                 ^ (this.feature != null ? this.feature.GetHashCode() : 0)

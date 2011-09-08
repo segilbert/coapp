@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.Compression.Cab
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter=true)]
-        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
             {

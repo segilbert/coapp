@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">array that receives the features</param>
         /// <param name="arrayIndex">offset into the array</param>
-        internal void CopyTo(ComponentInfo[] array, int arrayIndex)
+        public void CopyTo(ComponentInfo[] array, int arrayIndex)
         {
             foreach (ComponentInfo component in this)
             {
@@ -89,7 +89,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of components defined for the product.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Enumerates the components in the collection.
         /// </summary>
         /// <returns>an enumerator over all features in the collection</returns>
-        internal IEnumerator<ComponentInfo> GetEnumerator()
+        public IEnumerator<ComponentInfo> GetEnumerator()
         {
             using (View compView = this.session.Database.OpenView(
                 "SELECT `Component` FROM `Component`"))

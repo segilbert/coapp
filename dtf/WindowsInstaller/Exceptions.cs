@@ -107,7 +107,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a message that describes the exception.  This message may contain detailed
         /// formatted error data if it was available.
         /// </summary>
-        internal override String Message
+        public override String Message
         {
             get
             {
@@ -130,7 +130,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter=true)]
-        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
             {
@@ -550,7 +550,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets a message that describes the merge conflits.
         /// </summary>
-        internal override String Message
+        public override String Message
         {
             get
             {
@@ -576,7 +576,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="info">The SerializationInfo that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The StreamingContext that contains contextual information about the source or destination.</param>
         [SecurityPermission(SecurityAction.Demand, SerializationFormatter=true)]
-        internal override void GetObjectData(SerializationInfo info, StreamingContext context)
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null)
             {

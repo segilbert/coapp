@@ -73,7 +73,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports reading.
         /// </summary>
         /// <value>true if the stream supports reading; otherwise, false.</value>
-        internal override bool CanRead
+        public override bool CanRead
         {
             get
             {
@@ -85,7 +85,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports writing.
         /// </summary>
         /// <value>true if the stream supports writing; otherwise, false.</value>
-        internal override bool CanWrite
+        public override bool CanWrite
         {
             get
             {
@@ -97,7 +97,7 @@ namespace Microsoft.Deployment.Compression
         /// Gets a value indicating whether the source stream supports seeking.
         /// </summary>
         /// <value>true if the stream supports seeking; otherwise, false.</value>
-        internal override bool CanSeek
+        public override bool CanSeek
         {
             get
             {
@@ -108,7 +108,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets the length of the source stream.
         /// </summary>
-        internal override long Length
+        public override long Length
         {
             get
             {
@@ -119,7 +119,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Gets or sets the position of the source stream.
         /// </summary>
-        internal override long Position
+        public override long Position
         {
             get
             {
@@ -135,7 +135,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Flushes the source stream.
         /// </summary>
-        internal override void Flush()
+        public override void Flush()
         {
             this.source.Flush();
         }
@@ -144,7 +144,7 @@ namespace Microsoft.Deployment.Compression
         /// Sets the length of the source stream.
         /// </summary>
         /// <param name="value">The desired length of the stream in bytes.</param>
-        internal override void SetLength(long value)
+        public override void SetLength(long value)
         {
             this.source.SetLength(value);
         }
@@ -152,7 +152,7 @@ namespace Microsoft.Deployment.Compression
         /// <summary>
         /// Closes the source stream and also closes the additional objects that are carried.
         /// </summary>
-        internal override void Close()
+        public override void Close()
         {
             this.source.Close();
 
@@ -174,7 +174,7 @@ namespace Microsoft.Deployment.Compression
         /// <returns>The total number of bytes read into the buffer. This can be less
         /// than the number of bytes requested if that many bytes are not currently available,
         /// or zero (0) if the end of the stream has been reached.</returns>
-        internal override int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             return this.source.Read(buffer, offset, count);
         }
@@ -187,7 +187,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="offset">The zero-based byte offset in buffer at which
         /// to begin copying bytes to the stream.</param>
         /// <param name="count">The number of bytes to be written to the stream.</param>
-        internal override void Write(byte[] buffer, int offset, int count)
+        public override void Write(byte[] buffer, int offset, int count)
         {
             this.source.Write(buffer, offset, count);
         }
@@ -199,7 +199,7 @@ namespace Microsoft.Deployment.Compression
         /// <param name="origin">A value of type SeekOrigin indicating the reference
         /// point used to obtain the new position.</param>
         /// <returns>The new position within the stream.</returns>
-        internal override long Seek(long offset, SeekOrigin origin)
+        public override long Seek(long offset, SeekOrigin origin)
         {
             return this.source.Seek(offset, origin);
         }

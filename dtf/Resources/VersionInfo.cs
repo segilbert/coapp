@@ -178,7 +178,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        internal static explicit operator VersionInfo(byte[] bytesValue)
+        public static explicit operator VersionInfo(byte[] bytesValue)
         {
             VersionInfo viValue = new VersionInfo("");
             using (BinaryReader reader = new BinaryReader(new MemoryStream(bytesValue, false)))
@@ -188,7 +188,7 @@ namespace Microsoft.Deployment.Resources
             return viValue;
         }
 
-        internal static explicit operator byte[](VersionInfo viValue)
+        public static explicit operator byte[](VersionInfo viValue)
         {
             byte[] bytesValue = new byte[viValue.Length];
             using (BinaryWriter writer = new BinaryWriter(new MemoryStream(bytesValue, true)))
@@ -208,12 +208,12 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        internal void Add(VersionInfo item)
+        public void Add(VersionInfo item)
         {
             this.children.Add(item);
         }
 
-        internal bool Remove(VersionInfo item)
+        public bool Remove(VersionInfo item)
         {
             return this.children.Remove(item);
         }
@@ -241,22 +241,22 @@ namespace Microsoft.Deployment.Resources
             return -1;
         }
 
-        internal bool Contains(VersionInfo item)
+        public bool Contains(VersionInfo item)
         {
             return this.children.Contains(item);
         }
 
-        internal void CopyTo(VersionInfo[] array, int index)
+        public void CopyTo(VersionInfo[] array, int index)
         {
             this.children.CopyTo(array, index);
         }
 
-        internal void Clear()
+        public void Clear()
         {
             this.children.Clear();
         }
 
-        internal int Count
+        public int Count
         {
             get
             {
@@ -264,7 +264,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        internal bool IsReadOnly
+        public bool IsReadOnly
         {
             get
             {
@@ -272,7 +272,7 @@ namespace Microsoft.Deployment.Resources
             }
         }
 
-        internal IEnumerator<VersionInfo> GetEnumerator()
+        public IEnumerator<VersionInfo> GetEnumerator()
         {
             return this.children.GetEnumerator();
         }

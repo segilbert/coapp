@@ -230,7 +230,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Gets a string representation of the table.
         /// </summary>
         /// <returns>The name of the table.</returns>
-        internal override string ToString()
+        public override string ToString()
         {
             return this.name;
         }

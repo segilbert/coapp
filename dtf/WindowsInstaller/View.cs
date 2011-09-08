@@ -585,7 +585,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msiviewfetch.asp">MsiViewFetch</a>
         /// </p></remarks>
-        internal IEnumerator<Record> GetEnumerator()
+        public IEnumerator<Record> GetEnumerator()
         {
             Record rec;
             while ((rec = this.Fetch()) != null)

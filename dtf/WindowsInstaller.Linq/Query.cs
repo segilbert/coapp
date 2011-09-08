@@ -66,7 +66,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             this.projectionDelegates = new List<Delegate>();
         }
 
-        internal IEnumerator<T> GetEnumerator()
+        public IEnumerator<T> GetEnumerator()
         {
             if (this.selectColumns.Count == 0)
             {
@@ -255,7 +255,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             return ((IEnumerable<T>) this).GetEnumerator();
         }
 
-        internal IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
         {
             if (expression == null)
             {
@@ -315,7 +315,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             return q;
         }
 
-        internal IQueryable CreateQuery(Expression expression)
+        public IQueryable CreateQuery(Expression expression)
         {
             return this.CreateQuery<T>(expression);
         }
@@ -326,7 +326,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             return (LambdaExpression) unaryExpression.Operand;
         }
 
-        internal TResult Execute<TResult>(Expression expression)
+        public TResult Execute<TResult>(Expression expression)
         {
             throw new NotSupportedException(
                 "Direct method calls not supported -- use AsEnumerable() instead.");
@@ -338,7 +338,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
                 "Direct method calls not supported -- use AsEnumerable() instead.");
         }
 
-        internal IQueryProvider Provider
+        public IQueryProvider Provider
         {
             get
             {
@@ -346,7 +346,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             }
         }
 
-        internal Type ElementType
+        public Type ElementType
         {
             get
             {
@@ -354,7 +354,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Linq
             }
         }
 
-        internal Expression Expression
+        public Expression Expression
         {
             get
             {

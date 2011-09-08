@@ -154,7 +154,7 @@ namespace Microsoft.Deployment.Resources
             writer.Write(DateTimeToUInt64(this.timestamp));
         }
 
-        internal static explicit operator FixedFileVersionInfo(byte[] bytesValue)
+        public static explicit operator FixedFileVersionInfo(byte[] bytesValue)
         {
             FixedFileVersionInfo ffviValue = new FixedFileVersionInfo();
             using (BinaryReader reader = new BinaryReader(new MemoryStream(bytesValue, false)))
@@ -164,7 +164,7 @@ namespace Microsoft.Deployment.Resources
             return ffviValue;
         }
 
-        internal static explicit operator byte[](FixedFileVersionInfo ffviValue)
+        public static explicit operator byte[](FixedFileVersionInfo ffviValue)
         {
             const int FFVI_LENGTH = 52;
 

@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="array">array that receives the features</param>
         /// <param name="arrayIndex">offset into the array</param>
-        internal void CopyTo(FeatureInfo[] array, int arrayIndex)
+        public void CopyTo(FeatureInfo[] array, int arrayIndex)
         {
             foreach (FeatureInfo feature in this)
             {
@@ -89,7 +89,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <summary>
         /// Gets the number of features defined for the product.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Enumerates the features in the collection.
         /// </summary>
         /// <returns>an enumerator over all features in the collection</returns>
-        internal IEnumerator<FeatureInfo> GetEnumerator()
+        public IEnumerator<FeatureInfo> GetEnumerator()
         {
             using (View featureView = this.session.Database.OpenView(
                 "SELECT `Feature` FROM `Feature`"))

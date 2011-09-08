@@ -278,7 +278,7 @@ namespace Microsoft.Deployment.Resources
         /// Adds a new item to the collection.
         /// </summary>
         /// <param name="item">The Resource to add.</param>
-        internal void Add(Resource item)
+        public void Add(Resource item)
         {
             this.resources.Add(item);
         }
@@ -287,7 +287,7 @@ namespace Microsoft.Deployment.Resources
         /// Removes an item to the collection.
         /// </summary>
         /// <param name="item">The Resource to remove.</param>
-        internal bool Remove(Resource item)
+        public bool Remove(Resource item)
         {
             return this.resources.Remove(item);
         }
@@ -317,7 +317,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="item">The Resource to search for.</param>
         /// <returns>true if the item is found; false otherwise</returns>
-        internal bool Contains(Resource item)
+        public bool Contains(Resource item)
         {
             return this.resources.Contains(item);
         }
@@ -327,7 +327,7 @@ namespace Microsoft.Deployment.Resources
         /// </summary>
         /// <param name="array">The array to copy into.</param>
         /// <param name="arrayIndex">The starting index in the destination array.</param>
-        internal void CopyTo(Resource[] array, int arrayIndex)
+        public void CopyTo(Resource[] array, int arrayIndex)
         {
             this.resources.CopyTo(array, arrayIndex);
         }
@@ -335,7 +335,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Removes all resources from the collection.
         /// </summary>
-        internal void Clear()
+        public void Clear()
         {
             this.resources.Clear();
         }
@@ -343,7 +343,7 @@ namespace Microsoft.Deployment.Resources
         /// <summary>
         /// Gets the number of resources in the collection.
         /// </summary>
-        internal int Count
+        public int Count
         {
             get
             {
@@ -355,7 +355,7 @@ namespace Microsoft.Deployment.Resources
         /// Gets an enumerator over all resources in the collection.
         /// </summary>
         /// <returns></returns>
-        internal IEnumerator<Resource> GetEnumerator()
+        public IEnumerator<Resource> GetEnumerator()
         {
             return this.resources.GetEnumerator();
         }

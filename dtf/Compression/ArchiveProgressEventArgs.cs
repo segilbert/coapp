@@ -283,7 +283,7 @@ using System.Text;
     /// Creates a string representation of the progress event.
     /// </summary>
     /// <returns>a listing of all event parameters and values</returns>
-    internal override string ToString()
+    public override string ToString()
     {
         string formatString =
             "{0}\n" +

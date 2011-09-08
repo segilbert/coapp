@@ -22,7 +22,7 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System.Globalization;
     using System.Diagnostics.CodeAnalysis;
 
-    internal partial class Database
+    public partial class Database
     {
         /// <summary>
         /// Creates a transform that, when applied to the object database, results in the reference database.

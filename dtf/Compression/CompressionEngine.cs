@@ -100,7 +100,7 @@ using System.Globalization;
         /// <summary>
         /// Disposes of resources allocated by the compression engine.
         /// </summary>
-        internal void Dispose()
+        public void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);

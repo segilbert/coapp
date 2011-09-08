@@ -161,7 +161,7 @@ namespace Microsoft.Deployment.WindowsInstaller.Package
         /// <summary>
         /// Returns the name of the transform.
         /// </summary>
-        internal override string ToString()
+        public override string ToString()
         {
             return (this.Name != null ? this.Name : "MST");
         }

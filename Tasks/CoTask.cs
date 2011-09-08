@@ -105,6 +105,10 @@ namespace CoApp.Toolkit.Tasks {
         }}
 
         internal static Task GetParentTask( this Task task ) {
+            if (task == null) {
+                return null;
+            }
+                
             return _parentTaskField.GetValue(task) as Task ?? (_parentTasks.ContainsKey(task) ? _parentTasks[task] : null);
         }
 
