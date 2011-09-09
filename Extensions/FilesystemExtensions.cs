@@ -517,5 +517,17 @@ namespace CoApp.Toolkit.Extensions {
 
             return true;
         }
+
+
+        public static IEnumerable<string> GetMinimalPaths(this IEnumerable<string> paths) {
+            if (paths.Any() && paths.Skip(1).Any()) {
+                IEnumerable<IEnumerable<string>> newPaths = paths.Select(each => each.GetFullPath()).Select(each => each.Split('\\'));
+                while (newPaths.All(each => each.FirstOrDefault() == newPaths.FirstOrDefault().FirstOrDefault())) {
+                    newPaths = newPaths.Select(each => each.Skip(1));
+                }
+                return newPaths.Select(each => each.Aggregate((current, value) => current + "\\" + value));
+            }
+            return paths.Select(Path.GetFileName);
+        }
     }
 }
