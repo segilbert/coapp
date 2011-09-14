@@ -5,8 +5,10 @@
     // safecrtnt.lib    : Baked in security-enhanced functions (you know, those _s thangs).
     // msvcrt.lib		    : Baked in CRT (Windows XP SP3 and up).
     // msvcrt_winxp.obj : Implementation of some downlevel APIs, like except_handler4_common.
+    
+    GS01: I've removed $(DDKInstallPath)lib\wxp\i386\msvcrt_winxp.obj
     -->
-    <DDK_CRT>$(DDKInstallPath)lib\Crt\$(DDKPlatform)\safecrtnt.lib;$(DDKInstallPath)lib\Crt\$(DDKPlatform)\msvcrt.lib;$(DDKInstallPath)lib\wxp\i386\msvcrt_winxp.obj</DDK_CRT>
+    <DDK_CRT>$(DDKInstallPath)lib\Crt\$(DDKPlatform)\safecrtnt.lib;$(DDKInstallPath)lib\Crt\$(DDKPlatform)\msvcrt.lib;</DDK_CRT>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
