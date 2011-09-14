@@ -194,10 +194,11 @@ namespace CoApp.Toolkit.Engine.Client {
 
             // return a task that is the sum of all the tasks.
             return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => {
-               if( tasks.Where(each => each.IsFaulted || each.IsCanceled).Any() ) {
-                   throw new Exception("A task had an exception. TODO: Find out which task.");
-               }
 
+                var faulted = tasks.Where(each => each.IsFaulted);
+                if( faulted.Any()) {
+                    throw faulted.FirstOrDefault().Exception.Flatten().InnerExceptions.FirstOrDefault();
+                }
                return tasks.SelectMany(each => each.Result).Distinct();
             },
                 TaskContinuationOptions.AttachedToParent);
@@ -213,7 +214,12 @@ namespace CoApp.Toolkit.Engine.Client {
                     null, /* name */null, /* version */null, /* arch */ null, /* pkt */null, dependencies, installed, active, required, blocked, latest,
                     /* index */null, /* max-results */null, location, forceScan, new PackageManagerMessages {
                         PackageInformation = package => packages.Add(package),
-                    }.Extend(messages)).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
+                    }.Extend(messages)).ContinueWith(antecedent => {
+                        if( antecedent.IsFaulted || antecedent.IsCanceled ) {
+                            throw antecedent.Exception.Flatten().InnerExceptions.FirstOrDefault();
+                        }
+                        return packages as IEnumerable<Package>;
+                    }, TaskContinuationOptions.AttachedToParent);
             }
 
             Package singleResult = null;
@@ -503,6 +509,25 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
+        public Task DownloadProgress(string canonicalName, int progress, PackageManagerMessages messages = null) {
+            IsCompleted.Reset();
+            return Task.Factory.StartNew(() => {
+                if (messages != null) {
+                    messages.Register();
+                }
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("download-progress") {
+                        {"canonical-name", canonicalName},
+                        {"progress", progress.ToString()},
+
+                    });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
         public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages = null) {
             IsCompleted.Reset();
             return Task.Factory.StartNew(() => {
@@ -600,7 +625,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     break;
 
                 case "installing-package":
-                    PackageManagerMessages.Invoke.InstallingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0);
+                    PackageManagerMessages.Invoke.InstallingPackageProgress(responseMessage["canonical-name"], (int?) responseMessage["percent-complete"] ?? 0,(int?) responseMessage["overall-percent-complete"] ?? 0);
                     break;
 
                 case "message-argument-error":
@@ -720,7 +745,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     _pipe.WriteLineAsync(message.ToString()).ContinueWith(antecedent => { Console.WriteLine("Async Write Fail!? (1)"); },
                         TaskContinuationOptions.OnlyOnFaulted);
                 }
-                catch (Exception e) {
+                catch /* (Exception e) */ {
                     Console.WriteLine("Async Write Fail!? (2)");
                 }
             }

@@ -293,23 +293,28 @@
     <Compile Include="Text\HttpUtility.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\Advapi32.cs" />
+    <Compile Include="Win32\AllocationType.cs" />
     <Compile Include="Win32\AlternateDataStreamInfo.cs" />
     <Compile Include="Win32\ByHandleFileInformation.cs" />
     <Compile Include="Win32\ControlCodes.cs" />
+    <Compile Include="Win32\CreateRemoteThreadFlags.cs" />
     <Compile Include="Win32\FileStreamAttributes.cs" />
     <Compile Include="Win32\FileStreamType.cs" />
     <Compile Include="Win32\FileSystem.cs" />
+    <Compile Include="Win32\FileType.cs" />
     <Compile Include="Win32\IoReparseTag.cs" />
     <Compile Include="Win32\ISymlink.cs" />
     <Compile Include="Win32\Kernel32.cs" />
     <Compile Include="Win32\KnownFolders.cs" />
     <Compile Include="Win32\LegacySymlink.cs" />
+    <Compile Include="Win32\MemoryProtection.cs" />
     <Compile Include="Win32\ModernSymlink.cs" />
     <Compile Include="Win32\MoveFileFlags.cs" />
     <Compile Include="Win32\MPR.cs" />
     <Compile Include="Win32\NativeFileAccess.cs" />
     <Compile Include="Win32\NativeFileAttributesAndFlags.cs" />
     <Compile Include="Win32\Ntdll.cs" />
+    <Compile Include="Win32\Rehash.cs" />
     <Compile Include="Win32\ReparseData.cs" />
     <Compile Include="Win32\ReparsePoint.cs" />
     <Compile Include="Win32\ReparsePointError.cs" />
@@ -319,6 +324,7 @@
     <Compile Include="Win32\SearchPath.cs" />
     <Compile Include="Win32\SecurityImpersonationLevel.cs" />
     <Compile Include="Win32\SidAndAttributes.cs" />
+    <Compile Include="Win32\SizeT.cs" />
     <Compile Include="Win32\StreamName.cs" />
     <Compile Include="Win32\Symlink.cs" />
     <Compile Include="Win32\TokenElevation.cs" />
@@ -331,6 +337,8 @@
     <Compile Include="Win32\WinTrust.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="$(SolutionDir)\..\solution\ext\rehash\CoApp.Rehash.x86.dll" />
+    <EmbeddedResource Include="$(SolutionDir)\..\solution\ext\rehash\CoApp.Rehash.x64.dll" />
     <Content Include="dtf\Compression.Cab\Errors.txt" />
     <Content Include="dtf\WindowsInstaller\Errors.txt" />
     <EmbeddedResource Include="dtf\Compression.Cab\Errors.resources.resources" />

@@ -242,6 +242,11 @@ namespace CoApp.Toolkit.Engine {
                     messages.Register();
                 }
 
+                var overallProgress = 0.0;
+                var eachTaskIsWorth = 0.0;
+                var numberOfPackagesToInstall = 0;
+                var numberOfPackagesToDownload = 0;
+
                 using (var manualResetEvent = new ManualResetEvent(true)) {
                     try {
                         lock (manualResetEvents) {
@@ -321,7 +326,6 @@ namespace CoApp.Toolkit.Engine {
                                 return;
                             }
 
-
                             // we've got an install graph.
                             // let's see if we've got all the files
                             var missingFiles = from p in installGraph where !p.InternalPackageData.HasLocalLocation select p;
@@ -333,6 +337,14 @@ namespace CoApp.Toolkit.Engine {
                                     packagesTriedToDownloadThisTask.Add(p);
                                     p.PackageSessionData.CouldNotDownload = false;
                                 }
+                            }
+
+                            if( numberOfPackagesToInstall != installGraph.Count() || numberOfPackagesToDownload != missingFiles.Count() ) {
+                                // recalculate the rest of the install progress based on the new install graph.
+                                numberOfPackagesToInstall = installGraph.Count();
+                                numberOfPackagesToDownload = missingFiles.Count();
+
+                                eachTaskIsWorth = (1.0 - overallProgress)/(numberOfPackagesToInstall + numberOfPackagesToDownload);
                             }
 
                             if (missingFiles.Any()) {
@@ -357,6 +369,7 @@ namespace CoApp.Toolkit.Engine {
                                 var failed = false;
                                 // no missing files? Check
                                 // complete install graph? Check
+
                                 foreach (var p in installGraph) {
                                     var pkg = p;
                                     // seems like a good time to check if we're supposed to bail...
@@ -374,17 +387,23 @@ namespace CoApp.Toolkit.Engine {
                                                 pkg.PackageSessionData.PackageFailedInstall = true;
                                             }
                                             else {
+                                                var lastProgress = 0;
                                                 // GS01: We should put a softer lock here to keep the client aware that packages 
                                                 // are being installed on other threads...
                                                 lock (typeof (MSIBase)) {
-                                                    pkg.Install( percentage => PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, percentage));
+                                                    pkg.Install(percentage => {
+                                                        overallProgress += ((percentage - lastProgress) *eachTaskIsWorth)/100;
+                                                        lastProgress = percentage;
+                                                        PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, percentage, (int)(overallProgress*100));
+                                                    });
                                                 }
-                                                PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, 100);
+                                                overallProgress += ((100 - lastProgress)*eachTaskIsWorth)/100;
+                                                PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, 100,(int)(overallProgress*100));
                                                 PackageManagerMessages.Invoke.InstalledPackage(pkg.CanonicalName);
                                             }
                                         }
                                     }
-                                    catch (PackageInstallFailedException pife) {
+                                    catch /* (PackageInstallFailedException pife)  */ {
                                         PackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, validLocation, "Package failed to install.");
                                         pkg.PackageSessionData.PackageFailedInstall = true;
 
@@ -406,11 +425,14 @@ namespace CoApp.Toolkit.Engine {
                             //----------------------------------------------------------------------------
                             // wait until either the manualResetEvent is set, but check every second or so
                             // to see if the client has cancelled the operation.
-                            while (!manualResetEvent.WaitOne(1000)) {
+                            while (!manualResetEvent.WaitOne(500)) {
                                 if (CancellationRequested) {
                                     PackageManagerMessages.Invoke.OperationCancelled("install-package");
                                     return;
                                 }
+
+                                // we can also use this opportunity to update progress on any outstanding download tasks.
+                                overallProgress += missingFiles.Sum(missingFile => ((missingFile.PackageSessionData.DownloadProgressDelta*eachTaskIsWorth)/100));
                             }
                         } while (true);
 
@@ -430,6 +452,23 @@ namespace CoApp.Toolkit.Engine {
             }, TaskCreationOptions.AttachedToParent);
             return t;
         }
+
+
+        public Task DownloadProgress( string canonicalName , int? downloadProgress,PackageManagerMessages messages ) {
+            var t = Task.Factory.StartNew(() => {
+                if (messages != null) {
+                    messages.Register();
+                }
+                try {
+                    var package = GetSinglePackage(canonicalName, "download-progress");
+                    package.PackageSessionData.DownloadProgress = Math.Max(package.PackageSessionData.DownloadProgress, downloadProgress.GetValueOrDefault());
+                } catch {
+                    // suppress any exceptions... we just don't care!
+                }
+            }, TaskCreationOptions.AttachedToParent);
+            return t;
+        }
+
 
         public Task ListFeeds(int? index, int? maxResults, PackageManagerMessages messages) {
             var t = Task.Factory.StartNew(() => {
@@ -830,6 +869,8 @@ namespace CoApp.Toolkit.Engine {
                     return;
                 }
 
+                
+
                 // if there is a continuation task for the canonical name that goes along with this, 
                 // we should continue with that task, and get the heck out of here.
                 // 
@@ -855,7 +896,12 @@ namespace CoApp.Toolkit.Engine {
 
                     if (antecedent.Result.IsPackageFile) {
                         var package = Package.GetPackageFromFilename(location);
+                        
+                        // mark it download 100%
+                        package.PackageSessionData.DownloadProgress = 100;
+                        
                         SessionPackageFeed.Instance.Add(package);
+
                         PackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
                         PackageManagerMessages.Invoke.Recognized(localLocation);
                         return;

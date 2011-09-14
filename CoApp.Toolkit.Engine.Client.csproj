@@ -62,6 +62,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\Client\Downloader.cs" />
     <Compile Include="Engine\Client\Package.cs" />
     <Compile Include="Engine\Client\PackageManager.cs">
       <SubType>Code</SubType>

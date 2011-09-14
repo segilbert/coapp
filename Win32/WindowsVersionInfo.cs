@@ -11,6 +11,13 @@
 namespace CoApp.Toolkit.Win32 {
     using System;
 
+    public enum ProcessorType {
+        Unknown,
+        X86,
+        X64,
+        Arm
+    }
+
     /// <summary>
     /// Wrapper class for accessing information about the current Windows environment
     /// </summary>
@@ -63,5 +70,14 @@ namespace CoApp.Toolkit.Win32 {
                 return Environment.Is64BitOperatingSystem;
             }
         }
+
+        public static ProcessorType ProcessorType{ get {
+            // TODO: needs to be updated with proper check for arm on 32bit 
+            if( IsOS64Bit ) {
+                return ProcessorType.X64;
+            }
+
+            return ProcessorType.X86;
+        }}
     }
 }

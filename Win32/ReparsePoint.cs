@@ -195,7 +195,7 @@ namespace CoApp.Toolkit.Win32 {
 
                 try {
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle.DangerousGetHandle(), ControlCodes.GetReparsePoint, IntPtr.Zero, 0,
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.GetReparsePoint, IntPtr.Zero, 0,
                         outBuffer, outBufferSize, out bytesReturned, IntPtr.Zero);
 
                     if (!result) {
@@ -262,7 +262,7 @@ namespace CoApp.Toolkit.Win32 {
                     Marshal.StructureToPtr(reparseDataBuffer, inBuffer, false);
 
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle.DangerousGetHandle(), ControlCodes.SetReparsePoint,
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint,
                         inBuffer, reparseDataBuffer.ReparseDataLength + 8, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero);
 
                     if (!result) {
@@ -337,7 +337,7 @@ namespace CoApp.Toolkit.Win32 {
                     Marshal.StructureToPtr(reparseDataBuffer, inBuffer, false);
 
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle.DangerousGetHandle(), ControlCodes.SetReparsePoint,
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint,
                         inBuffer, reparseDataBuffer.ReparseDataLength + 8, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero);
 
                     if (!result) {
@@ -441,7 +441,7 @@ namespace CoApp.Toolkit.Win32 {
                     Marshal.StructureToPtr(reparsePoint._reparseDataData, inBuffer, false);
 
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle.DangerousGetHandle(), ControlCodes.SetReparsePoint,
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint,
                         inBuffer, reparsePoint._reparseDataData.ReparseDataLength + 8, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero);
 
                     if (!result) {

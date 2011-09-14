@@ -19,12 +19,18 @@ namespace CoApp.Toolkit.Win32 {
         private static readonly RegistryView _systemEnvironment = RegistryView.System[@"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"];
         private static readonly RegistryView _userEnvironment = RegistryView.User[@"Environment"];
 
+#if !COAPP_ENGINE_CORE
         private const Int32 HWND_BROADCAST = 0xffff;
         private const Int32 WM_SETTINGCHANGE = 0x001A;
         private const Int32 SMTO_ABORTIFHUNG = 0x0002;
-
+#endif
         private static void BroadcastChange() {
+#if COAPP_ENGINE_CORE
+            Rehash.ForceProcessToReloadEnvironment("explorer");
+            Rehash.ForceProcessToReloadEnvironment("services");
+#else
             Task.Factory.StartNew(() => { User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero); });
+#endif 
         }
 
         public static IEnumerable<string> SystemPath {

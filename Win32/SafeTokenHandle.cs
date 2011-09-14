@@ -12,24 +12,85 @@ namespace CoApp.Toolkit.Win32 {
     using System;
     using Microsoft.Win32.SafeHandles;
 
+
     /// <summary>
-    ///   Represents a wrapper class for a token handle.
+    ///  SafeHandleBase implements ReleaseHandle method for all our Safe Handle classes.
+    /// 
+    /// The purpose of the safe handle class is to get away from having IntPtr objects for handles 
+    /// coming back from Kernel APIs, and instead provide a type-safe wrapper that prohibits the 
+    /// accidental use of one handle type where another should be.
+    /// 
+    /// We create a common base class so that the release semantics are implemented the same.
     /// </summary>
-    public class SafeTokenHandle : SafeHandleZeroOrMinusOneIsInvalid {
+     public class AutoSafeHandle : SafeHandleZeroOrMinusOneIsInvalid {
+        protected AutoSafeHandle() : base (true) {}
 
-        private SafeTokenHandle() : base (true) {}
-
-
-        public SafeTokenHandle(IntPtr handle) : base(true) {
+        protected AutoSafeHandle(IntPtr handle) : base(true) {
             SetHandle(handle);
         }
 
-        internal static SafeTokenHandle InvalidHandle {
-            get { return new SafeTokenHandle(IntPtr.Zero); }
-        }
-
-        protected override bool ReleaseHandle() {
+        /// <summary>
+        /// When overridden in a derived class, executes the code required to free the handle.
+        /// </summary>
+        /// <returns>
+        /// true if the handle is released successfully; otherwise, in the event of a catastrophic failure, false. In this case, it generates a releaseHandleFailed MDA Managed Debugging Assistant.
+        /// </returns>
+        override protected bool ReleaseHandle() {
             return Kernel32.CloseHandle(handle);
         }
     }
+
+
+    /// <summary>
+    ///   Represents a wrapper class for a token handle.
+    /// </summary>
+    public class SafeTokenHandle : AutoSafeHandle {
+        public static SafeTokenHandle InvalidHandle = new SafeTokenHandle(IntPtr.Zero);
+        public SafeTokenHandle() {
+        }
+
+        public SafeTokenHandle(IntPtr handle) : base(handle) {
+        }
+    }
+
+    public sealed class SafeProcessHandle : AutoSafeHandle {
+        public static SafeProcessHandle InvalidHandle = new SafeProcessHandle(IntPtr.Zero);
+
+        public SafeProcessHandle() {
+        } 
+ 
+        internal SafeProcessHandle(IntPtr handle) : base (handle) {
+        }
+    } 
+
+   
+    public sealed class SafeThreadHandle : AutoSafeHandle { 
+        internal static SafeThreadHandle InvalidHandle = new SafeThreadHandle(IntPtr.Zero);
+
+        public SafeThreadHandle() {
+        }
+
+        internal SafeThreadHandle(IntPtr handle) : base (handle) { 
+        } 
+    } 
+
+    public sealed class SafeModuleHandle : SafeHandleZeroOrMinusOneIsInvalid {
+        internal static SafeModuleHandle InvalidHandle = new SafeModuleHandle(IntPtr.Zero);
+        public SafeModuleHandle() : base (true) {}
+
+        public SafeModuleHandle(IntPtr handle) : base(true) {
+            SetHandle(handle);
+        }
+
+        /// <summary>
+        /// When overridden in a derived class, executes the code required to free the handle.
+        /// </summary>
+        /// <returns>
+        /// true if the handle is released successfully; otherwise, in the event of a catastrophic failure, false. In this case, it generates a releaseHandleFailed MDA Managed Debugging Assistant.
+        /// </returns>
+        override protected bool ReleaseHandle() {
+            return true;
+        }
+    }
+
 }

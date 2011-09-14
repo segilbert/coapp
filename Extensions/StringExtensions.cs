@@ -287,6 +287,54 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
+        /// wildcard cache for IsWildcardMatch (so we're not rebuilding the regex every time)
+        /// </summary>
+        private static readonly Dictionary<string, Regex> _newWildcards = new Dictionary<string, Regex>();
+        private static Regex EscapeFilepathCharacters = new Regex(@"([\\|\$|\^|\{|\[|\||\)|\+|\.|\]|\}|\/])");
+
+        private static Regex WildcardToRegex( string wildcard, string noEscapePrefix = "^" ) {
+            return new Regex(noEscapePrefix + EscapeFilepathCharacters.Replace(wildcard, "\\$1")
+                .Replace("?", @".")
+                .Replace("**", @"?")
+                .Replace("*", @"[^\\\/\<\>\|]*")
+                .Replace("?", @".*") + '$');
+            
+        }
+
+        /// <summary>
+        /// The new implementation of the wildcard matching function.
+        /// 
+        /// Rules: 
+        ///   * means matches anything except slash or backslash 
+        ///   ? means match any one character
+        ///   ** means matches anything 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="wildcardMask"></param>
+        /// <returns></returns>
+        public static bool NewIsWildcardMatch(this string text, string wildcardMask, bool isMatchingLocation = false, string currentLocation = null) {
+            string key;
+
+            if (!isMatchingLocation) {
+                key = string.IsNullOrEmpty(currentLocation) ? wildcardMask : currentLocation + wildcardMask;
+                if (!_newWildcards.ContainsKey(key)) {
+                    _newWildcards.Add(key, WildcardToRegex(key));
+                }
+                return _newWildcards[key].IsMatch(text);
+            }
+
+            key = string.IsNullOrEmpty(currentLocation) ? wildcardMask : wildcardMask + currentLocation;
+            if (!_newWildcards.ContainsKey(key)) {
+                var prefix = string.IsNullOrEmpty(currentLocation)
+                    ? @".*[\\|\/]"
+                    : Regex.Escape((currentLocation.EndsWith("\\") || currentLocation.EndsWith("/")
+                        ? currentLocation : currentLocation + (text.Contains("\\") ? "\\" : (text.Contains("/") ? "/" : ""))));
+                _newWildcards.Add(key, WildcardToRegex(key, prefix));
+            }
+            return _newWildcards[key].IsMatch(text);
+        }
+
+        /// <summary>
         /// A case insensitive Contains() method.
         /// </summary>
         /// <param name="source">The source.</param>
@@ -787,11 +835,9 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="bytes">The bytes.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string ToHexString(this IEnumerable<byte> bytes)
-        {
+        public static string ToHexString(this IEnumerable<byte> bytes) {
             var sb = new StringBuilder();
-            foreach (var b in bytes)
-            {
+            foreach (var b in bytes) {
                 sb.Append(b.ToString("x2"));
             }
             return sb.ToString();

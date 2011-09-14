@@ -232,6 +232,7 @@
     <Compile Include="Utility\ToolSniffer.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\Advapi32.cs" />
+    <Compile Include="Win32\AllocationType.cs" />
     <Compile Include="Win32\ByHandleFileInformation.cs" />
     <Compile Include="Win32\ClipboardNotifier.cs">
       <SubType>Component</SubType>
@@ -242,6 +243,8 @@
     <Compile Include="Win32\ConsoleScreenBufferInfo.cs" />
     <Compile Include="Win32\ControlCodes.cs" />
     <Compile Include="Win32\Coord.cs" />
+    <Compile Include="Win32\CreateRemoteThreadFlags.cs" />
+    <Compile Include="Win32\FileType.cs" />
     <Compile Include="Win32\FocusInputRecord.cs" />
     <Compile Include="Win32\ImageCoffHeader.cs" />
     <Compile Include="Win32\ImageCor20Header.cs" />
@@ -255,6 +258,7 @@
     <Compile Include="Win32\KeyModifiers.cs" />
     <Compile Include="Win32\KnownFolders.cs" />
     <Compile Include="Win32\LegacySymlink.cs" />
+    <Compile Include="Win32\MemoryProtection.cs" />
     <Compile Include="Win32\MenuItemInfo.cs" />
     <Compile Include="Win32\Miim.cs" />
     <Compile Include="Win32\ModernSymlink.cs" />
@@ -275,6 +279,7 @@
     <Compile Include="Win32\ReparsePointError.cs" />
     <Compile Include="Win32\SearchPath.cs" />
     <Compile Include="Win32\SecurityAttributes.cs" />
+    <Compile Include="Win32\SizeT.cs" />
     <Compile Include="Win32\SmallRect.cs" />
     <Compile Include="Win32\StandardHandle.cs" />
     <Compile Include="Win32\Startupinfo.cs" />

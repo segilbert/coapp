@@ -29,7 +29,7 @@ namespace CoApp.Toolkit.Win32 {
         public static extern bool GlobalUnlock(IntPtr hMem);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool DeviceIoControl(IntPtr hDevice, ControlCodes dwIoControlCode, IntPtr InBuffer, int nInBufferSize, IntPtr OutBuffer, int nOutBufferSize, out int pBytesReturned, IntPtr lpOverlapped);
+        public static extern bool DeviceIoControl(SafeFileHandle hDevice, ControlCodes dwIoControlCode, IntPtr InBuffer, int nInBufferSize, IntPtr OutBuffer, int nOutBufferSize, out int pBytesReturned, IntPtr lpOverlapped);
         
         [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeFileHandle CreateFile(string name, NativeFileAccess access, FileShare share, IntPtr security, FileMode mode, NativeFileAttributesAndFlags flags, IntPtr template);
@@ -175,10 +175,10 @@ namespace CoApp.Toolkit.Win32 {
             IntPtr lpProcessInformation);
 
         [DllImport("kernel32.dll")] //, CharSet=CharSet.Unicode
-        public static extern IntPtr GetProcAddress(IntPtr hmod, String name);
+        public static extern IntPtr GetProcAddress(SafeModuleHandle hmod, String name);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        public static extern IntPtr GetModuleHandle(String lpModuleName);
+        public static extern SafeModuleHandle GetModuleHandle(String lpModuleName);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         public static extern bool WriteProcessMemory(
@@ -189,14 +189,37 @@ namespace CoApp.Toolkit.Win32 {
             out Int32 lpNumberOfBytesWritten // count of bytes	written
             );
 
-    }
 
-    public enum FileType : uint {
-        Char = 0x0002,
-        Disk = 0x0001,
-        Pipe = 0x0003,
-        Remote = 0x8000,
-        Unknown = 0x0000,
-    }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern IntPtr VirtualAllocEx(SafeProcessHandle processHandle, IntPtr address, SizeT size, AllocationType flAllocationType, MemoryProtection flProtect); 
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern SafeProcessHandle OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool WriteProcessMemory(SafeProcessHandle processHandle, IntPtr lpBaseAddress, byte[] lpBuffer, SizeT nSize, ref SizeT lpNumberOfBytesWritten);
+
+        [DllImport("kernel32.dll")]
+        public static extern bool FlushInstructionCache(SafeProcessHandle processHandle, IntPtr lpBaseAddress, SizeT dwSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern SafeThreadHandle CreateRemoteThread(SafeProcessHandle processHandle, IntPtr lpThreadAttributes, SizeT dwStackSize, IntPtr lpStartAddress,
+            IntPtr lpParameter, CreateRemoteThreadFlags creationFlags, out uint lpThreadId);
+
+        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)][return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsWow64Process([In] SafeProcessHandle processHandle, [Out, MarshalAs(UnmanagedType.Bool)] out bool wow64Process);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern bool VirtualFreeEx(SafeProcessHandle processHandle, IntPtr address, SizeT size, AllocationType flAllocationType); 
+
+        [DllImport("kernel32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+        public static extern SafeWaitHandle CreateEvent(IntPtr lpSecurityAttributes, bool isManualReset, bool initialState, string name);
+
+        [DllImport("kernel32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+        public static extern bool SetEvent(SafeWaitHandle handle);
+
+        [DllImport("kernel32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+        public static extern bool ResetEvent(SafeWaitHandle handle);
+
+    }
 }

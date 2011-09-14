@@ -330,7 +330,7 @@ namespace CoApp.Toolkit.Engine {
                     GetCurrentPackageVersion(Name, PublicKeyToken);
                     // GS01: fix this to rerun package composition on prior version.
                 }
-                catch (Exception e) {
+                catch /* (Exception e) */ {
                     // boooo!
                     Console.WriteLine("failed setting active package for {0}-{1}", Name, PublicKeyToken);
                     PackageManagerSettings.PerPackageSettings.DeleteSubkey(GeneralName);
@@ -913,6 +913,17 @@ namespace CoApp.Toolkit.Engine {
             return _generalPackageSettings ?? (_packageSettings = PackageManagerSettings.PerPackageSettings[_package.CanonicalName]);
         }}
 
+        private int _lastProgress;
+        public int DownloadProgress { get; set; }
+        public int DownloadProgressDelta { get {
+            var p = DownloadProgress;
+            var result = p - _lastProgress;
+            if (result < 0)
+                return 0;
+
+            _lastProgress = p;
+            return result;
+        }}
     }
 
     /// <summary>

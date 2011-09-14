@@ -27,7 +27,7 @@ namespace CoApp.Toolkit.Engine {
         public Action NoPackagesFound;
         public Action<string, DateTime, bool, bool, bool> FeedDetails;
         public Action<string, int> ScanningPackagesProgress;
-        public Action<string, int> InstallingPackageProgress;
+        public Action<string, int, int> InstallingPackageProgress;
         public Action<string, int> RemovingPackageProgress;
         public Action<string> InstalledPackage;
         public Action<string> RemovedPackage;

@@ -27,7 +27,7 @@ namespace CoApp.Toolkit.Win32
                     throw new ArgumentException();
                 }
             }
-            catch (Exception e)
+            catch /* (Exception e) */
             {
 
                 throw new ArgumentException();

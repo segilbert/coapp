@@ -474,7 +474,7 @@ namespace CoApp.Toolkit.Extensions {
                     var tmpFilename = Path.GetTempFileName();
                     File.Delete(tmpFilename);
                     File.Move(filename, tmpFilename);
-                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : filename, null,
+                    Kernel32.MoveFileEx(File.Exists(tmpFilename) ? tmpFilename : filename, null,
                         MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
                 }
                 catch {

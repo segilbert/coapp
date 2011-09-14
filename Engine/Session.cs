@@ -205,7 +205,7 @@ namespace CoApp.Toolkit.Engine {
                     _responsePipe = null;
 
                 }
-                catch (Exception e) {
+                catch /* (Exception e) */ {
                     Console.WriteLine("Errors when disposing pipes.");
                 }
             }
@@ -297,7 +297,7 @@ namespace CoApp.Toolkit.Engine {
                         }
                     }, TaskContinuationOptions.NotOnFaulted).Wait();
                 }
-                catch (Exception e) {
+                catch /* (Exception e) */ {
                     // hmm. disconnected again.
                     Disconnect();
                     return;
@@ -325,7 +325,7 @@ namespace CoApp.Toolkit.Engine {
                     _responsePipe.WriteLineAsync(message.ToString()).ContinueWith(antecedent => QueueResponseMessage(message),
                         TaskContinuationOptions.OnlyOnFaulted);
                 }
-                catch (Exception e) {
+                catch /* (Exception e) */ {
                     // queue the message
                     QueueResponseMessage(message);
                 }
@@ -472,7 +472,7 @@ namespace CoApp.Toolkit.Engine {
 
                             WriteErrorsOnException(readTask);
                         }
-                        catch (Exception e) {
+                        catch /* (Exception e) */ {
                             // if the pipe is broken, let's move to the disconnected state
                             Disconnect();
                         }
@@ -555,6 +555,12 @@ namespace CoApp.Toolkit.Engine {
                 case "install-package":
                     return NewPackageManager.Instance.InstallPackage(requestMessage["canonical-name"], requestMessage["auto-upgrade"], requestMessage["force"],
                         requestMessage["download"], requestMessage["pretend"], new PackageManagerMessages {
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages));
+
+                case "file-download-progress":
+                    return NewPackageManager.Instance.DownloadProgress(requestMessage["canonical-name"], requestMessage["progress"],
+                        new PackageManagerMessages {
                             RequestId = requestMessage["rqid"],
                         }.Extend(_messages));
 
@@ -696,10 +702,11 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
-        private void SendInstallingPackage(string canonicalName, int percentComplete) {
+        private void SendInstallingPackage(string canonicalName, int percentComplete, int overallProgress) {
             WriteAsync(new UrlEncodedMessage("installing-package") {
                 {"canonical-name", canonicalName},
                 {"percent-complete", percentComplete.ToString()},
+                {"overall-percent-complete", overallProgress.ToString()},
             });
         }
 

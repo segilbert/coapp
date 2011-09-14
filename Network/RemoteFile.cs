@@ -72,9 +72,9 @@ namespace CoApp.Toolkit.Network {
     }   
 
     public class RemoteFileMessages:MessageHandlers<RemoteFileMessages> {
-        public Action Failed;
-        public Action Completed;
-        public Action<int> Progress;
+        public Action<Uri> Failed;
+        public Action<Uri> Completed;
+        public Action<Uri,int> Progress;
     }
 
     public class RemoteFile:UniqueInstance<RemoteFile> {
@@ -166,8 +166,6 @@ namespace CoApp.Toolkit.Network {
                 return _fullPath ?? (_fullPath = (_filename != null ? Path.Combine(_localDirectory, _filename) : null));
             }
         }
-
-       
 
         public Task Get(RemoteFileMessages messages = null ) {
             lock (this) {
@@ -267,7 +265,7 @@ namespace CoApp.Toolkit.Network {
         }
 
         private void _cancel() {
-            RemoteFileMessages.Invoke.Failed();
+            RemoteFileMessages.Invoke.Failed(RemoteLocation);
         }
 
         public void Cancel() {
@@ -299,7 +297,7 @@ namespace CoApp.Toolkit.Network {
 
                     total += bytesRead;
                     
-                    RemoteFileMessages.Invoke.Progress((int) (_contentLength <= 0 ? total : (int) (total*100/_contentLength)));
+                    RemoteFileMessages.Invoke.Progress(RemoteLocation, (int) (_contentLength <= 0 ? total : (int) (total*100/_contentLength)));
 
                     // write to output file.
                     _filestream.Write(buffer, 0, bytesRead);
@@ -321,7 +319,7 @@ namespace CoApp.Toolkit.Network {
                     if (_contentLength == 0) {
                         _contentLength = fi.Length;
                     }
-                    RemoteFileMessages.Invoke.Completed();
+                    RemoteFileMessages.Invoke.Completed(RemoteLocation);
                     tcs.SetResult(null);
                 }
                 catch (Exception e) {

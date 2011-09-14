@@ -47,7 +47,7 @@ namespace Microsoft.Deployment.Compression.Zip
         /// since this instance was created.
         /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Crc")]
-        [CLSCompliant(false)]
+        //[CLSCompliant(false)]
         internal uint Crc
         {
             get

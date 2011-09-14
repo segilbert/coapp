@@ -186,7 +186,7 @@ namespace CoApp.Toolkit.Engine {
 
                 }
             }
-            catch (Exception e) {
+            catch /* (Exception e) */ {
                 Stop();
             }
         }
