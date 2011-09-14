@@ -298,7 +298,12 @@ namespace CoApp.Toolkit.Engine.Client {
                             packages.Add(package);
                         }
                     },
-                }.Extend(messages)).ContinueWith(antecedent => packages as IEnumerable<Package>, TaskContinuationOptions.AttachedToParent);
+                }.Extend(messages)).ContinueWith(antecedent => { 
+                        if( antecedent.IsFaulted || antecedent.IsCanceled ) {
+                            throw antecedent.Exception.Flatten().InnerExceptions.FirstOrDefault();
+                        }
+                    return packages as IEnumerable<Package>;
+                }, TaskContinuationOptions.AttachedToParent);
         }
 
         public Task FindPackages(string canonicalName = null, string name = null, string version = null, string arch = null, string publicKeyToken = null,
