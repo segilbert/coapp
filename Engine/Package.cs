@@ -910,7 +910,7 @@ namespace CoApp.Toolkit.Engine {
 
         private RegistryView _packageSettings;
         internal RegistryView PackageSettings { get {
-            return _generalPackageSettings ?? (_packageSettings = PackageManagerSettings.PerPackageSettings[_package.CanonicalName]);
+            return _packageSettings ?? (_packageSettings = PackageManagerSettings.PerPackageSettings[_package.CanonicalName]);
         }}
 
         private int _lastProgress;

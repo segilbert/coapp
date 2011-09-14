@@ -74,8 +74,13 @@ namespace CoApp.Toolkit.Extensions {
             if (!OutputRedirected) {
                 if (progress > -1) {
                     if( progress <= 100) {
+                        if( Console.BufferWidth < (message.Length + 5) ) {
+                            message = message.Substring(0, Console.BufferWidth - 12);
+                        }
+
                         var sz = Console.BufferWidth - (message.Length + 5);
                         var done = (int)((progress * sz) / 100);
+                        
                         Console.Write("\r{0} [{1}] ", message, "".PadRight(done, '=').PadRight(sz, ' '));
                     } else {
                         Console.Write("\r{0} [{1} ]", message, progress);

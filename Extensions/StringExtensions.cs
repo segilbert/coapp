@@ -316,16 +316,16 @@ namespace CoApp.Toolkit.Extensions {
             string key;
 
             if (!isMatchingLocation) {
-                key = string.IsNullOrEmpty(currentLocation) ? wildcardMask : currentLocation + wildcardMask;
+                key = (currentLocation ?? "" )+ wildcardMask;
                 if (!_newWildcards.ContainsKey(key)) {
                     _newWildcards.Add(key, WildcardToRegex(key));
                 }
                 return _newWildcards[key].IsMatch(text);
             }
 
-            key = string.IsNullOrEmpty(currentLocation) ? wildcardMask : wildcardMask + currentLocation;
+            key = wildcardMask + (currentLocation ?? "" );
             if (!_newWildcards.ContainsKey(key)) {
-                var prefix = string.IsNullOrEmpty(currentLocation)
+                var prefix = currentLocation == null
                     ? @".*[\\|\/]"
                     : Regex.Escape((currentLocation.EndsWith("\\") || currentLocation.EndsWith("/")
                         ? currentLocation : currentLocation + (text.Contains("\\") ? "\\" : (text.Contains("/") ? "/" : ""))));
