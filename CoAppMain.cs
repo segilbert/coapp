@@ -86,7 +86,11 @@ namespace CoApp.CLI {
                 NoPackagesFound = NoPackagesFound,
                 PermissionRequired = OperationRequiresPermission,
                 Error = MessageArgumentError,
-                RequireRemoteFile = (canonicalName, remoteLocations, localFolder, force ) => GetRemoteFile(canonicalName, remoteLocations, localFolder, force ),
+                RequireRemoteFile = (canonicalName, remoteLocations, localFolder, force ) => Downloader.GetRemoteFile(canonicalName, remoteLocations, localFolder, force, new RemoteFileMessages {
+                    Progress = (itemUri, percent) => {
+                        "Downloading {0}".format(itemUri.AbsoluteUri).PrintProgressBar(percent);
+                    }, 
+                } ,_messages),
                 OperationCancelled = CancellationRequested,
                 PackageSatisfiedBy = (original, satisfiedBy) => {
                     original.SatisfiedBy = satisfiedBy;
@@ -465,7 +469,6 @@ namespace CoApp.CLI {
                 PackageManager.Instance.Disconnect();
                 Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
             }
-
             
             return 0;
         }
@@ -687,7 +690,7 @@ namespace CoApp.CLI {
                 }
             }.Extend(_messages));
         }
-
+        /*
         private Dictionary<string, Task> currentDownloads = new Dictionary<string, Task>();
 
         private Task GetRemoteFile(string canonicalName, IEnumerable<string> locations, string targetFolder, bool forceDownload) {
@@ -735,7 +738,11 @@ namespace CoApp.CLI {
                                         targetFilename.TryHardToDeleteFile();
                                     }
                                 },
-                                Progress = (percent) => { "Downloading {0}".format(uri.AbsoluteUri).PrintProgressBar(percent);}
+                                Progress = (percent) => {
+                                    PackageManager.Instance.DownloadProgress(canonicalName, percent);
+                                    "Downloading {0}".format(uri.AbsoluteUri).PrintProgressBar(percent);
+
+                                }
                             }).Wait();
                             
                             if (File.Exists(targetFilename)) {
@@ -760,7 +767,7 @@ namespace CoApp.CLI {
                 return task;
             }
         }
-
+        */
 
         /// <summary>
         /// Removes the specified parameters.
@@ -866,7 +873,7 @@ namespace CoApp.CLI {
                     var package = p;
 
                     PackageManager.Instance.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, _pretend, new PackageManagerMessages {
-                        InstallingPackageProgress = (canonicalName, progress ) => {
+                        InstallingPackageProgress = (canonicalName, progress, overallProgress ) => {
                             // installation progress
                             ConsoleExtensions.PrintProgressBar("Installing: {0}".format(canonicalName), progress);
                         },
