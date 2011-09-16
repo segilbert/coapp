@@ -1,0 +1,96 @@
+﻿<Window x:Class="CoApp.Bootstrapper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Installer" Width="700" Height="400"
+        Background="Transparent" AllowsTransparency="True" WindowStyle="None" ShowInTaskbar="False" ResizeMode="NoResize" Topmost="True" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Border Style="{StaticResource ContentBorderStyle}" >
+            <StackPanel Name="sp1">
+                <StackPanel.Background>
+                    <ImageBrush Stretch="None" TileMode="Tile" Viewport="0,0,700,400" ViewportUnits="Absolute" />
+                </StackPanel.Background>
+                <StackPanel Name="Header" Style="{StaticResource HeaderBackground}" Background="Transparent"  Height="60" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
+                    <Grid Name="windowControls" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button x:Name="CloseBtn" Grid.Column="4" Width="19" Height="23" Style="{StaticResource MetroPathButton}" ToolTip="Cancel" Click="CloseBtnClick"  >
+                            <Path Fill="Black" Data="{StaticResource PathClose}" Margin="0,0,0,0" Stretch="Fill" Width="9" Height="9" />
+                        </Button>
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="10,0,10,00" Height="140" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                    <TextBlock Height="140" Name="textBlock1" Text="It will be a moment while CoApp configures the system components required to install the software." TextAlignment="Justify" TextWrapping="Wrap" FontSize="30" Padding="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </StackPanel>
+                <ProgressBar  Height="30" Name="progressBar1" Width="550" />
+
+                <Grid Name="windowControls3" HorizontalAlignment="Center" Margin="0,30,0,0" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="560"/>
+                        <ColumnDefinition Width="50"/>
+                    </Grid.ColumnDefinitions>
+                    <Canvas Grid.Column="0" Width="50"></Canvas>
+                    <Image  Grid.Column="1" Height="111" HorizontalAlignment="Center" Margin="0" Name="logoImage" Stretch="Fill" VerticalAlignment="Center"  Width="111" >
+<!--                        <Image.RenderTransform>
+                            <RotateTransform x:Name="Rotation" Angle="0" CenterX="55.5" CenterY="55.5" />
+                        </Image.RenderTransform>
+                        <Image.Triggers>
+                            <EventTrigger RoutedEvent="Image.Loaded">
+                                <BeginStoryboard >
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimationUsingKeyFrames Duration="0:0:6" Storyboard.TargetName="Rotation" Storyboard.TargetProperty="Angle" >
+                                            <EasingDoubleKeyFrame Value="60" KeyTime="00:00:01">
+                                                <EasingDoubleKeyFrame.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </EasingDoubleKeyFrame.EasingFunction>
+                                            </EasingDoubleKeyFrame>
+                                            <EasingDoubleKeyFrame Value="120" KeyTime="00:00:02">
+                                                <EasingDoubleKeyFrame.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </EasingDoubleKeyFrame.EasingFunction>
+                                            </EasingDoubleKeyFrame>
+                                            <EasingDoubleKeyFrame Value="180" KeyTime="00:00:03">
+                                                <EasingDoubleKeyFrame.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </EasingDoubleKeyFrame.EasingFunction>
+                                            </EasingDoubleKeyFrame>
+                                            <EasingDoubleKeyFrame Value="240" KeyTime="00:00:04">
+                                                <EasingDoubleKeyFrame.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </EasingDoubleKeyFrame.EasingFunction>
+                                            </EasingDoubleKeyFrame>
+                                            <EasingDoubleKeyFrame Value="300" KeyTime="00:00:5">
+                                                <EasingDoubleKeyFrame.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </EasingDoubleKeyFrame.EasingFunction>
+                                            </EasingDoubleKeyFrame>
+                                            <EasingDoubleKeyFrame Value="360" KeyTime="00:00:6">
+                                                <EasingDoubleKeyFrame.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut"/>
+                                                </EasingDoubleKeyFrame.EasingFunction>
+                                            </EasingDoubleKeyFrame>
+                                        </DoubleAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Image.Triggers>
+-->                        
+                    </Image>
+                    <Button Grid.Column="2"  x:Name="Cancel" Style="{DynamicResource MetroPathButton}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="60" Width="50" Margin="0" ToolTip="Cancel" Click="CloseBtnClick"  >
+                        <Canvas>
+                            <Ellipse Width="30" Height="30" Margin="10,5,5,5" Stretch="Fill" StrokeLineJoin="Round" Stroke="{StaticResource MetroMainButtons}" StrokeThickness="1.5"/>
+                            <Path Width="14" Height="16" Margin="18,12" Stretch="Fill" Fill="{StaticResource MetroMainButtons}" Data="{StaticResource PathClose}"/>
+                            <TextBlock Name="CancelText"  Width="50" Style="{StaticResource ButtonText}" TextAlignment="Center" Margin="0" Canvas.Top="40"><Run Text="Cancel"/></TextBlock>
+                        </Canvas>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
