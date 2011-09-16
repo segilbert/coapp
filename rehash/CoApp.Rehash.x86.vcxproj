@@ -88,8 +88,7 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>cd "$(SolutionDir)..\solution\tools\"
-if "$(ConfigurationName)" == "Release" start "signing" /D  "$(SolutionDir)..\solution\tools\" /wait "$(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe" --sign-only "$(TargetPath)" 
+      <Command>start "digital signing" /wait $(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe --sign-only "$(TargetPath)"
 copy /Y "$(TargetPath)" "$(SolutionDir)..\solution\ext\rehash\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
