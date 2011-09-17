@@ -25,7 +25,7 @@ namespace CoApp.Bootstrapper {
         private static extern int SizeofResource(IntPtr hModule, IntPtr hResInfo);
 
         public static MemoryStream GetBinaryResource(int resourceId) {
-            var hMod = LoadLibraryEx(Assembly.GetExecutingAssembly().Location, IntPtr.Zero, LOAD_LIBRARY_AS_DATAFILE); 
+            var hMod = LoadLibraryEx("coapp.resources.dll", IntPtr.Zero, LOAD_LIBRARY_AS_DATAFILE); 
             var hRes = FindResource(hMod, resourceId, "BINARY"); 
             var size = SizeofResource(hMod, hRes); 
             var pt = LoadResource(hMod, hRes);
