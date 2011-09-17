@@ -29,11 +29,12 @@ namespace CoApp.Toolkit.Extensions {
     /// </summary>
     /// <remarks></remarks>
     public static class AssemblyExtensions {
+#if !COAPP_ENGINE_CORE
         /// <summary>
         /// a "logo" of an assembly
         /// </summary>
         private static string logo;
-
+#endif
         /// <summary>
         /// Geths the assembly for a given object.
         /// </summary>

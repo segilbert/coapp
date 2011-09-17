@@ -337,7 +337,10 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM copy optional tools...
-if not exist "$(TargetDir)optional\" xcopy /q /s /c /i  "$(SolutionDir)tools\optional" "$(TargetDir)optional\"</PostBuildEvent>
+if not exist "$(TargetDir)optional\" xcopy /q /s /c /i  "$(SolutionDir)tools\optional" "$(TargetDir)optional\"
+REM USE signing tool in the solution (we're rebuilding the toolkit, can't use this one!)
+cd "$(SolutionDir)..\solution\tools\"
+if "$(ConfigurationName)" == "Release" start "signing" /D  "$(SolutionDir)..\solution\tools\" /wait "$(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe" "$(TargetPath)" "$(TargetDir)coapp.toolkit.*.dll"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-toolkit-build-numbers.js" cscript /nologo //E:Jscript "$(SolutionDir)scripts\inc-toolkit-build-numbers.js"
