@@ -11,10 +11,10 @@
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
 
-    public class PackageNotInstalledException : Exception {
-        public Package NotInstalledPackage;
+    internal class PackageNotInstalledException : Exception {
+        internal Package NotInstalledPackage;
 
-        public PackageNotInstalledException(Package package) {
+        internal PackageNotInstalledException(Package package) {
             NotInstalledPackage = package;
         }
     }

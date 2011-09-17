@@ -34,6 +34,12 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
+        /// <summary>
+        /// suppresses events when skipevent == true.
+        /// 
+        /// This makes it so that an insert doesn't cause a whole bunch of events.
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnCollectionChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs e) {
             if( !skipEvent)
                 base.OnCollectionChanged(e);
@@ -71,6 +77,9 @@ namespace CoApp.Toolkit.Extensions {
         }
     }
 
+    /// <summary>
+    /// Extension method to sort a regular observable collection.
+    /// </summary>
     public static class ObservableExtensions {
         public static void Sort<T>(this ObservableCollection<T> collection) where T : IComparable {
             var sorted = collection.OrderBy(x => x).ToList();

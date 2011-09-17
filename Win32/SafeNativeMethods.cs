@@ -20,7 +20,7 @@ namespace CoApp.Toolkit.Win32 {
     using Properties;
 
     /// <summary>
-    ///   Safe native methods.
+    ///   Safe native methods. (part of alternate streams stuff)
     /// </summary>
     internal static class SafeNativeMethods {
         #region Constants and flags
@@ -223,7 +223,6 @@ namespace CoApp.Toolkit.Win32 {
                 throw new NotSupportedException(string.Format(Resources.Culture,
                     Resources.Error_NonFile, path));
             }
-
             return result;
         }
 

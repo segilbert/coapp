@@ -14,7 +14,13 @@ using CoApp.Toolkit.Extensions;
 
 namespace CoApp.Toolkit.Package
 {
+    // Eric?
+
+#if COAPP_ENGINE_CORE
+    internal struct Huid
+#else
     public struct Huid
+#endif
     {
         internal string Name { get; private set; }
         internal string Version { get; private set; }

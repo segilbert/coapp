@@ -74,8 +74,13 @@ namespace CoApp.Toolkit.Extensions {
             if (!OutputRedirected) {
                 if (progress > -1) {
                     if( progress <= 100) {
+                        if( Console.BufferWidth < (message.Length + 5) ) {
+                            message = message.Substring(0, Console.BufferWidth - 12);
+                        }
+
                         var sz = Console.BufferWidth - (message.Length + 5);
                         var done = (int)((progress * sz) / 100);
+                        
                         Console.Write("\r{0} [{1}] ", message, "".PadRight(done, '=').PadRight(sz, ' '));
                     } else {
                         Console.Write("\r{0} [{1} ]", message, progress);
@@ -167,12 +172,12 @@ namespace CoApp.Toolkit.Extensions {
                 tSize = columnWidths.Sum() + columnWidths.Length;
             }
             */
-            var fmt = "|" + string.Join("", columnWidths.ByIndex().Select(n => "{{{0},{1}}}|".format(n, columnWidths[n])));
-            
+            // var fmt = "|" + string.Join("", columnWidths.ByIndex().Select(n => "{{{0},{1}}}|".format(n, columnWidths[n])));
+            var fmt = string.Join("", columnWidths.ByIndex().Select(n => "{{{0},{1}}}|".format(n, columnWidths[n]))).Trim('|');
             var breaker = "-".PadLeft(tSize + 1, '-');
 
             var result = new List<string>();
-            result.Add(breaker);
+            // result.Add(breaker);
             result.Add(fmt.format(JustifyAll(columnTitles, columnWidths, columnJustifications)));
             result.Add(breaker);
             result.AddRange(rows.Select(row => fmt.format(JustifyAll(row, columnWidths, columnJustifications))));

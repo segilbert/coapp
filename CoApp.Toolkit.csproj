@@ -47,6 +47,9 @@
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
@@ -83,6 +86,7 @@
     <Compile Include="Exceptions\ConflictingFileOrFolderException.cs" />
     <Compile Include="Exceptions\EndUserException.cs" />
     <Compile Include="Exceptions\EndUserRuleException.cs" />
+    <Compile Include="Exceptions\PathIsNotFileUriException.cs" />
     <Compile Include="Exceptions\PathIsNotSymlinkException.cs" />
     <Compile Include="Exceptions\EndUserPropertyException.cs" />
     <Compile Include="Exceptions\EndUserParseException.cs" />
@@ -99,6 +103,7 @@
     <Compile Include="Extensions\LinqExtensions.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\PropertySheetExtensions.cs" />
+    <Compile Include="Extensions\WebRequestExtensions.cs" />
     <Compile Include="Extensions\X509Certificate2Extensions.cs" />
     <Compile Include="Extensions\X509StoreExtensions.cs" />
     <Compile Include="Extensions\SortedObservableCollection.cs" />
@@ -110,10 +115,14 @@
     <Compile Include="Network\Ftp.cs" />
     <Compile Include="Network\HttpServer.cs" />
     <Compile Include="Network\RemoteFile.cs" />
-    <Compile Include="Network\TransferManager.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\PackageType.cs" />
+
     <Compile Include="Package\Validator.cs" />
+
+    <Compile Include="Pipes\AsyncPipeExtensions.cs" />
+    <Compile Include="Pipes\UrlEncodedMessage.cs" />
+
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -178,7 +187,7 @@
     <Compile Include="Scripting\Languages\PropertySheet\RuleProperty.cs" />
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
     <Compile Include="Spec\Event.cs" />
     <Compile Include="Spec\EventCondition.cs" />
     <Compile Include="Spec\FileGroup.cs" />
@@ -200,9 +209,6 @@
     <Compile Include="Tasks\CoTask.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
     <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
-    <Compile Include="Tasks\TaskExtensions.cs" />
-    <Compile Include="Tasks\CoTaskFactory.cs" />
-    <Compile Include="Tasks\Tasklet.cs" />
     <Compile Include="Tasks\TriggeredProperty.cs" />
     <Compile Include="Text\HttpUtility.cs" />
     <Compile Include="Text\Sgml\SgmlParser.cs">
@@ -231,6 +237,7 @@
     <Compile Include="Utility\ToolSniffer.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\Advapi32.cs" />
+    <Compile Include="Win32\AllocationType.cs" />
     <Compile Include="Win32\ByHandleFileInformation.cs" />
     <Compile Include="Win32\ClipboardNotifier.cs">
       <SubType>Component</SubType>
@@ -241,6 +248,8 @@
     <Compile Include="Win32\ConsoleScreenBufferInfo.cs" />
     <Compile Include="Win32\ControlCodes.cs" />
     <Compile Include="Win32\Coord.cs" />
+    <Compile Include="Win32\CreateRemoteThreadFlags.cs" />
+    <Compile Include="Win32\FileType.cs" />
     <Compile Include="Win32\FocusInputRecord.cs" />
     <Compile Include="Win32\ImageCoffHeader.cs" />
     <Compile Include="Win32\ImageCor20Header.cs" />
@@ -254,10 +263,12 @@
     <Compile Include="Win32\KeyModifiers.cs" />
     <Compile Include="Win32\KnownFolders.cs" />
     <Compile Include="Win32\LegacySymlink.cs" />
+    <Compile Include="Win32\MemoryProtection.cs" />
     <Compile Include="Win32\MenuItemInfo.cs" />
     <Compile Include="Win32\Miim.cs" />
     <Compile Include="Win32\ModernSymlink.cs" />
     <Compile Include="Win32\MoveFileFlags.cs" />
+    <Compile Include="Win32\MPR.cs" />
     <Compile Include="Win32\NativeFileAccess.cs" />
     <Compile Include="Win32\NativeFileAttributesAndFlags.cs" />
     <Compile Include="Win32\NativeWindowWithEvent.cs" />
@@ -273,6 +284,7 @@
     <Compile Include="Win32\ReparsePointError.cs" />
     <Compile Include="Win32\SearchPath.cs" />
     <Compile Include="Win32\SecurityAttributes.cs" />
+    <Compile Include="Win32\SizeT.cs" />
     <Compile Include="Win32\SmallRect.cs" />
     <Compile Include="Win32\StandardHandle.cs" />
     <Compile Include="Win32\Startupinfo.cs" />
@@ -306,9 +318,7 @@
     <Folder Include="Installer\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="coapp.autopkg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
     <None Include="Trace\Tracing.xsd">
       <SubType>Designer</SubType>
       <CustomToolNamespace>CoApp.Toolkit.Trace</CustomToolNamespace>
@@ -330,7 +340,9 @@
 if not exist "$(TargetDir)optional\" xcopy /q /s /c /i  "$(SolutionDir)tools\optional" "$(TargetDir)optional\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-build-numbers.js" cscript /nologo "$(SolutionDir)scripts\inc-build-numbers.js"</PreBuildEvent>
+    <PreBuildEvent>if exist "$(SolutionDir)scripts\inc-toolkit-build-numbers.js" cscript /nologo //E:Jscript "$(SolutionDir)scripts\inc-toolkit-build-numbers.js"
+if exist "$(SolutionDir)..\solution\scripts\stopservice.js" cscript //E:jscript "$(SolutionDir)..\solution\scripts\stopservice.js"
+</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

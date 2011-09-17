@@ -38,6 +38,9 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="LINQPad, Version=1.0.0.0, Culture=neutral, PublicKeyToken=21353812cd2a2db5, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
@@ -57,16 +60,18 @@
   <ItemGroup>
     <Compile Include="Debug\DumpExtension.cs" />
     <Compile Include="Properties\Debug.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="CoApp.Toolkit.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
-      <Name>CoApp.Toolkit</Name>
+      <Name>CoApp.Toolkit %28coapp.toolkit\CoApp.Toolkit%29</Name>
     </ProjectReference>
+    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
+  
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

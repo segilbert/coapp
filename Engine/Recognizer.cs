@@ -10,318 +10,210 @@
 
 namespace CoApp.Toolkit.Engine {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Net;
     using System.Threading.Tasks;
     using Extensions;
     using Feeds.Atom;
-    using Network;
     using PackageFormatHandlers;
     using Tasks;
 
+    internal class RequestRemoteFileState {
+        internal string LocalLocation;
+        internal string OriginalUrl;
+    }
+
     internal class Recognizer {
-        private static readonly TransferManager _transferManager =
-            TransferManager.GetTransferManager(PackageManagerSettings.CoAppCacheDirectory);
+        private static Task<RecognitionInfo> CacheAndReturnTask(string itemPath, RecognitionInfo recognitionInfo) {
+            SessionCache<RecognitionInfo>.Value[itemPath] = recognitionInfo;
+            return recognitionInfo.AsResultTask();
+        }
 
-        private static readonly Dictionary<string, RecognitionInfo> _cache = new Dictionary<string, RecognitionInfo>();
+        private static RecognitionInfo Cache(string itemPath, RecognitionInfo recognitionInfo) {
+            SessionCache<RecognitionInfo>.Value[itemPath] = recognitionInfo;
+            return recognitionInfo;
+        }
 
-        internal static Task<RecognitionInfo> Recognize(string item, string baseDirectory = null, string baseUrl = null, bool ensureLocal = false) {
-            if (_cache.ContainsKey(item)) {
-                return CoTaskFactory<RecognitionInfo>.AsTaskResult(_cache[item]);
+        internal static Task<RecognitionInfo> Recognize(string item) {
+            var cachedResult = SessionCache<RecognitionInfo>.Value[item];
+            if (cachedResult != null) {
+                return cachedResult.AsResultTask();
             }
 
-            baseDirectory = baseDirectory ?? Environment.CurrentDirectory;
+            try {
+                var location = new Uri(item);
+                if (!location.IsFile) {
+                    // some sort of remote item.
+                    // since we can't do anything with a remote item directly, 
+                    // we have to issue a request to the client to get it for us
 
-            var result = new RecognitionInfo();
+                    // first let's create a delegate to run when the file gets resolved.
+                    var completion = new Task<RecognitionInfo>((rrfState) => {
+                        var state = rrfState as RequestRemoteFileState;
+                        if (state == null || string.IsNullOrEmpty(state.LocalLocation)) {
+                            // didn't fill in the local location? -- this happens when the client can't download.
+                            // PackageManagerMessages.Invoke.FileNotRecognized() ?
+                            return new RecognitionInfo {
+                                FullPath = location.AbsoluteUri,
+                                FullUrl = location,
+                                IsURL = true,
+                                IsInvalid = true,
+                            };
+                        }
+                        var newLocation = new Uri(state.LocalLocation);
+                        if (newLocation.IsFile) {
+                            var continuedResult = Recognize(state.LocalLocation).Result;
 
-            if (item.StartsWith("pkg:", StringComparison.CurrentCultureIgnoreCase)) {
-                // this is a coapp package reference
-                result.IsReference = true;
-                result.IsCoAppMSI = true;
-            }
+                            // create the result object 
+                            var result = new RecognitionInfo {
+                                FullUrl = location,
+                            };
 
-            if (item.StartsWith("nuget:", StringComparison.CurrentCultureIgnoreCase)) {
-                // this is a nuget package reference
-                result.IsReference = true;
-                result.IsNugetPackage = true;
-            }
+                            result.CopyDetailsFrom(continuedResult);
+                            result.IsURL = true;
 
-            if (item.StartsWith("msi:", StringComparison.CurrentCultureIgnoreCase)) {
-                // this is a msi package reference
-                result.IsReference = true;
-                result.IsLegacyMSI = true;
-            }
+                            return Cache(item, result);
+                        }
+                        // so, the callback comes, but it's not a file. 
+                        // 
+                        return new RecognitionInfo {
+                            FullPath = location.AbsoluteUri,
+                            IsInvalid = true,
+                        };
+                    }, new RequestRemoteFileState {
+                        OriginalUrl = location.AbsoluteUri
+                    }, TaskCreationOptions.AttachedToParent);
 
-            if (item.StartsWith("openwrap:", StringComparison.CurrentCultureIgnoreCase)) {
-                // this is a msi package reference
-                result.IsReference = true;
-                result.IsOpenwrapPackage = true;
-            }
+                    // since we're expecting that the canonicalname will be used as a filename 
+                    // in the .cache directory, we need to generate a safe filename based on the 
+                    // data in the URL
+                    var safeCanonicalName = location.GetLeftPart(UriPartial.Path).MakeSafeFileName();
 
-            // Is this an URL of some kind?
-            if (result.IsUnknown) {
-                try {
-                    if (item.IndexOf("://") > -1) {
-                        // some sort of URL
-                        result.IsURL = true;
-                        result.FullUrl = new Uri(item);
-                    }
-                    else if (!string.IsNullOrEmpty(baseUrl)) {
-                        // it's a relative URL?
-                        result.IsURL = true;
-                        result.FullUrl = new Uri(new Uri(baseUrl), item);
-                    }
+                    // store the task until the client tells us that it has the file.
+                    SessionCache<Task<RecognitionInfo>>.Value[safeCanonicalName] = completion;
 
-                    // for now, we've got a full URL and it looks like it point somewhere.
-                    // until we attempt to retrieve the URL we really can't bank on knowing what it is.
-                    if (result.IsURL) {
-                        return CoTask<RecognitionInfo>.Factory.StartNew(() => {
-                            result.RemoteFile.Preview().Wait();
+                    // GS01: Should we make a deeper path in the cache directory?
+                    // perhaps that would let us use a cached version of the file we're looking for.
+                    PackageManagerMessages.Invoke.RequireRemoteFile(safeCanonicalName, location.AbsoluteUri.SingleItemAsEnumerable(),
+                        PackageManagerSettings.CoAppCacheDirectory, false);
 
-                            if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
-                                result.IsInvalid = true;
-                                result.Recognized.Value = true;
-                                lock (_cache) {
-                                    _cache.Add(item, result);
-                                }
-                                return result;
-                            }
+                    // return the completion task, as whatever is waiting for this 
+                    // needs to continue on that.
+                    return completion;
+                }
 
-                            if (result.RemoteFile.IsRedirect) {
-                                result.RemoteFile.Folder = _transferManager[result.RemoteFile.ActualRemoteLocation].Folder;
-                            }
+                //----------------------------------------------------------------
+                // we've managed to find a file system path.
+                // let's figure out what it is.
+                var localPath = location.LocalPath;
 
-                            result.FullPath = result.RemoteFile.LocalFullPath;
+                if (localPath.Contains("?") || localPath.Contains("*")) {
+                    // looks like a wildcard package feed.
+                    // which is a directory feed with a filter.
+                    var i = localPath.IndexOfAny(new[] {'*', '?'});
 
-                            if (ensureLocal) {
-                                if (!result.IsLocal) {
-                                    result.RemoteFile.Get().Wait();
-                                }
-
-                                if (!result.IsLocal) {
-                                    result.IsInvalid = true;
-                                    result.Recognized.Value = true;
-                                    lock (_cache) {
-                                        _cache.Add(item, result);
-                                    }
-                                    return result;
-                                }
-                            }
-
-                            if (result.IsLocal) {
-                                var localFileInfo = Recognize(result.FullPath).Result;
-                                // at this point, we should actually know the real file results.
-                                result.CopyDetailsFrom(localFileInfo);
-                                result.Recognized.Value = true;
-                                lock (_cache) {
-                                    _cache.Add(item, result);
-                                }
-                                return result;
-                            }
-
-                            // if it isn't local, and we've not been told to bring it local, 
-                            // we could guess?
-                            // we could just tell im, we dunno...
-                            // GS01: TODO : We're claiming ignorance right now.
-
-                            lock (_cache) {
-                                _cache.Add(item, result);
-                            }
-                            return result;
-                        }); // GS01: TODO : This is bad mojo--replace with better use of returning the child task 
-                        /*
-                        result.RemoteFile.Preview().ContinueWithParent(antecedent => {
-                            if (result.RemoteFile.LastStatus != HttpStatusCode.OK) {
-                                result.IsInvalid = true;
-                                result.Recognized.Value = true;
-                                return;
-                            }
-
-                            if (result.RemoteFile.IsRedirect) {
-                                result.RemoteFile.Folder = _transferManager[result.RemoteFile.ActualRemoteLocation].Folder;
-                            }
-
-                            result.FullPath = result.RemoteFile.LocalFullPath;
-
-                            if (ensureLocal) {
-                                if (!result.IsLocal) {
-                                    result.RemoteFile.Get().Wait();
-                                }
-
-                                if (!result.IsLocal) {
-                                    result.IsInvalid = true;
-                                    result.Recognized.Value = true;
-                                    return;
-                                }
-                            }
-
-                            if (result.IsLocal) {
-                                var localFileInfo = Recognize(result.FullPath);
-                                // at this point, we should actually know the real file results.
-                                result.CopyDetailsFrom(localFileInfo);
-                                result.Recognized.Value = true;
-                                return;
-                            }
-
-                            // not local. all we can do is guess?
-                            // TODO: Implement remote guess?
+                    var lastSlash = localPath.LastIndexOf('\\', i);
+                    var folder = localPath.Substring(0, lastSlash);
+                    if (Directory.Exists(folder)) {
+                        return CacheAndReturnTask(item, new RecognitionInfo {
+                            FullPath = folder,
+                            Filter = localPath.Substring(lastSlash + 1),
+                            IsFolder = true,
+                            IsPackageFeed = true
                         });
-                         * * */
-                    }
-                         
-                }
-                catch
-                {
-                }
-            }
-
-            if (result.IsUnknown) {
-                if (item.IndexOf('?') > -1 || item.IndexOf('*') > -1) {
-                    // this has a wildcard. Past that, we don't know what it is yet.
-                    // assuming this is a local path expression:
-                    //     c:\foo\*.msi
-                    //     App*.msi          (matching in the current dir)
-                    //     packages\*
-                    var folder = baseDirectory;
-                    var lastSlash = item.LastIndexOf("\\");
-                    if (lastSlash > -1) {
-                        folder = Path.GetFullPath(item.Substring(0, lastSlash));
-                    }
-
-                    if (folder.IndexOf('?') == -1 && folder.IndexOf('*') == -1) {
-                        if (Directory.Exists(folder)) {
-                            result.IsFolder = true;
-                            result.FullPath = Path.GetFullPath(folder).ToLower();
-                            result.Wildcard = item.Substring(lastSlash + 1);
-                        }
                     }
                 }
-            }
 
-            // Is this a directory?
-            if (result.IsUnknown) {
-                try {
-                    if (Directory.Exists(item)) {
-                        // a valid directory
-                        result.IsFolder = true;
-                        result.FullPath = Path.GetFullPath(item).ToLower();
-                    }
-                    else if (!string.IsNullOrEmpty(baseDirectory)) {
-                        var path = Path.Combine(baseDirectory, item).ToLower();
-                        if (Directory.Exists(path)) {
-                            result.IsFolder = true;
-                            result.FullPath = path;
-                        }
-                    }
-
-                    if (result.IsFolder) {
-                        result.IsPackageFeed = true;
-                    }
+                if (Directory.Exists(localPath)) {
+                    // it's a directory.
+                    // which means that it's a package feed.
+                    return CacheAndReturnTask(item, new RecognitionInfo {
+                        FullPath = localPath,
+                        Filter = "*",
+                        IsFolder = true,
+                        IsPackageFeed = true,
+                    });
                 }
-                catch {
-                }
-            }
 
-            // maybe it's a file?
-            if (result.IsUnknown) {
-                try {
-                    if (File.Exists(item)) {
-                        // some type of file
-                        result.IsFile = true;
-                        result.FullPath = Path.GetFullPath(item).ToLower();
-                    }
-                    else if (!string.IsNullOrEmpty(baseDirectory)) {
-                        var path = Path.Combine(baseDirectory, item);
-                        if (File.Exists(path)) {
-                            result.IsFile = true;
-                            result.FullPath = Path.GetFullPath(path).ToLower();
-                        }
+                if (File.Exists(localPath)) {
+                    var ext = Path.GetExtension(localPath);
+                    var result = new RecognitionInfo {
+                        IsFile = true,
+                        FullPath = localPath
+                    };
 
-                    }
+                    switch (ext) {
+                        case ".msi":
+                            result.IsCoAppMSI = CoAppMSI.IsCoAppPackageFile(localPath);
+                            result.IsLegacyMSI = !result.IsCoAppMSI;
+                            result.IsPackageFile = true;
+                            break;
 
-                    if (result.IsFile) {
-                        // so, this is a file. 
-                        // let's do a little bit of diggin'
+                        case ".nupkg":
+                            result.IsNugetPackage = true;
+                            result.IsPackageFile = true;
+                            break;
 
-                        var ext = Path.GetExtension(result.FullPath);
+                        case ".exe":
+                            result.IsLegacyEXE = true;
+                            result.IsPackageFile = true;
+                            break;
 
-                        switch (ext) {
-                            case ".msi":
-                                result.IsCoAppMSI = CoAppMSI.IsCoAppPackageFile(result.FullPath);
-                                result.IsLegacyMSI = !result.IsCoAppMSI;
-                                result.IsPackageFile = true;
-                                break;
+                        case ".zip":
+                        case ".cab":
+                        case ".rar":
+                        case ".7z":
+                            result.IsArchive = true;
+                            result.IsPackageFeed = true;
+                            break;
 
-                            case ".nupkg":
-                                result.IsNugetPackage = true;
-                                result.IsPackageFile = true;
-                                break;
+                        default:
+                            // guess based on file contents
+                            try {
+                                if (CoAppMSI.IsCoAppPackageFile(localPath)) {
+                                    result.IsCoAppMSI = true;
+                                    result.IsPackageFile = true;
+                                }
+                            }
+                            catch {
+                                // not a coapp file...
+                            }
 
-                            case ".exe":
-                                result.IsLegacyEXE = true;
-                                result.IsPackageFile = true;
-                                break;
-
-                            case ".zip":
-                            case ".cab":
-                            case ".rar":
-                            case ".7z":
-                                result.IsArchive = true;
-                                result.IsPackageFeed = true;
-                                break;
-
-                            default:
-                                if (result.FullPath.IsXmlFile()) {
-                                    try {
-                                        var feed = AtomFeed.Load(result.FullPath);
-                                        if (feed != null) {
-                                            result.IsPackageFeed = true;
-                                            result.IsAtom = true;
-                                        }
-                                    }
-                                    catch {
+                            if (localPath.IsXmlFile()) {
+                                try {
+                                    // this could be an atom feed
+                                    var feed = AtomFeed.Load(localPath);
+                                    if (feed != null) {
+                                        result.IsPackageFeed = true;
+                                        result.IsAtom = true;
                                     }
                                 }
-                                break;
-                        }
+                                catch {
+                                    // can't seem to figure out what this is. 
+                                    result.IsInvalid = true;
+                                }
+                            }
+                            break;
                     }
-                }
-                catch(Exception e) {
-                    Console.WriteLine("Unexpected: "+e.Message);
-
+                    return CacheAndReturnTask(item, result);
                 }
             }
-            if (!result.IsUnknown) {
-                result.Recognized.Value = true;
+            catch (UriFormatException) {
             }
-
-            lock (_cache) {
-                _cache.Add(item, result);
-            }
-            return CoTaskFactory<RecognitionInfo>.AsTaskResult(result);
+            // item wasn't able to match any known URI, UNC or Local Path format.
+            // or was file not found
+            return new RecognitionInfo {
+                FullPath = item,
+                IsInvalid = true,
+            }.AsResultTask();
         }
 
         #region Nested type: RecognitionInfo
 
         internal class RecognitionInfo {
-            public TriggeredProperty<bool> Recognized = new TriggeredProperty<bool>(false, value => value);
-            private Uri _fullUrl;
-            internal bool IsWildcard { get { return Wildcard != null; } }
-            internal string Wildcard { get; set; }
+            internal string Filter { get; set; }
             internal string FullPath { get; set; }
 
-            internal Uri FullUrl {
-                get { return _fullUrl; }
-                set {
-                    if (value != null) {
-                        RemoteFile = _transferManager[value];
-                    }
-                    _fullUrl = value;
-                }
-            }
-
-            internal RemoteFile RemoteFile { get; set; }
+            internal Uri FullUrl { get; set; }
 
             internal bool IsUnknown {
                 get { return !(IsPackageFeed | IsPackageFile); }
@@ -335,7 +227,6 @@ namespace CoApp.Toolkit.Engine {
             internal bool IsURL { get; set; }
             internal bool IsFile { get; set; }
             internal bool IsFolder { get; set; }
-            internal bool IsReference { get; set; }
 
             internal bool IsMSI {
                 get { return IsCoAppMSI | IsLegacyMSI; }
@@ -354,21 +245,6 @@ namespace CoApp.Toolkit.Engine {
             internal bool IsCoAppODataService { get; set; }
             internal bool IsNugetODataService { get; set; }
 
-            internal bool IsLocal {
-                get {
-                    if (RemoteFile != null) {
-                        return RemoteFile.IsLocal;
-                    }
-
-                    if (!string.IsNullOrEmpty(FullPath)) {
-                        if (File.Exists(FullPath)) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-            }
 
             internal void CopyDetailsFrom(RecognitionInfo fileInfo) {
                 FullPath = fileInfo.FullPath;

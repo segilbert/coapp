@@ -16,13 +16,40 @@ namespace CoApp.Toolkit.Win32 {
     using Exceptions;
     using Extensions;
 
+    /// <summary>
+    /// Synthetic Symlink implementation for Windows XP and Windows Server 2003
+    /// </summary>
+    /// <remarks></remarks>
     public class LegacySymlink : ISymlink {
+        /// <summary>
+        /// Name of the alternate stream for symlink info
+        /// </summary>
         private const string legacySymlinkInfo = "legacySymlinkInfo";
+        /// <summary>
+        /// Tag for the linked file info in the alternate stream
+        /// </summary>
         private const string linkedFile = "linkedfile:";
+        /// <summary>
+        /// Tag for the original file info in the alternate stream
+        /// </summary>
         private const string originalFile = "originalfile:";
+        /// <summary>
+        /// string length of constant
+        /// </summary>
         private static readonly int linkedFileLength = linkedFile.Length;
+        /// <summary>
+        /// string length of constant
+        /// </summary>
         private static readonly int originalFileLength = originalFile.Length;
 
+        /// <summary>
+        /// Creates a symlink for the given file path.
+        /// 
+        /// If the symlink already exists, it is updated.
+        /// </summary>
+        /// <param name="linkPath">The link path.</param>
+        /// <param name="actualFilePath">The actual file path.</param>
+        /// <remarks></remarks>
         public void MakeFileLink(string linkPath, string actualFilePath) {
             linkPath = linkPath.GetFullPath();
             actualFilePath = GetActualPath(actualFilePath.GetFullPath());
@@ -47,6 +74,14 @@ namespace CoApp.Toolkit.Win32 {
             AddSymlinkToAlternateStream(actualFilePath, linkPath);
         }
 
+        /// <summary>
+        /// Creates a symlink for a directory.
+        /// 
+        /// If it already exists, it is updated.
+        /// </summary>
+        /// <param name="linkPath">The link path.</param>
+        /// <param name="actualFolderPath">The actual folder path.</param>
+        /// <remarks></remarks>
         public void MakeDirectoryLink(string linkPath, string actualFolderPath) {
             linkPath = linkPath.GetFullPath();
             actualFolderPath = GetActualPath(actualFolderPath.GetFullPath());
@@ -67,6 +102,12 @@ namespace CoApp.Toolkit.Win32 {
             ReparsePoint.CreateJunction(linkPath, actualFolderPath);
         }
 
+        /// <summary>
+        /// Changes an existing link target to a new path.
+        /// </summary>
+        /// <param name="linkPath">The link path.</param>
+        /// <param name="newActualPath">The new actual path.</param>
+        /// <remarks></remarks>
         public void ChangeLinkTarget(string linkPath, string newActualPath) {
             linkPath = linkPath.GetFullPath();
             newActualPath = GetActualPath(newActualPath.GetFullPath());
@@ -91,6 +132,11 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Deletes the symlink.
+        /// </summary>
+        /// <param name="linkPath">The link path.</param>
+        /// <remarks></remarks>
         public void DeleteSymlink(string linkPath) {
             linkPath = linkPath.GetFullPath();
             if (!File.Exists(linkPath) && !Directory.Exists(linkPath)) {
@@ -112,6 +158,12 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Determines whether the specified link path is symlink.
+        /// </summary>
+        /// <param name="linkPath">The link path.</param>
+        /// <returns><c>true</c> if the specified link path is symlink; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public bool IsSymlink(string linkPath) {
             linkPath = linkPath.GetFullPath();
             if (File.Exists(linkPath)) {
@@ -144,6 +196,12 @@ namespace CoApp.Toolkit.Win32 {
             throw new FileNotFoundException("Link does not exist");
         }
 
+        /// <summary>
+        /// Gets the actual path.
+        /// </summary>
+        /// <param name="linkPath">The link path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public string GetActualPath(string linkPath) {
             linkPath = linkPath.GetFullPath();
             if(File.Exists(linkPath)) {
@@ -158,6 +216,13 @@ namespace CoApp.Toolkit.Win32 {
         }
 
 
+        /// <summary>
+        /// Adds the symlink to alternate stream.
+        /// 
+        /// </summary>
+        /// <param name="originalPath">The original path.</param>
+        /// <param name="filename">The filename.</param>
+        /// <remarks></remarks>
         private static void AddSymlinkToAlternateStream( string originalPath, string filename ) {
             string canonicalFilePath;
             var alternates = GetAlternateStreamData(originalPath, out canonicalFilePath).ToList();
@@ -165,6 +230,14 @@ namespace CoApp.Toolkit.Win32 {
             SetAlternateStreamData(canonicalFilePath, alternates);
         }
 
+        /// <summary>
+        /// Sets the alternate stream data.
+        /// 
+        /// This writes out the symlink data to the synthetic symlink file.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="linkPaths">The link paths.</param>
+        /// <remarks></remarks>
         private static void SetAlternateStreamData(string filename, IEnumerable<string> linkPaths) {
             filename = filename.GetFullPath();;
             linkPaths = linkPaths.Uniq(StringComparison.CurrentCultureIgnoreCase);
@@ -194,6 +267,13 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        /// <summary>
+        /// Reads the alternate stream data.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="canonicalFilePath">The canonical file path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private static IEnumerable<string> GetAlternateStreamData(string filename, out string canonicalFilePath) {
             filename = filename.GetFullPath();;
 
@@ -235,6 +315,11 @@ namespace CoApp.Toolkit.Win32 {
             return Enumerable.Empty<string>();
         }
 
+        /// <summary>
+        /// Scans the folder.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <remarks></remarks>
         public void ScanFolder(string path) {
             // just scan thru a folder and check IsSymlink on each file
             // this will automatically rebuild the data.
@@ -245,6 +330,12 @@ namespace CoApp.Toolkit.Win32 {
                 IsSymlink(f);
         }
 
+        /// <summary>
+        /// Gets the file info.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private static ByHandleFileInformation GetFileInfo(string filename) {
             filename = filename.GetFullPath();;
             

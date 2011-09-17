@@ -118,6 +118,15 @@ namespace CoApp.Toolkit.Win32 {
             Int32 tokenInfoLength,
             out Int32 returnLength);
 
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetTokenInformation(
+            IntPtr hToken,
+            TokenInformationClass tokenInfoClass,
+            IntPtr pTokenInfo,
+            Int32 tokenInfoLength,
+            out Int32 returnLength);
+
 
         /// <summary>
         /// Sets the elevation required state for a specified button or 

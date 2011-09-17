@@ -19,12 +19,36 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using Extensions;
     using Microsoft.Deployment.WindowsInstaller;
 
+    /// <summary>
+    /// A representation of an CoApp MSI file
+    /// </summary>
+    /// <remarks></remarks>
     internal class CoAppMSI : MSIBase {
+
+        internal static CoAppMSI Instance  = new CoAppMSI();
+
+        private CoAppMSI() {
+            
+        }
+
+        /// <summary>
+        /// Determines whether a given file is a CoApp MSI
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns><c>true</c> if [is co app package file] [the specified path]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         internal static bool IsCoAppPackageFile(string path) {
             var packageData = GetMSIData(path);
             return packageData.Tables.Contains("CO_PACKAGE");
         }
 
+        /// <summary>
+        /// gets the URL from the CO_URLs table given the id.
+        /// </summary>
+        /// <param name="CO_URLS">The C o_ URLS.</param>
+        /// <param name="id">The id.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private static string GetURL(dynamic CO_URLS, string id ) {
             if (CO_URLS == null || string.IsNullOrEmpty(id))
                 return null;
@@ -32,7 +56,16 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return rec == null ? null : rec.url;
         }
 
-        internal static dynamic GetCoAppPackageFileDetails(string localPackagePath) {
+        /// <summary>
+        /// Given a package filename, loads the metadata from the MSI
+        /// 
+        /// NOTE: NEED SPEC FOR WHAT IS REQUIRED, OPTIONAL in a CoApp MSI file.
+        /// 
+        /// </summary>
+        /// <param name="localPackagePath">The local package path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        internal static dynamic GetCoAppPackageFileInformation(string localPackagePath) {
             dynamic packageData = GetDynamicMSIData(localPackagePath);
             
             if (packageData.CO_PACKAGE == null) {
@@ -52,7 +85,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             UInt64 version = ((string)newrecord.version).VersionStringToUInt64();
             string pkt = newrecord.public_key_token;
 
-
             UInt64 minPolicy = 0;
             UInt64 maxPolicy = 0;
             
@@ -63,19 +95,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 minPolicy = ((string)policy.minimum_version).VersionStringToUInt64();
                 maxPolicy = ((string)policy.maximum_version).VersionStringToUInt64();
             }
-
-            string licenseText = null;
-            string licenseUrl = null;
-
-            if (packageData.CO_LICENSE != null)
-            {
-                var license = packageData.CO_LICENSE[0];
-                licenseText = license.license_text;
-                licenseUrl = license.license_url;
-            }
-
-            var properties = packageData.CO_PACKAGE_PROPERTIES[pkgid];
-            var publisher = packageData.CO_PUBLISHER[pkt];
 
             dynamic result =
                 new {
@@ -91,20 +110,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     roles = new List<Tuple<PackageRole, string>>(),
                     assemblies = new Dictionary<string, PackageAssemblyInfo>(),
 
-                    // new cosmetic metadata fields
-                    displayName = properties.display_name,
-                    description = StringExtensions.GunzipFromBase64(properties.description),
-                    publishDate = properties.publish_date,
-                    authorVersion = properties.author_version,
                     originalLocation = GetURL(packageData.CO_URLS, newrecord.original ),
                     feedLocation = GetURL(packageData.CO_URLS, newrecord.feed),
-                    icon = properties.icon,
-                    summary = properties.short_description,
-                    publisherName = publisher.name,
-                    publisherUrl = GetURL(packageData.CO_URLS,publisher.location),
-                    publisherEmail = publisher.email,
-                    license = StringExtensions.GunzipFromBase64(licenseText),
-                    licenseUrl = GetURL(packageData.CO_URLS, licenseUrl)
                 };
 
             if (packageData.CO_DEPENDENCY != null) {
@@ -122,7 +129,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     arch = pak.arch;
                     version = ((string)pak.version).VersionStringToUInt64();
                     pkt = pak.public_key_token;
-                    result.dependencies.Add(Registrar.GetPackage(name, version, arch, pkt, pkgid));
+                    result.dependencies.Add(Package.GetPackage(name, version, arch, pkt, pkgid));
                 }
             }
 
@@ -195,116 +202,149 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return result;
         }
 
+        /// <summary>
+        /// Installs the specified package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="progress">The progress.</param>
+        /// <remarks></remarks>
         public override void Install(Package package, Action<int> progress = null) {
-            progress = progress ?? ((percent) => { });
+            lock (typeof(MSIBase)) {
+                progress = progress ?? ((percent) => { });
 
-            int currentTotalTicks = -1;
-            int currentProgress = 0;
-            int progressDirection = 1;
+                int currentTotalTicks = -1;
+                int currentProgress = 0;
+                int progressDirection = 1;
+                int actualPercent = 0;
 
-            Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
-                switch (messageType) {
-                    case InstallMessage.Progress:
-                        if (message.Length >= 2) {
-                            var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).ToArray();
+                Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
+                    switch (messageType) {
+                        case InstallMessage.Progress:
+                            if (message.Length >= 2) {
+                                var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).ToArray();
 
-                            switch (msg[1]) {
-                                // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
-                                case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
-                                    currentTotalTicks = msg[3];
-                                    currentProgress = 0;
-                                    if (msg.Length >= 6) {
-                                        progressDirection = msg[5] == 0 ? 1 : -1;
-                                    }
-                                    break;
-                                case 1:
-                                    //Provides information related to progress messages to be sent by the current action.
-                                    break;
-                                case 2: //Increments the progress bar.
-                                    if (currentTotalTicks == -1) {
+                                switch (msg[1]) {
+                                        // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
+                                    case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
+                                        currentTotalTicks = msg[3];
+                                        currentProgress = 0;
+                                        if (msg.Length >= 6) {
+                                            progressDirection = msg[5] == 0 ? 1 : -1;
+                                        }
                                         break;
-                                    }
-                                    currentProgress += msg[3] * progressDirection;
-                                    break;
-                                case 3:
-                                    //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
-                                    break;
-                            }
-                        }
-
-                        if (currentTotalTicks > 0) {
-                            progress(currentProgress * 100 / currentTotalTicks);
-                        }
-                        break;
-                }
-                // capture installer messages to play back to status listener
-                return MessageResult.OK;
-            }), InstallLogModes.Progress);
-
-            try {
-                Installer.InstallProduct(package.LocalPackagePath,
-                    @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory, package.UserSpecified ? "ADD_TO_ARP=1" : ""));
-            }
-            finally {
-                SetUIHandlersToSilent();
-            }
-        }
-
-        public override void Remove(Package package, Action<int> progress = null) {
-            progress = progress ?? ((percent) => { });
-            int currentTotalTicks = -1;
-            int currentProgress = 0;
-            int progressDirection = 1;
-
-            Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
-                switch (messageType) {
-                    case InstallMessage.Progress:
-                        if (message.Length >= 2) {
-                            var msg =
-                                message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).
-                                    ToArray();
-
-                            switch (msg[1]) {
-                                // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
-                                case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
-                                    currentTotalTicks = msg[3];
-                                    currentProgress = 0;
-                                    if (msg.Length >= 6) {
-                                        progressDirection = msg[5] == 0 ? 1 : -1;
-                                    }
-                                    break;
-                                case 1: //Provides information related to progress messages to be sent by the current action.
-                                    break;
-                                case 2: //Increments the progress bar.
-                                    if (currentTotalTicks == -1) {
+                                    case 1:
+                                        //Provides information related to progress messages to be sent by the current action.
                                         break;
-                                    }
-                                    currentProgress += msg[3] * progressDirection;
-                                    break;
-                                case 3:
-                                    //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
-                                    break;
+                                    case 2: //Increments the progress bar.
+                                        if (currentTotalTicks == -1) {
+                                            break;
+                                        }
+                                        currentProgress += msg[3]*progressDirection;
+                                        break;
+                                    case 3:
+                                        //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
+                                        break;
+                                }
                             }
+
                             if (currentTotalTicks > 0) {
-                                progress(currentProgress * 100 / currentTotalTicks);
+                                var newPercent = (currentProgress*100/currentTotalTicks);
+                                if( actualPercent < newPercent) {
+                                    actualPercent = newPercent;
+                                    progress(actualPercent);    
+                                }
                             }
-                        }
-                        break;
-                }
-                // capture installer messages to play back to status listener
-                return MessageResult.OK;
-            }), InstallLogModes.Progress);
+                            break;
+                    }
+                    // capture installer messages to play back to status listener
+                    return MessageResult.OK;
+                }), InstallLogModes.Progress);
 
-            try {
-                Installer.InstallProduct(package.LocalPackagePath, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
-            }
-            finally {
-                SetUIHandlersToSilent();
+                try {
+                    Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation,
+                        @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
+                            package.PackageSessionData.IsClientSpecified ? "ADD_TO_ARP=1" : ""));
+                }
+                finally {
+                    SetUIHandlersToSilent();
+                }
             }
         }
 
+        /// <summary>
+        /// Removes the specified package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="progress">The progress.</param>
+        /// <remarks></remarks>
+        public override void Remove(Package package, Action<int> progress = null) {
+            lock (typeof(MSIBase)) {
+                progress = progress ?? ((percent) => { });
+                int currentTotalTicks = -1;
+                int currentProgress = 0;
+                int progressDirection = 1;
+                int actualPercent = 0;
+
+                Installer.SetExternalUI(((messageType, message, buttons, icon, defaultButton) => {
+                    switch (messageType) {
+                        case InstallMessage.Progress:
+                            if (message.Length >= 2) {
+                                var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(m => m.ToInt32(0)).ToArray();
+
+                                switch (msg[1]) {
+                                        // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
+                                    case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
+                                        currentTotalTicks = msg[3];
+                                        currentProgress = 0;
+                                        if (msg.Length >= 6) {
+                                            progressDirection = msg[5] == 0 ? 1 : -1;
+                                        }
+                                        break;
+                                    case 1: //Provides information related to progress messages to be sent by the current action.
+                                        break;
+                                    case 2: //Increments the progress bar.
+                                        if (currentTotalTicks == -1) {
+                                            break;
+                                        }
+                                        currentProgress += msg[3]*progressDirection;
+                                        break;
+                                    case 3:
+                                        //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
+                                        break;
+                                }
+                                if (currentTotalTicks > 0) {
+                                    var newPercent = (currentProgress*100/currentTotalTicks);
+                                    if (actualPercent < newPercent) {
+                                        actualPercent = newPercent;
+                                        progress(actualPercent);
+                                    }
+                                }
+                            }
+                            break;
+                    }
+                    // capture installer messages to play back to status listener
+                    return MessageResult.OK;
+                }), InstallLogModes.Progress);
+
+                try {
+                    Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+                }
+                finally {
+                    SetUIHandlersToSilent();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the package composition rules for the given package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Note: Refactoring comming up soon.
+        /// </remarks>
         public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
-            dynamic packageData = GetDynamicMSIData(package.LocalPackagePath);
+            dynamic packageData = GetDynamicMSIData(package.PackageSessionData.LocalValidatedLocation);
 
             if (packageData.CO_INSTALL_PROPERTIES == null) {
                 return Enumerable.Empty<CompositionRule>();
@@ -320,5 +360,49 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                         };
         }
 
+
+        /// <summary>
+        /// Loads the cosmetic package details when actually required.
+        /// 
+        /// Generally, this should be called as a delegate from the cache somewhere.
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        internal static PackageDetails GetPackageDetails(Package pkg, string filename) {
+            dynamic packageData = GetDynamicMSIData(filename);
+            var properties = packageData.CO_PACKAGE_PROPERTIES[pkg.ProductCode];
+            var publisher = packageData.CO_PUBLISHER[pkg.PublicKeyToken];
+
+            long publishDateTicks;
+            Int64.TryParse(properties.publish_date, out publishDateTicks);
+
+            string licenseText = null;
+            string licenseUrl = null;
+
+            if (packageData.CO_LICENSE != null)
+            {
+                var license = packageData.CO_LICENSE[0];
+                licenseText = license.license_text;
+                licenseUrl = license.license_url;
+            }
+
+            return new PackageDetails(pkg) {
+                DisplayName = properties.display_name,
+                FullDescription = StringExtensions.GunzipFromBase64(properties.description),
+                PublishDate = new DateTime(publishDateTicks),
+                AuthorVersion = properties.author_version,
+                Base64IconData = properties.icon,
+                SummaryDescription = properties.short_description,
+                Publisher = new PackageDetails.Party() {
+                    Name = publisher.Name,
+                    Url = GetURL(packageData.CO_URLS, publisher.location),
+                    Email = publisher.email
+                },
+                License = licenseText.GunzipFromBase64(),
+                LicenseUrl = GetURL(packageData.CO_URLS, licenseUrl),
+            };
+
+            
+        }
     }
 }

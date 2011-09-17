@@ -16,8 +16,9 @@ namespace CoApp.Toolkit.Win32 {
     using Microsoft.Win32.SafeHandles;
 
     public static class Kernel32 {
+#if !COAPP_ENGINE_CORE 
         public delegate bool ConsoleHandlerRoutine(ConsoleEvents eventId);
-
+#endif 
         [DllImport("kernel32.dll")]
         public static extern int GlobalAddAtom(string name);
         [DllImport("kernel32.dll")]
@@ -28,7 +29,7 @@ namespace CoApp.Toolkit.Win32 {
         public static extern bool GlobalUnlock(IntPtr hMem);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool DeviceIoControl(IntPtr hDevice, ControlCodes dwIoControlCode, IntPtr InBuffer, int nInBufferSize, IntPtr OutBuffer, int nOutBufferSize, out int pBytesReturned, IntPtr lpOverlapped);
+        public static extern bool DeviceIoControl(SafeFileHandle hDevice, ControlCodes dwIoControlCode, IntPtr InBuffer, int nInBufferSize, IntPtr OutBuffer, int nOutBufferSize, out int pBytesReturned, IntPtr lpOverlapped);
         
         [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeFileHandle CreateFile(string name, NativeFileAccess access, FileShare share, IntPtr security, FileMode mode, NativeFileAttributesAndFlags flags, IntPtr template);
@@ -80,10 +81,10 @@ namespace CoApp.Toolkit.Win32 {
 
         [DllImport("kernel32.dll")]
         public static extern bool AllocConsole();
-
+#if !COAPP_ENGINE_CORE 
         [DllImport("kernel32.dll")]
         public static extern bool SetConsoleCtrlHandler(ConsoleHandlerRoutine routine, bool add);
-
+#endif 
         [DllImport("kernel32.dll")]
         public static extern bool FreeConsole();
 
@@ -93,12 +94,14 @@ namespace CoApp.Toolkit.Win32 {
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetConsoleWindow();
 
+#if !COAPP_ENGINE_CORE 
         [DllImport("kernel32.dll")]
         public static extern SafeFileHandle GetStdHandle(StandardHandle nStandardHandle);
-
+#endif 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool CloseHandle(IntPtr h);
 
+#if !COAPP_ENGINE_CORE 
         [DllImport("kernel32.dll")]
         public static extern Coord GetLargestConsoleWindowSize();
 
@@ -136,6 +139,7 @@ namespace CoApp.Toolkit.Win32 {
         public static extern bool WriteConsole(IntPtr hConsoleOutput, String lpBuffer, Int32 nNumberOfCharsToWrite,
             out Int32 lpNumberOfCharsWritten, IntPtr lpReserved);
 
+
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessW(
             IntPtr lpApplicationName,
@@ -156,6 +160,8 @@ namespace CoApp.Toolkit.Win32 {
             [MarshalAs(UnmanagedType.LPStruct)] [In] Startupinfo lpStartupInfo,
             [MarshalAs(UnmanagedType.LPStruct)] [In] ProcessInformation lpProcessInformation);
 
+#endif 
+        
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessW(String applicationName, String commandLine, IntPtr lpProcessAttributes,
             IntPtr lpThreadAttributes, bool bInheritHandles, Int32 dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory,
@@ -169,10 +175,10 @@ namespace CoApp.Toolkit.Win32 {
             IntPtr lpProcessInformation);
 
         [DllImport("kernel32.dll")] //, CharSet=CharSet.Unicode
-        public static extern IntPtr GetProcAddress(IntPtr hmod, String name);
+        public static extern IntPtr GetProcAddress(SafeModuleHandle hmod, String name);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        public static extern IntPtr GetModuleHandle(String lpModuleName);
+        public static extern SafeModuleHandle GetModuleHandle(String lpModuleName);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         public static extern bool WriteProcessMemory(
@@ -183,14 +189,37 @@ namespace CoApp.Toolkit.Win32 {
             out Int32 lpNumberOfBytesWritten // count of bytes	written
             );
 
-    }
 
-    public enum FileType : uint {
-        Char = 0x0002,
-        Disk = 0x0001,
-        Pipe = 0x0003,
-        Remote = 0x8000,
-        Unknown = 0x0000,
-    }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern IntPtr VirtualAllocEx(SafeProcessHandle processHandle, IntPtr address, SizeT size, AllocationType flAllocationType, MemoryProtection flProtect); 
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern SafeProcessHandle OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool WriteProcessMemory(SafeProcessHandle processHandle, IntPtr lpBaseAddress, byte[] lpBuffer, SizeT nSize, ref SizeT lpNumberOfBytesWritten);
+
+        [DllImport("kernel32.dll")]
+        public static extern bool FlushInstructionCache(SafeProcessHandle processHandle, IntPtr lpBaseAddress, SizeT dwSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern SafeThreadHandle CreateRemoteThread(SafeProcessHandle processHandle, IntPtr lpThreadAttributes, SizeT dwStackSize, IntPtr lpStartAddress,
+            IntPtr lpParameter, CreateRemoteThreadFlags creationFlags, out uint lpThreadId);
+
+        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)][return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsWow64Process([In] SafeProcessHandle processHandle, [Out, MarshalAs(UnmanagedType.Bool)] out bool wow64Process);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern bool VirtualFreeEx(SafeProcessHandle processHandle, IntPtr address, SizeT size, AllocationType flAllocationType); 
+
+        [DllImport("kernel32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+        public static extern SafeWaitHandle CreateEvent(IntPtr lpSecurityAttributes, bool isManualReset, bool initialState, string name);
+
+        [DllImport("kernel32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+        public static extern bool SetEvent(SafeWaitHandle handle);
+
+        [DllImport("kernel32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+        public static extern bool ResetEvent(SafeWaitHandle handle);
+
+    }
 }

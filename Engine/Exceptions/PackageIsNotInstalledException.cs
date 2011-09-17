@@ -8,16 +8,13 @@
 // </license>
 //-----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CoApp.Toolkit.Engine.Exceptions {
-    public class PackageIsNotInstalledException : Exception {
-        public Package Package;
+    using System;
 
-        public PackageIsNotInstalledException(Package p ) {
+    internal class PackageIsNotInstalledException : Exception {
+        internal Package Package;
+
+        internal PackageIsNotInstalledException(Package p) {
             Package = p;
         }
     }

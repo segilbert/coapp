@@ -16,15 +16,46 @@ namespace CoApp.Toolkit.Engine {
     using Exceptions;
     using Extensions;
 
+    /// <summary>
+    /// Provides access to settings of the package manager.
+    /// </summary>
+    /// <remarks></remarks>
     public class PackageManagerSettings {
+        /// <summary>
+        /// Registry view for the package manager settings
+        /// </summary>
         public static RegistryView CoAppSettings = RegistryView.CoAppSystem[@"PackageManager"];
+        
+        /// <summary>
+        /// registry view for the cached items (contents subject to being dropped at a whim)
+        /// </summary>
         public static RegistryView CacheSettings = CoAppSettings[@".cache"];
+        
+        /// <summary>
+        /// registry view for package-specific information.
+        /// 
+        /// This data is currently the only registry data in coapp that can't be rebuilt--this stores the "current" version of a given package.
+        /// This is also where we will store flags like "blocked" or "required" 
+        /// </summary>
         public static RegistryView PerPackageSettings = CoAppSettings[@".packageInformation"];
 
+        /// <summary>
+        /// Gets the default for the CoApp root folder.
+        /// </summary>
+        /// <remarks></remarks>
         private static string DEFAULT_COAPP_ROOT {
             get { return Path.GetFullPath(Environment.ExpandEnvironmentVariables(@"%SystemDrive%\apps")); }
         }
 
+        /// <summary>
+        /// Gets or sets the coapp root directory.
+        /// 
+        /// May only change the value if the existing directory is empty.
+        /// 
+        /// If the directory can not be set, this will default to the DEFAULT_COAPP_ROOT location every time.
+        /// </summary>
+        /// <value>The coapp root directory.</value>
+        /// <remarks></remarks>
         public static string CoAppRootDirectory {
             get {
                 // string result = SystemStringSetting["RootDirectory"];
@@ -77,6 +108,10 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        /// <summary>
+        /// Gets the CoApp .installed directory (where the packages install to)
+        /// </summary>
+        /// <remarks></remarks>
         public static string CoAppInstalledDirectory {
             get {
                 var result = Path.Combine(CoAppRootDirectory, ".installed");
@@ -89,6 +124,10 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        /// <summary>
+        /// Gets the co app cache directory (where transient files are located).
+        /// </summary>
+        /// <remarks></remarks>
         public static string CoAppCacheDirectory {
             get {
                 var result = Path.Combine(CoAppRootDirectory, ".cache");
@@ -101,21 +140,16 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        /// <summary>
+        /// Gets the coapp package cache.
+        ///  
+        /// Not currently used--this is where we could copy MSIs that we've installed 
+        /// This may be necessary on XP, where the OS doesn't store the complete MSI.
+        /// </summary>
+        /// <remarks></remarks>
         public static string CoAppPackageCache {
             get {
                 var result = Path.Combine(CoAppCacheDirectory, "packages");
-                if (!Directory.Exists(result)) {
-                    Directory.CreateDirectory(result);
-                    var di = new DirectoryInfo(result);
-                    di.Attributes = FileAttributes.Hidden;
-                }
-                return result;
-            }
-        }
-
-        public static string CoAppFeedCache {
-            get {
-                var result = Path.Combine(CoAppCacheDirectory, "feeds");
                 if (!Directory.Exists(result)) {
                     Directory.CreateDirectory(result);
                     var di = new DirectoryInfo(result);

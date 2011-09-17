@@ -100,38 +100,41 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
         }
 
 
-        public void Populate(Package package, string relativeLocation, string packageUrlPrefix) {
+        internal void Populate(Package package, string relativeLocation, string packageUrlPrefix) {
             Id = package.ProductCode;
             Title = new TextSyndicationContent(package.CosmeticName);
-            Summary = new TextSyndicationContent(package.SummaryDescription);
-            PublishDate = package.PublishDate; 
+            Summary = new TextSyndicationContent(package.PackageDetails.SummaryDescription);
+            PublishDate = package.PackageDetails.PublishDate; 
+            
+            if (package.PackageDetails.Publisher != null) {
+                var author = CreatePerson();
+                author.Name = package.PackageDetails.Publisher.Name;
+                author.Email = package.PackageDetails.Publisher.Email;
+                author.Uri = package.PackageDetails.Publisher.Url;
+                Authors.Add(author);
+            }
 
-            var author = CreatePerson();
-            author.Name = package.Publisher.Name;
-            author.Email = package.Publisher.Email;
-            author.Uri = package.Publisher.Url;
-            Authors.Add(author);
-
-            if (package.Contributors != null) {
-                foreach (var contrib in package.Contributors.Select(contributor => CreatePerson())) {
-                    contrib.Name = package.Publisher.Name;
-                    contrib.Email = package.Publisher.Email;
-                    contrib.Uri = package.Publisher.Url;
-                    Contributors.Add(contrib);
+            if (package.PackageDetails.Contributors != null) {
+                foreach (var contrib in package.PackageDetails.Contributors) {
+                    var contributor = CreatePerson();
+                    contributor .Name = contrib.Name;
+                    contributor .Email = contrib.Email;
+                    contributor .Uri = contrib.Url;
+                    Contributors.Add(contributor);
                 }
             }
 
-            if( package.CopyrightStatement != null )
-                Copyright = new TextSyndicationContent(package.CopyrightStatement);
+            if( package.PackageDetails.CopyrightStatement != null )
+                Copyright = new TextSyndicationContent(package.PackageDetails.CopyrightStatement);
 
-            if (package.Tags != null) {
-                foreach (var tag in package.Tags) {
+            if (package.PackageDetails.Tags != null) {
+                foreach (var tag in package.PackageDetails.Tags) {
                     Categories.Add(new SyndicationCategory(tag));
                 }
             }
 
-            if( package.FullDescription != null ) {
-                Content = SyndicationContent.CreateHtmlContent(package.FullDescription);
+            if( package.PackageDetails.FullDescription != null ) {
+                Content = SyndicationContent.CreateHtmlContent(package.PackageDetails.FullDescription);
             }
 
             packageElement.Id = package.ProductCode;
@@ -139,12 +142,12 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             packageElement.Icon = string.Empty;
             packageElement.Name = package.Name;
             packageElement.Version = package.Version;
-            packageElement.BindingPolicyMaxVersion = package.PolicyMaximumVersion;
-            packageElement.BindingPolicyMinVersion = package.PolicyMinimumVersion;
+            packageElement.BindingPolicyMaxVersion = package.InternalPackageData.PolicyMaximumVersion;
+            packageElement.BindingPolicyMinVersion = package.InternalPackageData.PolicyMinimumVersion;
             packageElement.PublicKeyToken = package.PublicKeyToken;
-            packageElement.Dependencies = package.Dependencies.Select(p => p.CanonicalName).ToArray();
+            packageElement.Dependencies = package.InternalPackageData.Dependencies.Select(p => p.CanonicalName).ToArray();
             packageElement.RelativeLocation = relativeLocation;
-            packageElement.Filename = Path.GetFileName(package.LocalPackagePath);
+            packageElement.Filename = Path.GetFileName(package.InternalPackageData.LocalLocation);
 
             var link = CreateLink();
 

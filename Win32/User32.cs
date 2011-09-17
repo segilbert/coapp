@@ -11,7 +11,7 @@
 namespace CoApp.Toolkit.Win32 {
     using System;
     using System.Runtime.InteropServices;
-
+     
     /// <summary>
     /// Summary description for Win32.
     /// </summary>
@@ -59,8 +59,10 @@ namespace CoApp.Toolkit.Win32 {
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr SetParent(IntPtr child, IntPtr newParent);
 
+#if !COAPP_ENGINE_CORE
         [DllImport("user32.dll")]
         public static extern bool GetWindowInfo(IntPtr hwnd, out WindowInfo wi);
+#endif
 
         [DllImport("user32.dll")]
         public static extern bool PostMessage(IntPtr hwnd, Int32 msg, Int32 wparam, Int32 lparam);
@@ -86,9 +88,10 @@ namespace CoApp.Toolkit.Win32 {
         [DllImport("user32.dll")]
         public static extern Int32 GetMenuItemCount(IntPtr hMenu);
 
+#if !COAPP_ENGINE_CORE
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         public static extern bool GetMenuItemInfo(IntPtr hMenu, Int32 item, bool bByPosition, [MarshalAs(UnmanagedType.LPStruct)] [In] [Out] MenuItemInfo mii);
-
+#endif 
         [DllImport("user32.dll")]
         public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
 

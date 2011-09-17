@@ -94,12 +94,12 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             }
         }
 
-        public void AddPackages(IEnumerable<Package>packages) {
+        internal void AddPackages(IEnumerable<Package>packages) {
             foreach (var p in packages)
                 AddPackage(p);
         }
 
-        public void AddPackage(Package package, string relativePath = null) {
+        internal void AddPackage(Package package, string relativePath = null) {
             var item = CreateItem() as AtomItem;
             item.Populate(package, relativePath, _packageUrlPrefix);
 

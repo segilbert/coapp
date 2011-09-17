@@ -23,15 +23,21 @@ namespace CoApp.Toolkit.Extensions {
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Text;
+#if !COAPP_ENGINE_CORE
     using Collections;
-
+#endif 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks></remarks>
     public static class CollectionExtensions {
         /// <summary>
-        ///   Splits a string into a List of strings.
+        /// Splits a string into a List of strings.
         /// </summary>
-        /// <param name = "str"></param>
-        /// <param name = "separator"></param>
+        /// <param name="str">The STR.</param>
+        /// <param name="separator">The separator.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static List<string> SplitToList(this string str, params char[] separator) {
             var result = new List<string>();
             if(!string.IsNullOrEmpty(str)) {
@@ -42,32 +48,34 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
-        ///   Removes duplicate strings from a list.
+        /// Removes duplicate strings from a list.
         /// </summary>
-        /// <param name = "collection"></param>
-        /// <param name = "stringComparison"></param>
+        /// <param name="collection">The collection.</param>
+        /// <param name="stringComparison">The string comparison.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static List<string> Uniq(this IEnumerable<string> collection, StringComparison stringComparison) {
             return Uniq((collection is List<string>) ? (collection as List<string>) : collection.ToList(), stringComparison);
         }
 
-        ///<summary>
-        ///  Removes duplicate strings from a list.
-        ///
-        ///  Assumes Case Sensitivity.
-        ///</summary>
-        ///<param name = "collection"></param>
-        ///<returns></returns>
+        /// <summary>
+        /// Removes duplicate strings from a list.
+        /// Assumes Case Sensitivity.
+        /// </summary>
+        /// <param name="collection">The collection.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static List<string> Uniq(this IEnumerable<string> collection) {
             return Uniq((collection is List<string>) ? (collection as List<string>) : collection.ToList());
         }
 
         /// <summary>
-        ///   Removes duplicate strings from a list.
+        /// Removes duplicate strings from a list.
         /// </summary>
-        /// <param name = "list"></param>
-        /// <param name = "stringComparison"></param>
+        /// <param name="list">The list.</param>
+        /// <param name="stringComparison">The string comparison.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static List<string> Uniq(this List<string> list, StringComparison stringComparison) {
             for(var i = 0; i < list.Count; i++) {
                 for(var j = list.Count - 1; j > i; j--) {
@@ -79,13 +87,13 @@ namespace CoApp.Toolkit.Extensions {
             return list;
         }
 
-        ///<summary>
-        ///  Removes duplicate strings from a list.
-        ///
-        ///  Assumes Case Sensitivity.
-        ///</summary>
-        ///<param name = "list"></param>
-        ///<returns></returns>
+        /// <summary>
+        /// Removes duplicate strings from a list.
+        /// Assumes Case Sensitivity.
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static List<string> Uniq(this List<string> list) {
             for(var i = 0; i < list.Count; i++) {
                 for(var j = list.Count - 1; j > i; j--) {
@@ -98,11 +106,12 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
-        ///   Combines a list of strings into a single string seperated by seperator
+        /// Combines a list of strings into a single string seperated by seperator
         /// </summary>
-        /// <param name = "list"></param>
-        /// <param name = "separator"></param>
+        /// <param name="list">The list.</param>
+        /// <param name="separator">The separator.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static string Combine(this List<string> list, char separator) {
             var sb = new StringBuilder();
             foreach(string s in list) {
@@ -115,11 +124,12 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
-        ///   Combines a list of strings into a single string seperated by seperator
+        /// Combines a list of strings into a single string seperated by seperator
         /// </summary>
-        /// <param name = "list"></param>
-        /// <param name = "separator"></param>
+        /// <param name="list">The list.</param>
+        /// <param name="separator">The separator.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static string Combine(this List<string> list, string separator) {
             var sb = new StringBuilder();
             foreach(string s in list) {
@@ -131,18 +141,31 @@ namespace CoApp.Toolkit.Extensions {
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Adds the contents of one collection to another.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="destination">The destination.</param>
+        /// <param name="collection">The collection.</param>
+        /// <remarks></remarks>
         public static void AddRange<T>(this Collection<T> destination, IEnumerable<T> collection) {
             foreach (var i in collection)
                 destination.Add(i);
         }
 
-        public static TValue GetOrDefault<TKey,TValue>(this Dictionary<TKey,TValue> dictionary, TKey key) {
-            TValue value;
-            dictionary.TryGetValue(key, out value);
-            return value;
+        /// <summary>
+        /// Determines whether the collection object is either null or an  empty collection.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <returns><c>true</c> if [is null or empty] [the specified collection]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T> collection ) {
+            return collection == null ? true : !collection.Any();
         }
 
-        public static Dictionary<string, IEnumerable<string>>Merge(this Dictionary<string, IEnumerable<string>> result, IDictionary<string, IEnumerable<string>> more ) {
+#if !COAPP_ENGINE_CORE
+         public static Dictionary<string, IEnumerable<string>>Merge(this Dictionary<string, IEnumerable<string>> result, IDictionary<string, IEnumerable<string>> more ) {
             foreach( var k in more.Keys) {
                 if( result.ContainsKey(k)) {
                     result[k] = result[k].Union(more[k]).Distinct();
@@ -154,8 +177,10 @@ namespace CoApp.Toolkit.Extensions {
             return result;
         }
 
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T> collection ) {
-            return collection == null ? true : !collection.Any();
+         public static TValue GetOrDefault<TKey,TValue>(this Dictionary<TKey,TValue> dictionary, TKey key) {
+            TValue value;
+            dictionary.TryGetValue(key, out value);
+            return value;
         }
 
         public static IEnumerable<T> ToLazyEnumerable<T>(this IEnumerable<T> collection) {
@@ -177,5 +202,8 @@ namespace CoApp.Toolkit.Extensions {
 
             return list;
         }
+
+#endif
+
     }
 }

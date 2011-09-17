@@ -8,18 +8,16 @@
 // </license>
 //-----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CoApp.Toolkit.Engine.Exceptions {
-    public class MultiplePackagesMatchException : Exception {
-        public string PackageMask;
-        public IEnumerable<Package> PackageMatches;
+    using System;
+    using System.Collections.Generic;
 
-        public MultiplePackagesMatchException(string packageMask, IEnumerable<Package> packageMatch) {
-            PackageMask = packageMask; 
+    internal class MultiplePackagesMatchException : Exception {
+        internal string PackageMask;
+        internal IEnumerable<Package> PackageMatches;
+
+        internal MultiplePackagesMatchException(string packageMask, IEnumerable<Package> packageMatch) {
+            PackageMask = packageMask;
             PackageMatches = packageMatch;
         }
     }

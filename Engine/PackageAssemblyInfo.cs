@@ -11,12 +11,37 @@
 using CoApp.Toolkit.Package;
 namespace CoApp.Toolkit.Engine
 {
+    /// <summary>
+    /// 
+    /// 
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// Storage Class.
+    /// 
+    /// Note: Is this actually required? Should we normalize the use of this with Package itself?
+    /// </remarks>
     public class PackageAssemblyInfo
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public string Name;
+        /// <summary>
+        /// 
+        /// </summary>
         public string Arch;
+        /// <summary>
+        /// 
+        /// </summary>
         public string Type;
+        /// <summary>
+        /// 
+        /// </summary>
         public string Version;
+        /// <summary>
+        /// 
+        /// </summary>
         public string PublicKeyToken;
     }
 }

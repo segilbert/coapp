@@ -27,33 +27,19 @@ namespace CoApp.Toolkit.Engine {
     using OperationCompletedBeforeResultException = Tasks.OperationCompletedBeforeResultException;
 
 
-    public class PackageManagerMessages : MessageHandlers<PackageManagerMessages> {
-        public Action<string, IEnumerable<Package>> MultiplePackagesMatch;
-        public Action<Package> PackageRemoveFailed;
-        public Action<string> PackageNotFound;
-        public Action<Package> PackageIsNotInstalled;
-
-        public Action<Package> RemovingPackage;
-        public Action<Package, int> RemovingProgress;
-
-        public Action<Package> InstallingPackage;
-        public Action<Package, int> InstallProgress;
-
-        public Action<int> PackageScanning;
-        public Action<Package> FailedDependentPackageInstall;
-        public Action<RemoteFile> DownloadingFile;
-        public Action<RemoteFile, long> DownloadingFileProgress;
-        public Action<Package> PackageNotSatisfied;
-        public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
-        public Action<IEnumerable<Package>> UpgradingPackage;
-    }
-
+    /// <summary>
+    /// NOTE: EXPLICITLY IGNORE, MAJOR REFACTORING AHEAD
+    /// </summary>
     public class PackageManager {
         // private readonly List<Package> _acquirePackageQueue = new List<Package>();
         // private readonly List<Package> _installQueue = new List<Package>();
         private static readonly TransferManager _transferManager = TransferManager.GetTransferManager(PackageManagerSettings.CoAppCacheDirectory);
 
-        private bool IsCancellationRequested { get { return Tasklet.CurrentCancellationToken.IsCancellationRequested; } }
+        private bool IsCancellationRequested {
+            get { /* return Tasklet.CurrentCancellationToken.IsCancellationRequested; */
+                return false;
+            }
+        }
 
         public IEnumerable<string> PackagesAreUpgradable = Enumerable.Empty<string>();
         public IEnumerable<string> PackagesAsSpecified = Enumerable.Empty<string>();
@@ -93,16 +79,18 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public Task InstallPackages(IEnumerable<string> packageMasks, MessageHandlers messageHandlers = null) {
-            return Registrar.GetPackagesByName(packageMasks, messageHandlers).ContinueWithParent(antecedent => {
+            return Registrar.GetPackagesByName(packageMasks, messageHandlers).ContinueWith(antecedent => {
                 foreach (var p in antecedent.Result) {
                     p.UserSpecified = true;
                 }
                 return antecedent.Result;
-            }).ContinueWithParent(antecedent => { InstallPackages(antecedent.Result); });
+            }, TaskContinuationOptions.AttachedToParent ).ContinueWith(antecedent => { InstallPackages(antecedent.Result); }, TaskContinuationOptions.AttachedToParent );
         }
 
-        public Task InstallPackages(IEnumerable<Package> packages, MessageHandlers messageHandlers = null) {
-            return CoTask.Factory.StartNew(() => {
+        internal Task InstallPackages(IEnumerable<Package> packages, MessageHandlers messageHandlers = null) {
+            return Task.Factory.StartNew(() => {
+                messageHandlers.Register();
+
                 // if we're gonna install packages, we should make sure that CoApp has been properly installed
                 EnsureCoAppIsInstalledInPath();
                 RunCompositionOnInstlledPackages(); // GS01: hack.
@@ -130,7 +118,7 @@ namespace CoApp.Toolkit.Engine {
                     downloadQueue.Clear();
                     installQueue.Clear();
 
-                    Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
+                    // Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
 
                     Registrar.ScanForPackages(packages);
 
@@ -222,7 +210,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                     // try to find them
                 } while (Registrar.StateCounter != state);
-            }, messageHandlers);
+            });
         }
 
         private bool DownloadPackages(IEnumerable<Package> packages) {
@@ -247,7 +235,7 @@ namespace CoApp.Toolkit.Engine {
                     // try preferred location
                     var remoteFile = _transferManager[package.RemoteLocation.Value];
                     var tsk = remoteFile.Get();
-                    tsk.ContinueWithParent(antecedent => {
+                    tsk.ContinueWith(antecedent => {
                         if (remoteFile.LastStatus != HttpStatusCode.OK) {
                             // failed download; check for other possible download locations.
                             // GS01: TODO IMPLEMENT OTHER LOCATIONS.
@@ -262,12 +250,12 @@ namespace CoApp.Toolkit.Engine {
                         if (!thisPkg.HasLocalFile)
                             throw new Exception("SHOULD NOT HAPPEN: File completed download, but doesn't have a local file [{0}]??".format(remoteFile.ActualRemoteLocation.AbsoluteUri));
                         
-                    });
+                    }, TaskContinuationOptions.AttachedToParent );
 
                     remoteFile.DownloadProgress.Notification += progress => PackageManagerMessages.Invoke.DownloadingFileProgress(remoteFile, progress);
                 }
 
-                Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
+                // Tasklet.WaitforCurrentChildTasks(); // HACK HACK HACK ???
 
                 if (packages.Any(package => package.CouldNotDownload)) {
                     return false;
@@ -342,9 +330,10 @@ namespace CoApp.Toolkit.Engine {
             return packageToSatisfy.CanSatisfy = true;
         }
 
-        public Task RemovePackages(IEnumerable<string> packages, MessageHandlers messageHandlers = null) {
+        internal Task RemovePackages(IEnumerable<string> packages, MessageHandlers messageHandlers = null) {
             // scan 
-            return CoTask.Factory.StartNew(() => {
+            return Task.Factory.StartNew(() => {
+                messageHandlers.Register();
 
                 GetInstalledPackages().Wait();
 
@@ -378,15 +367,17 @@ namespace CoApp.Toolkit.Engine {
                     }
                     PackageManagerMessages.Invoke.RemovingProgress(p, 100);
                 }
-            },messageHandlers);
+            });
         }
 
         public Task Upgrade(IEnumerable<string> packageList, MessageHandlers messageHandlers = null) {
             if( packageList == null || packageList.Count() == 0 ) {
                 packageList = new[] {"*"};
             }
-            return CoTask.Factory.StartNew(() => {
-                GetInstalledPackages().ContinueWithParent((antecedent) => {
+            return Task.Factory.StartNew(() => {
+                messageHandlers.Register();
+
+                GetInstalledPackages().ContinueWith((antecedent) => {
 
                     var installedPackages = antecedent.Result;
                     var newPackages = new List<Package>();
@@ -408,32 +399,33 @@ namespace CoApp.Toolkit.Engine {
                     }
                     PackageManagerMessages.Invoke.UpgradingPackage(newPackages);
                     InstallPackages(newPackages).Wait();
-                });
-            },messageHandlers);
+                }, TaskContinuationOptions.AttachedToParent );
+            });
         }
 
-        public Task<IEnumerable<Package>> GetInstalledPackages(MessageHandlers messageHandlers = null) {
-            return CoTask.Factory.StartNew<IEnumerable<Package>>(() => { 
+        internal Task<IEnumerable<Package>> GetInstalledPackages(MessageHandlers messageHandlers = null) {
+            return Task.Factory.StartNew<IEnumerable<Package>>(() => {
+                messageHandlers.Register();
                 MSIBase.ScanInstalledMSIs();
                 Registrar.SaveCache();
                 return Registrar.InstalledPackages;
-            },messageHandlers);
+            });
         }
 
-        public Task<IEnumerable<Package>> GetPackagesInScanLocations(MessageHandlers messageHandlers = null)
+        internal Task<IEnumerable<Package>> GetPackagesInScanLocations(MessageHandlers messageHandlers = null)
         {
-            return CoTask.Factory.StartNew<IEnumerable<Package>>(() =>
-            {
+            return Task.Factory.StartNew<IEnumerable<Package>>(() => {
+                messageHandlers.Register();
                 MSIBase.ScanInstalledMSIs();
                 Registrar.SaveCache();
                 return Registrar.Packages.Union(Registrar.ScanForPackages("*"));
-            }, messageHandlers);
+            });
         }
 
 
-        public void GenerateAtomFeed(string outputFilename, string packageSource, bool recursive,  string rootUrl, string packageUrl, string actualUrl = null, string title = null) {
+        internal void GenerateAtomFeed(string outputFilename, string packageSource, bool recursive,  string rootUrl, string packageUrl, string actualUrl = null, string title = null) {
             outputFilename = Path.GetFullPath(outputFilename);
-            PackageFeed.GetPackageFeedFromLocation(packageSource, recursive).ContinueWithParent(antecedent => {
+            PackageFeed.GetPackageFeedFromLocation(packageSource, recursive).ContinueWith(antecedent => {
                 var packageFeed = antecedent.Result;
 
                 var generatedFeed = new AtomFeed(outputFilename, rootUrl, packageUrl, actualUrl, title);
@@ -443,13 +435,13 @@ namespace CoApp.Toolkit.Engine {
                 }
                 generatedFeed.Save(outputFilename);
 
-            }).Wait();
+            }, TaskContinuationOptions.AttachedToParent ).Wait();
         }
 
         /// <summary>
         /// Checks (and corrects) to see if the CoApp\bin directory is in the path
         /// </summary>
-        public void EnsureCoAppIsInstalledInPath() {
+        internal void EnsureCoAppIsInstalledInPath() {
             if (AdminPrivilege.IsRunAsAdmin) {
                 var coappbin = Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin");
 
@@ -464,9 +456,9 @@ namespace CoApp.Toolkit.Engine {
         /// <summary>
         /// Checks (and corrects) to see if the CoApp\bin directory is in the path
         /// </summary>
-        public void RunCompositionOnInstlledPackages() {
+        internal void RunCompositionOnInstlledPackages() {
             if (AdminPrivilege.IsRunAsAdmin) {
-                GetInstalledPackages().ContinueWithParent((antecedent) => {
+                GetInstalledPackages().ContinueWith((antecedent) => {
                     var pks = from pkg in Registrar.InstalledPackages
                         select new {
                             pkg.Name,
@@ -477,7 +469,7 @@ namespace CoApp.Toolkit.Engine {
                         //Console.WriteLine("Current Version [{0}] [{1}]",pkg.Name, Package.GetCurrentPackage(pkg.Name, pkg.PublicKeyToken));
                         Package.GetCurrentPackage(pkg.Name, pkg.PublicKeyToken);
                     }
-                }).Wait();
+                }, TaskContinuationOptions.AttachedToParent ).Wait();
 
             }
         }

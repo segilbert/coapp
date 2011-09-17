@@ -8,17 +8,15 @@
 // </license>
 //-----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CoApp.Toolkit.Engine.Exceptions {
-    public class PackageHasPotentialUpgradesException : Exception {
-        public Package UnsatisfiedPackage;
-        public IEnumerable<Package> SatifactionOptions;
+    using System;
+    using System.Collections.Generic;
 
-        public PackageHasPotentialUpgradesException(Package unsatisfiedPackage, IEnumerable<Package> satisfactionOptions) {
+    internal class PackageHasPotentialUpgradesException : Exception {
+        internal Package UnsatisfiedPackage;
+        internal IEnumerable<Package> SatifactionOptions;
+
+        internal PackageHasPotentialUpgradesException(Package unsatisfiedPackage, IEnumerable<Package> satisfactionOptions) {
             UnsatisfiedPackage = unsatisfiedPackage;
             SatifactionOptions = satisfactionOptions;
         }

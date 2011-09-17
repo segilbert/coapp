@@ -25,14 +25,22 @@ namespace CoApp.Toolkit.Extensions {
     using System.Xml;
     using System.Xml.Linq;
 
+    /// <summary>
+    /// Xml Extension Methods.
+    /// </summary>
+    /// <remarks></remarks>
     public static class XmlExtensions {
+        /// <summary>
+        /// Cache for xml strings and their xml document equivalent.
+        /// </summary>
         private static readonly Dictionary<string, XmlDocument> DocCache = new Dictionary<string, XmlDocument>();
 
         /// <summary>
-        ///   Returns a list of strings for the inner text of a collection of XmlNodes
+        /// Returns a list of strings for the inner text of a collection of XmlNodes
         /// </summary>
-        /// <param name = "nodeList"></param>
+        /// <param name="nodeList">The node list.</param>
         /// <returns></returns>
+        /// <remarks></remarks>
         public static List<string> InnerText(this XmlNodeList nodeList) {
             var result = new List<string>();
             foreach(XmlNode node in nodeList) {
@@ -41,6 +49,12 @@ namespace CoApp.Toolkit.Extensions {
             return result;
         }
 
+        /// <summary>
+        /// Gets the xmldoc representation of the given string
+        /// </summary>
+        /// <param name="xmlDoc">The XML doc.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlDocument XmlDoc(this string xmlDoc) {
             if(DocCache.ContainsKey(xmlDoc)) {
                 return DocCache[xmlDoc];
@@ -52,6 +66,12 @@ namespace CoApp.Toolkit.Extensions {
             return doc;
         }
 
+        /// <summary>
+        /// Gets the xmldoc representation of the given string as a JSON graph.
+        /// </summary>
+        /// <param name="jsonDoc">The json doc.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlDocument JsonDoc(this string jsonDoc) {
             if(DocCache.ContainsKey(jsonDoc)) {
                 return DocCache[jsonDoc];
@@ -67,6 +87,12 @@ namespace CoApp.Toolkit.Extensions {
             return doc;
         }
 
+        /// <summary>
+        /// Converts an XML document to JSON
+        /// </summary>
+        /// <param name="xmlDoc">The XML doc.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string ToJsonString(this XmlDocument xmlDoc) {
             var stream = new MemoryStream();
             var writer = JsonReaderWriterFactory.CreateJsonWriter(stream);
@@ -74,12 +100,25 @@ namespace CoApp.Toolkit.Extensions {
             return Encoding.Default.GetString(stream.GetBuffer());
         }
 
+        /// <summary>
+        /// deserializes a JSON doc as given object type.
+        /// </summary>
+        /// <typeparam name="TType">The type of the type.</typeparam>
+        /// <param name="jsonText">The json text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static TType JsonDeserialize<TType>(this string jsonText) {
             var stream = new MemoryStream(Encoding.Default.GetBytes(jsonText));
             var json = new DataContractJsonSerializer(typeof(TType));
             return (TType) json.ReadObject(stream);
         }
 
+        /// <summary>
+        /// Serializes a object to JSON
+        /// </summary>
+        /// <param name="obj">The obj.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string JsonSerialize(this object obj) {
             var stream = new MemoryStream();
             var json = new DataContractJsonSerializer(obj.GetType());
@@ -87,54 +126,156 @@ namespace CoApp.Toolkit.Extensions {
             return Encoding.Default.GetString(stream.GetBuffer());
         }
 
+        /// <summary>
+        /// wrapper method to select nodes in a xmldocument for an XPath Expression
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPath(this XmlDocument doc, string XPathExpression, params object[] args) {
             return doc.SelectNodes(XPathExpression.format(args));
         }
 
+        /// <summary>
+        /// wrapper method to select a single in a xmldocument for an XPath Expression
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNode XPathSingle(this XmlDocument doc, string XPathExpression, params object[] args) {
             return doc.SelectSingleNode(XPathExpression.format(args));
         }
 
+        /// <summary>
+        /// wrapper method to select nodes in a xmldocument using a case insensitive XPath expression.
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathContains(this XmlDocument doc, string XPathExpression, string containsText) {
             return doc.XPath(string.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
         }
 
+        /// <summary>
+        /// wrapper method to select nodes in a xmldocument excluding a case insensitive XPath expression.
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathExcludes(this XmlDocument doc, string XPathExpression, string containsText) {
             return doc.XPath(string.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
         }
 
+        /// <summary>
+        /// wrapper method to select nodes in a xmldocument using a parameterized XPath Expression.
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPath(this string doc, string XPathExpression, params object[] args) {
             return doc.XmlDoc().XPath(XPathExpression, args);
         }
 
+        /// <summary>
+        /// wrapper method to a single node in a xmldocument using a parameterized XPath Expression.
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNode XPathSingle(this string doc, string XPathExpression, params object[] args) {
             return doc.XmlDoc().XPathSingle(XPathExpression, args);
         }
 
+        /// <summary>
+        /// wrapper method to select nodes in a xmldocument string
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathContains(this string doc, string XPathExpression, string containsText) {
             return doc.XmlDoc().XPathContains(XPathExpression, containsText);
         }
 
+        /// <summary>
+        /// wrapper method to select nodes in a xmldocument string excluding a string
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathExcludes(this string doc, string XPathExpression, string containsText) {
             return doc.XmlDoc().XPathExcludes(XPathExpression, containsText);
         }
 
+        /// <summary>
+        /// wrapper method 
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPath(this XmlNode doc, string XPathExpression, params object[] args) {
             return doc.SelectNodes(XPathExpression.format(args));
         }
 
+        /// <summary>
+        /// wrapper method 
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNode XPathSingle(this XmlNode doc, string XPathExpression, params object[] args) {
             return doc.SelectSingleNode(XPathExpression.format(args));
         }
 
+        /// <summary>
+        /// wrapper method 
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathContains(this XmlNode doc, string XPathExpression, string containsText) {
             return doc.XPath(string.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
         }
 
+        /// <summary>
+        /// wrapper method 
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathExcludes(this XmlNode doc, string XPathExpression, string containsText) {
             return doc.XPath(string.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
         }
 
+        /// <summary>
+        /// Creates and Xml document from a node list
+        /// </summary>
+        /// <param name="nodeList">The node list.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlDocument ToXmlDocument(this XmlNodeList nodeList) {
             var tmpDoc = new StringBuilder();
             tmpDoc.AppendLine("<?xml version=\"1.0\" encoding=\"Windows-1252\"?>\r\n<content>\r\n");
@@ -146,26 +287,70 @@ namespace CoApp.Toolkit.Extensions {
             return tmpDoc.ToString().XmlDoc();
         }
 
+        /// <summary>
+        /// wrapper function
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPath(this XmlNodeList doc, string XPathExpression, params object[] args) {
             return doc.ToXmlDocument().SelectNodes(XPathExpression.format(args));
         }
 
+        /// <summary>
+        /// wrapper function
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNode XPathSingle(this XmlNodeList doc, string XPathExpression, params object[] args) {
             return doc.ToXmlDocument().SelectSingleNode(XPathExpression.format(args));
         }
 
+        /// <summary>
+        /// wrapper function
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathContains(this XmlNodeList doc, string XPathExpression, string containsText) {
             return doc.ToXmlDocument().XPath(string.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
         }
 
+        /// <summary>
+        /// wrapper function
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <param name="XPathExpression">The X path expression.</param>
+        /// <param name="containsText">The contains text.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList XPathExcludes(this XmlNodeList doc, string XPathExpression, string containsText) {
             return doc.ToXmlDocument().XPath(string.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
         }
 
+        /// <summary>
+        /// wrapper function
+        /// </summary>
+        /// <param name="doc">The doc.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static XmlNodeList DocumentNodes(this XmlDocument doc) {
             return doc.ChildNodes[1].ChildNodes;
         }
 
+        /// <summary>
+        /// Determines whether a given file is an xml document 
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns><c>true</c> if [is XML file] [the specified filename]; otherwise, <c>false</c>.</returns>
+        /// <remarks></remarks>
         public static bool IsXmlFile(this string filename) {
             if( File.Exists(filename)) {
                 using( var s = File.OpenText(filename)) {
@@ -181,11 +366,23 @@ namespace CoApp.Toolkit.Extensions {
             return false;
         }
 
+        /// <summary>
+        /// Pretties the save XML.
+        /// </summary>
+        /// <param name="xmlDocumentText">The XML document text.</param>
+        /// <param name="outputPath">The output path.</param>
+        /// <remarks></remarks>
         public static void PrettySaveXml(this IEnumerable<string> xmlDocumentText, string outputPath) {
             var tempDocument = XDocument.Load(new StringReader(string.Join("\r\n", xmlDocumentText)));
             tempDocument.Save(outputPath, SaveOptions.None);
         }
 
+        /// <summary>
+        /// Pretties the save XML.
+        /// </summary>
+        /// <param name="xmlDocumentStream">The XML document stream.</param>
+        /// <param name="outputPath">The output path.</param>
+        /// <remarks></remarks>
         public static void PrettySaveXml(this MemoryStream xmlDocumentStream, string outputPath) {
             xmlDocumentStream.Seek(0, SeekOrigin.Begin);
             var tempDocument = XDocument.Load(xmlDocumentStream);

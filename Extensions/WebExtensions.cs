@@ -235,32 +235,7 @@ namespace CoApp.Toolkit.Extensions {
             return finalUri;
         }
 
-        /// <summary>
-        ///   Encodes a string into HTML encoding format, encoding control characters as well.
-        /// </summary>
-        /// <param name = "s"></param>
-        /// <returns></returns>
-        public static string HtmlEncode(this string s) {
-            s = WebUtility.HtmlEncode(s);
-            var sb = new StringBuilder(s.Length + 100);
 
-            for(var p = 0; p < s.Length; p++)
-                sb.Append(s[p] < 31 ? string.Format("&#x{0:x2};", (int) s[p]) : "" + s[p]);
-
-            return sb.ToString();
-        }
-
-        public static string HtmlDecode(this string s) {
-            return WebUtility.HtmlDecode(s);
-        }
-
-        public static string UrlEncode(this string s) {
-            return HttpUtility.UrlEncode(s);
-        }
-
-        public static string UrlDecode(this string s) {
-            return HttpUtility.UrlDecode(s);
-        }
 
         public static Uri MakeAbsolute(this Uri baseUri, string relativeUrl) {
             // first see if it's a URL or a fragment

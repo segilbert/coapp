@@ -126,19 +126,43 @@ namespace CoApp.Toolkit.Crypto {
         private const string WINTRUST_ACTION_GENERIC_VERIFY_V2 = "{00AAC56B-CD44-11d0-8CC2-00C04FC295EE}";
 
         public static bool HasValidSignature(string fileName) {
-            WinTrustData wtd = new WinTrustData(fileName);
-            Guid guidAction = new Guid(WINTRUST_ACTION_GENERIC_VERIFY_V2);
-            WinVerifyTrustResult result = WinTrust.WinVerifyTrust(INVALID_HANDLE_VALUE, guidAction, wtd);
-            bool ret = (result == WinVerifyTrustResult.Success);
-            return ret;
+            try {
+                WinTrustData wtd = new WinTrustData(fileName);
+                Guid guidAction = new Guid(WINTRUST_ACTION_GENERIC_VERIFY_V2);
+                WinVerifyTrustResult result = WinTrust.WinVerifyTrust(INVALID_HANDLE_VALUE, guidAction, wtd);
+                bool ret = (result == WinVerifyTrustResult.Success);
+                return ret;
+            } catch(Exception) {
+                return false;
+            }
         }
 
         public static Dictionary<string, string> GetPublisherInformation(string filename) {
-            var cert = new X509Certificate2(filename);
-            var fields= cert.Subject.Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
-            var result = fields.Select(f => f.Split('=')).Where(s => s.Length > 1).ToDictionary(s => s[0], s => s[1]);
-            result.Add("PublisherName", fields[0].Split('=')[1]);
+            var result = new Dictionary<string, string>();
+            try {
+                var cert = new X509Certificate2(filename);
+                var fields= cert.Subject.Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
+                // var result = fields.Select(f => f.Split('=')).Where(s => s.Length > 1).ToDictionary(s => s[0], s => s[1]);
+            
+                result.Add("PublisherName", fields[0].Split('=')[1]);
+            }
+            catch (Exception) {
+            }
+
             return result;
+
+        }
+
+        public static string GetPublisherName(string filename) {
+            try {
+                var cert = new X509Certificate2(filename);
+                var fields = cert.Subject.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                return fields[0].Split('=')[1];
+            }
+            catch (Exception) {
+            }
+
+            return null;
         }
 
        public static void GetSignatureInformation(string filename) {

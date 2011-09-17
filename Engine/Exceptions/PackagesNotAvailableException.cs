@@ -8,16 +8,14 @@
 // </license>
 //-----------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace CoApp.Toolkit.Engine.Exceptions {
-    public class PackagesNotAvailableException : Exception {
-        public IEnumerable<Package> Packages;
+    using System;
+    using System.Collections.Generic;
 
-        public PackagesNotAvailableException(IEnumerable<Package> pkgs) {
+    internal class PackagesNotAvailableException : Exception {
+        internal IEnumerable<Package> Packages;
+
+        internal PackagesNotAvailableException(IEnumerable<Package> pkgs) {
             Packages = pkgs;
         }
     }

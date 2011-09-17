@@ -26,17 +26,52 @@ namespace CoApp.Toolkit.Extensions {
     using System.Reflection;
     using System.Text.RegularExpressions;
 
+    /// <summary>
+    /// Storage Class for complex options from the command line.
+    /// </summary>
+    /// <remarks></remarks>
     public class ComplexOption {
+        /// <summary>
+        /// 
+        /// </summary>
         public string WholePrefix; // stuff in the []
+        /// <summary>
+        /// 
+        /// </summary>
         public string WholeValue; // stuff after the []
+        /// <summary>
+        /// 
+        /// </summary>
         public List<string> PrefixParameters = new List<string>(); // individual items in the []
+        /// <summary>
+        /// 
+        /// </summary>
         public Dictionary<string, string> Values = new Dictionary<string, string>(); // individual key/values after the []
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// NOTE: Explicity Ignore, testing this will produce no discernable value, and will only lead to heartbreak.
+    /// </remarks>
     public static class CommandLineExtensions {
+        /// <summary>
+        /// 
+        /// </summary>
         private static Dictionary<string, IEnumerable<string>> switches;
+        /// <summary>
+        /// 
+        /// </summary>
         private static IEnumerable<string> parameters;
 
+        /// <summary>
+        /// Gets the parameters for switch or null.
+        /// </summary>
+        /// <param name="args">The args.</param>
+        /// <param name="key">The key.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<string> GetParametersForSwitchOrNull(this IEnumerable<string> args, string key) {
             if(switches == null)
                 Switches(args);
@@ -48,6 +83,13 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 
+        /// <summary>
+        /// Gets the parameters for switch.
+        /// </summary>
+        /// <param name="args">The args.</param>
+        /// <param name="key">The key.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<string> GetParametersForSwitch(this IEnumerable<string> args,string key) {
             if (switches == null) 
                 Switches(args);
@@ -58,12 +100,25 @@ namespace CoApp.Toolkit.Extensions {
             return new List<string>();
         }
 
+        /// <summary>
+        /// Switches the value.
+        /// </summary>
+        /// <param name="args">The args.</param>
+        /// <param name="key">The key.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static string SwitchValue(this IEnumerable<string> args, string key) {
             if(args.Switches().ContainsKey(key))
                 return args.GetParametersForSwitch(key).FirstOrDefault();
             return null;
         }
 
+        /// <summary>
+        /// Switcheses the specified args.
+        /// </summary>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static Dictionary<string, IEnumerable<string>> Switches(this IEnumerable<string> args) {
             if(switches != null) {
                 return switches;
@@ -101,7 +156,7 @@ namespace CoApp.Toolkit.Extensions {
                     // firstarg++;
                     continue;
                 }
-
+#if !COAPP_ENGINE_CORE 
                 if (arg.Equals("list-bugtracker") || arg.Equals("list-bugtrackers")) {
                     // the user is asking for the bugtracker URLs for this application.
                     ListBugTrackers();
@@ -113,7 +168,7 @@ namespace CoApp.Toolkit.Extensions {
                     OpenBugTracker();
                     continue;
                 }
-
+#endif 
                 if(!switches.ContainsKey(arg)) {
                     switches.Add(arg, new List<string>());
                 }
@@ -124,6 +179,7 @@ namespace CoApp.Toolkit.Extensions {
             return switches;
         }
 
+#if !COAPP_ENGINE_CORE 
         public static void ListBugTrackers() {
             using (new ConsoleColors(ConsoleColor.Cyan, ConsoleColor.Black)) {
                 Assembly.GetEntryAssembly().Logo().Print();
@@ -154,7 +210,13 @@ namespace CoApp.Toolkit.Extensions {
                    let attributes = a.GetCustomAttributes(false) from attribute in attributes.Where(attribute => (attribute as Attribute) != null).Where(attribute => (attribute as Attribute).GetType().Name == "AssemblyBugtrackerAttribute") 
                    select new KeyValuePair<Assembly, string>(a, attribute.ToString());
         }
+#endif
 
+        /// <summary>
+        /// Loads the configuration.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <remarks></remarks>
         public static void LoadConfiguration(this string file) {
             if(switches == null) {
                 switches = new Dictionary<string, IEnumerable<string>>();
@@ -222,6 +284,12 @@ namespace CoApp.Toolkit.Extensions {
         //      @"\s*[;,]\s*(?!(?<=(?:^|[;,])\s*""(?:[^""]|""""|\\"")*[;,])(?:[^""]|""""|\\"")*""\s*(?:[;,]|$))"
         //  http://regexlib.com/REDetails.aspx?regexp_id=621
         //      @",(?!(?<=(?:^|,)\s*\x22(?:[^\x22]|\x22\x22|\\\x22)*,)(?:[^\x22]|\x22\x22|\\\x22)*\x22\s*(?:,|$))"
+        /// <summary>
+        /// Gets the complex options.
+        /// </summary>
+        /// <param name="rawParameterList">The raw parameter list.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<ComplexOption> GetComplexOptions(this IEnumerable<string> rawParameterList) {
             var optionList = new List<ComplexOption>();
             foreach(string p in rawParameterList) {
@@ -258,13 +326,22 @@ namespace CoApp.Toolkit.Extensions {
             return optionList;
         }
 
-        // public static List<string> Parameters(this string[] args) {
+        // public static List<string> Data(this string[] args) {
+        /// <summary>
+        /// Parameterses the specified args.
+        /// </summary>
+        /// <param name="args">The args.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         public static IEnumerable<string> Parameters(this IEnumerable<string> args) {
             return parameters ?? (parameters = from argument in args
                                                where !(argument.StartsWith("--"))
                                                select argument);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public const string HelpConfigSyntax = @"
 Advanced Command Line Configuration Files 
 -----------------------------------------
