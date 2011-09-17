@@ -161,5 +161,21 @@ namespace CoApp.Toolkit.Extensions {
         public static IEnumerable<T> ToLazyEnumerable<T>(this IEnumerable<T> collection) {
             return new LazyEnumerable<T>(collection);
         }
+
+
+        /// <summary>
+        /// A way to use the Add method more like a Concat. Very useful for Aggregate. Instead of returning void,
+        /// this returns the list itself.
+        /// </summary>
+        /// <typeparam name="T">The type of the element</typeparam>
+        /// <param name="list"></param>
+        /// <param name="item">The item to add to the list</param>
+        /// <returns>The list after the new <paramref name="item"/> has been added.</returns>
+        public static IList<T> LAdd<T>(this IList<T> list, T item)
+        {
+            list.Add(item);
+
+            return list;
+        }
     }
 }

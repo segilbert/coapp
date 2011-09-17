@@ -31,7 +31,7 @@ namespace CoApp.Toolkit.Crypto
                 return null;
 
             if (!File.Exists(file))
-                return null;
+                throw new FileNotFoundException("", file);
 
             var fileContents = File.ReadAllBytes(file);
             var ptr = Marshal.AllocHGlobal(fileContents.Length);
