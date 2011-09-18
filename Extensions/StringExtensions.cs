@@ -244,8 +244,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <remarks></remarks>
         public static bool IsWildcardMatch(this string text, string wildcardMask, string ignorePrefix = null, bool escapePrefix = true) {
             //find out if the wildcard is rooted?
-
-            ignorePrefix = string.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
+            if (Path.GetPathRoot(wildcardMask) == String.Empty)
 
                 ignorePrefix = String.IsNullOrEmpty(ignorePrefix) ? @".*\\?" : escapePrefix ? Regex.Escape(ignorePrefix) : ignorePrefix;
             else
