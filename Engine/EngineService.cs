@@ -102,7 +102,10 @@ namespace CoApp.Toolkit.Engine {
 
             _engineService = Task.Factory.StartNew(() => {
                 _pipeSecurity = new PipeSecurity();
-                _pipeSecurity.AddAccessRule(new PipeAccessRule("Everyone", PipeAccessRights.ReadWrite, AccessControlType.Allow));
+//                SecurityIdentifier sid = new SecurityIdentifier(WellKnownSidType.WorldSid,null );
+
+
+                _pipeSecurity.AddAccessRule(new PipeAccessRule( new SecurityIdentifier(WellKnownSidType.WorldSid,null ), PipeAccessRights.ReadWrite, AccessControlType.Allow));
                 _pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().Owner, PipeAccessRights.FullControl, AccessControlType.Allow));
 
                 // start two listeners by default--each listener will also spawn a new empty one.

@@ -12,7 +12,6 @@ namespace CoApp.Toolkit.Win32 {
     using System;
     using Microsoft.Win32.SafeHandles;
 
-
     /// <summary>
     ///  SafeHandleBase implements ReleaseHandle method for all our Safe Handle classes.
     /// 

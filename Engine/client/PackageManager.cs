@@ -119,7 +119,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 while (IsConnected) {
                     var incomingMessage = new byte[BufferSize];
-                    
+
                     try {
 
                         var readTask = _pipe.ReadAsync(incomingMessage, 0, BufferSize);
@@ -138,7 +138,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            Debug.WriteLine("Response:{0}".format( responseMessage.ToString()) );
+                            Debug.WriteLine("Response:{0}".format(responseMessage.ToString()));
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -164,7 +164,6 @@ namespace CoApp.Toolkit.Engine.Client {
                 Disconnect();
             });
         }
-
 
         public void Disconnect() {
             lock (this) {
