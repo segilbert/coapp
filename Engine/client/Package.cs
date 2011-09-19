@@ -37,39 +37,43 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         protected Package() {
+            Tags = Enumerable.Empty<string>();
+            RemoteLocations = Enumerable.Empty<string>();
+            Dependencies = Enumerable.Empty<string>();
+            SupercedentPackages = Enumerable.Empty<string>();
         }
 
-        public string CanonicalName;
-        public string LocalPackagePath;
-        public string Name;
-        public string Version;
-        public string Architecture;
-        public string PublicKeyToken;
-        public bool IsInstalled;
-        public bool IsBlocked;
-        public bool IsRequired;
-        public bool IsClientRequired;
-        public bool IsActive;
-        public bool IsDependency;
-        public string Description;
-        public string Summary;
-        public string DisplayName;
-        public string Copyright;
-        public string AuthorVersion;
-        public string Icon;
-        public string License;
-        public string LicenseUrl;
-        public string PublishDate;
-        public string PublisherName;
-        public string PublisherUrl;
-        public string PublisherEmail;
+        public string CanonicalName { get; set; }
+        public string LocalPackagePath{ get; set; }
+        public string Name{ get; set; }
+        public string Version{ get; set; }
+        public string Architecture{ get; set; }
+        public string PublicKeyToken{ get; set; }
+        public bool IsInstalled{ get; set; }
+        public bool IsBlocked{ get; set; }
+        public bool IsRequired{ get; set; }
+        public bool IsClientRequired{ get; set; }
+        public bool IsActive{ get; set; }
+        public bool IsDependency{ get; set; }
+        public string Description{ get; set; }
+        public string Summary{ get; set; }
+        public string DisplayName{ get; set; }
+        public string Copyright{ get; set; }
+        public string AuthorVersion{ get; set; }
+        public string Icon{ get; set; }
+        public string License{ get; set; }
+        public string LicenseUrl{ get; set; }
+        public string PublishDate{ get; set; }
+        public string PublisherName{ get; set; }
+        public string PublisherUrl{ get; set; }
+        public string PublisherEmail{ get; set; }
 
-        public bool IsConflicted;
-        public Package SatisfiedBy;
+        public bool IsConflicted{ get; set; }
+        public Package SatisfiedBy{ get; set; }
 
-        public IEnumerable<string> Tags = Enumerable.Empty<string>();
-        public IEnumerable<string> RemoteLocations= Enumerable.Empty<string>();
-        public IEnumerable<string> Dependencies= Enumerable.Empty<string>();
-        public IEnumerable<string> SupercedentPackages= Enumerable.Empty<string>();
+        public IEnumerable<string> Tags{ get; set; }  
+        public IEnumerable<string> RemoteLocations{ get; set; }
+        public IEnumerable<string> Dependencies{ get; set; }
+        public IEnumerable<string> SupercedentPackages{ get; set; }
     };
 }
