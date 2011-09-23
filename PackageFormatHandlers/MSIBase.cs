@@ -128,7 +128,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
         public static IEnumerable<string> InstalledMSIFilenames {
             get { 
-                return ProductInstallation.AllProducts.Select(each => each.LocalPackage);
+                return ProductInstallation.AllProducts.Where( each => each.LocalPackage != null ).Select(each => each.LocalPackage);
             }
         }
 
