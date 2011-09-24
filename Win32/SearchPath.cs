@@ -7,6 +7,7 @@
 //     You may not use the software except in compliance with the License. 
 // </license>
 //-----------------------------------------------------------------------
+
 namespace CoApp.Toolkit.Win32 {
     using System;
     using System.Collections.Generic;
@@ -24,13 +25,14 @@ namespace CoApp.Toolkit.Win32 {
         private const Int32 WM_SETTINGCHANGE = 0x001A;
         private const Int32 SMTO_ABORTIFHUNG = 0x0002;
 #endif
+
         private static void BroadcastChange() {
 #if COAPP_ENGINE_CORE
             Rehash.ForceProcessToReloadEnvironment("explorer");
             Rehash.ForceProcessToReloadEnvironment("services");
 #else
             Task.Factory.StartNew(() => { User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero); });
-#endif 
+#endif
         }
 
         public static IEnumerable<string> SystemPath {
@@ -39,7 +41,7 @@ namespace CoApp.Toolkit.Win32 {
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
-                var newValue =  value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
+                var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
                 if (newValue != _systemEnvironment["#Path"].StringValue) {
                     _systemEnvironment["#Path"].StringValue = newValue;
                     BroadcastChange();
@@ -49,7 +51,7 @@ namespace CoApp.Toolkit.Win32 {
 
         public static IEnumerable<string> UserPath {
             get {
-                var path = _userEnvironment["#Path"].StringValue; 
+                var path = _userEnvironment["#Path"].StringValue;
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
@@ -66,9 +68,7 @@ namespace CoApp.Toolkit.Win32 {
                 var path = Environment.GetEnvironmentVariable("path");
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
-            set {
-                Environment.SetEnvironmentVariable("path", value.Any() ? value.Aggregate((current, each) => current + ";" + each) : "");
-            }
+            set { Environment.SetEnvironmentVariable("path", value.Any() ? value.Aggregate((current, each) => current + ";" + each) : ""); }
         }
 
         public static IEnumerable<string> Append(this IEnumerable<string> searchPath, string pathToAdd) {

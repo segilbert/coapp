@@ -14,7 +14,7 @@ namespace CoApp.Toolkit.Win32 {
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public class MenuItemInfo {
-        public readonly Int32 cbSize = Marshal.SizeOf(typeof(MenuItemInfo));
+        public readonly Int32 cbSize = Marshal.SizeOf(typeof (MenuItemInfo));
         public Miim fMask;
         public Int32 fType;
         public Int32 fState;
@@ -26,6 +26,7 @@ namespace CoApp.Toolkit.Win32 {
 
         [MarshalAs(UnmanagedType.LPWStr, SizeConst = 255)]
         public String dwTypeData = new String(' ', 256);
+
         public readonly Int32 cch = 255;
         public IntPtr hbmpItem;
     }

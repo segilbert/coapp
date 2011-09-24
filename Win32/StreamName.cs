@@ -61,7 +61,7 @@ namespace CoApp.Toolkit.Win32 {
         ///   There is insufficient memory to satisfy the request.
         /// </exception>
         public void EnsureCapacity(int capacity) {
-            int currentSize = _memoryBlock.IsInvalid ? 0 : _memoryBlock.Size;
+            var currentSize = _memoryBlock.IsInvalid ? 0 : _memoryBlock.Size;
             if (capacity > currentSize) {
                 if (0 != currentSize) {
                     currentSize <<= 1;
@@ -106,10 +106,10 @@ namespace CoApp.Toolkit.Win32 {
         ///   The stream name.
         /// </returns>
         public string ReadStreamName(int length) {
-            string name = this.ReadString(length);
+            var name = this.ReadString(length);
             if (!string.IsNullOrEmpty(name)) {
                 // Name is of the format ":NAME:$DATA\0"
-                int separatorIndex = name.IndexOf(SafeNativeMethods.StreamSeparator, 1);
+                var separatorIndex = name.IndexOf(SafeNativeMethods.StreamSeparator, 1);
                 if (-1 != separatorIndex) {
                     name = name.Substring(1, separatorIndex - 1);
                 }

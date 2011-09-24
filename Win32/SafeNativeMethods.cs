@@ -42,10 +42,10 @@ namespace CoApp.Toolkit.Win32 {
         #region Utility Structures
 
         public struct Win32StreamInfo {
-            public FileStreamType StreamType;
             public FileStreamAttributes StreamAttributes;
-            public long StreamSize;
             public string StreamName;
+            public long StreamSize;
+            public FileStreamType StreamType;
         }
 
         #endregion
@@ -103,14 +103,12 @@ namespace CoApp.Toolkit.Win32 {
                     if (string.IsNullOrEmpty(path)) {
                         throw new IOException(GetErrorMessage(errorCode), MakeHRFromErrorCode(errorCode));
                     }
-                    throw new IOException(string.Format(Resources.Culture, Resources.Error_SharingViolation, path),
-                        MakeHRFromErrorCode(errorCode));
+                    throw new IOException(string.Format(Resources.Culture, Resources.Error_SharingViolation, path), MakeHRFromErrorCode(errorCode));
                 }
                 case 80: // File already exists
                 {
                     if (!string.IsNullOrEmpty(path)) {
-                        throw new IOException(string.Format(Resources.Culture, Resources.Error_FileAlreadyExists, path),
-                            MakeHRFromErrorCode(errorCode));
+                        throw new IOException(string.Format(Resources.Culture, Resources.Error_FileAlreadyExists, path), MakeHRFromErrorCode(errorCode));
                     }
                     break;
                 }
@@ -121,8 +119,7 @@ namespace CoApp.Toolkit.Win32 {
                 case 183: // File or directory already exists
                 {
                     if (!string.IsNullOrEmpty(path)) {
-                        throw new IOException(string.Format(Resources.Culture, Resources.Error_AlreadyExists, path),
-                            MakeHRFromErrorCode(errorCode));
+                        throw new IOException(string.Format(Resources.Culture, Resources.Error_AlreadyExists, path), MakeHRFromErrorCode(errorCode));
                     }
                     break;
                 }
@@ -142,9 +139,9 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         public static void ThrowLastIOError(string path) {
-            int errorCode = Marshal.GetLastWin32Error();
+            var errorCode = Marshal.GetLastWin32Error();
             if (0 != errorCode) {
-                int hr = Marshal.GetHRForLastWin32Error();
+                var hr = Marshal.GetHRForLastWin32Error();
                 if (0 <= hr) {
                     throw new Win32Exception(errorCode);
                 }
@@ -164,7 +161,7 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         public static string BuildStreamPath(string filePath, string streamName) {
-            string result = filePath;
+            var result = filePath;
             if (!string.IsNullOrEmpty(filePath)) {
                 if (1 == result.Length) {
                     result = ".\\" + result;
@@ -188,9 +185,9 @@ namespace CoApp.Toolkit.Win32 {
                 throw new ArgumentNullException("name");
             }
 
-            int result = Kernel32.GetFileAttributes(name);
+            var result = Kernel32.GetFileAttributes(name);
             if (-1 == result) {
-                int errorCode = Marshal.GetLastWin32Error();
+                var errorCode = Marshal.GetLastWin32Error();
                 if (ErrorFileNotFound != errorCode) {
                     ThrowLastIOError(name);
                 }
@@ -204,9 +201,9 @@ namespace CoApp.Toolkit.Win32 {
                 throw new ArgumentNullException("name");
             }
 
-            bool result = Kernel32.DeleteFile(name);
+            var result = Kernel32.DeleteFile(name);
             if (!result) {
-                int errorCode = Marshal.GetLastWin32Error();
+                var errorCode = Marshal.GetLastWin32Error();
                 if (ErrorFileNotFound != errorCode) {
                     ThrowLastIOError(name);
                 }
@@ -217,17 +214,16 @@ namespace CoApp.Toolkit.Win32 {
 
         public static SafeFileHandle SafeCreateFile(string path, NativeFileAccess access, FileShare share, IntPtr security, FileMode mode,
             NativeFileAttributesAndFlags flags, IntPtr template) {
-            SafeFileHandle result = Kernel32.CreateFile(path, access, share, security, mode, flags, template);
+            var result = Kernel32.CreateFile(path, access, share, security, mode, flags, template);
             if (!result.IsInvalid && FileType.Disk != Kernel32.GetFileType(result)) {
                 result.Dispose();
-                throw new NotSupportedException(string.Format(Resources.Culture,
-                    Resources.Error_NonFile, path));
+                throw new NotSupportedException(string.Format(Resources.Culture, Resources.Error_NonFile, path));
             }
             return result;
         }
 
         private static long GetFileSize(string path, SafeFileHandle handle) {
-            long result = 0L;
+            var result = 0L;
             if (null != handle && !handle.IsInvalid) {
                 long value;
                 if (Kernel32.GetFileSizeEx(handle, out value)) {
@@ -242,11 +238,9 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         public static long GetFileSize(string path) {
-            long result = 0L;
+            var result = 0L;
             if (!string.IsNullOrEmpty(path)) {
-                using (
-                    SafeFileHandle handle = SafeCreateFile(path, NativeFileAccess.GenericRead, FileShare.Read, IntPtr.Zero, FileMode.Open, 0,
-                        IntPtr.Zero)) {
+                using (var handle = SafeCreateFile(path, NativeFileAccess.GenericRead, FileShare.Read, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero)) {
                     result = GetFileSize(path, handle);
                 }
             }
@@ -265,14 +259,14 @@ namespace CoApp.Toolkit.Win32 {
             var result = new List<Win32StreamInfo>();
 
             using (
-                SafeFileHandle hFile = SafeCreateFile(filePath, NativeFileAccess.GenericRead, FileShare.Read, IntPtr.Zero, FileMode.Open,
+                var hFile = SafeCreateFile(filePath, NativeFileAccess.GenericRead, FileShare.Read, IntPtr.Zero, FileMode.Open,
                     NativeFileAttributesAndFlags.BackupSemantics, IntPtr.Zero)) {
                 using (var hName = new StreamName()) {
                     if (!hFile.IsInvalid) {
                         var streamId = new Win32StreamId();
-                        int dwStreamHeaderSize = Marshal.SizeOf(streamId);
-                        bool finished = false;
-                        IntPtr context = IntPtr.Zero;
+                        var dwStreamHeaderSize = Marshal.SizeOf(streamId);
+                        var finished = false;
+                        var context = IntPtr.Zero;
                         int bytesRead;
                         string name;
 
@@ -292,9 +286,7 @@ namespace CoApp.Toolkit.Win32 {
                                     }
                                     else {
                                         hName.EnsureCapacity(streamId.StreamNameSize);
-                                        if (
-                                            !Kernel32.BackupRead(hFile, hName.MemoryBlock, streamId.StreamNameSize, out bytesRead, false,
-                                                false, ref context)) {
+                                        if (!Kernel32.BackupRead(hFile, hName.MemoryBlock, streamId.StreamNameSize, out bytesRead, false, false, ref context)) {
                                             name = null;
                                             finished = true;
                                         }
@@ -315,11 +307,12 @@ namespace CoApp.Toolkit.Win32 {
                                     }
 
                                     // Skip the contents of the stream:
-                                    int bytesSeekedLow, bytesSeekedHigh;
+                                    int bytesSeekedLow,
+                                        bytesSeekedHigh;
 
                                     if (!finished &&
-                                        !Kernel32.BackupSeek(hFile, (int) (streamId.Size & 0xffffffff), (int) (streamId.Size >> 32),
-                                            out bytesSeekedLow, out bytesSeekedHigh, ref context)) {
+                                        !Kernel32.BackupSeek(hFile, (int) (streamId.Size & 0xffffffff), (int) (streamId.Size >> 32), out bytesSeekedLow,
+                                            out bytesSeekedHigh, ref context)) {
                                         finished = true;
                                     }
                                 }

@@ -84,11 +84,10 @@ namespace CoApp.Toolkit.Win32 {
                 throw new FileNotFoundException(null, file.FullName);
             }
 
-            string path = file.FullName;
+            var path = file.FullName;
             new FileIOPermission(FileIOPermissionAccess.Read, path).Demand();
 
-            return SafeNativeMethods.ListStreams(path)
-                .Select(s => new AlternateDataStreamInfo(path, s)).ToList().AsReadOnly();
+            return SafeNativeMethods.ListStreams(path).Select(s => new AlternateDataStreamInfo(path, s)).ToList().AsReadOnly();
         }
 
         /// <summary>
@@ -153,7 +152,7 @@ namespace CoApp.Toolkit.Win32 {
             }
             SafeNativeMethods.ValidateStreamName(streamName);
 
-            string path = SafeNativeMethods.BuildStreamPath(file.FullName, streamName);
+            var path = SafeNativeMethods.BuildStreamPath(file.FullName, streamName);
             return -1 != SafeNativeMethods.SafeGetFileAttributes(path);
         }
 
@@ -238,25 +237,20 @@ namespace CoApp.Toolkit.Win32 {
             SafeNativeMethods.ValidateStreamName(streamName);
 
             if (FileMode.Truncate == mode || FileMode.Append == mode) {
-                throw new NotSupportedException(string.Format(Resources.Culture,
-                    Resources.Error_InvalidMode, mode));
+                throw new NotSupportedException(string.Format(Resources.Culture, Resources.Error_InvalidMode, mode));
             }
 
-            FileIOPermissionAccess permAccess = (FileMode.Open == mode)
-                ? FileIOPermissionAccess.Read
-                : FileIOPermissionAccess.Read | FileIOPermissionAccess.Write;
+            var permAccess = (FileMode.Open == mode) ? FileIOPermissionAccess.Read : FileIOPermissionAccess.Read | FileIOPermissionAccess.Write;
             new FileIOPermission(permAccess, file.FullName).Demand();
 
-            string path = SafeNativeMethods.BuildStreamPath(file.FullName, streamName);
-            bool exists = -1 != SafeNativeMethods.SafeGetFileAttributes(path);
+            var path = SafeNativeMethods.BuildStreamPath(file.FullName, streamName);
+            var exists = -1 != SafeNativeMethods.SafeGetFileAttributes(path);
 
             if (!exists && FileMode.Open == mode) {
-                throw new IOException(string.Format(Resources.Culture,
-                    Resources.Error_StreamNotFound, streamName, file.Name));
+                throw new IOException(string.Format(Resources.Culture, Resources.Error_StreamNotFound, streamName, file.Name));
             }
             if (exists && FileMode.CreateNew == mode) {
-                throw new IOException(string.Format(Resources.Culture,
-                    Resources.Error_StreamExists, streamName, file.Name));
+                throw new IOException(string.Format(Resources.Culture, Resources.Error_StreamExists, streamName, file.Name));
             }
 
             return new AlternateDataStreamInfo(file.FullName, streamName, path, exists);
@@ -418,7 +412,7 @@ namespace CoApp.Toolkit.Win32 {
 
             var result = false;
             if (file.Exists) {
-                string path = SafeNativeMethods.BuildStreamPath(file.FullName, streamName);
+                var path = SafeNativeMethods.BuildStreamPath(file.FullName, streamName);
                 if (-1 != SafeNativeMethods.SafeGetFileAttributes(path)) {
                     result = SafeNativeMethods.SafeDeleteFile(path);
                 }

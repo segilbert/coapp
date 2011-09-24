@@ -15,10 +15,7 @@ namespace CoApp.Toolkit.Win32 {
 
     public class WinTrust {
         [DllImport("wintrust.dll", ExactSpelling = true, SetLastError = false, CharSet = CharSet.Unicode)]
-        public static extern WinVerifyTrustResult WinVerifyTrust(
-            [In] IntPtr hwnd,
-            [In] [MarshalAs(UnmanagedType.LPStruct)] Guid pgActionID,
-            [In] WinTrustData pWVTData
-            );
+        public static extern WinVerifyTrustResult WinVerifyTrust([In] IntPtr hwnd, [In] [MarshalAs(UnmanagedType.LPStruct)] Guid pgActionID,
+            [In] WinTrustData pWVTData);
     }
 }

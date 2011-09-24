@@ -14,6 +14,8 @@ namespace CoApp.Toolkit.Win32 {
     using Extensions;
 
     public class ModernSymlink : ISymlink {
+        #region ISymlink Members
+
         public void MakeFileLink(string linkPath, string actualFilePath) {
             linkPath = linkPath.GetFullPath();
             actualFilePath = GetActualPath(actualFilePath.GetFullPath());
@@ -79,15 +81,6 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
-        private void deleteSymlink(string linkPath) {
-            if (File.Exists(linkPath)) {
-                linkPath.TryHardToDeleteFile();
-            }
-            else if (Directory.Exists(linkPath)) {
-                linkPath.TryHardToDeleteDirectory();
-            }
-        }
-
         public bool IsSymlink(string linkPath) {
             if (!ReparsePoint.IsReparsePoint(linkPath)) {
                 return false;
@@ -100,6 +93,17 @@ namespace CoApp.Toolkit.Win32 {
         public string GetActualPath(string linkPath) {
             linkPath = linkPath.GetFullPath();
             return ReparsePoint.GetActualPath(linkPath);
+        }
+
+        #endregion
+
+        private void deleteSymlink(string linkPath) {
+            if (File.Exists(linkPath)) {
+                linkPath.TryHardToDeleteFile();
+            }
+            else if (Directory.Exists(linkPath)) {
+                linkPath.TryHardToDeleteDirectory();
+            }
         }
     }
 }

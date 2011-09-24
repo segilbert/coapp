@@ -12,7 +12,7 @@ namespace CoApp.Toolkit.Win32 {
     using System.Runtime.InteropServices;
 
     /// <summary>
-    /// The structure specifies the mandatory integrity level for a token.
+    ///   The structure specifies the mandatory integrity level for a token.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct TokenMandatoryLabel {

@@ -25,13 +25,13 @@ namespace CoApp.Toolkit.Win32 {
     public sealed class AlternateDataStreamInfo : IEquatable<AlternateDataStreamInfo> {
         #region Private Data
 
-        private readonly string _fullPath;
+        private readonly FileStreamAttributes _attributes;
+        private readonly bool _exists;
         private readonly string _filePath;
+        private readonly string _fullPath;
+        private readonly long _size;
         private readonly string _streamName;
         private readonly FileStreamType _streamType;
-        private readonly FileStreamAttributes _attributes;
-        private readonly long _size;
-        private readonly bool _exists;
 
         #endregion
 
@@ -178,6 +178,30 @@ namespace CoApp.Toolkit.Win32 {
         #region -IEquatable
 
         /// <summary>
+        ///   Returns a value indicating whether
+        ///   this instance is equal to another instance.
+        /// </summary>
+        /// <param name = "other">
+        ///   The instance to compare to.
+        /// </param>
+        /// <returns>
+        ///   <see langword = "true" /> if the current object is equal to the <paramref name = "other" /> parameter;
+        ///   otherwise, <see langword = "false" />.
+        /// </returns>
+        public bool Equals(AlternateDataStreamInfo other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            var comparer = StringComparer.OrdinalIgnoreCase;
+            return comparer.Equals(this._filePath ?? string.Empty, other._filePath ?? string.Empty) &&
+                comparer.Equals(this._streamName ?? string.Empty, other._streamName ?? string.Empty);
+        }
+
+        /// <summary>
         ///   Returns a <see cref = "String" /> that represents the current instance.
         /// </summary>
         /// <returns>
@@ -195,8 +219,7 @@ namespace CoApp.Toolkit.Win32 {
         /// </returns>
         public override int GetHashCode() {
             var comparer = StringComparer.OrdinalIgnoreCase;
-            return comparer.GetHashCode(_filePath ?? string.Empty)
-                ^ comparer.GetHashCode(_streamName ?? string.Empty);
+            return comparer.GetHashCode(_filePath ?? string.Empty) ^ comparer.GetHashCode(_streamName ?? string.Empty);
         }
 
         /// <summary>
@@ -223,30 +246,6 @@ namespace CoApp.Toolkit.Win32 {
             }
 
             return false;
-        }
-
-        /// <summary>
-        ///   Returns a value indicating whether
-        ///   this instance is equal to another instance.
-        /// </summary>
-        /// <param name = "other">
-        ///   The instance to compare to.
-        /// </param>
-        /// <returns>
-        ///   <see langword = "true" /> if the current object is equal to the <paramref name = "other" /> parameter;
-        ///   otherwise, <see langword = "false" />.
-        /// </returns>
-        public bool Equals(AlternateDataStreamInfo other) {
-            if (ReferenceEquals(null, other)) {
-                return false;
-            }
-            if (ReferenceEquals(this, other)) {
-                return true;
-            }
-
-            var comparer = StringComparer.OrdinalIgnoreCase;
-            return comparer.Equals(this._filePath ?? string.Empty, other._filePath ?? string.Empty)
-                && comparer.Equals(this._streamName ?? string.Empty, other._streamName ?? string.Empty);
         }
 
         /// <summary>
@@ -347,7 +346,7 @@ namespace CoApp.Toolkit.Win32 {
         ///   The <see cref = "FileIOPermissionAccess" />.
         /// </returns>
         private static FileIOPermissionAccess CalculateAccess(FileMode mode, FileAccess access) {
-            FileIOPermissionAccess permAccess = FileIOPermissionAccess.NoAccess;
+            var permAccess = FileIOPermissionAccess.NoAccess;
             switch (mode) {
                 case FileMode.Append:
                     permAccess = FileIOPermissionAccess.Append;
@@ -428,10 +427,10 @@ namespace CoApp.Toolkit.Win32 {
                 throw new ArgumentOutOfRangeException("bufferSize", bufferSize, null);
             }
 
-            FileIOPermissionAccess permAccess = CalculateAccess(mode, access);
+            var permAccess = CalculateAccess(mode, access);
             new FileIOPermission(permAccess, _filePath).Demand();
 
-            NativeFileAttributesAndFlags flags = useAsync ? NativeFileAttributesAndFlags.Overlapped : 0;
+            var flags = useAsync ? NativeFileAttributesAndFlags.Overlapped : 0;
             var handle = SafeNativeMethods.SafeCreateFile(this.FullPath, access.ToNative(), share, IntPtr.Zero, mode, flags, IntPtr.Zero);
             if (handle.IsInvalid) {
                 SafeNativeMethods.ThrowLastIOError(this.FullPath);
@@ -573,7 +572,7 @@ namespace CoApp.Toolkit.Win32 {
         ///   There was an error opening the stream.
         /// </exception>
         public FileStream Open(FileMode mode) {
-            FileAccess access = (FileMode.Append == mode) ? FileAccess.Write : FileAccess.ReadWrite;
+            var access = (FileMode.Append == mode) ? FileAccess.Write : FileAccess.ReadWrite;
             return this.Open(mode, access, FileShare.None, SafeNativeMethods.DefaultBufferSize, false);
         }
 

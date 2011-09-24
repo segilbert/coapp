@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Win32 {
     using System.Runtime.InteropServices;
 
     /// <summary>
-    /// The structure indicates whether a token has elevated privileges.
+    ///   The structure indicates whether a token has elevated privileges.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct TokenElevation {

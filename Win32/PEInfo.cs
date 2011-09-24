@@ -14,6 +14,7 @@
 // Copyright (C) 2000-2002 Lutz Roeder. All rights reserved.
 // http://www.aisto.com/roeder
 // roeder@aisto.com
+
 namespace CoApp.Toolkit.Win32 {
     using System;
     using System.Collections.Generic;
@@ -26,148 +27,47 @@ namespace CoApp.Toolkit.Win32 {
     using Utility;
 
     public class PEInfo {
-        public ImageSectionHeader[] SectionHeaders;
-        public ImageOptionalHeaderNt NtHeader;
-        public ImageCor20Header CorHeader;
-        public ImageCoffHeader CoffHeader;
-
-        private ImageDataDirectory _exportTable;
-        private ImageDataDirectory _importTable;
-        private ImageDataDirectory _resourceTable;
-        private ImageDataDirectory _exceptionTable;
-        private ImageDataDirectory _certificateTable;
-        private ImageDataDirectory _baseRelocationTable;
-        private ImageDataDirectory _debug;
-        private ImageDataDirectory _copyright;
-        private ImageDataDirectory _globalPtr;
-        private ImageDataDirectory _tlsTable;
-        private ImageDataDirectory _loadConfigTable;
-        private ImageDataDirectory _boundImport;
-        private ImageDataDirectory _iat;
-        private ImageDataDirectory _delayImportDescriptor;
-        private ImageDataDirectory _runtimeHeader;
-        private ImageDataDirectory _reserved;
-
-        private readonly string _filename;
         private static readonly Dictionary<string, PEInfo> _cache = new Dictionary<string, PEInfo>();
 
-        private static readonly Lazy<ProgramFinder> _programFinder = new Lazy<ProgramFinder>(() => new ProgramFinder("", @"{0}\optional;%SystemDrive%\WinDDK;%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%".format(
-            Path.GetDirectoryName(Assembly.GetEntryAssembly().Location))));
+        private static readonly Lazy<ProgramFinder> _programFinder =
+            new Lazy<ProgramFinder>(
+                () =>
+                    new ProgramFinder("",
+                        @"{0}\optional;%SystemDrive%\WinDDK;%ProgramFiles(x86)%;%ProgramFiles%;%ProgramW6432%".format(
+                            Path.GetDirectoryName(Assembly.GetEntryAssembly().Location))));
 
-        private static readonly Lazy<ProcessUtility> _dependsX86 = new Lazy<ProcessUtility>(() => new ProcessUtility(_programFinder.Value.ScanForFile("depends.exe", ExecutableInfo.x86, "2.2")));
-        private static readonly Lazy<ProcessUtility> _dependsX64 = new Lazy<ProcessUtility>(() => new ProcessUtility(_programFinder.Value.ScanForFile("depends.exe", ExecutableInfo.x64, "2.2")));
+        private static readonly Lazy<ProcessUtility> _dependsX86 =
+            new Lazy<ProcessUtility>(() => new ProcessUtility(_programFinder.Value.ScanForFile("depends.exe", ExecutableInfo.x86, "2.2")));
 
-        private readonly Lazy<FileVersionInfo> _fileVersionInfo;
-        private readonly Lazy<string> _fileVersionString;
-        private readonly Lazy<ulong> _fileVersionLong;
+        private static readonly Lazy<ProcessUtility> _dependsX64 =
+            new Lazy<ProcessUtility>(() => new ProcessUtility(_programFinder.Value.ScanForFile("depends.exe", ExecutableInfo.x64, "2.2")));
+
         private readonly Lazy<ExecutableInfo> _executableInfo;
 
-        public ExecutableInfo ExecutableInfo { get { return _executableInfo.Value; } }
-        public ulong FileVersionLong { get { return IsPEBinary ?_fileVersionLong.Value : 0L; } }
-        public string FileVersion { get { return IsPEBinary ? _fileVersionString.Value : "0.0.0.0"; } }
-        public FileVersionInfo VersionInfo { get { return IsPEBinary ? _fileVersionInfo.Value : null; } }
-
-        public IEnumerable<DependencyInformation> DependencyInformation { get; private set; }
-        private IEnumerable<DependencyInformation> DependencyInformationImpl {
-            get {
-                var depends = Environment.Is64BitOperatingSystem && (ExecutableInfo & ExecutableInfo.x64) == ExecutableInfo.x64
-                    ? _dependsX64.Value : _dependsX86.Value;
-                var tmpFile = Path.GetTempFileName();
-
-                depends.Exec(@"/c /a:1 ""/oc:{0}"" /u:1 /f:1 ""{1}""", tmpFile, _filename);
-
-                using (var csv = new CsvReader(new StreamReader(tmpFile), true)) {
-                    while (csv.ReadNextRecord()) {
-                        yield return new DependencyInformation {
-                            Status = csv["Status"],
-                            Module = csv["Module"].ToLower(),
-                            Filename = Path.GetFileName(csv["Module"]).ToLower(),
-                            FileTimeStamp = csv["File Time Stamp"],
-                            LinkTimeStamp = csv["Link Time Stamp"],
-                            FileSize = csv["File Size"],
-                            Attr = csv["Attr."],
-                            LinkChecksum = csv["Link Checksum"],
-                            RealChecksum = csv["Real Checksum"],
-                            CPU = csv["CPU"],
-                            Subsystem = csv["Subsystem"],
-                            Symbols = csv["Symbols"],
-                            PreferredBase = csv["Preferred Base"],
-                            ActualBase = csv["Actual Base"],
-                            VirtualSize = csv["Virtual Size"],
-                            LoadOrder = csv["Load Order"],
-                            FileVer = csv["File Ver"],
-                            ProductVer = csv["Product Ver"],
-                            ImageVer = csv["Image Ver"],
-                            LinkerVer = csv["Linker Ver"],
-                            OSVer = csv["OS Ver"],
-                            SubsystemVer = csv["Subsystem Ver"]
-                        };
-
-                    }
-                }
-                tmpFile.TryHardToDeleteFile();
-            }
-        }
-
-        public bool Is64BitPE {
-            get { return IsPEBinary && (NtHeader.Magic == 0x20b); }
-        }
-
-        public bool Is32BitPE {
-            get { return IsPEBinary && (NtHeader.Magic == 0x10b); }
-        }
-
-        public bool IsManaged {
-            get { return IsPEBinary && CorHeader != null; }
-        }
-
-        public bool IsNative {
-            get { return IsPEBinary && CorHeader == null; }
-        }
-
-        public bool Is32Bit {
-            get {
-                if (!IsPEBinary)
-                    return false;
-
-                if (!Is32BitPE)
-                    return false;
-
-                if (!IsManaged)
-                    return true;
-
-                return (CorHeader.Flags & 0x0002) != 0;
-            }
-        }
-
-        public bool Is64Bit {
-            get { return IsPEBinary && Is64BitPE; }
-        }
-
-        public bool IsAny {
-            get { return IsPEBinary && (Is32BitPE && IsManaged && ((CorHeader.Flags & 0x0002) == 0)); }
-        }
-
-        public bool IsConsole {
-            get { return IsPEBinary && (NtHeader.SubSystem & 1) == 1; }   
-        }
-
-        public bool IsPEBinary { get; private set; }
-
-        public static PEInfo Scan(string filename) {
-            filename = filename.GetFullPath();
-
-            if( !File.Exists(filename)) 
-                throw new FileNotFoundException("Unable to find file",filename);
-
-            lock (_cache) {
-                if (!_cache.ContainsKey(filename)) {
-                    _cache.Add(filename, new PEInfo(filename));
-                }
-            }
-
-            return _cache[filename];
-        }
+        private readonly Lazy<FileVersionInfo> _fileVersionInfo;
+        private readonly Lazy<ulong> _fileVersionLong;
+        private readonly Lazy<string> _fileVersionString;
+        private readonly string _filename;
+        public ImageCoffHeader CoffHeader;
+        public ImageCor20Header CorHeader;
+        public ImageOptionalHeaderNt NtHeader;
+        public ImageSectionHeader[] SectionHeaders;
+        private ImageDataDirectory _baseRelocationTable;
+        private ImageDataDirectory _boundImport;
+        private ImageDataDirectory _certificateTable;
+        private ImageDataDirectory _copyright;
+        private ImageDataDirectory _debug;
+        private ImageDataDirectory _delayImportDescriptor;
+        private ImageDataDirectory _exceptionTable;
+        private ImageDataDirectory _exportTable;
+        private ImageDataDirectory _globalPtr;
+        private ImageDataDirectory _iat;
+        private ImageDataDirectory _importTable;
+        private ImageDataDirectory _loadConfigTable;
+        private ImageDataDirectory _reserved;
+        private ImageDataDirectory _resourceTable;
+        private ImageDataDirectory _runtimeHeader;
+        private ImageDataDirectory _tlsTable;
 
         private PEInfo(string filename) {
             _filename = filename;
@@ -345,9 +245,136 @@ namespace CoApp.Toolkit.Win32 {
                         ExportAddressTableJumps = ReadDataDirectory(reader)
                     };
                 }
-            } catch {
+            }
+            catch {
                 IsPEBinary = false;
             }
+        }
+
+        public ExecutableInfo ExecutableInfo {
+            get { return _executableInfo.Value; }
+        }
+
+        public ulong FileVersionLong {
+            get { return IsPEBinary ? _fileVersionLong.Value : 0L; }
+        }
+
+        public string FileVersion {
+            get { return IsPEBinary ? _fileVersionString.Value : "0.0.0.0"; }
+        }
+
+        public FileVersionInfo VersionInfo {
+            get { return IsPEBinary ? _fileVersionInfo.Value : null; }
+        }
+
+        public IEnumerable<DependencyInformation> DependencyInformation { get; private set; }
+
+        private IEnumerable<DependencyInformation> DependencyInformationImpl {
+            get {
+                var depends = Environment.Is64BitOperatingSystem && (ExecutableInfo & ExecutableInfo.x64) == ExecutableInfo.x64
+                    ? _dependsX64.Value : _dependsX86.Value;
+                var tmpFile = Path.GetTempFileName();
+
+                depends.Exec(@"/c /a:1 ""/oc:{0}"" /u:1 /f:1 ""{1}""", tmpFile, _filename);
+
+                using (var csv = new CsvReader(new StreamReader(tmpFile), true)) {
+                    while (csv.ReadNextRecord()) {
+                        yield return new DependencyInformation {
+                            Status = csv["Status"],
+                            Module = csv["Module"].ToLower(),
+                            Filename = Path.GetFileName(csv["Module"]).ToLower(),
+                            FileTimeStamp = csv["File Time Stamp"],
+                            LinkTimeStamp = csv["Link Time Stamp"],
+                            FileSize = csv["File Size"],
+                            Attr = csv["Attr."],
+                            LinkChecksum = csv["Link Checksum"],
+                            RealChecksum = csv["Real Checksum"],
+                            CPU = csv["CPU"],
+                            Subsystem = csv["Subsystem"],
+                            Symbols = csv["Symbols"],
+                            PreferredBase = csv["Preferred Base"],
+                            ActualBase = csv["Actual Base"],
+                            VirtualSize = csv["Virtual Size"],
+                            LoadOrder = csv["Load Order"],
+                            FileVer = csv["File Ver"],
+                            ProductVer = csv["Product Ver"],
+                            ImageVer = csv["Image Ver"],
+                            LinkerVer = csv["Linker Ver"],
+                            OSVer = csv["OS Ver"],
+                            SubsystemVer = csv["Subsystem Ver"]
+                        };
+                    }
+                }
+                tmpFile.TryHardToDeleteFile();
+            }
+        }
+
+        public bool Is64BitPE {
+            get { return IsPEBinary && (NtHeader.Magic == 0x20b); }
+        }
+
+        public bool Is32BitPE {
+            get { return IsPEBinary && (NtHeader.Magic == 0x10b); }
+        }
+
+        public bool IsManaged {
+            get { return IsPEBinary && CorHeader != null; }
+        }
+
+        public bool IsNative {
+            get { return IsPEBinary && CorHeader == null; }
+        }
+
+        public bool Is32Bit {
+            get {
+                if (!IsPEBinary) {
+                    return false;
+                }
+
+                if (!Is32BitPE) {
+                    return false;
+                }
+
+                if (!IsManaged) {
+                    return true;
+                }
+
+                return (CorHeader.Flags & 0x0002) != 0;
+            }
+        }
+
+        public bool Is64Bit {
+            get { return IsPEBinary && Is64BitPE; }
+        }
+
+        public bool IsAny {
+            get { return IsPEBinary && (Is32BitPE && IsManaged && ((CorHeader.Flags & 0x0002) == 0)); }
+        }
+
+        public bool IsConsole {
+            get { return IsPEBinary && (NtHeader.SubSystem & 1) == 1; }
+        }
+
+        public bool IsPEBinary { get; private set; }
+
+        public long MetaDataRoot {
+            get { return RvaToVa(CorHeader.MetaData.Rva); }
+        }
+
+        public static PEInfo Scan(string filename) {
+            filename = filename.GetFullPath();
+
+            if (!File.Exists(filename)) {
+                throw new FileNotFoundException("Unable to find file", filename);
+            }
+
+            lock (_cache) {
+                if (!_cache.ContainsKey(filename)) {
+                    _cache.Add(filename, new PEInfo(filename));
+                }
+            }
+
+            return _cache[filename];
         }
 
         private static ImageDataDirectory ReadDataDirectory(BinaryReader reader) {
@@ -365,11 +392,5 @@ namespace CoApp.Toolkit.Win32 {
             }
             throw new Exception("Invalid RVA address.");
         }
-
-        public long MetaDataRoot {
-            get { return RvaToVa(CorHeader.MetaData.Rva); }
-        }
     }
-
-    
 }

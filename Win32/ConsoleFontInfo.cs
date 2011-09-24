@@ -12,7 +12,7 @@ namespace CoApp.Toolkit.Win32 {
     using System;
 
     public struct ConsoleFontInfo {
-        public Int32 nFont;
         public Coord dwFontSize;
+        public Int32 nFont;
     }
 }

@@ -14,18 +14,19 @@
 // Copyright (C) 2000-2002 Lutz Roeder. All rights reserved.
 // http://www.aisto.com/roeder
 // roeder@aisto.com
+
 namespace CoApp.Toolkit.Win32 {
     public class ImageCor20Header {
-        public uint Size;
-        public ushort MajorRuntimeVersion;
-        public ushort MinorRuntimeVersion;
-        public ImageDataDirectory MetaData;
-        public uint Flags;
-        public uint EntryPointToken;
-        public ImageDataDirectory Resources;
-        public ImageDataDirectory StrongNameSignature;
         public ImageDataDirectory CodeManagerTable;
-        public ImageDataDirectory VTableFixups;
+        public uint EntryPointToken;
         public ImageDataDirectory ExportAddressTableJumps;
+        public uint Flags;
+        public ushort MajorRuntimeVersion;
+        public ImageDataDirectory MetaData;
+        public ushort MinorRuntimeVersion;
+        public ImageDataDirectory Resources;
+        public uint Size;
+        public ImageDataDirectory StrongNameSignature;
+        public ImageDataDirectory VTableFixups;
     }
 }

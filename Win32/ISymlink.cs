@@ -16,7 +16,7 @@ namespace CoApp.Toolkit.Win32 {
         void ChangeLinkTarget(string linkPath, string actualFolderPath);
 
         void DeleteSymlink(string linkPath);
-        
+
         bool IsSymlink(string linkPath);
         string GetActualPath(string linkPath);
     }

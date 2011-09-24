@@ -11,14 +11,14 @@
 namespace CoApp.Toolkit.Win32 {
     using System;
 
-
     /// <summary>
-    /// Wrapper class to abstract out which symlink implementation to use on a given platform
+    ///   Wrapper class to abstract out which symlink implementation to use on a given platform
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public class Symlink {
         /// <summary>
-        /// backing field for the ISymlink instance for handling symlinks. Vista+ gets a ModernSymlink instance.
+        ///   backing field for the ISymlink instance for handling symlinks. Vista+ gets a ModernSymlink instance.
         /// </summary>
         private static Lazy<ISymlink> _symlink = new Lazy<ISymlink>(() => {
             if (WindowsVersionInfo.IsVistaOrBeyond) {
@@ -28,55 +28,66 @@ namespace CoApp.Toolkit.Win32 {
         });
 
         /// <summary>
-        /// Wrapper Method: Makes the file link.
+        ///   Wrapper Method: Makes the file link.
         /// </summary>
-        /// <param name="linkPath">The link path.</param>
-        /// <param name="actualFilePath">The actual file path.</param>
-        /// <remarks></remarks>
+        /// <param name = "linkPath">The link path.</param>
+        /// <param name = "actualFilePath">The actual file path.</param>
+        /// <remarks>
+        /// </remarks>
         public static void MakeFileLink(string linkPath, string actualFilePath) {
             _symlink.Value.MakeFileLink(linkPath, actualFilePath);
         }
+
         /// <summary>
-        /// Wrapper Method: Makes the directory link.
+        ///   Wrapper Method: Makes the directory link.
         /// </summary>
-        /// <param name="linkPath">The link path.</param>
-        /// <param name="actualFolderPath">The actual folder path.</param>
-        /// <remarks></remarks>
+        /// <param name = "linkPath">The link path.</param>
+        /// <param name = "actualFolderPath">The actual folder path.</param>
+        /// <remarks>
+        /// </remarks>
         public static void MakeDirectoryLink(string linkPath, string actualFolderPath) {
             _symlink.Value.MakeDirectoryLink(linkPath, actualFolderPath);
         }
+
         /// <summary>
-        /// Wrapper Method: Changes the link target.
+        ///   Wrapper Method: Changes the link target.
         /// </summary>
-        /// <param name="linkPath">The link path.</param>
-        /// <param name="newActualPath">The new actual path.</param>
-        /// <remarks></remarks>
+        /// <param name = "linkPath">The link path.</param>
+        /// <param name = "newActualPath">The new actual path.</param>
+        /// <remarks>
+        /// </remarks>
         public static void ChangeLinkTarget(string linkPath, string newActualPath) {
-            _symlink.Value.ChangeLinkTarget(linkPath,newActualPath);
+            _symlink.Value.ChangeLinkTarget(linkPath, newActualPath);
         }
+
         /// <summary>
-        /// Wrapper Method: Deletes the symlink.
+        ///   Wrapper Method: Deletes the symlink.
         /// </summary>
-        /// <param name="linkPath">The link path.</param>
-        /// <remarks></remarks>
+        /// <param name = "linkPath">The link path.</param>
+        /// <remarks>
+        /// </remarks>
         public static void DeleteSymlink(string linkPath) {
             _symlink.Value.DeleteSymlink(linkPath);
         }
+
         /// <summary>
-        /// Wrapper Method: Determines whether the specified link path is symlink.
+        ///   Wrapper Method: Determines whether the specified link path is symlink.
         /// </summary>
-        /// <param name="linkPath">The link path.</param>
+        /// <param name = "linkPath">The link path.</param>
         /// <returns><c>true</c> if the specified link path is symlink; otherwise, <c>false</c>.</returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public static bool IsSymlink(string linkPath) {
             return _symlink.Value.IsSymlink(linkPath);
         }
+
         /// <summary>
-        /// Wrapper Method: Gets the actual path.
+        ///   Wrapper Method: Gets the actual path.
         /// </summary>
-        /// <param name="linkPath">The link path.</param>
+        /// <param name = "linkPath">The link path.</param>
         /// <returns></returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public static string GetActualPath(string linkPath) {
             return _symlink.Value.GetActualPath(linkPath);
         }

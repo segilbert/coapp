@@ -104,8 +104,7 @@ namespace CoApp.Toolkit.Engine {
                 _pipeSecurity = new PipeSecurity();
 //                SecurityIdentifier sid = new SecurityIdentifier(WellKnownSidType.WorldSid,null );
 
-
-                _pipeSecurity.AddAccessRule(new PipeAccessRule( new SecurityIdentifier(WellKnownSidType.WorldSid,null ), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+                _pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid,null ), PipeAccessRights.ReadWrite, AccessControlType.Allow));
                 _pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().Owner, PipeAccessRights.FullControl, AccessControlType.Allow));
 
                 // start two listeners by default--each listener will also spawn a new empty one.

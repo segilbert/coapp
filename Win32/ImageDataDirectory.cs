@@ -14,6 +14,7 @@
 // Copyright (C) 2000-2002 Lutz Roeder. All rights reserved.
 // http://www.aisto.com/roeder
 // roeder@aisto.com
+
 namespace CoApp.Toolkit.Win32 {
     public struct ImageDataDirectory {
         public uint Rva;

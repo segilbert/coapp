@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Win32 {
     using System.Runtime.InteropServices;
 
     /// <summary>
-    /// Native function calls using NTDLL
+    ///   Native function calls using NTDLL
     /// </summary>
     public static class Ntdll {
         [DllImport("ntdll.dll", CallingConvention = CallingConvention.StdCall)]

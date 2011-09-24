@@ -117,17 +117,51 @@
     <Compile Include="Network\RemoteFile.cs" />
     <Compile Include="Package\Huid.cs" />
     <Compile Include="Package\PackageType.cs" />
-
     <Compile Include="Package\Validator.cs" />
-
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />
     <Compile Include="Pipes\UrlEncodedMessage.cs" />
-
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Win32\Accel.cs" />
+    <Compile Include="Win32\AcceleratorVirtualKey.cs" />
+    <Compile Include="Win32\BitmapCompression.cs" />
+    <Compile Include="Win32\BitmapFileHeader.cs" />
+    <Compile Include="Win32\BitmapInfo.cs" />
+    <Compile Include="Win32\BitmapInfoHeader.cs" />
+    <Compile Include="Win32\ButtonControlStyles.cs" />
+    <Compile Include="Win32\DialogExItemTemplate.cs" />
+    <Compile Include="Win32\DialogExTemplate.cs" />
+    <Compile Include="Win32\DialogItemClass.cs" />
+    <Compile Include="Win32\DialogItemTemplate.cs" />
+    <Compile Include="Win32\DialogStyles.cs" />
+    <Compile Include="Win32\Dialogtemplate.cs" />
+    <Compile Include="Win32\DIBColors.cs" />
+    <Compile Include="Win32\EditControlStyles.cs" />
+    <Compile Include="Win32\ExtendedDialogStyles.cs" />
+    <Compile Include="Win32\FileGrpIconDir.cs" />
+    <Compile Include="Win32\FileGrpIconDirEntry.cs" />
+    <Compile Include="Win32\FontDirEntry.cs" />
+    <Compile Include="Win32\Gdi32.cs" />
+    <Compile Include="Win32\GrpIconDir.cs" />
+    <Compile Include="Win32\GrpIconDirEntry.cs" />
+    <Compile Include="Win32\Iconinfo.cs" />
+    <Compile Include="Win32\Kernel32Contants.cs" />
+    <Compile Include="Win32\ManifestType.cs" />
+    <Compile Include="Win32\MenuExItemTemplate.cs" />
+    <Compile Include="Win32\MenuExTemplate.cs" />
+    <Compile Include="Win32\MenuFlags.cs" />
+    <Compile Include="Win32\MenuItemTemplate.cs" />
+    <Compile Include="Win32\MenuResourceType.cs" />
+    <Compile Include="Win32\MenuTemplate.cs" />
+    <Compile Include="Win32\ResourceHeader.cs" />
+    <Compile Include="Win32\ResourceHeaderType.cs" />
+    <Compile Include="Win32\ResourceTypes.cs" />
+    <Compile Include="Win32\RgbQuad.cs" />
+    <Compile Include="Win32\StaticControlStyles.cs" />
+    <Compile Include="Win32\User32a.cs" />
     <Compile Include="Scan\ProjectScanner.cs" />
     <Compile Include="Scan\Types\ScannedDefine.cs" />
     <Compile Include="Scan\Types\ScannedFile.cs" />
@@ -289,7 +323,11 @@
     <Compile Include="Win32\StandardHandle.cs" />
     <Compile Include="Win32\Startupinfo.cs" />
     <Compile Include="Win32\SystemInfo.cs" />
+    <Compile Include="Win32\VarHeader.cs" />
+    <Compile Include="Win32\VirtualKeys.cs" />
+    <Compile Include="Win32\VsFixedfileinfo.cs" />
     <Compile Include="Win32\WindowInfo.cs" />
+    <Compile Include="Win32\WindowStyles.cs" />
     <Compile Include="Win32\WindowsVersionInfo.cs" />
     <Compile Include="Win32\ReparsePoint.cs" />
     <Compile Include="Win32\SafeHGlobalHandle.cs" />
@@ -313,6 +351,7 @@
     <Compile Include="Win32\Win32Msgs.cs" />
     <Compile Include="Win32\Winmm.cs" />
     <Compile Include="Win32\WinTrust.cs" />
+    <Compile Include="Win32\Winver.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Installer\" />

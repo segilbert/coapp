@@ -12,10 +12,10 @@ namespace CoApp.Toolkit.Win32 {
     using System;
 
     public struct ConsoleScreenBufferInfo {
-        public Coord dwSize;
         public Coord dwCursorPosition;
-        public Int16 wAttributes;
-        public SmallRect srWindow;
         public Int16 dwMaximumWindowSize;
+        public Coord dwSize;
+        public SmallRect srWindow;
+        public Int16 wAttributes;
     }
 }

@@ -12,15 +12,15 @@ namespace CoApp.Toolkit.Win32 {
     using System.Runtime.InteropServices.ComTypes;
 
     public struct ByHandleFileInformation {
-        public uint FileAttributes;
         public FILETIME CreationTime;
+        public uint FileAttributes;
+        public ulong FileIndex;
+        public ulong FileSize;
         public FILETIME LastAccessTime;
         public FILETIME LastWriteTime;
-        public uint VolumeSerialNumber;
-        public ulong FileSize;
-//         public uint FileSizeLow;
+        //         public uint FileSizeLow;
         public uint NumberOfLinks;
-        public ulong FileIndex;
+        public uint VolumeSerialNumber;
         //public uint FileIndexLow;
     }
 }

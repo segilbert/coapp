@@ -14,7 +14,7 @@ namespace CoApp.Toolkit.Win32 {
 
     [StructLayout(LayoutKind.Sequential)]
     public class SecurityAttributes {
-        public readonly Int32 nLength = Marshal.SizeOf(typeof(SecurityAttributes));
+        public readonly Int32 nLength = Marshal.SizeOf(typeof (SecurityAttributes));
         public IntPtr lpSecurityDescriptor;
         public bool bInheritHandle;
     }

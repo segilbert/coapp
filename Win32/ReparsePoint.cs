@@ -19,43 +19,43 @@ namespace CoApp.Toolkit.Win32 {
     using Microsoft.Win32.SafeHandles;
 
     /// <summary>
-    /// A low-level interface to mucking with reparse points on NTFS
+    ///   A low-level interface to mucking with reparse points on NTFS
     /// 
-    /// see: http://msdn.microsoft.com/en-us/library/cc232007(v=prot.10).aspx
+    ///   see: http://msdn.microsoft.com/en-us/library/cc232007(v=prot.10).aspx
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>
+    /// </remarks>
     public class ReparsePoint {
         /// <summary>
-        /// This prefix indicates to NTFS that the path is to be treated as a non-interpreted
-        /// path in the virtual file system.
+        ///   This prefix indicates to NTFS that the path is to be treated as a non-interpreted
+        ///   path in the virtual file system.
         /// </summary>
         private const string NonInterpretedPathPrefix = @"\??\";
 
         /// <summary>
-        /// 
         /// </summary>
         private static Regex UncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
+
         /// <summary>
-        /// 
         /// </summary>
         private static Regex DrivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
+
         /// <summary>
-        /// 
         /// </summary>
         private static Regex VolumePrefixRx = new Regex(@"\\\?\?\\Volume");
 
         /// <summary>
-        /// 
         /// </summary>
         private ReparseData _reparseDataData;
 
         /// <summary>
-        /// Prevents a default instance of the <see cref="ReparsePoint"/> class from being created.
+        ///   Prevents a default instance of the <see cref = "ReparsePoint" /> class from being created.
         /// 
-        /// Populates the data from the buffer pointed to by the pointer.
+        ///   Populates the data from the buffer pointed to by the pointer.
         /// </summary>
-        /// <param name="buffer">The buffer.</param>
-        /// <remarks></remarks>
+        /// <param name = "buffer">The buffer.</param>
+        /// <remarks>
+        /// </remarks>
         private ReparsePoint(IntPtr buffer) {
             if (buffer == IntPtr.Zero) {
                 throw new ArgumentNullException("buffer");
@@ -65,17 +65,71 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         /// <summary>
-        /// Gets the file handle to the reparse point.
+        ///   Gets a value indicating whether this instance is symlink or junction.
         /// </summary>
-        /// <param name="reparsePoint">The reparse point.</param>
-        /// <param name="accessMode">The access mode.</param>
+        /// <remarks>
+        /// </remarks>
+        public bool IsSymlinkOrJunction {
+            get { return (_reparseDataData.ReparseTag == IoReparseTag.MountPoint || _reparseDataData.ReparseTag == IoReparseTag.Symlink) && !IsMountPoint; }
+        }
+
+        /// <summary>
+        ///   Gets a value indicating whether this instance is relative symlink.
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        public bool IsRelativeSymlink {
+            get { return _reparseDataData.ReparseTag == IoReparseTag.Symlink && (_reparseDataData.PathBuffer[0] & 1) == 1; }
+        }
+
+        /// <summary>
+        ///   Gets a value indicating whether this instance is mount point.
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        public bool IsMountPoint {
+            get { return VolumePrefixRx.Match(SubstituteName).Success; }
+        }
+
+        /// <summary>
+        ///   Gets the "print name" of the reparse point
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        public string PrintName {
+            get {
+                var extraOffset = _reparseDataData.ReparseTag == IoReparseTag.Symlink ? 4 : 0;
+                return _reparseDataData.PrintNameLength > 0
+                    ? Encoding.Unicode.GetString(_reparseDataData.PathBuffer, _reparseDataData.PrintNameOffset + extraOffset, _reparseDataData.PrintNameLength)
+                    : string.Empty;
+            }
+        }
+
+        /// <summary>
+        ///   Gets the "substitute name" of the reparse point.
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        public string SubstituteName {
+            get {
+                var extraOffset = _reparseDataData.ReparseTag == IoReparseTag.Symlink ? 4 : 0;
+                return _reparseDataData.SubstituteNameLength > 0
+                    ? Encoding.Unicode.GetString(_reparseDataData.PathBuffer, _reparseDataData.SubstituteNameOffset + extraOffset,
+                        _reparseDataData.SubstituteNameLength) : string.Empty;
+            }
+        }
+
+        /// <summary>
+        ///   Gets the file handle to the reparse point.
+        /// </summary>
+        /// <param name = "reparsePoint">The reparse point.</param>
+        /// <param name = "accessMode">The access mode.</param>
         /// <returns></returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         private static SafeFileHandle GetReparsePointHandle(string reparsePoint, NativeFileAccess accessMode) {
-            var reparsePointHandle = Kernel32.CreateFile(reparsePoint, accessMode,
-                FileShare.Read | FileShare.Write | FileShare.Delete,
-                IntPtr.Zero, FileMode.Open, NativeFileAttributesAndFlags.BackupSemantics | NativeFileAttributesAndFlags.OpenReparsePoint,
-                IntPtr.Zero);
+            var reparsePointHandle = Kernel32.CreateFile(reparsePoint, accessMode, FileShare.Read | FileShare.Write | FileShare.Delete, IntPtr.Zero,
+                FileMode.Open, NativeFileAttributesAndFlags.BackupSemantics | NativeFileAttributesAndFlags.OpenReparsePoint, IntPtr.Zero);
 
             if (Marshal.GetLastWin32Error() != 0) {
                 throw new IOException("Unable to open reparse point.", Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
@@ -85,76 +139,23 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         /// <summary>
-        /// Determines whether a given path is a reparse point
+        ///   Determines whether a given path is a reparse point
         /// </summary>
-        /// <param name="path">The path.</param>
+        /// <param name = "path">The path.</param>
         /// <returns><c>true</c> if [is reparse point] [the specified path]; otherwise, <c>false</c>.</returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public static bool IsReparsePoint(string path) {
             return (File.GetAttributes(path) & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint;
         }
 
         /// <summary>
-        /// Gets a value indicating whether this instance is symlink or junction.
+        ///   Gets the actual path of a reparse point
         /// </summary>
-        /// <remarks></remarks>
-        public bool IsSymlinkOrJunction {
-            get {
-                return (_reparseDataData.ReparseTag == IoReparseTag.MountPoint || _reparseDataData.ReparseTag == IoReparseTag.Symlink) &&
-                    !IsMountPoint;
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this instance is relative symlink.
-        /// </summary>
-        /// <remarks></remarks>
-        public bool IsRelativeSymlink {
-            get { return _reparseDataData.ReparseTag == IoReparseTag.Symlink && (_reparseDataData.PathBuffer[0] & 1) == 1; }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this instance is mount point.
-        /// </summary>
-        /// <remarks></remarks>
-        public bool IsMountPoint {
-            get { return VolumePrefixRx.Match(SubstituteName).Success; }
-        }
-
-        /// <summary>
-        /// Gets the "print name" of the reparse point
-        /// </summary>
-        /// <remarks></remarks>
-        public string PrintName {
-            get {
-                var extraOffset = _reparseDataData.ReparseTag == IoReparseTag.Symlink ? 4 : 0;
-                return _reparseDataData.PrintNameLength > 0
-                    ? Encoding.Unicode.GetString(_reparseDataData.PathBuffer, _reparseDataData.PrintNameOffset + extraOffset,
-                        _reparseDataData.PrintNameLength)
-                    : string.Empty;
-            }
-        }
-
-        /// <summary>
-        /// Gets the "substitute name" of the reparse point.
-        /// </summary>
-        /// <remarks></remarks>
-        public string SubstituteName {
-            get {
-                var extraOffset = _reparseDataData.ReparseTag == IoReparseTag.Symlink ? 4 : 0;
-                return _reparseDataData.SubstituteNameLength > 0
-                    ? Encoding.Unicode.GetString(_reparseDataData.PathBuffer, _reparseDataData.SubstituteNameOffset + extraOffset,
-                        _reparseDataData.SubstituteNameLength)
-                    : string.Empty;
-            }
-        }
-
-        /// <summary>
-        /// Gets the actual path of a reparse point
-        /// </summary>
-        /// <param name="linkPath">The link path.</param>
+        /// <param name = "linkPath">The link path.</param>
         /// <returns></returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public static string GetActualPath(string linkPath) {
             if (!IsReparsePoint(linkPath)) {
                 // if it's not a reparse point, return the path given.
@@ -173,13 +174,14 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         /// <summary>
-        /// Opens the specified path as a reparse point.
+        ///   Opens the specified path as a reparse point.
         /// 
-        /// throws if it's not a reparse point.
+        ///   throws if it's not a reparse point.
         /// </summary>
-        /// <param name="path">The path.</param>
+        /// <param name = "path">The path.</param>
         /// <returns></returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public static ReparsePoint Open(string path) {
             if (!IsReparsePoint(path)) {
                 throw new IOException("Path is not reparse point");
@@ -195,18 +197,16 @@ namespace CoApp.Toolkit.Win32 {
 
                 try {
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.GetReparsePoint, IntPtr.Zero, 0,
-                        outBuffer, outBufferSize, out bytesReturned, IntPtr.Zero);
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.GetReparsePoint, IntPtr.Zero, 0, outBuffer, outBufferSize, out bytesReturned,
+                        IntPtr.Zero);
 
                     if (!result) {
                         var error = Marshal.GetLastWin32Error();
                         if (error == ReparsePointError.NotAReparsePoint) {
-                            throw new IOException("Path is not a reparse point.",
-                                Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
+                            throw new IOException("Path is not a reparse point.", Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
                         }
 
-                        throw new IOException("Unable to get information about reparse point.",
-                            Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
+                        throw new IOException("Unable to get information about reparse point.", Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
                     }
                     return new ReparsePoint(outBuffer);
                 }
@@ -217,12 +217,13 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         /// <summary>
-        /// Creates the junction.
+        ///   Creates the junction.
         /// </summary>
-        /// <param name="junctionPath">The junction path.</param>
-        /// <param name="targetDirectory">The target directory.</param>
+        /// <param name = "junctionPath">The junction path.</param>
+        /// <param name = "targetDirectory">The target directory.</param>
         /// <returns></returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         public static ReparsePoint CreateJunction(string junctionPath, string targetDirectory) {
             junctionPath = junctionPath.GetFullPath();
             targetDirectory = targetDirectory.GetFullPath();
@@ -262,13 +263,12 @@ namespace CoApp.Toolkit.Win32 {
                     Marshal.StructureToPtr(reparseDataBuffer, inBuffer, false);
 
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint,
-                        inBuffer, reparseDataBuffer.ReparseDataLength + 8, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero);
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint, inBuffer, reparseDataBuffer.ReparseDataLength + 8, IntPtr.Zero,
+                        0, out bytesReturned, IntPtr.Zero);
 
                     if (!result) {
                         Directory.Delete(junctionPath);
-                        throw new IOException("Unable to create junction point.",
-                            Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
+                        throw new IOException("Unable to create junction point.", Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
                     }
 
                     return Open(junctionPath);
@@ -280,12 +280,13 @@ namespace CoApp.Toolkit.Win32 {
         }
 
         /// <summary>
-        /// Creates the symlink.
+        ///   Creates the symlink.
         /// </summary>
-        /// <param name="symlinkPath">The symlink path.</param>
-        /// <param name="linkTarget">The link target.</param>
+        /// <param name = "symlinkPath">The symlink path.</param>
+        /// <param name = "linkTarget">The link target.</param>
         /// <returns></returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         [HandleProcessCorruptedStateExceptions]
         public static ReparsePoint CreateSymlink(string symlinkPath, string linkTarget) {
             symlinkPath = symlinkPath.GetFullPath();
@@ -306,7 +307,7 @@ namespace CoApp.Toolkit.Win32 {
             }
 
             // dark magic kung-fu to get privilige to create symlink.
-            IntPtr state = IntPtr.Zero;
+            var state = IntPtr.Zero;
             UInt32 privilege = 35;
             Ntdll.RtlAcquirePrivilege(ref privilege, 1, 0, ref state);
 
@@ -324,8 +325,7 @@ namespace CoApp.Toolkit.Win32 {
                     PathBuffer = new byte[0x3ff0],
                 };
 
-                reparseDataBuffer.ReparseDataLength =
-                    (ushort) (reparseDataBuffer.PrintNameLength + reparseDataBuffer.PrintNameOffset + 10 + extraOffset);
+                reparseDataBuffer.ReparseDataLength = (ushort) (reparseDataBuffer.PrintNameLength + reparseDataBuffer.PrintNameOffset + 10 + extraOffset);
 
                 Array.Copy(substituteName, 0, reparseDataBuffer.PathBuffer, extraOffset, substituteName.Length);
                 Array.Copy(printName, 0, reparseDataBuffer.PathBuffer, reparseDataBuffer.PrintNameOffset + extraOffset, printName.Length);
@@ -337,8 +337,8 @@ namespace CoApp.Toolkit.Win32 {
                     Marshal.StructureToPtr(reparseDataBuffer, inBuffer, false);
 
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint,
-                        inBuffer, reparseDataBuffer.ReparseDataLength + 8, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero);
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint, inBuffer, reparseDataBuffer.ReparseDataLength + 8, IntPtr.Zero,
+                        0, out bytesReturned, IntPtr.Zero);
 
                     if (!result) {
                         if (Directory.Exists(symlinkPath)) {
@@ -354,25 +354,26 @@ namespace CoApp.Toolkit.Win32 {
                 }
                 finally {
                     Marshal.FreeHGlobal(inBuffer);
-                   try {
+                    try {
                         if (state != IntPtr.Zero) {
-                                Ntdll.RtlReleasePrivilege(state);
-                            }
-
-                        } catch {
-                            // sometimes this doesn't work so well
+                            Ntdll.RtlReleasePrivilege(state);
                         }
+                    }
+                    catch {
+                        // sometimes this doesn't work so well
+                    }
                 }
             }
         }
 
         /// <summary>
-        /// Changes the reparse point target.
+        ///   Changes the reparse point target.
         /// </summary>
-        /// <param name="reparsePointPath">The reparse point path.</param>
-        /// <param name="newReparsePointTarget">The new reparse point target.</param>
+        /// <param name = "reparsePointPath">The reparse point path.</param>
+        /// <param name = "newReparsePointTarget">The new reparse point target.</param>
         /// <returns></returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// </remarks>
         [HandleProcessCorruptedStateExceptions]
         public static ReparsePoint ChangeReparsePointTarget(string reparsePointPath, string newReparsePointTarget) {
             reparsePointPath = reparsePointPath.GetFullPath();
@@ -403,8 +404,7 @@ namespace CoApp.Toolkit.Win32 {
             var reparsePoint = Open(reparsePointPath);
             var isSymlink = reparsePoint._reparseDataData.ReparseTag == IoReparseTag.Symlink;
 
-            if (reparsePoint._reparseDataData.ReparseTag != IoReparseTag.MountPoint &&
-                reparsePoint._reparseDataData.ReparseTag != IoReparseTag.Symlink) {
+            if (reparsePoint._reparseDataData.ReparseTag != IoReparseTag.MountPoint && reparsePoint._reparseDataData.ReparseTag != IoReparseTag.Symlink) {
                 throw new IOException("ChangeReparsePointTarget only works on junctions and symlink reparse points.");
             }
 
@@ -427,12 +427,10 @@ namespace CoApp.Toolkit.Win32 {
                 reparsePoint._reparseDataData.PathBuffer = new byte[0x3ff0];
 
                 reparsePoint._reparseDataData.ReparseDataLength =
-                    (ushort)
-                        (reparsePoint._reparseDataData.PrintNameLength + reparsePoint._reparseDataData.PrintNameOffset + 10 + extraOffset);
+                    (ushort) (reparsePoint._reparseDataData.PrintNameLength + reparsePoint._reparseDataData.PrintNameOffset + 10 + extraOffset);
 
                 Array.Copy(substituteName, 0, reparsePoint._reparseDataData.PathBuffer, extraOffset, substituteName.Length);
-                Array.Copy(printName, 0, reparsePoint._reparseDataData.PathBuffer,
-                    reparsePoint._reparseDataData.PrintNameOffset + extraOffset, printName.Length);
+                Array.Copy(printName, 0, reparsePoint._reparseDataData.PathBuffer, reparsePoint._reparseDataData.PrintNameOffset + extraOffset, printName.Length);
 
                 var inBufferSize = Marshal.SizeOf(reparsePoint._reparseDataData);
                 var inBuffer = Marshal.AllocHGlobal(inBufferSize);
@@ -441,8 +439,8 @@ namespace CoApp.Toolkit.Win32 {
                     Marshal.StructureToPtr(reparsePoint._reparseDataData, inBuffer, false);
 
                     int bytesReturned;
-                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint,
-                        inBuffer, reparsePoint._reparseDataData.ReparseDataLength + 8, IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero);
+                    var result = Kernel32.DeviceIoControl(handle, ControlCodes.SetReparsePoint, inBuffer, reparsePoint._reparseDataData.ReparseDataLength + 8,
+                        IntPtr.Zero, 0, out bytesReturned, IntPtr.Zero);
 
                     if (!result) {
                         throw new IOException("Unable to modify reparse point.", Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
@@ -455,7 +453,8 @@ namespace CoApp.Toolkit.Win32 {
                             if (state != IntPtr.Zero) {
                                 Ntdll.RtlReleasePrivilege(state);
                             }
-                        } catch {
+                        }
+                        catch {
                             // sometimes this doesn't work so well
                         }
                     }

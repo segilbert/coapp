@@ -21,18 +21,22 @@ namespace CoApp.Toolkit.Win32 {
         ///   No attributes.
         /// </summary>
         None = 0,
+
         /// <summary>
         ///   Set if the stream contains data that is modified when read.
         /// </summary>
         ModifiedWhenRead = 1,
+
         /// <summary>
         ///   Set if the stream contains security data.
         /// </summary>
         ContainsSecurity = 2,
+
         /// <summary>
         ///   Set if the stream contains properties.
         /// </summary>
         ContainsProperties = 4,
+
         /// <summary>
         ///   Set if the stream is sparse.
         /// </summary>

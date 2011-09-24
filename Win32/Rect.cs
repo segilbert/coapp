@@ -12,9 +12,9 @@ namespace CoApp.Toolkit.Win32 {
     using System;
 
     public struct Rect {
-        public Int32 left;
-        public Int32 top;
-        public Int32 right;
         public Int32 bottom;
+        public Int32 left;
+        public Int32 right;
+        public Int32 top;
     }
 }

@@ -8,95 +8,101 @@
 // </license>
 //-----------------------------------------------------------------------
 
-using System;
-using System.ComponentModel;
-using System.Windows.Forms;
+namespace CoApp.Toolkit.Win32 {
+    using System;
+    using System.ComponentModel;
+    using System.Windows.Forms;
 
-namespace CoApp.Toolkit.Win32
- {
     /// <summary>
-     /// Handles a System Hotkey
-     /// </summary>
-     public class SystemHotkey : Component  
-     {
-         public event EventHandler Pressed;
-         public event EventHandler Error;
-         private int code = 0;
-         public bool IsRegistered { set; get; }
- 
-         protected Keys hotKey=Keys.None;
+    ///   Handles a System Hotkey
+    /// </summary>
+    public class SystemHotkey : Component {
+        private int code;
 
-         public SystemHotkey(IContainer container) {
-             container.Add(this);
+        protected Keys hotKey = Keys.None;
 
-             NativeWindowWithEvent.Instance.ProcessMessage+=MessageEvent;
-         }
- 
-         public SystemHotkey() {
-             if (!DesignMode) {
-                 NativeWindowWithEvent.Instance.ProcessMessage+=MessageEvent;
-             }
-         }
- 
-         protected override void Dispose(bool disposing){
-             if (IsRegistered) {
-                 UnregisterHotkey();
-             }
-             NativeWindowWithEvent.Instance.ProcessMessage-=MessageEvent;
-             base.Dispose(disposing);
-         }
+        public SystemHotkey(IContainer container) {
+            container.Add(this);
 
-         protected void MessageEvent(object sender,ref Message m,ref bool handled) {   
-             if ((m.Msg==(int)Win32Msgs.WM_HOTKEY))
-                 if((m.WParam==(IntPtr)code)){
-                 handled=true;
-                 
-                 if (Pressed!=null) 
-                     Pressed(this,EventArgs.Empty);
-             }
-         }
-     
-         protected bool UnregisterHotkey() {
-             var result = false;
-             if(IsRegistered)
-                 result  = User32.UnregisterHotKey(NativeWindowWithEvent.Instance.Handle, code);
-             IsRegistered = false;
-             return result;
-         }
- 
-         protected bool RegisterHotkey(Keys key) {  
-             Keys win32Key = key & ~(Keys.Alt|Keys.Control|Keys.Shift);
-             KeyModifiers mod = ((key & Keys.Alt) != Keys.None ? KeyModifiers.MOD_ALT:0) | ((key & Keys.Shift) != Keys.None ? KeyModifiers.MOD_SHIFT:0) | ((key & Keys.Control) != Keys.None ? KeyModifiers.MOD_CONTROL:0);
-             code = ((int) mod << 16) + (int) win32Key;
-             IsRegistered = User32.RegisterHotKey(NativeWindowWithEvent.Instance.Handle, code, (int)mod, (int)win32Key);
+            NativeWindowWithEvent.Instance.ProcessMessage += MessageEvent;
+        }
 
-             return IsRegistered;
-         }
+        public SystemHotkey() {
+            if (!DesignMode) {
+                NativeWindowWithEvent.Instance.ProcessMessage += MessageEvent;
+            }
+        }
 
-         public Keys Shortcut {
-             get { return hotKey; }
-             set {
-                 if(DesignMode) {
-                     return; //Don't register in Designmode
-                 }
+        public bool IsRegistered { set; get; }
 
-                 if((IsRegistered)&&(hotKey!=value))  //Unregister previous registered Hotkey
-                 {
-                     if(!UnregisterHotkey()) {
-                         if(Error!=null)
-                             Error(this, EventArgs.Empty);
-                     }
-                 }
+        public Keys Shortcut {
+            get { return hotKey; }
+            set {
+                if (DesignMode) {
+                    return; //Don't register in Designmode
+                }
 
-                 hotKey = value;
+                if ((IsRegistered) && (hotKey != value)) //Unregister previous registered Hotkey
+                {
+                    if (!UnregisterHotkey()) {
+                        if (Error != null) {
+                            Error(this, EventArgs.Empty);
+                        }
+                    }
+                }
 
-                 if(value!=Keys.None) {
-                     if(!RegisterHotkey(value)) {
-                         if(Error != null)
-                             Error(this, EventArgs.Empty);
-                     }
-                 }
-             }
-         }
-     }
- }
+                hotKey = value;
+
+                if (value != Keys.None) {
+                    if (!RegisterHotkey(value)) {
+                        if (Error != null) {
+                            Error(this, EventArgs.Empty);
+                        }
+                    }
+                }
+            }
+        }
+
+        public event EventHandler Pressed;
+        public event EventHandler Error;
+
+        protected override void Dispose(bool disposing) {
+            if (IsRegistered) {
+                UnregisterHotkey();
+            }
+            NativeWindowWithEvent.Instance.ProcessMessage -= MessageEvent;
+            base.Dispose(disposing);
+        }
+
+        protected void MessageEvent(object sender, ref Message m, ref bool handled) {
+            if ((m.Msg == (int) Win32Msgs.WM_HOTKEY)) {
+                if ((m.WParam == (IntPtr) code)) {
+                    handled = true;
+
+                    if (Pressed != null) {
+                        Pressed(this, EventArgs.Empty);
+                    }
+                }
+            }
+        }
+
+        protected bool UnregisterHotkey() {
+            var result = false;
+            if (IsRegistered) {
+                result = User32.UnregisterHotKey(NativeWindowWithEvent.Instance.Handle, code);
+            }
+            IsRegistered = false;
+            return result;
+        }
+
+        protected bool RegisterHotkey(Keys key) {
+            var win32Key = key & ~(Keys.Alt | Keys.Control | Keys.Shift);
+            var mod = ((key & Keys.Alt) != Keys.None ? KeyModifiers.MOD_ALT : 0) | ((key & Keys.Shift) != Keys.None ? KeyModifiers.MOD_SHIFT : 0) |
+                ((key & Keys.Control) != Keys.None ? KeyModifiers.MOD_CONTROL : 0);
+            code = ((int) mod << 16) + (int) win32Key;
+            IsRegistered = User32.RegisterHotKey(NativeWindowWithEvent.Instance.Handle, code, (int) mod, (int) win32Key);
+
+            return IsRegistered;
+        }
+    }
+}

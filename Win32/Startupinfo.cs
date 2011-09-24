@@ -14,7 +14,7 @@ namespace CoApp.Toolkit.Win32 {
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public class Startupinfo {
-        public Int32 cb = Marshal.SizeOf(typeof(Startupinfo));
+        public Int32 cb = Marshal.SizeOf(typeof (Startupinfo));
         public IntPtr lpReserved;
         public IntPtr lpDesktop;
         public IntPtr lpTitle;

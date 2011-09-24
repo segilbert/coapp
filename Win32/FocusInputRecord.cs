@@ -16,6 +16,7 @@ namespace CoApp.Toolkit.Win32 {
     public class FocusInputRecord {
         public Int16 EventType;
         public bool bSetFocus;
+
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 255)]
         public String wszTitle = new String(' ', 256);
     }

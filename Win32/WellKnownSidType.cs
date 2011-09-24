@@ -10,9 +10,9 @@
 
 namespace CoApp.Toolkit.Win32 {
     /// <summary>
-    /// The WELL_KNOWN_SID_TYPE enumeration type is a list of commonly used 
-    /// security identifiers (SIDs). Programs can pass these values to the 
-    /// CreateWellKnownSid function to create a SID from this list.
+    ///   The WELL_KNOWN_SID_TYPE enumeration type is a list of commonly used 
+    ///   security identifiers (SIDs). Programs can pass these values to the 
+    ///   CreateWellKnownSid function to create a SID from this list.
     /// </summary>
     public enum WellKnownSidType {
         WinNullSid = 0,

@@ -15,7 +15,7 @@ namespace CoApp.Toolkit.Win32 {
     [StructLayout(LayoutKind.Sequential)]
     public struct SystemInfo {
         public ushort processorArchitecture;
-        ushort reserved;
+        private ushort reserved;
         public uint pageSize;
         public IntPtr minimumApplicationAddress;
         public IntPtr maximumApplicationAddress;

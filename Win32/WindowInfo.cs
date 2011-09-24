@@ -12,15 +12,15 @@ namespace CoApp.Toolkit.Win32 {
     using System;
 
     public struct WindowInfo {
+        public Int16 atomWindowType;
         public Int32 cbSize;
-        public Rect rcWindow;
-        public Rect rcClient;
-        public Int32 dwStyle;
-        public Int32 dwExStyle;
-        public Int32 dwWindowStatus;
         public Int32 cxWindowBorders;
         public Int32 cyWindowBorders;
-        public Int16 atomWindowType;
+        public Int32 dwExStyle;
+        public Int32 dwStyle;
+        public Int32 dwWindowStatus;
+        public Rect rcClient;
+        public Rect rcWindow;
         public Int16 wCreatorVersion;
     }
 }
