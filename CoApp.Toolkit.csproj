@@ -132,6 +132,7 @@
     <Compile Include="Win32\BitmapInfo.cs" />
     <Compile Include="Win32\BitmapInfoHeader.cs" />
     <Compile Include="Win32\ButtonControlStyles.cs" />
+    <Compile Include="Win32\CryptUi.cs" />
     <Compile Include="Win32\DialogExItemTemplate.cs" />
     <Compile Include="Win32\DialogExTemplate.cs" />
     <Compile Include="Win32\DialogItemClass.cs" />
@@ -148,6 +149,7 @@
     <Compile Include="Win32\GrpIconDir.cs" />
     <Compile Include="Win32\GrpIconDirEntry.cs" />
     <Compile Include="Win32\Iconinfo.cs" />
+    <Compile Include="Win32\ImageHlp.cs" />
     <Compile Include="Win32\Kernel32Contants.cs" />
     <Compile Include="Win32\ManifestType.cs" />
     <Compile Include="Win32\MenuExItemTemplate.cs" />
@@ -156,12 +158,12 @@
     <Compile Include="Win32\MenuItemTemplate.cs" />
     <Compile Include="Win32\MenuResourceType.cs" />
     <Compile Include="Win32\MenuTemplate.cs" />
+    <Compile Include="Win32\Mscoree.cs" />
     <Compile Include="Win32\ResourceHeader.cs" />
     <Compile Include="Win32\ResourceHeaderType.cs" />
     <Compile Include="Win32\ResourceTypes.cs" />
     <Compile Include="Win32\RgbQuad.cs" />
     <Compile Include="Win32\StaticControlStyles.cs" />
-    <Compile Include="Win32\User32a.cs" />
     <Compile Include="Scan\ProjectScanner.cs" />
     <Compile Include="Scan\Types\ScannedDefine.cs" />
     <Compile Include="Scan\Types\ScannedFile.cs" />
