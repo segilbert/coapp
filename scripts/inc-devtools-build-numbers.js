@@ -22,23 +22,8 @@ if( exists(filename = GetRelativePath( "\\..\\source\\CoApp.Devtools.AssemblyStr
     origTxt = ReadAll(filename);
     newTxt = origTxt;
     
-    // unsigned version
-    rx = /\[assembly: AssemblyVersion\("(.*)\.(.*)\.(.*)\.(.*)"\)\] \/\/UNSIGNED VERSION/ig;
-    rx.exec(newTxt);
-    
-    major = parseInt(RegExp.$1.Trim());
-    minor = parseInt(RegExp.$2.Trim());
-    build = parseInt(RegExp.$3.Trim());
-    revision = parseInt(RegExp.$4.Trim())+1;
-
-    if( major < 1 )
-        throw  "FAILURE";
-    
-    newTxt = newTxt.replace( /\[assembly: AssemblyVersion.*\/\/UNSIGNED VERSION/ig , '[assembly: AssemblyVersion("'+major+'.'+minor+'.'+build+'.'+revision+'")] //UNSIGNED VERSION' );
-    newTxt = newTxt.replace( /\[assembly: AssemblyFileVersion.*\/\/UNSIGNED VERSION/ig , '[assembly: AssemblyFileVersion("'+major+'.'+minor+'.'+build+'.'+revision+'")] //UNSIGNED VERSION' );
-
     // signed version
-    rx = /\[assembly: AssemblyVersion\("(.*)\.(.*)\.(.*)\.(.*)"\)\] \/\/SIGNED VERSION/ig;
+    rx = /\[assembly: AssemblyVersion\("(.*)\.(.*)\.(.*)\.(.*)"\)\]/ig;
     rx.exec(newTxt);
     
     major = parseInt(RegExp.$1.Trim());
@@ -49,8 +34,8 @@ if( exists(filename = GetRelativePath( "\\..\\source\\CoApp.Devtools.AssemblyStr
     if( major < 1 )
         throw  "FAILURE (1)";
     
-    newTxt = newTxt.replace( /\[assembly: AssemblyVersion.*\/\/SIGNED VERSION/ig , '[assembly: AssemblyVersion("'+major+'.'+minor+'.'+build+'.'+revision+'")] //SIGNED VERSION' );
-    newTxt = newTxt.replace( /\[assembly: AssemblyFileVersion.*\/\/SIGNED VERSION/ig , '[assembly: AssemblyFileVersion("'+major+'.'+minor+'.'+build+'.'+revision+'")] //SIGNED VERSION' );
+    newTxt = newTxt.replace( /\[assembly: AssemblyVersion.*/ig , '[assembly: AssemblyVersion("'+major+'.'+minor+'.'+build+'.'+revision+'")]' );
+    newTxt = newTxt.replace( /\[assembly: AssemblyFileVersion.*/ig , '[assembly: AssemblyFileVersion("'+major+'.'+minor+'.'+build+'.'+revision+'")]' );
     
    
     if( origTxt.length >1000 && newTxt.length > 1000 ) {

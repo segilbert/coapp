@@ -12,31 +12,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("CoApp Project")]
 [assembly: AssemblyCopyright("Copyright (c) Garrett Serack, CoApp Contributors 2010-2011")]
 
-// disable warning about using /keyfile instead of AssemblyKeyFile
-#pragma warning disable 1699
+// We no longer need to delay sign in order to strong name and sign the code before 
+// we publish it, so now we will have just one set of  Version  lines, and no strong 
+// naming until publishing.
 
-#if SIGN_ASSEMBLY || TEST_SIGN_ASSEMBLY
-[assembly: AssemblyVersion("1.1.2.908")] //SIGNED VERSION
-[assembly: AssemblyFileVersion("1.1.2.908")] //SIGNED VERSION
-
-#if SIGN_ASSEMBLY 
-    [assembly: AssemblyKeyFileAttribute(@"..\signing\coapp-release-public-key.snk")]
-    [assembly:AssemblyDelaySignAttribute(true)]
-#endif 
-
-#if TEST_SIGN_ASSEMBLY
-    [assembly: AssemblyKeyFileAttribute(@"..\solution\CoApp-Development.SNK")]
-    [assembly:AssemblyDelaySignAttribute(true)]
-#endif 
-
-#else
-
-[assembly: AssemblyVersion("1.1.1.908")] //UNSIGNED VERSION
-[assembly: AssemblyFileVersion("1.1.1.908")] //UNSIGNED VERSION
-
-#endif
-
-#pragma warning restore 1699
+[assembly: AssemblyVersion("1.1.2.1028")]
+[assembly: AssemblyFileVersion("1.1.2.1028")]
 
 [AttributeUsage(AttributeTargets.Assembly, Inherited = false)]
 internal class AssemblyBugtrackerAttribute : Attribute {
@@ -48,6 +29,126 @@ internal class AssemblyBugtrackerAttribute : Attribute {
         return TrackerUrl;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
