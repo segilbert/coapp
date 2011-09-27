@@ -7,10 +7,10 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CoApp")]
-[assembly: AssemblyDescription("CoApp second stage bootstrapper utility")]
+[assembly: AssemblyTitle("Software Installer!")]
+[assembly: AssemblyDescription("Confgures Windows Installer for CoApp packages")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyProduct("CoApp")]
+[assembly: AssemblyProduct("Software Installer")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en")]

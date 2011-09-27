@@ -6,7 +6,7 @@
     xmlns:clr="clr-namespace:System;assembly=mscorlib" >
 
     <!-- Fonts-->
-    <FontFamily x:Key="ContentFontFamily">Segoe UI, Lucida Sans Unicode, Verdana</FontFamily>
+    <FontFamily x:Key="ContentFontFamily">Segoe UI, Tahoma, Lucida Sans Unicode</FontFamily>
 
     <clr:Double x:Key="HeaderFontSize">22</clr:Double>
     <clr:Double x:Key="HeaderButtonFontSize">8</clr:Double>
@@ -29,6 +29,12 @@
     <SolidColorBrush x:Key="PageBorderBrush" Color="{StaticResource BorderColor}" />
 
     <!-- Styles-->
+
+    <Style x:Key="SadFace" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontFamily" Value="{StaticResource ContentFontFamily}"/>
+    </Style>
+
     <Style x:Key="HeaderText" TargetType="TextBlock">
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="FontFamily" Value="{StaticResource ContentFontFamily}"/>
