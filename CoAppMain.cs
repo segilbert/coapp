@@ -236,6 +236,7 @@ namespace CoApp.CLI {
 
                 Verbose("# Contacting Service...");
                 PackageManager.Instance.Connect("command-line-client", "garrett");
+
                 Verbose("# Waiting for service to respond...");
                 if (!PackageManager.Instance.IsReady.WaitOne(5000)) {
                     Verbose("# not connected...");
@@ -595,8 +596,6 @@ namespace CoApp.CLI {
             return null;
         }
 
-       
-
         private Task Upgrade(IEnumerable<Package> packages) {
             if (packages.Any()) {
                 var upgrades = new List<Package>();
@@ -690,84 +689,6 @@ namespace CoApp.CLI {
                 }
             }.Extend(_messages));
         }
-        /*
-        private Dictionary<string, Task> currentDownloads = new Dictionary<string, Task>();
-
-        private Task GetRemoteFile(string canonicalName, IEnumerable<string> locations, string targetFolder, bool forceDownload) {
-            var targetFilename = Path.Combine(targetFolder, canonicalName);
-            lock (currentDownloads) {
-                if (currentDownloads.ContainsKey(targetFilename)) {
-                    return currentDownloads[targetFilename];
-                }
-
-                if (File.Exists(targetFilename)) {
-                    if (forceDownload) {
-                        targetFilename.TryHardToDeleteFile();
-                    }
-                    else {
-                        PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, "<file exists>",
-                            new PackageManagerMessages().Extend(_messages));
-                        return null;
-                    }
-                }
-
-                // gotta download the file...
-                var task = Task.Factory.StartNew(() => {
-                    foreach (var location in locations) {
-                        try {
-                            var uri = new Uri(location);
-                            if (uri.IsFile) {
-                                // try to copy the file local.
-                                var remoteFile = uri.AbsoluteUri.CanonicalizePath();
-
-                                // if this fails, we'll just move down the line.
-                                File.Copy(remoteFile, targetFilename);
-                                PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, uri.AbsoluteUri,
-                                    new PackageManagerMessages().Extend(_messages));
-                                return;
-                            }
-
-                            var rf = RemoteFile.GetRemoteFile(uri, targetFilename);
-                            rf.Get(new RemoteFileMessages {
-                                Completed = () => {
-                                   Console.WriteLine();
-                                   PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, uri.AbsoluteUri, new PackageManagerMessages().Extend(_messages)); 
-                                },
-                                Failed = () => {
-                                    if (File.Exists(targetFilename)) {
-                                        targetFilename.TryHardToDeleteFile();
-                                    }
-                                },
-                                Progress = (percent) => {
-                                    PackageManager.Instance.DownloadProgress(canonicalName, percent);
-                                    "Downloading {0}".format(uri.AbsoluteUri).PrintProgressBar(percent);
-
-                                }
-                            }).Wait();
-                            
-                            if (File.Exists(targetFilename)) {
-                                return;
-                            }
-                        }
-                        catch {
-                            // bogus, dude.
-                            // try the next one.
-                        }
-                    }
-
-                    PackageManager.Instance.UnableToAcquire(canonicalName, new PackageManagerMessages());
-
-                }, TaskCreationOptions.AttachedToParent).ContinueWith(antecedent => {
-                    lock (currentDownloads) {
-                        currentDownloads.Remove(targetFilename);
-                    }
-                }, TaskContinuationOptions.AttachedToParent);
-
-                currentDownloads.Add(targetFilename, task);
-                return task;
-            }
-        }
-        */
 
         /// <summary>
         /// Removes the specified parameters.
@@ -865,7 +786,6 @@ namespace CoApp.CLI {
                 }
 
                 // now, each package in the list can be installed
-                
                 var installedList= new List<string>();
                 var failedList = new List<string>();
                 
