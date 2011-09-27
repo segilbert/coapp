@@ -1,3 +1,13 @@
+//-----------------------------------------------------------------------
+// <copyright company="CoApp Project">
+//     Copyright (c) 2011 Garrett Serack . All rights reserved.
+// </copyright>
+// <license>
+//     The software is licensed under the Apache 2.0 License (the "License")
+//     You may not use the software except in compliance with the License. 
+// </license>
+//-----------------------------------------------------------------------
+
 #pragma once
 void SetProgressValue( int overallprogress );
 
@@ -6,14 +16,21 @@ void SetProgressValue( int overallprogress );
 ///		combines a path and a filename
 /// </summary>
  wchar_t* UrlOrPathCombine(const wchar_t* path, const wchar_t* name, wchar_t seperator) {
-	ASSERT_STRING_OK( path );
-	ASSERT_STRING_OK( name );
-	
+	if( IsNullOrEmpty(path) && IsNullOrEmpty(name) ) {
+		 return NewString();
+	}
+
+	if( IsNullOrEmpty(path) ){
+		 return DuplicateString(name);
+	}
+
+	if( IsNullOrEmpty(name) ){
+		 return DuplicateString(path);
+	}
+
 	if( path[SafeStringLengthInCharacters( path )-1] == seperator  ) {
-		DebugPrintf(L"COMBINE: [%s],[%s]", path, name );
 		return Sprintf( L"%s%s" , path, name );
 	}
-	DebugPrintf(L"COMBINE: [%s],[%s]+ %c", path, name, seperator );
 	return Sprintf(L"%s%c%s" , path, seperator, name );
 }
 
@@ -82,11 +99,8 @@ BOOL FileExists(const wchar_t* filePath) {
     WIN32_FILE_ATTRIBUTE_DATA fileData;
 
     if( IsNullOrEmpty(filePath) ) {
-		DebugPrintf(L"FileExists(%s) = FALSE", filePath);
         return 0;
 	}
-
-	DebugPrintf(L"FileExists(%s) = %s", filePath, GetFileAttributesEx( filePath, GetFileExInfoStandard, &fileData) ? L"TRUE" : L"FALSE");
 
     return GetFileAttributesEx( filePath, GetFileExInfoStandard, &fileData);
 }
@@ -196,7 +210,6 @@ BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
                     subject.
             */
             // wprintf_s(L"The file \"%s\" is signed and the signature was verified.\n", pwszSourceFile);
-			DebugPrintf(L"IsEmbeddedSignatureValid(%s) = TRUE ", pwszSourceFile );
 			return TRUE;
             break;
         
@@ -245,7 +258,6 @@ BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
             // wprintf_s(L"Error is: 0x%x.\n", lStatus);
             break;
     }
-	DebugPrintf(L"IsEmbeddedSignatureValid(%s) = FALSE ", pwszSourceFile );
     return FALSE;
 }
 
@@ -296,8 +308,6 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 		urlComponents.dwHostNameLength  = -1;
 		urlComponents.dwUrlPathLength   = -1;
 		urlComponents.dwExtraInfoLength = -1;
-
-		DebugPrintf(L"TRYING TO DOWNLOAD: [%s]", URL);
 
 		if(!WinHttpCrackUrl(URL, (DWORD)wcslen(URL), 0, &urlComponents)) {
 			OnDownloadProgress( DOWNLOAD_FAIL_BAD_URL , 0);
@@ -410,9 +420,7 @@ wchar_t* DownloadRelativeFile( const wchar_t* baseUrl, const wchar_t* filename ,
 	wchar_t* result = NULL;
 	wchar_t* url = NULL;
 	__try {
-		DebugPrintf(L"In DRF");
 		if( !IsNullOrEmpty(baseUrl)) {
-			DebugPrintf(L"In DRF2");
 			result = TempFileName(filename);
 
 			url = UrlOrPathCombine( baseUrl , filename, '/' );
@@ -470,7 +478,9 @@ wchar_t* ExtractFileFromMSI( const wchar_t* msiFilename, const wchar_t* binaryFi
 
 	wchar_t* result = NULL;
 	
-	ASSERT_NOT_NULL( msiFilename );
+	if( IsNullOrEmpty(msiFilename) ) {
+		return NULL;
+	}
 
 	__try { 
 		if( ERROR_SUCCESS != MsiOpenDatabase(msiFilename, MSIDBOPEN_READONLY, &packageDatabase) ) {
@@ -513,9 +523,9 @@ wchar_t* ExtractFileFromMSI( const wchar_t* msiFilename, const wchar_t* binaryFi
 	} __finally { 
 		if ( record ) 
 			MsiCloseHandle(record);
-		if ( record ) 
+		if ( view ) 
 			MsiCloseHandle(view);
-		if ( record ) 
+		if ( packageDatabase ) 
 			MsiCloseHandle(packageDatabase);
 
 		DeleteString(&query);
@@ -530,8 +540,6 @@ wchar_t* ExtractFileFromMSI( const wchar_t* msiFilename, const wchar_t* binaryFi
 BOOL AcquireFile_OnDownloadProgress(int downloadStatus, unsigned int progress ) {
 	// these are supposed to be pretty small, and we don't 
 	// really want to visually track the progress of downloading these files.
-
-	DebugPrintf(L"OnDownloadProgress : %d (%d)", downloadStatus, progress  );
 
 	if( downloadStatus < 0 ) {
 		LastDownloadStatus  = downloadStatus;
@@ -560,7 +568,9 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 	wchar_t* localizedFilename  = NULL;
 	wchar_t* url = NULL;
 
-	ASSERT_NOT_NULL(filename);
+	if( IsNullOrEmpty(filename) ) {
+		return NULL;
+	}
 	__try {
 		// split the filename parts
 		lcid = GetUserDefaultLCID();
@@ -574,7 +584,6 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 		
 		// is the localized file in the bootstrap folder?
 		result = UrlOrPathCombine( BootstrapFolder, localizedFilename, L'\\');
-		DebugPrintf(L"1 Testing: %s", result);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -582,7 +591,6 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// is the localized file in the msi folder?
 		result = UrlOrPathCombine( MsiFolder, localizedFilename, L'\\');
-		DebugPrintf(L"2 Testing: %s", result);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -590,7 +598,6 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// try the MSI for the localized file 
 		result = ExtractFileFromMSI( MsiFile, localizedFilename );
-		DebugPrintf(L"3 Testing: %s", result);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -602,7 +609,6 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// is the standard file in the bootstrap folder?
 		result = UrlOrPathCombine( MsiFolder, filename, L'\\');
-		DebugPrintf(L"4 Testing: %s", result);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -610,7 +616,6 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// is the standard file in the msi folder?
 		result = UrlOrPathCombine( BootstrapFolder, filename, L'\\');
-		DebugPrintf(L"5 Testing: %s", result);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -618,21 +623,17 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// try the MSI for the regular file 
 		result = ExtractFileFromMSI( MsiFile, filename );
-		DebugPrintf(L"6 Testing: %s", result);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
 		DeleteString(&result);
 
 		if( !searchOnline ) {
-			DebugPrintf(L"NOT SEARCHING ONLINE");
 			__leave; // aint gonna find it.
 		}
-		DebugPrintf(L"YUP SEARCHING ONLINE");
 
 
 		if( !IsNullOrEmpty(additionalDownloadServer) ) {
-			DebugPrintf(L"==> ONLINE Service: %s",additionalDownloadServer );
 			// try regular file off the bootstrap server
 			result = DownloadRelativeFile( additionalDownloadServer, filename , AcquireFile_OnDownloadProgress );
 			if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {

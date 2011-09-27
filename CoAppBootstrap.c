@@ -16,7 +16,7 @@
 #include <winhttp.h>
 #include <process.h>
 #include <wchar.h>
-#include <malloc.h>
+#include <malloc.h>	
 #include <winhttp.h>
 #include <winbase.h>
 #include <stdarg.h>
@@ -39,26 +39,6 @@
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 #define __WFUNCTION__ WIDEN(__FUNCTION__)
-
-#define EXIT_UNABLE_TO_DOWNLOAD_DOTNET           1
-#define EXIT_PACKAGE_FAILED_SIGNATURE_VALIDATION 2
-#define EXIT_ERROR_EXTRACTING_NEXT_BOOTSTRAP     3
-#define EXIT_NULL_POINTER						 4
-#define EXIT_ADMIN_RIGHTS_REQUIRED				 5
-#define EXIT_MEMORY_ALLOCATION_FAILURE			 6
-#define EXIT_INVALID_STRING						 7
-#define EXIT_STRING_PRINTF_ERROR				 8
-#define EXIT_UNABLE_TO_FIND_TEMPDIR			     9
-#define EXIT_UNKNOWN_COMPONENT_TYPE			     10
-#define EXIT_NO_MSI_COMMANDLINE					 11
-#define EXIT_UNABLE_TO_CREATE_DIRECTORY			 13
-
-#define EXIT_UNABLE_TO_ACQUIRE_RESOURCES			14
-
-#define ASSERT_NOT_NULL( pointer ) { if(!pointer) { TerminateApplicationWithError(EXIT_NULL_POINTER,L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__); } }
-#define ASSERT_STRING_SIZE( stringpointer ) { if(SafeStringLengthInCharacters(stringpointer)< 0) { TerminateApplicationWithError(EXIT_INVALID_STRING, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__); } }
-#define ASSERT_STRING_OK( stringpointer) ASSERT_NOT_NULL( stringpointer ); ASSERT_STRING_SIZE( stringpointer );
-
 #define SETPROGRESS			WM_USER+2
 
 // Global Data -------------------------------------------------------------------------------------------------------------------------------------
@@ -205,7 +185,7 @@ INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lP
 		case WM_CTLCOLORBTN:
 		case WM_CTLCOLORSTATIC: 
 		case WM_CTLCOLOREDIT:
-
+			
 			staticControl = (HDC) wParam;
 			if( hwnd == errorDialog && (lParam == (LPARAM)GetDlgItem( hwnd, IDC_X ) || lParam == (LPARAM)GetDlgItem( hwnd, IDC_CANCEL ))  ) {
 				SetBkColor(staticControl, RGB(18,115,170));
@@ -358,11 +338,11 @@ int ShowGUI( HINSTANCE hInstance ) {
 
 	resourceDll = AcquireFile(L"coapp.resources.dll", TRUE, NULL);
 	if( resourceDll == NULL ) {
-		TerminateApplicationWithError(EXIT_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to find or download CoApp.Resources.DLL");
+		TerminateApplicationWithError(IDS_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to find or download CoApp.Resources.DLL");
 	}
 
 	if( LoadResources(resourceDll) == FALSE ) {
-		TerminateApplicationWithError(EXIT_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to load resource from %s", resourceDll);
+		TerminateApplicationWithError(IDS_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to load resources");
 	}
 
 	// get the desktop window size
@@ -426,10 +406,6 @@ int ShowGUI( HINSTANCE hInstance ) {
 
 	return 0;
 }
-
-
-
-
 
 // 
 //   FUNCTION: IsRunAsAdmin()
@@ -594,7 +570,6 @@ HRESULT MonitorChainedInstaller( HANDLE process, void (*OnProgress)(wchar_t* ste
         ret= WaitForMultipleObjects(2, handles, FALSE, 500); // INFINITE ??
 		switch(ret) {
         case WAIT_OBJECT_0: { // process handle closed.  Maybe it blew up, maybe it's just really fast.  Let's find out.
-			DebugPrintf(L"WAIT_OBJECT_0");
             if ((mmioData->m_downloadFinished && mmioData->m_installFinished) == FALSE) { 
 				goto fin; // huh, not a good sign
             }
@@ -617,8 +592,6 @@ HRESULT MonitorChainedInstaller( HANDLE process, void (*OnProgress)(wchar_t* ste
         }		
     }
 fin:
-	
-	
 	if (mmioData->m_hrInstallFinished != S_OK) {
         result = mmioData->m_hrInstallFinished;
     }
@@ -642,7 +615,7 @@ int LaunchSecondStage() {
 	wchar_t* secondStage = AcquireFile(BootstrapperUIFilename,TRUE,NULL);
 
 	if( secondStage == NULL) {
-		TerminateApplicationWithError(EXIT_ERROR_EXTRACTING_NEXT_BOOTSTRAP, GetString(IDS_UNABLE_TO_FIND_SECOND_STAGE, L"Can't find second stage bootstrap."));
+		TerminateApplicationWithError(IDS_UNABLE_TO_FIND_SECOND_STAGE, L"Can't find second stage bootstrap.");
 	}
 	
 	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
@@ -713,7 +686,7 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
 	}
 
 	if(IsNullOrEmpty(destinationFilename) ) {
-		TerminateApplicationWithError(EXIT_UNABLE_TO_DOWNLOAD_DOTNET, GetString(IDS_UNABLE_TO_DOWNLOAD_FRAMEWORK, L"Unable to download the .NET Framework 4.0 Installer (Required)") );
+		TerminateApplicationWithError(IDS_UNABLE_TO_DOWNLOAD_FRAMEWORK, L"Unable to download the .NET Framework 4.0 Installer (Required)");
 	}
 
 	__try {
@@ -731,7 +704,7 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
 
 		if( MonitorChainedInstaller(ProcInfo.hProcess, OnProgress) != S_OK ) {
 			// hmm. bailed out of installing .NET
-			TerminateApplicationWithError(EXIT_UNABLE_TO_DOWNLOAD_DOTNET, GetString(IDS_FRAMEWORK_INSTALL_CANCELLED, L"Cancelled Installation."));
+			TerminateApplicationWithError(IDS_FRAMEWORK_INSTALL_CANCELLED, L"Cancelled Installation.");
 			__leave;
 		}
 
@@ -746,7 +719,7 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
 			return LaunchSecondStage();
 		}
 		else {
-			TerminateApplicationWithError(EXIT_UNABLE_TO_DOWNLOAD_DOTNET, GetString(IDS_SOMETHING_ODD, L"Unknown Error."));
+			TerminateApplicationWithError(IDS_SOMETHING_ODD, L"Unknown Error.");
 		}
 	} __finally {
 		ExitProcess(0);
@@ -772,7 +745,7 @@ void RunAsAdmin(const wchar_t* pszCmdLine) {
 		if (dwError == ERROR_CANCELLED) {
 			// The user refused the elevation.
 			// Do nothing ...
-			TerminateApplicationWithError(EXIT_ADMIN_RIGHTS_REQUIRED , GetString(IDS_REQUIRES_ADMIN_RIGHTS,L"Administrator rights are required."));
+			TerminateApplicationWithError(IDS_REQUIRES_ADMIN_RIGHTS,L"Administrator rights are required.");
 		}
 	}
 }
@@ -797,7 +770,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, wchar_t* pszC
 	}
 
 	if( IsNullOrEmpty(MsiFile) ) {
-		TerminateApplicationWithError(EXIT_NO_MSI_COMMANDLINE, GetString(IDS_MISSING_MSI_FILE_ON_COMMANDLINE,L"Missing MSI filename on command line."));
+		TerminateApplicationWithError(IDS_MISSING_MSI_FILE_ON_COMMANDLINE,L"Missing MSI filename on command line.");
 	}
 
 	if( *MsiFile == L'"' ) {
@@ -846,11 +819,10 @@ typedef struct TDialogTemplate {
 } DialogTemplate;
  
 
-void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... ) {
-	
-	wchar_t message[BUFSIZE*4];
-	wchar_t fullMessage[BUFSIZE*4];
-	va_list args;
+void TerminateApplicationWithError(int errorLevel, wchar_t* defaultText) {
+	const wchar_t* message;
+	wchar_t* help;
+
 	MSG  msg;
 	int status;
 	HWND newControl;
@@ -873,10 +845,8 @@ void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... )
 		}
 	}
 
-	va_start(args, format);
-	StringCbVPrintf(message,BUFSIZE*4,format,args);
-	StringCbPrintf( fullMessage, BUFSIZE*4,L"%s%d",HelpUrl,errorLevel);
-
+	message = GetString(errorLevel, defaultText);
+	help = Sprintf(L"%s%d",HelpUrl,errorLevel);
 	ErrorLevel = errorLevel;
 
 	if( StatusDialog != NULL ) {
@@ -930,7 +900,7 @@ void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... )
 	newControl = CreateWindowEx(0, L"STATIC", GetString( IDS_FOR_ASSISTANCE, L"For assistance you can visit"), WS_CHILD | WS_VISIBLE | SS_RIGHT, 99,310,180,20,errorDialog, (HMENU)(IDC_STATIC1+54), (HINSTANCE)ApplicationInstance , NULL);
 	SendMessage( newControl, WM_SETFONT, (WPARAM)mediumTextFont,TRUE);
 
-	newControl = CreateWindowEx(0, L"STATIC", fullMessage, WS_CHILD | WS_VISIBLE | SS_NOTIFY, 283,310,360,20,errorDialog, (HMENU)(IDC_STATIC1+53), (HINSTANCE)ApplicationInstance , NULL);
+	newControl = CreateWindowEx(0, L"STATIC", help, WS_CHILD | WS_VISIBLE | SS_NOTIFY, 283,310,360,20,errorDialog, (HMENU)(IDC_STATIC1+53), (HINSTANCE)ApplicationInstance , NULL);
 	SendMessage( newControl, WM_SETFONT, (WPARAM)mediumUnderlinedTextFont,TRUE);
 
 	newControl = CreateWindowEx(0, L"button", GetString(IDS_CANCEL, L"Cancel"), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, 650, 0,32,32,errorDialog, (HMENU) IDC_X, (HINSTANCE)ApplicationInstance , NULL);

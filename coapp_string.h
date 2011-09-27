@@ -1,6 +1,6 @@
 #pragma once
 
-void TerminateApplicationWithError(int errorLevel , const wchar_t* format, ... );
+void TerminateApplicationWithError(int errorLevel , wchar_t* defaultString );
 
 size_t SafeStringLengthInCharacters(const wchar_t* text ) {
 	size_t stringLength;
@@ -17,8 +17,6 @@ BOOL IsNullOrEmpty(const wchar_t* text) {
 
 wchar_t* NewString() {
 	wchar_t* result = (wchar_t*) malloc(BUFSIZE*sizeof(wchar_t));
-	ASSERT_NOT_NULL( result );
-
 	ZeroMemory(result, BUFSIZE*sizeof(wchar_t));
 	return result;
 }
@@ -36,9 +34,10 @@ wchar_t* DuplicateString( const wchar_t* text ) {
 	size_t size;
 	wchar_t* result = NULL;
 	
-	ASSERT_NOT_NULL( text );
-	ASSERT_STRING_SIZE( text );
-
+	if( IsNullOrEmpty(text ) ) {
+		return NewString();
+	}
+	
 	size = SafeStringLengthInCharacters(text);
 	
 	result = NewString();
@@ -52,24 +51,25 @@ wchar_t* Sprintf(const wchar_t* format, ... ) {
 	wchar_t* result = NewString();
 	va_list args;
 	
-	ASSERT_STRING_OK(format);
+	if( IsNullOrEmpty(format) ) {
+		return NewString(); 
+	}
+
 	va_start(args, format);
 	
 	if( SUCCEEDED(StringCbVPrintf(result,BUFSIZE,format, args) ) ) {
 		va_end(args);
 		return result;	
 	}
-	TerminateApplicationWithError(EXIT_STRING_PRINTF_ERROR, L"Internal Error: An unexpected error has ocurred in function:" __WFUNCTION__);
-
 	return NULL;
 }
 
+#if FALSE
 void _DebugPrintf(const wchar_t* format, ...) {
     // Had to remove underscore in valist & vastart for formatting
 	wchar_t* result = NewString();
 	va_list args;
 	
-	ASSERT_STRING_OK(format);
 	va_start(args, format);
 	
 	if( SUCCEEDED(StringCbVPrintf(result,BUFSIZE,format, args) ) ) {
@@ -79,7 +79,7 @@ void _DebugPrintf(const wchar_t* format, ...) {
 }
 
 #define DebugPrintf(format, ... ) _DebugPrintf(L" [%s] => [%d] %s", __WFUNCTION__, __LINE__ , Sprintf( format, __VA_ARGS__ ) );
-
+#endif
 
 const wchar_t* GetString( UINT resourceId, const wchar_t* defaultString ) {
 	wchar_t* result = NewString();
