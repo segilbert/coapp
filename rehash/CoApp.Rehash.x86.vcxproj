@@ -87,10 +87,7 @@
       <AdditionalDependencies>$(DDK_CRT);kernel32.lib;user32.lib;Advapi32.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
-    <PostBuildEvent>
-      <Command>start "digital signing" /wait $(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe --sign-only "$(TargetPath)"
-copy /Y "$(TargetPath)" "$(SolutionDir)..\solution\ext\rehash\"</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Rehash.c" />

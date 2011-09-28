@@ -484,6 +484,40 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         /// <summary>
+        /// This makes sure a file is writable by moving the original, copying this one back
+        /// then deleting the original (or at least tryinghardtodelete the original).
+        /// 
+        /// This allows us to modify locked files in place.
+        /// </summary>
+        /// <param name="filename"></param>
+        public static void TryHardToMakeFileWriteable(this string filename) {
+            filename = filename.GetFullPath();
+
+            if( File.Exists(filename )) {
+                var tmpFilename = Path.GetTempFileName();
+                File.Delete(tmpFilename);
+                File.Move(filename, tmpFilename);
+                File.Copy(tmpFilename, filename);
+                TryHardToDeleteFile(tmpFilename);
+            }
+        }
+
+        /// <summary>
+        /// This makes a temporary copy of a file that we can work with.
+        /// </summary>
+        /// <param name="filename"></param>
+        public static string CreateBackupWorkingCopy(this string filename) {
+            filename = filename.GetFullPath();
+            if (File.Exists(filename)) {
+                var tmpFilename = Path.GetTempFileName();
+                File.Delete(tmpFilename);
+                File.Copy(filename, tmpFilename);
+                return tmpFilename;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Tries the hard to delete directory.
         /// 
         /// If it can't, it will move the folder and mark it for deletion on reboot.
