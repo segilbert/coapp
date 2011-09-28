@@ -1,8 +1,9 @@
 @echo off
-:release-sign.cmd
+setlocal
 cd %~dp0
-start /wait %~dp0\..\tools\simplesigner\simplesigner --sign-only "..\..\output\any\release\bin\bootstrap.exe"
-start /wait %~dp0\..\tools\simplesigner\simplesigner --sign-only "..\..\output\any\release\bin\detoured-*.dll"
-start /wait %~dp0\..\tools\simplesigner\simplesigner ..\..\output\any\release\bin\*.exe ..\..\output\any\release\bin\*.dll
 
-
+cscript //E:JScript release-sign-bootstrap.js
+cscript //E:JScript release-sign-detours.js
+cscript //E:JScript release-sign-devtools.js
+cscript //E:JScript release-sign-toolkit.js
+cscript //E:JScript release-sign-trace.js

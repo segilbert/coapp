@@ -60,36 +60,38 @@ function New( staticObject ) {
     return Function.prototype.Extend.call( {}, staticObject );
 }
 
-String.prototype.Format = function() {
+String.prototype.Format = function () {
     var args = (arguments.length == 1 && typeof (arguments[0]) == "object") ? arguments[0] : arguments;
-
+    var tmpString = "";
+    var collection;
     var result = this;
     var z;
+    var iter;
 
-    while( z = /\[FOR\:(.*?)\](.*)\[\/FOR\]/.exec(result) ) {
-        var tmpString="";
+    while (z = /\[FOR\:(.*?)\](.*)\[\/FOR\]/.exec(result)) {
+        tmpString = "";
         try {
-            var collection = eval(z[1]);
-            for(var iter=0;iter<collection.length;iter++)
-                tmpString += z[2].replace(/\$iter/g, iter )+"\r\n";
+            collection = eval(z[1]);
+            for (iter = 0; iter < collection.length; iter++)
+                tmpString += z[2].replace(/\$iter/g, iter) + "\r\n";
         }
-        catch(e) {}
-        result = result.replace(z[0], tmpString );
+        catch (e) { }
+        result = result.replace(z[0], tmpString);
     }
 
-    while( z = /\[FOREACH\:(.*?)\](.*)\[\/FOREACH\]/.exec(result) ) {
-        var tmpString="";
+    while (z = /\[FOREACH\:(.*?)\](.*)\[\/FOREACH\]/.exec(result)) {
+        tmpString = "";
         try {
-            var collection = eval(z[1]);
-            for(var iter in collection)
-                tmpString += z[2].replace(/\$iter/g, iter )+"\r\n";
+            collection = eval(z[1]);
+            for (iter in collection)
+                tmpString += z[2].replace(/\$iter/g, iter) + "\r\n";
         }
-        catch(e) {}
-        result = result.replace(z[0], tmpString );
+        catch (e) { }
+        result = result.replace(z[0], tmpString);
     }
-    
-    while (z = /{(.*?)}/.exec(result)) { 
-        try { result = result.replace(z[0], isNaN(z[1]) ? eval(z[1]) : (args[z[1]]||"??<" + z[1] + ">??" )); }
+
+    while (z = /{(.*?)}/.exec(result)) {
+        try { result = result.replace(z[0], isNaN(z[1]) ? eval(z[1]) : (args[z[1]] || "??<" + z[1] + ">??")); }
         catch (x) { result = result.replace(z[0], "??<" + z[1] + ">??"); }
     }
     return result.replace(/\?\?\</g, "{").replace(/\>\?\?/g, "}");
@@ -158,14 +160,14 @@ function $$(cmdline) {
             }  
                 
         }
-        $$.WScript.Sleep(10);
+        $$.WScript.Sleep(1);
     }
     
     $ERRORLEVEL = proc.ExitCode;
     }
     catch(exc) {
         print ("Error Message: " + exc.message);
-        print ("Error Code: " + (exc.number & 0xFFFF))
+        print("Error Code: " + (exc.number & 0xFFFF));
         print ("Error Name: " + exc.name);
     }
     return $StdOutString = $StdOut.join("\r\n");
@@ -236,7 +238,6 @@ $$.Extend( {
             print ("Error Name: " + exc.name);
         }
         return $StdOutString = $StdOut.join("\r\n");
-    
     },
     
     RunAsync : function(cmdline) {
@@ -395,7 +396,7 @@ var BinaryFile = {
 
         while ((len = result.length) > 1) {
             var tmpArr = [];
-            for (var pos = 0; pos < len; pos += 2)
+            for (pos = 0; pos < len; pos += 2)
                 tmpArr.push(pos + 1 == len ? result[pos] : '' + result[pos] + result[pos + 1]);
             result = tmpArr;
         }
@@ -827,10 +828,10 @@ function folderExists(folder) {
 
 function folderIsEmpty(folder) {
 	var fol = $$.fso.GetFolder(FormatArguments(arguments))
-	,	contents = 0
-	;
-	for( var fc = new Enumerator(fol.Files); !fc.atEnd(); fc.moveNext() ) contents++;
-	for( var fc = new Enumerator(fol.SubFolders); !fc.atEnd(); fc.moveNext() ) contents++;
+	, contents = 0;
+    var fc;
+	for( fc = new Enumerator(fol.Files); !fc.atEnd(); fc.moveNext() ) contents++;
+	for( fc = new Enumerator(fol.SubFolders); !fc.atEnd(); fc.moveNext() ) contents++;
 	
 	return (!contents);
 }
@@ -906,13 +907,14 @@ function dir(path, rxFilter) {
     var f = $$.fso.GetFolder(FormatArguments(path, arguments));
     if (f) {
         var result = [];
-        for (var e = new Enumerator(f.Files); !e.atEnd(); e.moveNext()) {
+        var e;
+        for (e = new Enumerator(f.Files); !e.atEnd(); e.moveNext()) {
             var txt = "" + e.item();
             if (rxFilter.exec(txt))
                 result[txt] = $$.fso.GetFile(txt); // index is filename, 
         }
         
-        for( var e = new Enumerator(f.SubFolders); !e.atEnd(); e.moveNext()) {
+        for( e = new Enumerator(f.SubFolders); !e.atEnd(); e.moveNext()) {
             for(var each in set = dir( ""+e.item(), rxFilter ) )
                 result[each] = set[each];
         }
@@ -1114,8 +1116,8 @@ function copyAsHardlink(src, dest) {
 }
 
 function getRelativePath( fromDir, toFileOrDir ) {
-	var fromDir = ( $$.fso.GetAbsolutePathName( fromDir ) ).split( '\\' );
-	var toFileOrDir = ( $$.fso.GetAbsolutePathName( toFileOrDir ) ).split( '\\' );
+	fromDir = ( $$.fso.GetAbsolutePathName( fromDir ) ).split( '\\' );
+	toFileOrDir = ( $$.fso.GetAbsolutePathName( toFileOrDir ) ).split( '\\' );
 	
 	// find out how much they have in common
 	var commonDepth = 0;
