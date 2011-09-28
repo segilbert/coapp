@@ -111,12 +111,7 @@
     <Manifest>
       <AdditionalManifestFiles>CoAppBootstrap.manifest.xml</AdditionalManifestFiles>
     </Manifest>
-    <PostBuildEvent>
-      <Command>REM $(SolutionDir)..\solution\tools\upx.exe -9 "$(TargetPath)"
-start "digital signing" /wait $(SolutionDir)..\solution\tools\simplesigner\simplesigner.exe --sign-only "$(TargetPath)"
-copy /Y "$(TargetPath)" "$(SolutionDir)..\solution\ext\lib\bootstrap.exe"
-</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CoAppBootstrap.c">
