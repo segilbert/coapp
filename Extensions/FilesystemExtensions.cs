@@ -534,7 +534,7 @@ namespace CoApp.Toolkit.Extensions {
                 }
             }
 
-            if (File.Exists(directoryName)) {
+            if (Directory.Exists(directoryName)) {
                 try {
                     // move the folder to the tmp folder (which can be done even if locked)
                     // and tell the OS to remove it next reboot.
