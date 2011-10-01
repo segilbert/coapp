@@ -49,14 +49,13 @@ const wchar_t* DotNetFullInstallerUrl = L"http://download.microsoft.com/download
 const wchar_t* DotNetFullInstallerFilename = L"dotNetFx40_Full_x86_x64.exe";
 
 const wchar_t* dot_net_regkey = L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full#Install";
-const wchar_t* BootstrapperUIFilename = L"BootstrapperUI.exe";
+const wchar_t* BootstrapperUIFilename = L"bootstrapperui.exe";
 const wchar_t* eventName = L"/Global/coappbootstrapper";
 const wchar_t* sectionName = L"coappbootstrapper";
 const wchar_t* CoAppServerUrl = L"http://coapp.org/resources/";
 const wchar_t* HelpUrl = L"http://coapp.org/help/"; 
 const wchar_t* BootstrapServerUrl = NULL;
 const wchar_t* BootstrapServerHelpUrl = NULL;
-
 
 HANDLE ApplicationInstance = 0;
 HANDLE WorkerThread = NULL;
@@ -86,8 +85,6 @@ HICON circle_light;
 HICON ximg;
 HICON ximg_light;
 int ErrorLevel = 0;
-
-int LastDownloadStatus; 
 // -------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -125,29 +122,28 @@ typedef struct MmioDataStructure {
     WCHAR m_szEventName[MAX_PATH];         // Event that chainer creates and chainee opens to sync communications.
 };
 
-// This is called by the chainer to force the chained setup to be cancelled
-void AbortChainedInstaller() {
-    //Don't do anything if it is invalid.
-    if (NULL == mmioData) {
-        return;
-    }
+void Cancel() {
+    IsShuttingDown = TRUE;
 
-    // set cancel flags
-    mmioData->m_downloadAbort= TRUE;
-    mmioData->m_installAbort = TRUE;
+    if (NULL != mmioData) {
+		// set cancel flags if we have a chainer going.
+		mmioData->m_downloadAbort= TRUE;
+		mmioData->m_installAbort = TRUE;
+    }
 }
 
 void Shutdown() {
-    IsShuttingDown = TRUE;
-	AbortChainedInstaller();
-    PostQuitMessage(0);
+	Cancel();
+	PostQuitMessage(0);
 }
 
 void SetProgressValue( int overallprogress ) {
-	if( overallprogress  > 512 ) {
-		overallprogress = 512;
+	if( overallprogress  > 288 ) {
+		overallprogress = 288;
 	}
 	PostMessage(StatusDialog, SETPROGRESS, (WPARAM)(overallprogress ),0 );
+	InvalidateRect(GetDlgItem(StatusDialog, IDC_PROGRESS2), NULL, FALSE );
+	UpdateWindow(StatusDialog);
 	Sleep(20);
 }
 
@@ -238,7 +234,16 @@ INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lP
 
 					if( !Ready|| MessageBox(hwnd, GetString(IDS_OK_TO_CANCEL,  L"Are you sure you would like to cancel?"), GetString(IDS_CANCEL, L"Cancel"), MB_ICONEXCLAMATION | MB_YESNO ) == IDYES ) { 
 						Ready = FALSE;
-						Shutdown();
+						// after they click, if we are still monitoring the installer, we really should 
+						// wait for that to clean up (otherwise it keeps going.)
+						hwnd = GetDlgItem(StatusDialog, IDC_STATICTEXT3);
+						SetWindowText(hwnd, GetString(IDS_CANCELLING, L"Cancelling..."));
+						InvalidateRect(hwnd, NULL, FALSE );
+						UpdateWindow(StatusDialog);
+
+						
+
+						Cancel();
 					}
 					return TRUE;
 				break;
@@ -252,13 +257,24 @@ INT_PTR CALLBACK DialogProc (HWND hwnd,  UINT message, WPARAM wParam,  LPARAM lP
 		case WM_CLOSE:
 			if( !Ready || MessageBox(hwnd, GetString(IDS_OK_TO_CANCEL,  L"Are you sure you would like to cancel?"), GetString(IDS_CANCEL, L"Cancel"), MB_ICONEXCLAMATION | MB_YESNO ) == IDYES ) { 
 				Ready = FALSE;
-				Shutdown();
-				DestroyWindow (hwnd);
+				// after they click, if we are still monitoring the installer, we really should 
+				// wait for that to clean up (otherwise it keeps going.)
+				hwnd = GetDlgItem(StatusDialog, IDC_STATICTEXT3);
+				SetWindowText(hwnd, GetString(IDS_CANCELLING, L"Cancelling..."));
+				InvalidateRect(hwnd, NULL, FALSE );
+				UpdateWindow(StatusDialog);
+
+				Cancel();
 			}
 			return TRUE;
 
 		case WM_INITDIALOG:
 			return TRUE;
+			break;
+
+		case WM_NCHITTEST:
+			SetWindowLong(hwnd,DWL_MSGRESULT,(LONG)HTCAPTION);
+			return HTCAPTION;
 			break;
 
 		case WM_DRAWITEM:
@@ -333,16 +349,17 @@ int ShowGUI( HINSTANCE hInstance ) {
 
 	HANDLE mediumTextFont;
 	HANDLE bigTextFont;
-
 	RECT rect;
 
-	resourceDll = AcquireFile(L"coapp.resources.dll", TRUE, NULL);
+	resourceDll = AcquireFile(L"CoApp.Resources.dll", TRUE, NULL);
 	if( resourceDll == NULL ) {
 		TerminateApplicationWithError(IDS_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to find or download CoApp.Resources.DLL");
+		return 0;
 	}
 
 	if( LoadResources(resourceDll) == FALSE ) {
 		TerminateApplicationWithError(IDS_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to load resources");
+		return 0;
 	}
 
 	// get the desktop window size
@@ -368,13 +385,12 @@ int ShowGUI( HINSTANCE hInstance ) {
 	// bitmap = LoadBitmap(hInstance, MAKEINTRESOURCE(IDB_BITMAP_LOGO));
 	logoControl = CreateWindowEx(0, L"STATIC", L"", WS_CHILD | SS_BITMAP | WS_VISIBLE, (680-111)/2, 255,111,111,StatusDialog, NULL, hInstance , NULL);
 	SendMessage(logoControl , STM_SETIMAGE, (WPARAM)IMAGE_BITMAP,(LPARAM)logo);
-	
 
 	// move the progress bar into the righ tspot.
-	SetWindowPos(GetDlgItem( StatusDialog, IDC_PROGRESS2), NULL, 65,200,550 , 30, SWP_SHOWWINDOW);
+	SetWindowPos(GetDlgItem( StatusDialog, IDC_PROGRESS2), HWND_TOP, 65,200,550 , 30, SWP_SHOWWINDOW);
 
-	// set progressbar to 0-512
-	SendMessage(GetDlgItem( StatusDialog, IDC_PROGRESS2), PBM_SETRANGE, 0, MAKELPARAM(0,512) );
+	// set progressbar to 0-288 (32(download) + 256(installer)) 
+	SendMessage(GetDlgItem( StatusDialog, IDC_PROGRESS2), PBM_SETRANGE, 0, MAKELPARAM(0,288) );
 	SetProgressValue( 1 );
 
 	// Large Text String (on top of images)
@@ -406,58 +422,6 @@ int ShowGUI( HINSTANCE hInstance ) {
 
 	return 0;
 }
-
-// 
-//   FUNCTION: IsRunAsAdmin()
-//
-//   PURPOSE: The function checks whether the current process is run as 
-//   administrator. In other words, it dictates whether the primary access 
-//   token of the process belongs to user account that is a member of the 
-//   local Administrators group and it is elevated.
-//
-//   RETURN VALUE: Returns TRUE if the primary access token of the process 
-//   belongs to user account that is a member of the local Administrators 
-//   group and it is elevated. Returns FALSE if the token does not.
-//
-//   EXAMPLE CALL:
-//         if (IsRunAsAdmin())
-//             wprintf (L"Process is run as administrator\n");
-//         else
-//             wprintf (L"Process is not run as administrator\n");
-BOOL IsRunAsAdmin() {
-    BOOL fIsRunAsAdmin = FALSE;
-    DWORD dwError = ERROR_SUCCESS;
-    PSID pAdministratorsGroup = NULL;
-
-	__try {
-		// Allocate and initialize a SID of the administrators group.
-		SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-		if (!AllocateAndInitializeSid(&NtAuthority,  2,  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS,  0, 0, 0, 0, 0, 0, &pAdministratorsGroup)) {
-			dwError = GetLastError();
-			__leave;
-		}
-
-		// Determine whether the SID of administrators group is enabled in 
-		// the primary access token of the process.
-		if (!CheckTokenMembership(NULL, pAdministratorsGroup, &fIsRunAsAdmin)) {
-			dwError = GetLastError();
-			__leave;
-		}
-	} __finally { 
-		// Centralized cleanup for all allocated resources.
-		if (pAdministratorsGroup) {
-			FreeSid(pAdministratorsGroup);
-			pAdministratorsGroup = NULL;
-		}
-
-		// Throw the error if something failed in the function.
-		if (ERROR_SUCCESS != dwError) {
-			fIsRunAsAdmin = FALSE;
-		}
-	}
-    return fIsRunAsAdmin;
-}
-
 
 void* GetRegistryValue(const wchar_t* keyname, const wchar_t* valueName,DWORD expectedDataType  ) {
 	LSTATUS status;
@@ -556,7 +520,7 @@ void SetupMonitor() {
 }
 
 // Called by the chainer to start the chained setup - this blocks untils the setup is complete
-HRESULT MonitorChainedInstaller( HANDLE process, void (*OnProgress)(wchar_t* step,unsigned int progress)) {
+HRESULT MonitorChainedInstaller( HANDLE process ) {
     HANDLE handles[2];
 	int totalProgress = 0;
 	HRESULT result;
@@ -578,10 +542,10 @@ HRESULT MonitorChainedInstaller( HANDLE process, void (*OnProgress)(wchar_t* ste
 
 		case WAIT_TIMEOUT:
         case WAIT_OBJECT_0 + 1:
-			totalProgress = (int)mmioData->m_downloadProgressSoFar + (int)mmioData->m_installProgressSoFar; // (gives a number between 0-85%)
-			if( totalProgress > 512 ) 
-				totalProgress = 512;
-			OnProgress(mmioData->m_szCurrentItemStep, totalProgress);
+			totalProgress = ((int)mmioData->m_downloadProgressSoFar/8) + (int)mmioData->m_installProgressSoFar; // (gives a number between 0-85%)
+			if( totalProgress > 288 ) 
+				totalProgress = 288;
+			SetProgressValue( totalProgress );
 			break;
 
 		case WAIT_FAILED:
@@ -616,6 +580,7 @@ int LaunchSecondStage() {
 
 	if( secondStage == NULL) {
 		TerminateApplicationWithError(IDS_UNABLE_TO_FIND_SECOND_STAGE, L"Can't find second stage bootstrap.");
+		return -1;
 	}
 	
 	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO) );
@@ -631,10 +596,6 @@ int LaunchSecondStage() {
 
     ExitProcess(0);
     return 0;
-}
-
-void OnProgress(wchar_t* step, unsigned int progress ) {
-	SetProgressValue( progress );
 }
 
 void SetupMonitor();
@@ -679,14 +640,13 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
 		if(!IsNullOrEmpty(destinationFilename) ) {
 			__leave;
 		}
-
-		
 	} __finally {
 
 	}
 
 	if(IsNullOrEmpty(destinationFilename) ) {
 		TerminateApplicationWithError(IDS_UNABLE_TO_DOWNLOAD_FRAMEWORK, L"Unable to download the .NET Framework 4.0 Installer (Required)");
+		return 1;
 	}
 
 	__try {
@@ -702,9 +662,12 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
 		// launch the second-stage-bootstrapper.
 		CreateProcess( destinationFilename, commandLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcInfo );
 
-		if( MonitorChainedInstaller(ProcInfo.hProcess, OnProgress) != S_OK ) {
+		if( MonitorChainedInstaller(ProcInfo.hProcess) != S_OK ) {
 			// hmm. bailed out of installing .NET
-			TerminateApplicationWithError(IDS_FRAMEWORK_INSTALL_CANCELLED, L"Cancelled Installation.");
+			if( IsShuttingDown ) {
+				Shutdown();
+			}
+			TerminateApplicationWithError(IDS_FRAMEWORK_INSTALL_CANCELLED, L"The installation was abnormally cancelled.");
 			__leave;
 		}
 
@@ -712,7 +675,7 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
 		if( IsShuttingDown )
 			__leave;
 
-		SetProgressValue( 100 );
+		SetProgressValue( 288 );
 
 		// check to see if .NET 4.0 is installed.
 		if( RegistryKeyPresent(dot_net_regkey) ) {
@@ -720,6 +683,7 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
 		}
 		else {
 			TerminateApplicationWithError(IDS_SOMETHING_ODD, L"Unknown Error.");
+			return 1;
 		}
 	} __finally {
 		ExitProcess(0);
@@ -730,23 +694,48 @@ unsigned __stdcall InstallNetFramework( void* pArguments ){
     return 0;
 }
 
-void RunAsAdmin(const wchar_t* pszCmdLine) {
+void ElevateSelf(const wchar_t* pszCmdLine) {
+	SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
+    PSID psid = NULL;
+	BOOL isAdmin = FALSE;
 	SHELLEXECUTEINFO sei;
-	DWORD dwError;
-	sei.lpVerb = L"runas";
-		
-	sei.lpFile = BootstrapPath;
-	sei.lpParameters = pszCmdLine;
-	sei.hwnd = NULL;
-	sei.nShow = SW_NORMAL;
+	wchar_t modulePath[MAX_PATH];  
+	wchar_t* newPath;
+	int rc;
 
-	if (!ShellExecuteEx(&sei)) {
-		dwError = GetLastError();
-		if (dwError == ERROR_CANCELLED) {
-			// The user refused the elevation.
-			// Do nothing ...
-			TerminateApplicationWithError(IDS_REQUIRES_ADMIN_RIGHTS,L"Administrator rights are required.");
+	__try {
+		if( AllocateAndInitializeSid(&ntAuth,  2,  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS,  0, 0, 0, 0, 0, 0, &psid) && CheckTokenMembership(NULL, psid, &isAdmin ) && isAdmin ) {
+			__leave; //Yep, we're an admin
 		}
+
+		ZeroMemory(&sei, sizeof(SHELLEXECUTEINFO) );
+		GetModuleFileName(NULL, modulePath, MAX_PATH);
+		// make sure path has a .EXE on the end.
+		DebugPrintf(L"MODULE=%s",modulePath);
+		
+
+		newPath = TempFileName(Sprintf(L"%s.exe",GetFilenameFromPath(modulePath)));
+		DebugPrintf(L"NEWPATH=%s",newPath);
+
+		rc = CopyFile(modulePath, newPath, FALSE);
+		DebugPrintf(L"copyfile: %d", rc );
+
+		sei.lpFile = newPath;
+		sei.lpVerb = L"runas";
+		sei.lpParameters = pszCmdLine;
+		sei.hwnd = GetForegroundWindow();
+		sei.nShow = SW_NORMAL;
+		sei.cbSize = sizeof(SHELLEXECUTEINFO);
+		
+		if (!ShellExecuteEx(&sei)) {
+			rc = GetLastError();
+			DebugPrintf(L"FAILURE: %d", rc );
+			TerminateApplicationWithError(IDS_REQUIRES_ADMIN_RIGHTS,L"Administrator rights are required.");
+			return;
+		}
+		ExitProcess(0);
+	} __finally {
+		FreeSid(psid);
 	}
 }
 
@@ -755,6 +744,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, wchar_t* pszC
     INITCOMMONCONTROLSEX iccs;
     ApplicationInstance = hInstance;
 
+	// Elevate the process if it is not run as administrator.
+	ElevateSelf(pszCmdLine);
+
 	// get the path of this process
 	BootstrapPath = NewString();
 	GetModuleFileName(NULL, BootstrapPath, BUFSIZE);
@@ -762,15 +754,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, wchar_t* pszC
 	
 	BootstrapFolder = GetFolderFromPath(BootstrapPath);
 
-	// Elevate the process if it is not run as administrator.
-	if (!IsRunAsAdmin()){
-		// Launch itself as administrator.
-		RunAsAdmin(pszCmdLine);
-		return 0;
-	}
-
 	if( IsNullOrEmpty(MsiFile) ) {
 		TerminateApplicationWithError(IDS_MISSING_MSI_FILE_ON_COMMANDLINE,L"Missing MSI filename on command line.");
+		return 1;
 	}
 
 	if( *MsiFile == L'"' ) {
@@ -801,7 +787,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, wchar_t* pszC
     InitCommonControlsEx(&iccs);
 	BootstrapServerUrl = (wchar_t*)GetRegistryValue(L"Software\\CoApp", L"BootstrapServer",REG_SZ);
 
-    // not there? install it.--- start worker thread
+    // .NET 4.0 not there? install it.--- start worker thread
     WorkerThread = (HANDLE)_beginthreadex(NULL, 0, &InstallNetFramework, NULL, 0, &WorkerThreadId);
 	
     // And, show the GUI
@@ -837,9 +823,12 @@ void TerminateApplicationWithError(int errorLevel, wchar_t* defaultText) {
 
 	wchar_t* resourceDll;
 
+	// stop doing anything we were doing!
+	IsShuttingDown = TRUE;
+
 	if( resourceModule == NULL ) { 
 		// if the resourceModule isn't loaded, and can't be, it's not *super* critical... 
-		resourceDll = AcquireFile(L"coapp.resources.dll", TRUE, NULL);
+		resourceDll = AcquireFile(L"CoApp.Resources.dll", TRUE, NULL);
 		if( resourceDll != NULL ) { 
 			LoadResources(resourceDll);
 		}
@@ -852,7 +841,6 @@ void TerminateApplicationWithError(int errorLevel, wchar_t* defaultText) {
 	if( StatusDialog != NULL ) {
 		ShowWindow( StatusDialog, SW_HIDE);
 	}
-
 
 	//-----------------
 	// Create Dialog

@@ -62,7 +62,7 @@ wchar_t* UniqueTempFileName(const wchar_t* name,const wchar_t* extension) {
 }
 
 wchar_t* TempFileName(const wchar_t* name) {
-DWORD returnValue = 0;
+	DWORD returnValue = 0;
 	wchar_t tempFolderPath[BUFSIZE];
 
 	returnValue = GetTempPath(BUFSIZE,  tempFolderPath); 
@@ -89,12 +89,17 @@ wchar_t* GetFolderFromPath( const wchar_t* path ) {
 	return result;
 }
 
-///
-wchar_t* GetModuleFullPath( HMODULE module ) {
-	wchar_t* result = NewString();
-	GetModuleFileName(module, result, BUFSIZE);
-	return result;
+const wchar_t* GetFilenameFromPath( const wchar_t* path ) {
+	const wchar_t* position = NULL;
+	int length= wcslen(path);
+
+	position = path+length;
+	while( position >= path && position[0] != L'\\')
+		position--;
+
+	return position+1;
 }
+
 BOOL FileExists(const wchar_t* filePath) {
     WIN32_FILE_ATTRIBUTE_DATA fileData;
 
@@ -261,6 +266,7 @@ BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
     return FALSE;
 }
 
+#define DOWNLOAD_FAIL_CANCELLED			 -12
 #define DOWNLOAD_FAIL_ALLOCATION_FAILURE -11
 #define DOWNLOAD_FAIL_NO_DATA_AVAILABLE -10
 #define DOWNLOAD_FAIL_CREATING_FILE		-9
@@ -280,7 +286,7 @@ BOOL IsEmbeddedSignatureValid(LPCWSTR pwszSourceFile)
 ///		Downloads a file from a URL 
 ///		returns file size on success, -1 on error.
 /// </summary>
-int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*OnDownloadProgress)(int downloadStatus,unsigned int progress) ) {
+int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename) {
 	URL_COMPONENTS urlComponents;
 
 	wchar_t urlPath[BUFSIZE];
@@ -300,6 +306,8 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 	HANDLE localFile = NULL;
 	int percentComplete =0;
 	
+	DebugPrintf(L"HTTP GET: [%s]",URL);
+
 	__try {
 		ZeroMemory(&urlComponents, sizeof(urlComponents));
 		urlComponents.dwStructSize = sizeof(urlComponents);
@@ -310,7 +318,7 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 		urlComponents.dwExtraInfoLength = -1;
 
 		if(!WinHttpCrackUrl(URL, (DWORD)wcslen(URL), 0, &urlComponents)) {
-			OnDownloadProgress( DOWNLOAD_FAIL_BAD_URL , 0);
+			totalBytesDownloaded = DOWNLOAD_FAIL_BAD_URL;
 			__leave;
 		}
 
@@ -319,7 +327,7 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 
 		// Use WinHttpOpen to obtain a session handle.
 		if(!(session = WinHttpOpen( L"CoAppBootstrapper/1.0",  WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0))) {
-			OnDownloadProgress(DOWNLOAD_FAIL_NO_CONNECTION, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_NO_CONNECTION;
 			__leave;
 		}
 
@@ -327,32 +335,32 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 
 		// Specify an HTTP server.
 		if (!(connection = WinHttpConnect( session, urlHost, urlComponents.nPort, 0))) {
-			OnDownloadProgress(DOWNLOAD_FAIL_CANT_CONNECT, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_CANT_CONNECT;
 			__leave;
 		}
 
 		// Create an HTTP request handle.
 		if (!(request = WinHttpOpenRequest( connection, L"GET",urlPath , NULL, WINHTTP_NO_REFERER,  WINHTTP_DEFAULT_ACCEPT_TYPES, 0))) {
-			OnDownloadProgress(DOWNLOAD_FAIL_OPENING_REQUEST, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_OPENING_REQUEST;
 			__leave;
 		}
 
 		// Send a request.
 		if(!(WinHttpSendRequest( request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))) {
-			OnDownloadProgress(DOWNLOAD_FAIL_SEND_REQUEST, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_SEND_REQUEST;
 			__leave;
 		}
  
 		// End the request.
 		if(!(WinHttpReceiveResponse( request, NULL))) {
-			OnDownloadProgress(DOWNLOAD_FAIL_NO_RESPONSE, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_NO_RESPONSE;
 			__leave;		
 		}
 
 		tmpValue = sizeof(DWORD);
 		WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE| WINHTTP_QUERY_FLAG_NUMBER, NULL, &dwStatusCode, &tmpValue, NULL );
 		if( dwStatusCode != HTTP_STATUS_OK ) {
-			OnDownloadProgress(DOWNLOAD_FAIL_NOT_200_OK, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_NOT_200_OK;
 			__leave;		
 		}
 
@@ -360,24 +368,29 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 		WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &contentLength, &tmpValue , NULL);
 
 		if( INVALID_HANDLE_VALUE == (localFile = CreateFile(destinationFilename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,  FILE_ATTRIBUTE_NORMAL,NULL))) {
-			OnDownloadProgress(DOWNLOAD_FAIL_CREATING_FILE, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_CREATING_FILE;
 			__leave;		
 		}
 
 		// Allocate space for the buffer.
 		pszOutBuffer = malloc(128*1024); // 128k buffer should be fine.
 		if (!pszOutBuffer)  {
-			OnDownloadProgress(DOWNLOAD_FAIL_ALLOCATION_FAILURE, 0 );
+			totalBytesDownloaded = DOWNLOAD_FAIL_ALLOCATION_FAILURE;
 			__leave;
 		}
 	
 		// Keep checking for data until there is nothing left.
 		do  {
+			if( IsShuttingDown ) {
+				totalBytesDownloaded = DOWNLOAD_FAIL_CANCELLED;
+				__leave;
+			}
+
 			// Check for available data.
 			bytesAvailable = 0;
 
 			if (!WinHttpQueryDataAvailable( request, &bytesAvailable)) {
-				OnDownloadProgress(DOWNLOAD_FAIL_NO_DATA_AVAILABLE, percentComplete );
+				totalBytesDownloaded = DOWNLOAD_FAIL_NO_DATA_AVAILABLE;
 				__leave;
 			}
 			// No more available data.
@@ -385,13 +398,16 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 				break;
 
 			if (!WinHttpReadData( request, (LPVOID)pszOutBuffer, 128*1024, &bytesDownloaded))  {
-				OnDownloadProgress(DOWNLOAD_FAIL_ALLOCATION_FAILURE, percentComplete );
+				totalBytesDownloaded = DOWNLOAD_FAIL_ALLOCATION_FAILURE;
 				__leave;
 			}
 		
 			WriteFile( localFile, pszOutBuffer, bytesDownloaded, &bytesWritten, NULL ); 
 			totalBytesDownloaded+=bytesDownloaded;
-			percentComplete = (int)(totalBytesDownloaded*100/contentLength );
+
+			// we really don't support progress for this anymore.
+			// percentComplete = (int)(totalBytesDownloaded*100/contentLength );
+			// OnDownloadProgress( DOWNLOAD_PROGRESS , percentComplete);
 
 			// This condition should never be reached since WinHttpQueryDataAvailable
 			// reported that there are bits to read.
@@ -413,19 +429,20 @@ int DownloadFile(const wchar_t* URL, const wchar_t* destinationFilename, BOOL (*
 		if (session) 
 			WinHttpCloseHandle(session);
 	}
+
 	return (int)totalBytesDownloaded; // bytes downloaded.
 }
 
-wchar_t* DownloadRelativeFile( const wchar_t* baseUrl, const wchar_t* filename , BOOL (*OnDownloadProgress)(int downloadStatus,unsigned int progress)  ) {
+wchar_t* DownloadRelativeFile( const wchar_t* baseUrl, const wchar_t* filename) {
 	wchar_t* result = NULL;
 	wchar_t* url = NULL;
+
 	__try {
 		if( !IsNullOrEmpty(baseUrl)) {
 			result = TempFileName(filename);
-
 			url = UrlOrPathCombine( baseUrl , filename, '/' );
-			DownloadFile( url, result, OnDownloadProgress );
-			if( LastDownloadStatus == 0 && FileExists(result) ) {
+			
+			if( DownloadFile( url, result) > 0 && FileExists(result) ) {
 				if(IsEmbeddedSignatureValid( result ) ) {
 					__leave;
 				}
@@ -537,23 +554,6 @@ wchar_t* ExtractFileFromMSI( const wchar_t* msiFilename, const wchar_t* binaryFi
     return result;
 }
 
-BOOL AcquireFile_OnDownloadProgress(int downloadStatus, unsigned int progress ) {
-	// these are supposed to be pretty small, and we don't 
-	// really want to visually track the progress of downloading these files.
-
-	if( downloadStatus < 0 ) {
-		LastDownloadStatus  = downloadStatus;
-		return FALSE; // return false to kill the download
-	}
-
-	if( IsShuttingDown ) {
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-
 // This gets a dependent resource, by finding it in one of the following locations
 //		same folder as the bootstrap.exe
 //		embedded (and unpacked from) the MSI
@@ -584,6 +584,7 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 		
 		// is the localized file in the bootstrap folder?
 		result = UrlOrPathCombine( BootstrapFolder, localizedFilename, L'\\');
+		DebugPrintf(L"Trying %s", result );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -591,6 +592,7 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// is the localized file in the msi folder?
 		result = UrlOrPathCombine( MsiFolder, localizedFilename, L'\\');
+		DebugPrintf(L"Trying %s", result );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -598,6 +600,7 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// try the MSI for the localized file 
 		result = ExtractFileFromMSI( MsiFile, localizedFilename );
+		DebugPrintf(L"Trying %s::%s", MsiFile, localizedFilename );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -609,6 +612,7 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// is the standard file in the bootstrap folder?
 		result = UrlOrPathCombine( MsiFolder, filename, L'\\');
+		DebugPrintf(L"Trying %s", result );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -616,6 +620,7 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// is the standard file in the msi folder?
 		result = UrlOrPathCombine( BootstrapFolder, filename, L'\\');
+		DebugPrintf(L"Trying %s", result );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -623,6 +628,7 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 
 		// try the MSI for the regular file 
 		result = ExtractFileFromMSI( MsiFile, filename );
+		DebugPrintf(L"Trying %s::%s", MsiFile, filename );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -632,10 +638,11 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 			__leave; // aint gonna find it.
 		}
 
-
 		if( !IsNullOrEmpty(additionalDownloadServer) ) {
 			// try regular file off the bootstrap server
-			result = DownloadRelativeFile( additionalDownloadServer, filename , AcquireFile_OnDownloadProgress );
+			DebugPrintf(L"Trying %s::%s", additionalDownloadServer, filename );
+			result = DownloadRelativeFile( additionalDownloadServer, filename  );
+			
 			if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 				__leave; // found it 
 			}
@@ -647,14 +654,16 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 		//------------------------
 
 		// try localized file off the bootstrap server
-		result = DownloadRelativeFile( BootstrapServerUrl, localizedFilename, AcquireFile_OnDownloadProgress );
+		DebugPrintf(L"Trying %s::%s", BootstrapServerUrl, localizedFilename );
+		result = DownloadRelativeFile( BootstrapServerUrl, localizedFilename);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
 		DeleteString(&result);
 
 		// try localized file off the coapp server
-		result = DownloadRelativeFile( CoAppServerUrl, localizedFilename, AcquireFile_OnDownloadProgress );
+		DebugPrintf(L"Trying %s::%s", CoAppServerUrl, localizedFilename );
+		result = DownloadRelativeFile( CoAppServerUrl, localizedFilename );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
@@ -665,14 +674,16 @@ wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t*
 		//------------------------
 
 		// try regular file off the bootstrap server
-		result = DownloadRelativeFile( BootstrapServerUrl, filename , AcquireFile_OnDownloadProgress );
+		DebugPrintf(L"Trying %s::%s", BootstrapServerUrl, filename );
+		result = DownloadRelativeFile( BootstrapServerUrl, filename  );
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}
 		DeleteString(&result);
 
 		// try regular file off the coapp server
-		result = DownloadRelativeFile( CoAppServerUrl, filename, AcquireFile_OnDownloadProgress );
+		DebugPrintf(L"Trying %s::%s", CoAppServerUrl, filename );
+		result = DownloadRelativeFile( CoAppServerUrl, filename);
 		if( FileExists( result ) && IsEmbeddedSignatureValid(result) ) {
 			__leave; // found it 
 		}

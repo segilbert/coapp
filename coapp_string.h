@@ -64,7 +64,7 @@ wchar_t* Sprintf(const wchar_t* format, ... ) {
 	return NULL;
 }
 
-#if FALSE
+
 void _DebugPrintf(const wchar_t* format, ...) {
     // Had to remove underscore in valist & vastart for formatting
 	wchar_t* result = NewString();
@@ -79,7 +79,7 @@ void _DebugPrintf(const wchar_t* format, ...) {
 }
 
 #define DebugPrintf(format, ... ) _DebugPrintf(L" [%s] => [%d] %s", __WFUNCTION__, __LINE__ , Sprintf( format, __VA_ARGS__ ) );
-#endif
+
 
 const wchar_t* GetString( UINT resourceId, const wchar_t* defaultString ) {
 	wchar_t* result = NewString();

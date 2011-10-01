@@ -71,7 +71,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(DDK_CRT);kernel32.lib;user32.lib;gdi32.lib;comctl32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);Winhttp.lib;WinTrust.lib;Version.lib;gdiplus.lib</AdditionalDependencies>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>CoAppBootstrap.manifest.xml</AdditionalManifestFiles>
@@ -106,7 +105,6 @@
       <AdditionalDependencies>$(DDK_CRT);kernel32.lib;user32.lib;gdi32.lib;comctl32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);Winhttp.lib;WinTrust.lib;Version.lib;gdiplus.lib;$(DDKInstallPath)lib\wxp\i386\msvcrt_winxp.obj</AdditionalDependencies>
       <SectionAlignment>
       </SectionAlignment>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>CoAppBootstrap.manifest.xml</AdditionalManifestFiles>
@@ -126,6 +124,9 @@
   <ItemGroup>
     <ClInclude Include="coapp_file.h" />
     <ClInclude Include="coapp_string.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="bootstrap.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
