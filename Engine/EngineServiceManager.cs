@@ -11,8 +11,10 @@
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Diagnostics;
+    using System.IO;
     using System.IO.Pipes;
     using System.Linq;
+    using System.Reflection;
     using System.Security.Principal;
     using System.ServiceProcess;
     using System.Threading;
@@ -221,7 +223,16 @@ namespace CoApp.Toolkit.Engine {
 #if DEBUG
         private static void TryToRunServiceInteractively() {
             if (!IsServiceRunning | !Process.GetProcessesByName("coapp.service").Any()) {
-                Process.Start("coapp.service.exe", "--interactive");
+                var path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                var file = Path.Combine(path, "coapp.service.exe");
+                
+                if( !File.Exists(file)) {
+                    file = Path.Combine(Environment.CurrentDirectory, "coapp.service.exe");
+                    if (!File.Exists(file)) {
+                        throw new FileNotFoundException("Can't find CoApp Service EXE");
+                    }
+                }
+                Process.Start(file, "--interactive");
                 for (var i = 0; i < 10 && !IsServiceResponding; i++) {
                     Thread.Sleep(300); // give it a chance to startup.
                 }

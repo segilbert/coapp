@@ -16,7 +16,7 @@ namespace CoApp.Toolkit.Exceptions {
     public class EndUserRuleException : Exception {
         public Rule Rule;
         public EndUserRuleException(Rule rule, string errorcode, string message, params object[] parameters)
-            : base("{0}({1},{2}):{3}:{4}".format(rule.SourceFile, rule.SourceRow, rule.SourceColumn, errorcode, message.format(parameters))) {
+            : base("{0}({1},{2}):{3}:{4}".format(rule.SourceLocation.SourceFile, rule.SourceLocation.Row, rule.SourceLocation.Column, errorcode, message.format(parameters))) {
             Rule = rule;
         }
     }

@@ -667,6 +667,12 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 return;
             }
 
+            if (NextCharacter == '>') {
+                AddToken(Lambda);
+                Index++;
+                return;
+            }
+
             AddToken(Equal);
         }
 

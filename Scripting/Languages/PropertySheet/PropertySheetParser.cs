@@ -14,11 +14,17 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using Extensions;
     using Utility;
 
+    public class SourceLocation {
+        public int Row;
+        public int Column;
+        public string SourceFile;
+    }
+
     public class PropertySheetParser {
         private readonly string _propertySheetText;
         private readonly string _filename;
         private readonly PropertySheet _propertySheet;
-            
+
         protected PropertySheetParser(string text, string originalFilename,PropertySheet propertySheet) {
             _propertySheetText = text;
             _propertySheet = propertySheet;
@@ -52,10 +58,24 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             var enumerator = tokenStream.GetEnumerator();
             Token token;
 
-            var rule = new Rule();
-            var property = new RuleProperty();
-            List<string> valueCollection= null;
-            var depth = 0;
+            Rule rule = null;
+            string ruleName = "*";
+            string ruleParameter = null;
+            string ruleClass = null;
+            string ruleId = null;
+
+            NewRuleProperty property = null;
+
+            var sourceLocation = new SourceLocation {
+                Row=0,
+                Column = 0,
+                SourceFile = null,
+            };
+
+            string propertyName = null;
+            string propertyLabelText = null;
+            string presentlyUnknownValue = null;
+            string collectionName = null;
 
             enumerator.MoveNext();
 
@@ -70,29 +90,37 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         continue;
                 }
 
+                // System.Console.WriteLine("Token : {0} == [{1}]", token.Type, token.Data);
+
                 switch (state) {
                     case ParseState.Global:
+                        sourceLocation = new SourceLocation { // will be the start of the next new rule.
+                            Row = token.Row,
+                            Column = token.Column,
+                            SourceFile = _filename,
+                        };
+
                         switch (token.Type) {
                             case TokenType.Identifier: // look for identifier as the start of a selector
                                 state = ParseState.Selector;
-                                rule.Name = token.Data;
+                                ruleName = token.Data;
                                 continue;
 
                             case TokenType.Dot:
                                 state = ParseState.SelectorDot;
-                                rule.Name = "*";
+                                ruleName = "*";
                                 // take next identifier as the classname
                                 continue;
 
                             case TokenType.Pound:
                                 state = ParseState.SelectorPound;
-                                rule.Name = "*";
+                                ruleName = "*";
                                 // take next identifier as the id
                                 continue;
 
-                            case TokenType.Semicolon:
-                                // tolerate extra semicolons.
+                            case TokenType.Semicolon: // tolerate extra semicolons.
                                 continue;
+
                             default:
                                 throw new EndUserParseException(token, _filename, "PSP 100", "Expected one of '.' , '#' or identifier");
                         }
@@ -108,14 +136,17 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 continue;
 
                             case TokenType.SelectorParameter:
-                                rule.Parameter = token.Data;
+                                ruleParameter = token.Data;
                                 continue;
 
                             case TokenType.OpenBrace:
                                 state = ParseState.InRule;
-                                rule.SourceRow = token.Row;
-                                rule.SourceColumn = token.Column;
-                                rule.SourceFile = _filename;
+                                if( _propertySheet.HasRule(ruleName, ruleParameter, ruleClass, ruleId) ) {
+                                    throw new EndUserParseException(token, _filename, "PSP 113", "Duplicate rule with identical selector not allowed: {0} ", Rule.CreateSelectorString(ruleName, ruleParameter,ruleClass, ruleId )); 
+                                }
+
+                                rule = _propertySheet.GetRule(ruleName, ruleParameter, ruleClass, ruleId);
+                                rule.SourceLocation = sourceLocation;
                                 continue;
 
                             default:
@@ -125,7 +156,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     case ParseState.SelectorDot:
                         switch (token.Type) {
                             case TokenType.Identifier:
-                                rule.Class = token.Data;
+                                ruleClass = token.Data;
                                 state = ParseState.Selector;
                                 continue;
 
@@ -136,7 +167,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     case ParseState.SelectorPound:
                         switch (token.Type) {
                             case TokenType.Identifier:
-                                rule.Id = token.Data;
+                                ruleId = token.Data;
                                 state = ParseState.Selector;
                                 continue;
 
@@ -151,19 +182,19 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
                             case TokenType.StringLiteral:
                             case TokenType.Identifier:
-                                property.Name = token.Data;
+                                propertyName = token.Data;
                                 state = ParseState.HavePropertyName;
-                                property.SourceRow = token.Row;
-                                property.SourceColumn = token.Column;
-                                property.SourceFile = _filename;
+                                sourceLocation = new SourceLocation {
+                                    Row = token.Row,
+                                    Column = token.Column,
+                                    SourceFile = _filename,
+                                };
+                                
                                 continue;
 
-                            case TokenType.CloseBrace: // extra semicolons are tolerated.
-                                if (_propertySheet._rules.ContainsKey(rule.FullSelector)) {
-                                    throw new EndUserParseException(token, _filename, "PSP 113", "Duplicate rule with identical selector not allowed: {0} ", rule.FullSelector);
-                                }
-                                _propertySheet._rules.Add(rule.FullSelector, rule);
-                                rule = new Rule();
+                            case TokenType.CloseBrace: 
+                                // this rule is DONE.
+                                rule = null; // set this to null, so that we don't accidentally add new stuff to this rule.
                                 state = ParseState.Global;
                                 continue;
 
@@ -175,6 +206,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         switch (token.Type) {
                             case TokenType.Colon:
                                 state = ParseState.HavePropertySeparator;
+                                property = rule.GetRuleProperty(propertyName);
                                 continue;
 
                             default:
@@ -185,113 +217,200 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         switch (token.Type) {
                             case TokenType.StringLiteral:
                             case TokenType.NumericLiteral:
-                                state = ParseState.HavePropertyValue;
+                                state = ParseState.HavePropertyLabel;
                                 if ("@Literal" == token.RawData) {
-                                    property.LValue = token.Data;
+                                    propertyLabelText = token.Data;
                                 }
                                 else {
-                                    property.RawValue = token.Data;
+                                    propertyLabelText = token.Data;
                                 }
                                 continue;
 
                             case TokenType.Identifier:
-                                state = ParseState.HavePropertyValue;
-                                property.LValue = token.Data;
+                                state = ParseState.HavePropertyLabel;
+                                propertyLabelText = token.Data;
                                 continue;
 
                             case TokenType.OpenBrace:
-                                valueCollection = new List<string>();
-                                state = ParseState.InPropertyCollection;
-                                continue;
-
-                            case TokenType.OpenParenthesis:
-                                depth = 1;
-                                property.Expression = string.Empty;
-                                state = ParseState.InPropertyExpression;
+                                state = ParseState.InPropertyCollectionWithoutLabel;
                                 continue;
 
                             default:
                                 throw new EndUserParseException(token, _filename, "PSP 106", "After rule property name, expected value, open-brace '{{' or open-parenthesis '('." );
                         }
-                    case ParseState.InPropertyExpression:
-                        switch (token.Type) {
-                            case TokenType.CloseParenthesis:
-                                depth--;
-                                if (depth == 0) {
-                                    state = ParseState.HavePropertyCompleted;
-                                    continue;
-                                }
-                                break;
-                            case TokenType.OpenParenthesis:
-                                depth++;
-                                break;
-                        }
-                        property.Expression += token.Data;
-                        continue;
-                        
 
-                    case ParseState.InPropertyCollection:
+                    case ParseState.InPropertyCollectionWithoutLabel:
                         switch (token.Type) {
                             case TokenType.StringLiteral:
                             case TokenType.NumericLiteral:
                             case TokenType.Identifier:
-                                valueCollection.Add(token.Data);
+                                // at this point it could be a collection, a label, or a value.
+                                presentlyUnknownValue = token.Data;
+                                state = ParseState.InPropertyCollectionWithoutLableButHaveSomething;
+                                continue;
+
+                            case TokenType.CloseBrace:
+                                state = ParseState.HavePropertyCompleted;
+                                continue;
+
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 107", "In property collection, expected value or close brace '}}'");
+                        }
+
+                    case ParseState.InPropertyCollectionWithoutLableButHaveSomething:
+                        switch (token.Type) {
+                            case TokenType.Lambda:
+                                collectionName = presentlyUnknownValue;
+                                presentlyUnknownValue = null;
+                                state = ParseState.HasLambda;
+                                continue;
+
+                            case TokenType.Equal:
+                                // looks like it's gonna be a label = value type.
+                                propertyLabelText = presentlyUnknownValue;
+                                presentlyUnknownValue = null;
+                                state = ParseState.HasEqualsInCollection;
+                                continue;
+
+                            case TokenType.Comma: {
+                                    // turns out its a simple collection item.
+                                    var pv = property.GetPropertyValue(string.Empty);
+                                    pv.Add(presentlyUnknownValue);
+                                    pv.SourceLocation = sourceLocation;
+                                    presentlyUnknownValue = null;
+                                    state = ParseState.InPropertyCollectionWithoutLabel;
+                                }
+                                continue;
+
+                            case TokenType.CloseBrace: {
+                                    // turns out its a simple collection item.
+                                    var pv = property.GetPropertyValue(string.Empty);
+                                    pv.Add(presentlyUnknownValue);
+                                    pv.SourceLocation = sourceLocation;
+                                    presentlyUnknownValue = null;
+                                    state = ParseState.HavePropertyCompleted;
+                                }
+                                continue;
+
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 114", "after an value or identifier in a collection expected a '=>' or '=' or ',' .");
+                        }
+
+                    case  ParseState.HasEqualsInCollection :
+                        switch (token.Type) {
+                            case TokenType.StringLiteral:
+                            case TokenType.NumericLiteral:
+                            case TokenType.Identifier: {
+                                    var pv = property.GetPropertyValue(propertyLabelText);
+                                    pv.Add(token.Data);
+                                    pv.SourceLocation = sourceLocation;
+                                    state = ParseState.InPropertyCollectionWithoutLabelWaitingForComma;
+                                }
+                                continue;
+
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 119", "after an equals '=' in a collection, expected a value or identifier.");
+
+                        }
+                    case ParseState.HasLambda:
+                        switch (token.Type) {
+                            case TokenType.StringLiteral:
+                            case TokenType.NumericLiteral:
+                            case TokenType.Identifier:
+                                propertyLabelText = token.Data;
+                                state = ParseState.HasLambdaAndLabel;
+                                continue;
+
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 115", "After the '=>' in a collection, expected value or identifier.");
+
+                        }
+
+                    case ParseState.HasLambdaAndLabel:
+                        switch (token.Type) {
+                            case TokenType.Equal:
+                                state = ParseState.HasLambdaAndLabelAndEquals;
+                                continue;
+
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 116", "After the '{0} => {1}' in collection, expected '=' ", collectionName, propertyLabelText);
+
+                        }
+
+                    case ParseState.HasLambdaAndLabelAndEquals:
+                        switch (token.Type) {
+                            case TokenType.StringLiteral:
+                            case TokenType.NumericLiteral:
+                            case TokenType.Identifier: {
+                                    var pv = property.GetPropertyValue(propertyLabelText, collectionName);
+                                    pv.Add(token.Data);
+                                    pv.SourceLocation = sourceLocation;
+                                    collectionName = propertyLabelText = null;
+                                    state = ParseState.InPropertyCollectionWithoutLabelWaitingForComma;
+                                }   
+                                continue;
+
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 117", "After the '{0} => {1} = ' in collection, expected a value or identifier" ,collectionName, propertyLabelText);
+                        }
+
+                    case ParseState.InPropertyCollectionWithoutLabelWaitingForComma:
+                        switch (token.Type) {
+                            case TokenType.Comma:
+                            case TokenType.Semicolon:
+                                state = ParseState.InPropertyCollectionWithoutLabel;
+                                continue;
+
+                            case TokenType.CloseBrace:
+                                state = ParseState.HavePropertyCompleted;
+                                continue;
+
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 118", "After complete expression or value in a collection, expected ',' or '}'.");
+                        }
+
+                    case ParseState.InPropertyCollectionWithLabel:
+                        switch (token.Type) {
+                            case TokenType.StringLiteral:
+                            case TokenType.NumericLiteral:
+                            case TokenType.Identifier:
+                                presentlyUnknownValue = token.Data;
                                 state = ParseState.HaveCollectionValue;
                                 continue;
 
                             case TokenType.CloseBrace:
-                                property.Values = valueCollection;
                                 state = ParseState.HavePropertyCompleted;
-                                continue;
-
-                            case TokenType.OpenParenthesis:
-                                depth = 1;
-                                property.Expression = "EXPRESSION:"; // we're just borrowing this to store the expression during parsing
-                                state = ParseState.InPropertyCollectionExpression;
                                 continue;
 
                             default:
-                                throw new EndUserParseException(token, _filename, "PSP 107", "In property collection, expected value, expression or close brace '}}'" );
+                                throw new EndUserParseException(token, _filename, "PSP 107", "In property collection, expected value or close brace '}}'" );
                         }
-
-                    case ParseState.InPropertyCollectionExpression:
-                        switch (token.Type) {
-                            case TokenType.CloseParenthesis:
-                                depth--;
-                                if (depth == 0) {
-                                    state = ParseState.HaveCollectionValue;
-                                    valueCollection.Add(property.Expression);
-                                    property.Expression = null; // we're just borrowing this to store the expression during parsing
-                                    continue;
-                                }
-                                break;
-                            case TokenType.OpenParenthesis:
-                                depth++;
-                                break;
-
-                            case TokenType.StringLiteral:
-                                property.Expression += ("@Literal" == token.RawData) ? "@\"{0}\"".format((string)token.Data) : token.RawData;
-                                continue;
-                        }
-                        property.Expression += token.Data ; // we're just borrowing this to store the expression during parsing
-                        continue;
-
 
                     case ParseState.HaveCollectionValue: 
                         switch (token.Type) {
-                            case TokenType.Comma:
-                                state = ParseState.InPropertyCollection;
+                            case TokenType.Comma: {
+                                    var pv = property.GetPropertyValue(propertyLabelText);
+                                    pv.Add(presentlyUnknownValue);
+                                    pv.SourceLocation = sourceLocation;
+                                    collectionName = propertyLabelText = null;
+                                    state = ParseState.InPropertyCollectionWithLabel;
+                                }
                                 continue;
-                            case TokenType.CloseBrace:
-                                property.Values = valueCollection;
-                                state = ParseState.HavePropertyCompleted;
+
+                            case TokenType.CloseBrace: {
+                                    var pv = property.GetPropertyValue(propertyLabelText);
+                                    pv.Add(presentlyUnknownValue);
+                                    pv.SourceLocation = sourceLocation;
+                                    collectionName = propertyLabelText = null;
+                                    state = ParseState.HavePropertyCompleted;
+                                }
                                 continue;
 
                             default:
                                 throw new EndUserParseException(token, _filename, "PSP 108", "With property collection value, expected comma ',' or close-brace '}}'.");
                         }
 
-                    case ParseState.HavePropertyValue:
+                    case ParseState.HavePropertyLabel:
                         switch (token.Type) {
                             case TokenType.Equal:
                                 state = ParseState.HavePropertyEquals;
@@ -301,21 +420,26 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 var t = SkipToNext(ref enumerator);
 
                                 if( !t.HasValue ) {
-                                    throw new EndUserParseException(token, _filename, "PSP 109", "Unexpected end of Token stream [HavePropertyValue]");
+                                    throw new EndUserParseException(token, _filename, "PSP 109", "Unexpected end of Token stream [HavePropertyLabel]");
                                 }
                                 token = t.Value;
 
                                 if (token.Type == TokenType.Identifier || token.Type == TokenType.NumericLiteral) {
-                                    property.RawValue = property.RawValue + "." + token.Data;
+                                    propertyLabelText += "." + token.Data;
                                 }
                                 else 
                                     throw new EndUserParseException(token, _filename, "PSP 110", "Expected identifier or numeric literal after Dot '.'.");
                                 continue;
-                           
-                            case TokenType.Semicolon:
-                                state = ParseState.InRule;
-                                rule.Properties.Add(property);
-                                property = new RuleProperty();
+
+                            case TokenType.Semicolon: {
+                                    // it turns out that what we thought the label was, is really the property value,
+                                    // the label is an empty string
+                                    var pv = property.GetPropertyValue(string.Empty);
+                                    pv.Add(propertyLabelText);
+                                    pv.SourceLocation = sourceLocation;
+                                    propertyName = propertyLabelText = null;
+                                    state = ParseState.InRule;
+                                }
                                 continue;
 
                             default:
@@ -326,14 +450,19 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         switch (token.Type) {
                             case TokenType.Identifier:
                             case TokenType.StringLiteral:
-                            case TokenType.NumericLiteral:
-                                state = ParseState.HavePropertyCompleted;
-                                property.RValue = token.Data;
+                            case TokenType.NumericLiteral: {
+                                    // found our property-value. add it, and move along.
+                                    var pv = property.GetPropertyValue(propertyLabelText);
+                                    pv.Add(token.Data);
+                                    pv.SourceLocation = sourceLocation;
+                                    propertyName = propertyLabelText = null;
+                                    state = ParseState.HavePropertyCompleted;
+                                }
                                 continue;
 
                             case TokenType.OpenBrace:
-                                valueCollection = new List<string>();
-                                state = ParseState.InPropertyCollection;
+                                // we're starting a new collection (where we have the label already).
+                                state = ParseState.InPropertyCollectionWithLabel;
                                 continue;
 
                             default:
@@ -344,13 +473,14 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         switch (token.Type) {
                             case TokenType.Semicolon:
                                 state = ParseState.InRule;
-                                rule.Properties.Add(property);
-                                property = new RuleProperty();
                                 continue;
 
                             default:
-                                throw new EndUserParseException(token, _filename, "PSP 113", "After rule completed, expected semi-colon ';'.");
+                                throw new EndUserParseException(token, _filename, "PSP 113", "After property completed, expected semi-colon ';'.");
                         }
+
+                    default:
+                        throw new EndUserParseException(token, _filename, "PSP 120", "CATS AND DOGS, LIVINGTOGETHER...");
                 }
             } while (enumerator.MoveNext());
             return _propertySheet;
@@ -371,13 +501,19 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             InRule,
             HavePropertyName,
             HavePropertySeparator,
-            HavePropertyValue,
+            HavePropertyLabel,
             HavePropertyCompleted,
             HavePropertyEquals,
-            InPropertyCollection,
-            InPropertyCollectionExpression,
+            InPropertyCollectionWithLabel,
+            InPropertyCollectionWithoutLabel,
             HaveCollectionValue,
-            InPropertyExpression,
+
+            InPropertyCollectionWithoutLableButHaveSomething,
+            HasLambda,
+            HasLambdaAndLabel,
+            HasEqualsInCollection,
+            HasLambdaAndLabelAndEquals,
+            InPropertyCollectionWithoutLabelWaitingForComma,
 
         }
 

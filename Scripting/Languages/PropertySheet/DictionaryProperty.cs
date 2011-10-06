@@ -36,12 +36,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
         public ICollection<string> Keys {
             get {
-                return _rule.CompoundPropertyKeys(_name).ToList();
+                return _rule.PropertyLabels(_name).ToList();
             }
         }
 
         bool IDictionary<string, IList<string>>.Remove(string key) {
-            return _rule.RemoveCompoundPropertyValues(_name, key);
+            return _rule.ClearProperties(_name, key);
         }
 
         bool IDictionary<string, IList<string>>.TryGetValue(string key, out IList<string> value) {

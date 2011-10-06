@@ -14,20 +14,30 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using System.Linq;
     using Extensions;
 
+    /*
     public class RuleProperty {
-        private IEnumerable<string> _values;
+        private List<string> _values;
+        // each expression is supposed to be like
+        // foo => lvalue = rvalue;
+        private IEnumerable<Tuple<string, string, string>> _expressions;
+        
+        public string LValue { get; set; }
+        public string Name { get; set; }
+        public string RValue { get; set; }
 
-        public string LValue;
-        public string Name;
-        public string RValue;
-        public string Expression;
         public int SourceRow;
         public int SourceColumn;
         public string SourceFile;
         
         public IEnumerable<string> Values {
             get { return IsCollection ? _values : (IsCompoundProperty ? RValue : LValue).SingleItemAsEnumerable(); }
-            set { _values = value; }
+            set {
+                if( _values == null ) {
+                    _values = new List<string>();
+                }
+                _values.Clear();
+                _values.AddRange(value);
+            }
         }
 
         private static string QuoteIfNeeded(string val) {
@@ -39,7 +49,9 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 : @"""{0}""".format(val);
         }
 
-        public string RawValue {
+        
+
+        internal string RawValue {
             get {
                 if (IsCollection) {
                     return _values.Aggregate(string.IsNullOrEmpty(LValue) ? "{\r\n" : "{0} = {{\r\n".format(QuoteIfNeeded(LValue)), (result, each) => result + "        " + (QuoteIfNeeded(each)) + " ,\r\n") + "    }";
@@ -47,10 +59,6 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
                 if (IsCompoundProperty) {
                     return String.Format(@"{0}={1}" , QuoteIfNeeded( LValue), QuoteIfNeeded(RValue));
-                }
-
-                if (IsExpression) {
-                    return "(" + Expression + ")";
                 }
 
                 if (string.IsNullOrEmpty(LValue)) {
@@ -62,7 +70,6 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
             set {
                 _values = null;
-                Expression = null;
 
                 if (!(value.Contains("\r") || value.Contains("\n"))) {
                     var p = value.IndexOf('=');
@@ -90,12 +97,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             get { return _values != null; }
         }
 
-        public bool IsExpression {
-            get { return Expression != null; }
-        }
-
         public bool IsValue {
-            get { return !(IsCollection || IsCompoundProperty || IsExpression); }
+            get { return !(IsCollection || IsCompoundProperty); }
         }
-    }
+    } */
 }

@@ -889,5 +889,18 @@ namespace CoApp.Toolkit.Extensions {
         public static string UrlDecode(this string s) {
             return HttpUtility.UrlDecode(s);
         }
+
+        public static string CamelCaseToDashed(this string camelCaseText) {
+            return new string(camelCaseToDashed(camelCaseText).ToArray());
+        }
+
+        private static IEnumerable<char> camelCaseToDashed(this string camelCaseText ) {
+            foreach( var ch in camelCaseText ) {
+                if( Char.IsUpper(ch) ) {
+                    yield return '-';
+                }
+                yield return Char.ToLower(ch);
+            }
+        }
     }
 }
