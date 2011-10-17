@@ -651,6 +651,7 @@ namespace CoApp.Toolkit.Engine {
                 {"version", package.Version.UInt64VersiontoString()},
                 {"arch", package.Architecture},
                 {"public-key-token", package.PublicKeyToken},
+                {"product-code", package.ProductCode.ToString()},
                 {"installed", package.IsInstalled.ToString()},
                 {"blocked", package.IsBlocked.ToString()},
                 {"required", package.IsRequired.ToString()},
@@ -684,6 +685,7 @@ namespace CoApp.Toolkit.Engine {
                 {"publisher-name", package.PackageDetails.Publisher.Name},
                 {"publisher-url", package.PackageDetails.Publisher.Location.AbsoluteUri},
                 {"publisher-email", package.PackageDetails.Publisher.Email},
+                {"package-item-text", package.PackageDetails.GetAtomItemText(package) },
             };
 
             msg.AddCollection("tags", package.PackageDetails.Tags);

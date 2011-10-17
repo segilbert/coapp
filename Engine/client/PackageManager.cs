@@ -73,7 +73,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
         private Task _serviceTask;
         private NamedPipeClientStream _pipe;
-        internal const int BufferSize = 8192;
+        internal const int BufferSize = 1024*1024*2;
         public ManualResetEvent IsReady = new ManualResetEvent(false);
         public ManualResetEvent IsDisconnected = new ManualResetEvent(true);
 
@@ -142,7 +142,8 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            Debug.WriteLine("Response:{0}".format(responseMessage.ToString()));
+                            //Debug.WriteLine("Response:{0}".format(responseMessage.ToString()));
+                            Console.WriteLine("Response:{0}".format(responseMessage.ToString()));
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -614,6 +615,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     result.Version = responseMessage["version"];
                     result.Architecture = responseMessage["arch"];
                     result.PublicKeyToken = responseMessage["public-key-token"];
+                    result.ProductCode = responseMessage["product-code"];
                     result.IsInstalled = (bool?) responseMessage["installed"] ?? false;
                     result.IsBlocked = (bool?) responseMessage["blocked"] ?? false;
                     result.IsRequired = (bool?) responseMessage["required"] ?? false;
@@ -680,6 +682,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     details.PublisherUrl = responseMessage["publisher-url"];
                     details.PublisherEmail = responseMessage["publisher-email"];
                     details.Tags = responseMessage.GetCollection("tags");
+                    details.PackageItemText = responseMessage["package-item-text"];
 
                     /*
                     if (!package.PackageDetails.Contributors.IsNullOrEmpty()) {

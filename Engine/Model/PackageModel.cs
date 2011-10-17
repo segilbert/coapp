@@ -11,8 +11,11 @@
 namespace CoApp.Toolkit.Engine.Model {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
+    using System.Xml;
     using System.Xml.Serialization;
+    using Atom;
     using Extensions;
 
     [XmlRoot(ElementName = "Package", Namespace = "http://coapp.org/atom-package-feed-1.0")]
@@ -158,5 +161,17 @@ namespace CoApp.Toolkit.Engine.Model {
 
         [XmlIgnore]
         public string Description { get; set; }
+
+#if COAPP_ENGINE_CORE 
+        internal string GetAtomItemText(Package package) {
+            var item = new AtomItem(package);
+            using(var sw = new StringWriter() ) {
+                using(var xw = XmlWriter.Create(sw) ) {
+                    item.SaveAsAtom10(xw);
+                }
+                return sw.ToString();
+            }
+        }
+#endif
     }
 }

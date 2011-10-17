@@ -204,6 +204,7 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
 
 #if COAPP_ENGINE_CORE
         public AtomItem(Package package) {
+            Model = new PackageModel();
             Model.Name = package.Name;
             var arch = Architecture.Unknown;
             Enum.TryParse(package.Architecture, true, out arch);
@@ -216,8 +217,12 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
 
             Model.Roles = new List<Role>(package.InternalPackageData.Roles);
             Model.Dependencies = package.InternalPackageData.Dependencies.Where(each => each.ProductCode.HasValue).Select(each => each.ProductCode.Value).ToList();
-            Model.Features = new List<Feature>(package.InternalPackageData.Features);
-            Model.RequiredFeatures = new List<Feature>(package.InternalPackageData.RequiredFeatures);
+            if (!package.InternalPackageData.Features.IsNullOrEmpty()) {
+                Model.Features = new List<Feature>(package.InternalPackageData.Features);
+            }
+            if (!package.InternalPackageData.RequiredFeatures.IsNullOrEmpty()) {
+                Model.RequiredFeatures = new List<Feature>(package.InternalPackageData.RequiredFeatures);
+            }
 
             Model.Feeds = package.InternalPackageData.FeedLocations.Select(each => each.ToUri()).ToList();
             Model.Locations = package.InternalPackageData.RemoteLocations.Select(each => each.ToUri()).ToList();

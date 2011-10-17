@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Engine.Client {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -67,6 +68,8 @@ namespace CoApp.Toolkit.Engine.Client {
         public string PublisherName{ get; set; }
         public string PublisherUrl{ get; set; }
         public string PublisherEmail{ get; set; }
+        public string ProductCode { get; set; }
+        public string PackageItemText { get; set; }
 
         public bool IsConflicted{ get; set; }
         public Package SatisfiedBy{ get; set; }

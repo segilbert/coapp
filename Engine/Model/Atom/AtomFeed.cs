@@ -125,6 +125,11 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
             return item;
         }
 
+        public AtomItem Add(AtomItem item) {
+            Items = Items.Union(item.SingleItemAsEnumerable()).ToArray();
+            return item;
+        }
+
 #if COAPP_ENGINE_CORE 
         /// <summary>
         /// This takes an existing package object and creates a package model from it and inserts it into the feed.
