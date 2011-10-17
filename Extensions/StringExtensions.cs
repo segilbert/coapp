@@ -881,46 +881,58 @@ namespace CoApp.Toolkit.Extensions {
 
         public delegate string GetMacroValueDelegate(string valueName);
 
-        
 
-        private static readonly Regex Macro = new Regex(@"(\$\{(.*?)\})");
+
+        private static readonly Regex[] Macros = new[] {
+            new Regex(@"(\$\{(.*?)\})"), new Regex(@"(\$\%7B(.*?)\%7D)")
+        };
+        
 
         public static string FormatWithMacros(this string value, GetMacroValueDelegate getMacroValue , object eachItem = null) {
             if (getMacroValue == null) {
                 return value; // no macro handler?, just return 
             }
 
-
             bool keepGoing;
             do {
                 keepGoing = false;
+                foreach (var macro in Macros) {
+                    var matches = macro.Matches(value);
+                    foreach (var m in matches) {
+                        var match = m as Match;
+                        var innerMacro = match.Groups[2].Value;
+                        var outerMacro = match.Groups[1].Value;
 
-                var matches = Macro.Matches(value);
-                foreach (var m in matches) {
-                    var match = m as Match;
-                    var innerMacro = match.Groups[2].Value;
-                    var outerMacro = match.Groups[1].Value;
-                    var replacement = getMacroValue(innerMacro);
-                    if (eachItem != null) {
-                        // try resolving it as an ${each.property} style.
-                        // the element at the front is the 'this' value
-                        // just trim off whatever is at the front up to and including the first dot.
-                        try {
-                            if (innerMacro.Contains(".")) {
-                                innerMacro = innerMacro.Substring(innerMacro.IndexOf('.') + 1).Trim();
-                                var r = eachItem.SimpleEval(innerMacro).ToString();
-                                value = value.Replace(outerMacro, r);
-                                keepGoing = true;
-                            }
-                        } catch {
-                            // meh. screw em'
+                        string replacement = null;
+
+                        // get the first responder.
+                        foreach (GetMacroValueDelegate del in getMacroValue.GetInvocationList()) {
+                            replacement = del(innerMacro);
+                            if (replacement != null)
+                                break;
                         }
-                    }
 
-                    if (replacement != null) {
-                        value = value.Replace(outerMacro, replacement);
-                        keepGoing = true;
-                        break;
+                        if (eachItem != null) {
+                            // try resolving it as an ${each.property} style.
+                            // the element at the front is the 'this' value
+                            // just trim off whatever is at the front up to and including the first dot.
+                            try {
+                                if (innerMacro.Contains(".")) {
+                                    innerMacro = innerMacro.Substring(innerMacro.IndexOf('.') + 1).Trim();
+                                    var r = eachItem.SimpleEval(innerMacro).ToString();
+                                    value = value.Replace(outerMacro, r);
+                                    keepGoing = true;
+                                }
+                            } catch {
+                                // meh. screw em'
+                            }
+                        }
+
+                        if (replacement != null) {
+                            value = value.Replace(outerMacro, replacement);
+                            keepGoing = true;
+                            break;
+                        }
                     }
                 }
             } while (keepGoing);

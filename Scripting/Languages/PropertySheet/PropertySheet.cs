@@ -86,7 +86,16 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     var match = m as Match;
                     var innerMacro = match.Groups[2].Value;
                     var outerMacro =  match.Groups[1].Value;
-                    var replacement = GetMacroValue(innerMacro);
+                    // var replacement = GetMacroValue(innerMacro);
+                    string replacement = null;
+
+                    // get the first responder.
+                    foreach ( StringExtensions.GetMacroValueDelegate del in GetMacroValue.GetInvocationList()) {
+                        replacement = del(innerMacro);
+                        if (replacement != null)
+                            break;
+                    }
+
                     if( eachItem != null ) {
                         // try resolving it as an ${each.property} style.
                         // the element at the front is the 'this' value
