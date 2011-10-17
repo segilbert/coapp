@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Engine {
     using Exceptions;
     using Extensions;
     using Feeds;
+    using Model;
     using PackageFormatHandlers;
     using Shell;
     using Tasks;
@@ -37,11 +38,12 @@ namespace CoApp.Toolkit.Engine {
             }
             return _canonicalName;
         } }
+
         public string Name { get; internal set; }
         public UInt64 Version { get; internal set; }
         public string Architecture { get; internal set; }
         public string PublicKeyToken { get; internal  set; }
-        public string ProductCode { get; internal set; }
+        public Guid? ProductCode { get; internal set; }
         
 
         /// <summary>
@@ -65,8 +67,9 @@ namespace CoApp.Toolkit.Engine {
                 return _isInstalled ?? (_isInstalled = ((Func<bool>) (() => {
                     try {
                         Changed();
-                        if (PackageHandler != null)
-                            return PackageHandler.IsInstalled(ProductCode);
+                        if (PackageHandler != null && ProductCode != null ) {
+                            return PackageHandler.IsInstalled(ProductCode.Value);
+                        }
 
                         return false;
                     }
@@ -103,19 +106,17 @@ namespace CoApp.Toolkit.Engine {
             get { return "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant(); }
         }
 
-                /// <summary>
+        /// <summary>
         /// the collection of all known packages
         /// </summary>
         private static readonly ObservableCollection<Package> _packages = new ObservableCollection<Package>();
 
-        internal static Package GetPackageFromProductCode(string productCode) {
-            Guid pkgGuid;
-
-            if( productCode[0] == '{' && Guid.TryParse(productCode, out pkgGuid)) {
+        internal static Package GetPackageFromProductCode(Guid? productCode) {
+            if (productCode != null ) {
                 lock (_packages) {
                     var pkg = _packages.Where(package => package.ProductCode == productCode).FirstOrDefault();
                     if (pkg == null) {
-                        // where the only thing we know is packageID.
+                        // where the only thing we know is product code.
                         pkg = new Package(productCode);
                         _packages.Add(pkg);
                     }
@@ -124,6 +125,9 @@ namespace CoApp.Toolkit.Engine {
             }
             return null; // only happens if the productCode isn't a guid.
         }
+
+#if FALSE
+        
 
         internal static  Package GetPackageFromCanonicalName(string canonicalName) {
             lock (_packages) {
@@ -140,6 +144,7 @@ namespace CoApp.Toolkit.Engine {
             }
             return null; // only happens if the canonicalName isn't a canonicalName.
         }
+#endif 
 
         internal static Package GetPackageFromFilename(string filename ) {
             filename = filename.CanonicalizePathIfLocalAndExists();
@@ -156,83 +161,33 @@ namespace CoApp.Toolkit.Engine {
                     package => package.InternalPackageData.HasLocalLocation && package.InternalPackageData.LocalLocations.Contains(filename))).FirstOrDefault();
             }
 
-            if (pkg != null) {
-                return pkg;
-            }
-
-            var packageFileInformation = CoAppMSI.GetCoAppPackageFileInformation(filename);
-
-            // try via just the package id
-            if (!string.IsNullOrEmpty(packageFileInformation.packageId)) {
-                lock (_packages) {
-                    pkg = _packages.Where(package => package.ProductCode == packageFileInformation.packageId).FirstOrDefault();
-                }
-            }
-
-            // try via the cosmetic name fields
-            if (pkg == null) {
-                lock (_packages) {
-                    pkg = (_packages.Where(package =>
-                        package.Architecture == packageFileInformation.Architecture &&
-                        package.Version == packageFileInformation.Version &&
-                        package.PublicKeyToken == packageFileInformation.PublicKeyToken &&
-                        package.Name.Equals(packageFileInformation.Name, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
-                }
-            }
-
-            if (pkg == null) {
-                pkg = new Package(packageFileInformation.Name, packageFileInformation.Architecture, packageFileInformation.Version, packageFileInformation.PublicKeyToken, packageFileInformation.packageId);
-
-                lock( _packages ) {
-                    _packages.Add(pkg);
-                }
-            }
-
-            if (string.IsNullOrEmpty(pkg.ProductCode)) {
-                pkg.ProductCode = packageFileInformation.packageId;
-            }
-
-            if (pkg.InternalPackageData.Dependencies.Count == 0) {
-                pkg.InternalPackageData.Dependencies.AddRange((IEnumerable<Package>) packageFileInformation.dependencies);
-            }
-
-            pkg.InternalPackageData.LocalLocation = filename;
-
-            pkg.InternalPackageData.Assemblies.AddRange((IEnumerable<PackageAssemblyInfo>) packageFileInformation.assemblies.Values);
-            pkg.InternalPackageData.Roles.AddRange((IEnumerable<Tuple<PackageRole, string>>) packageFileInformation.roles);
-
-            pkg.InternalPackageData.PolicyMinimumVersion = packageFileInformation.policy_min_version;
-            pkg.InternalPackageData.PolicyMaximumVersion = packageFileInformation.policy_max_version;
-
-            pkg.PackageHandler = CoAppMSI.Instance;
-
-            pkg.InternalPackageData.CanonicalFeedLocation = packageFileInformation.feedLocation;
-            pkg.InternalPackageData.CanonicalPackageLocation = packageFileInformation.originalLocation;
-
-            // set the delegate to get the package details if it is really needed.
-            Cache<PackageDetails>.Value.Insert(pkg.CanonicalName, (unusedCanonicalFileName) => CoAppMSI.GetPackageDetails(pkg, filename));
-
-            return pkg;
+            return pkg ?? CoAppMSI.GetCoAppPackageFileInformation(filename);
         }
 
-        internal static Package GetPackage(string packageName, ulong version, string architecture, string publicKeyToken, string packageId) {
+        internal static Package GetPackage(string packageName, ulong version, Architecture architecture, string publicKeyToken, Guid? productCode) {
+            return GetPackage(packageName, version, architecture.ToString(), publicKeyToken, productCode);
+        }
+
+        internal static Package GetPackage(string packageName, ulong version, string architecture, string publicKeyToken, Guid? productCode) {
             Package pkg;
 
-            // try via just the package id
-            if (!string.IsNullOrEmpty(packageId)) {
+            // try via just the package product code
+            if (productCode != null) {
                 lock (_packages) {
-                    pkg = _packages.Where(package => package.ProductCode == packageId).FirstOrDefault();
+                    pkg = _packages.Where(package => package.ProductCode == productCode).FirstOrDefault();
                 }
 
-                if (pkg != null && string.IsNullOrEmpty(pkg.Name)) {
-                    pkg.Name = packageName;
-                    pkg.Architecture = architecture;
-                    pkg.Version = version;
-                    pkg.PublicKeyToken = publicKeyToken;
+                if (pkg != null) {
+                    // if we *have* this package somewhere, but don't know its name, 
+                    // we can now fill *that* in.
+                    if (string.IsNullOrEmpty(pkg.Name)) {
+                        pkg.Name = packageName;
+                        pkg.Architecture = architecture;
+                        pkg.Version = version;
+                        pkg.PublicKeyToken = publicKeyToken;
+                    }
+                       return pkg;
                 }
-
-                if (pkg != null)
-                    return pkg;
             }
 
             lock (_packages) {
@@ -243,20 +198,22 @@ namespace CoApp.Toolkit.Engine {
                     package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
             }
             
+            // we've tried finding it a couple of ways, and got back nothing for our trouble.
+            // we'll create an package with the details we have, and pass that back.
             if (pkg == null) {
-                pkg = new Package(packageName, architecture, version, publicKeyToken, packageId);
+                pkg = new Package(packageName, architecture, version, publicKeyToken, productCode);
                 lock(_packages) {
                     _packages.Add(pkg);
                 }
             }
 
-            if( !string.IsNullOrEmpty(packageId) && string.IsNullOrEmpty(pkg.ProductCode) ) {
-                pkg.ProductCode = packageId;
+            // if we did find a package and its product code was empty, we can fill that in now if we have it.
+            if (productCode !=null && pkg.ProductCode == null) {
+                pkg.ProductCode = productCode;
             }
 
             return pkg;
         }
-
 
         private Package() {
             Name = string.Empty;
@@ -265,11 +222,11 @@ namespace CoApp.Toolkit.Engine {
             PublicKeyToken = string.Empty;
         }
 
-        private Package(string productCode) : this() {
+        private Package(Guid? productCode) : this() {
             ProductCode = productCode;
         }
 
-        private Package(string name, string architecture, UInt64 version, string publicKeyToken, string productCode) : this(productCode) {
+        private Package(string name, string architecture, UInt64 version, string publicKeyToken, Guid? productCode) : this(productCode) {
             Name = name;
             Version = version;
             Architecture = architecture;
@@ -411,20 +368,20 @@ namespace CoApp.Toolkit.Engine {
 
         public IEnumerable<CompositionRule> ImplicitRules {
             get {
-                foreach (var role in InternalPackageData.Roles.Select(each => each.Item1)) {
+                foreach (var role in InternalPackageData.Roles.Select(each => each.PackageRole)) {
                     switch (role) {
                         case PackageRole.Application:
-                            yield return new CompositionRule(this) {
+                            yield return new CompositionRule() {
                                 Action = CompositionAction.SymlinkFolder,
-                                Location = "{$CANONICALPACKAGEDIR}",
+                                Link = "{$CANONICALPACKAGEDIR}",
                                 Target = "{$PACKAGEDIR}",
                             };
                             break;
-                        case PackageRole.DeveloperLib:
+                        case PackageRole.DeveloperLibrary:
                             break;
-                        case PackageRole.SharedLib:
+                        case PackageRole.Assembly:
                             break;
-                        case PackageRole.Source:
+                        case PackageRole.SourceCode:
                             break;
                     }
                 }
@@ -438,8 +395,8 @@ namespace CoApp.Toolkit.Engine {
             var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this));
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)) {
-                var link = rule.Location.GetFullPath();
-                var dir = rule.Target.GetFullPath();
+                var link = rule.GetResolvedLink(this).GetFullPath();
+                var dir = rule.GetResolvedTarget(this).GetFullPath();
 
                 if (Directory.Exists(dir) && (makeCurrent || !Directory.Exists(link))) {
                     try {
@@ -455,8 +412,8 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)) {
-                var file = rule.Target.GetFullPath();
-                var link = rule.Location.GetFullPath();
+                var file = rule.GetResolvedTarget(this).GetFullPath();
+                var link = rule.GetResolvedLink(this).GetFullPath();
                 if (File.Exists(file) && (makeCurrent || !File.Exists(link))) {
                     if (!Directory.Exists(Path.GetDirectoryName(link))) {
                         Directory.CreateDirectory(Path.GetDirectoryName(link));
@@ -474,8 +431,8 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.Shortcut)) {
-                var target = rule.Target.GetFullPath();
-                var link = rule.Location.GetFullPath();
+                var target = rule.GetResolvedTarget(this).GetFullPath();
+                var link = rule.GetResolvedLink(this).GetFullPath();
 
                 if (File.Exists(target) && (makeCurrent || !File.Exists(link))) {
                     if (!Directory.Exists(Path.GetDirectoryName(link))) {
@@ -491,24 +448,24 @@ namespace CoApp.Toolkit.Engine {
             var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this));
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.Shortcut)
-                let target = rule.Target.GetFullPath()
-                let link = rule.Location.GetFullPath()
+                let target = rule.GetResolvedTarget(this).GetFullPath()
+                let link = rule.GetResolvedLink(this).GetFullPath()
                 where ShellLink.PointsTo(link, target)
                 select link) {
                 link.TryHardToDeleteFile();
             }
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)
-                let target = rule.Target.GetFullPath()
-                let link = rule.Location.GetFullPath()
+                let target = rule.GetResolvedTarget(this).GetFullPath()
+                let link = rule.GetResolvedLink(this).GetFullPath()
                 where File.Exists(target) && File.Exists(link) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
                 select link) {
                 Symlink.DeleteSymlink(link);
             }
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)
-                let target = rule.Target.GetFullPath()
-                let link = rule.Location.GetFullPath()
+                let target = rule.GetResolvedTarget(this).GetFullPath()
+                let link = rule.GetResolvedLink(this).GetFullPath()
                 where File.Exists(target) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
                 select link) {
                 Symlink.DeleteSymlink(link);
@@ -600,11 +557,11 @@ namespace CoApp.Toolkit.Engine {
         internal UInt64 PolicyMinimumVersion { get; set; }
         internal UInt64 PolicyMaximumVersion { get; set; }
 
-        /// <summary>
-        /// the tuple is: (role name, flavor)
-        /// </summary>
-        public readonly List<Tuple<PackageRole, string>> Roles = new List<Tuple<PackageRole, string>>();
-        public readonly List<PackageAssemblyInfo> Assemblies = new List<PackageAssemblyInfo>();
+        public readonly List<Role> Roles = new List<Role>();
+        public List<Feature> Features { get; set; }
+        public List<Feature> RequiredFeatures { get; set; } 
+
+        // public readonly List<PackageAssemblyInfo> Assemblies = new List<PackageAssemblyInfo>();
         public readonly ObservableCollection<Package> Dependencies = new ObservableCollection<Package>();
 
         public string CanonicalPackageLocation {
@@ -766,45 +723,12 @@ namespace CoApp.Toolkit.Engine {
         }
     }
 
-    internal class PackageDetails : NotifiesPackageManager {
-        internal class Party {
-            public string Name { get; set; }
-            public string Url { get; set; }
-            public string Email { get; set; }
-        }
-
-        private Package _package;
-
-        internal PackageDetails(Package package) {
-            _package = package;
-        }
-
-        public string SummaryDescription { get; set; }
-        public DateTime PublishDate { get; set; }
-
-        public Party Publisher = new Party();
-        public IEnumerable<Party> Contributors { get; set; }
-
-        public string CopyrightStatement { get; set; }
-        public string AuthorVersion { get; set; }
-
-        public IEnumerable<string> Tags { get; set; }
-        public string FullDescription { get; set; }
-        public string Base64IconData { get; set; }
-
-        public string License { get; set; }
-        public string LicenseUrl { get; set; }
-
-        public string DisplayName { get; set; }
-
-    }
-
     /// <summary>
     /// This stores information that is really only relevant to the currently running 
     /// Session, not between sessions.
     /// 
     /// The instance of this is bound to the Session.
-    /// </summary>
+    /// </summary>  
     internal class PackageSessionData : NotifiesPackageManager {
 
         internal bool DoNotSupercede; // TODO: it's possible these could be contradictory

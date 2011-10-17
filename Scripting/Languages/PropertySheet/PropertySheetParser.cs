@@ -146,6 +146,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 }
 
                                 rule = _propertySheet.GetRule(ruleName, ruleParameter, ruleClass, ruleId);
+                                
+                                ruleName = null;
+                                ruleParameter = null;
+                                ruleClass = null;
+                                ruleId = null;
+
                                 rule.SourceLocation = sourceLocation;
                                 continue;
 

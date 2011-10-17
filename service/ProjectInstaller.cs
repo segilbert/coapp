@@ -8,6 +8,7 @@ namespace CoApp.Service {
     using System.ComponentModel;
     using System.Configuration.Install;
     using System.ServiceProcess;
+    using Toolkit.Engine;
 
     [RunInstaller(true)]
     public class ProjectInstaller : Installer {
@@ -20,7 +21,7 @@ namespace CoApp.Service {
             ServiceProcessInstaller.Password = null;
             ServiceProcessInstaller.Username = null;
 
-            ServiceInstaller.ServiceName = CoAppService.CoAppServiceName;
+            ServiceInstaller.ServiceName = EngineServiceManager.CoAppServiceName;
             ServiceInstaller.StartType = ServiceStartMode.Automatic;
 
             Installers.AddRange(new Installer[] {ServiceProcessInstaller,ServiceInstaller});

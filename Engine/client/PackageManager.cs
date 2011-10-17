@@ -97,7 +97,11 @@ namespace CoApp.Toolkit.Engine.Client {
                 return _serviceTask;
             }
 
-            EngineServiceManager.EnsureServiceIsResponding();
+#if DEBUG
+            EngineServiceManager.EnsureServiceIsResponding(true);
+#else
+                  EngineServiceManager.EnsureServiceIsResponding();
+#endif
 
             sessionId = sessionId ?? DateTime.Now.Ticks.ToString();
 

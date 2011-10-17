@@ -12,8 +12,10 @@
 namespace CoApp.Toolkit.Crypto {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Linq;
     using System.Runtime.InteropServices;
+    using System.Security.Cryptography.Pkcs;
     using System.Security.Cryptography.X509Certificates;
     using CoApp.Toolkit.Win32;
 
@@ -136,7 +138,7 @@ namespace CoApp.Toolkit.Crypto {
                 return false;
             }
         }
-
+        
         public static Dictionary<string, string> GetPublisherInformation(string filename) {
             var result = new Dictionary<string, string>();
             try {
@@ -223,6 +225,121 @@ namespace CoApp.Toolkit.Crypto {
 
            }
        }
+
+        public static bool IsTimestamped(string filename) {
+            try {
+                int encodingType;
+                int contentType;
+                int formatType;
+                IntPtr certStore = IntPtr.Zero;
+                IntPtr cryptMsg = IntPtr.Zero;
+                IntPtr context = IntPtr.Zero;
+
+                if (!WinCrypt.CryptQueryObject(
+                    WinCrypt.CERT_QUERY_OBJECT_FILE,
+                    Marshal.StringToHGlobalUni(filename),
+                    WinCrypt.CERT_QUERY_CONTENT_FLAG_ALL,
+                    WinCrypt.CERT_QUERY_FORMAT_FLAG_ALL,
+                    0,
+                    out encodingType,
+                    out contentType,
+                    out formatType,
+                    ref certStore,
+                    ref cryptMsg,
+                    ref context)) {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+
+                //expecting contentType=10; CERT_QUERY_CONTENT_PKCS7_SIGNED_EMBED 
+                //Logger.LogInfo(string.Format("Querying file '{0}':", filename));
+                //Logger.LogInfo(string.Format("  Encoding Type: {0}", encodingType));
+                //Logger.LogInfo(string.Format("  Content Type: {0}", contentType));
+                //Logger.LogInfo(string.Format("  Format Type: {0}", formatType));
+                //Logger.LogInfo(string.Format("  Cert Store: {0}", certStore.ToInt32()));
+                //Logger.LogInfo(string.Format("  Crypt Msg: {0}", cryptMsg.ToInt32()));
+                //Logger.LogInfo(string.Format("  Context: {0}", context.ToInt32()));
+
+
+                // Get size of the encoded message.
+                int cbData = 0;
+                if (!WinCrypt.CryptMsgGetParam(
+                    cryptMsg,
+                    WinCrypt.CMSG_ENCODED_MESSAGE,//Crypt32.CMSG_SIGNER_INFO_PARAM,
+                    0,
+                    IntPtr.Zero,
+                    ref cbData)) {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+
+                var vData = new byte[cbData];
+
+                // Get the encoded message.
+                if (!WinCrypt.CryptMsgGetParam(
+                    cryptMsg,
+                    WinCrypt.CMSG_ENCODED_MESSAGE,//Crypt32.CMSG_SIGNER_INFO_PARAM,
+                    0,
+                    vData,
+                    ref cbData)) {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+
+                var signedCms = new SignedCms();
+                signedCms.Decode(vData);
+
+                foreach (var signerInfo in signedCms.SignerInfos) {
+                    foreach (var unsignedAttribute in signerInfo.UnsignedAttributes) {
+                        if (unsignedAttribute.Oid.Value == WinCrypt.szOID_RSA_counterSign) {
+                            foreach (var counterSignInfo in signerInfo.CounterSignerInfos) {
+                                foreach (var signedAttribute in counterSignInfo.SignedAttributes) {
+                                    if (signedAttribute.Oid.Value == WinCrypt.szOID_RSA_signingTime) {
+                                        System.Runtime.InteropServices.ComTypes.FILETIME fileTime = new System.Runtime.InteropServices.ComTypes.FILETIME();
+                                        int fileTimeSize = Marshal.SizeOf(fileTime);
+                                        IntPtr fileTimePtr = Marshal.AllocCoTaskMem(fileTimeSize);
+                                        Marshal.StructureToPtr(fileTime, fileTimePtr, true);
+
+                                        byte[] buffdata = new byte[fileTimeSize];
+                                        Marshal.Copy(fileTimePtr, buffdata, 0, fileTimeSize);
+
+                                        uint buffSize = (uint)buffdata.Length;
+
+                                        uint encoding = WinCrypt.X509_ASN_ENCODING | WinCrypt.PKCS_7_ASN_ENCODING;
+
+                                        UIntPtr rsaSigningTime = (UIntPtr)(uint)Marshal.StringToHGlobalAnsi(WinCrypt.szOID_RSA_signingTime);
+
+                                        byte[] pbData = signedAttribute.Values[0].RawData;
+                                        uint ucbData = (uint)pbData.Length;
+
+                                        bool workie = WinCrypt.CryptDecodeObject(encoding, rsaSigningTime, pbData, ucbData, 0, buffdata, ref buffSize);
+
+                                        if (workie) {
+                                            IntPtr fileTimePtr2 = Marshal.AllocCoTaskMem(buffdata.Length);
+                                            Marshal.Copy(buffdata, 0, fileTimePtr2, buffdata.Length);
+                                            System.Runtime.InteropServices.ComTypes.FILETIME fileTime2 = (System.Runtime.InteropServices.ComTypes.FILETIME)Marshal.PtrToStructure(fileTimePtr2, typeof(System.Runtime.InteropServices.ComTypes.FILETIME));
+
+                                            long hFT2 = (((long)fileTime2.dwHighDateTime) << 32) + ((uint)fileTime2.dwLowDateTime);
+
+                                            DateTime dte = DateTime.FromFileTime(hFT2);
+                                            Console.WriteLine(dte.ToString());
+                                        } else {
+                                            throw new Win32Exception(Marshal.GetLastWin32Error());
+                                        }
+
+                                    }
+                                }
+
+                            }
+
+                            return true;
+                        }
+
+                    }
+                }
+            } catch (Exception) {
+                // no logging
+            }
+
+            return false;
+        }
 
     }
 }

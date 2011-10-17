@@ -59,7 +59,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 LastScanned = DateTime.Now;
 
                 // GS01: BUG: recursive now should use ** in pattern match.
-                var files = Location.DirectoryEnumerateFilesSmarter(_filter, false ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly, NewPackageManager.Instance.BlockedScanLocations);
+                var files = Location.DirectoryEnumerateFilesSmarter(_filter, false ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly /*, NewPackageManager.Instance.BlockedScanLocations*/);
                 files = from file in files
                     where Recognizer.Recognize(file).Result.IsPackageFile // Since we know this to be local, it'm ok with blocking on the result.
                     select file;

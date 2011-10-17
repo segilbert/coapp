@@ -18,12 +18,14 @@
 // -----------------------------------------------------------------------
 
 namespace CoApp.Toolkit.Extensions {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Runtime.Serialization.Json;
     using System.Text;
     using System.Xml;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
     /// <summary>
     /// Xml Extension Methods.
@@ -159,7 +161,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static XmlNodeList XPathContains(this XmlDocument doc, string XPathExpression, string containsText) {
-            return doc.XPath(string.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
+            return doc.XPath(String.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
         }
 
         /// <summary>
@@ -171,7 +173,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static XmlNodeList XPathExcludes(this XmlDocument doc, string XPathExpression, string containsText) {
-            return doc.XPath(string.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
+            return doc.XPath(String.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
         }
 
         /// <summary>
@@ -255,7 +257,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static XmlNodeList XPathContains(this XmlNode doc, string XPathExpression, string containsText) {
-            return doc.XPath(string.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
+            return doc.XPath(String.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
         }
 
         /// <summary>
@@ -267,7 +269,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static XmlNodeList XPathExcludes(this XmlNode doc, string XPathExpression, string containsText) {
-            return doc.XPath(string.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
+            return doc.XPath(String.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
         }
 
         /// <summary>
@@ -320,7 +322,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static XmlNodeList XPathContains(this XmlNodeList doc, string XPathExpression, string containsText) {
-            return doc.ToXmlDocument().XPath(string.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
+            return doc.ToXmlDocument().XPath(String.Format(@"{0}[contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}')]", XPathExpression, containsText));
         }
 
         /// <summary>
@@ -332,7 +334,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static XmlNodeList XPathExcludes(this XmlNodeList doc, string XPathExpression, string containsText) {
-            return doc.ToXmlDocument().XPath(string.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
+            return doc.ToXmlDocument().XPath(String.Format(@"{0}[not(contains( translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') , '{1}'))]", XPathExpression, containsText));
         }
 
         /// <summary>
@@ -373,7 +375,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="outputPath">The output path.</param>
         /// <remarks></remarks>
         public static void PrettySaveXml(this IEnumerable<string> xmlDocumentText, string outputPath) {
-            var tempDocument = XDocument.Load(new StringReader(string.Join("\r\n", xmlDocumentText)));
+            var tempDocument = XDocument.Load(new StringReader(String.Join("\r\n", xmlDocumentText)));
             tempDocument.Save(outputPath, SaveOptions.None);
         }
 
@@ -389,5 +391,40 @@ namespace CoApp.Toolkit.Extensions {
             tempDocument.Save(outputPath, SaveOptions.None);
         }
 
+        /// <summary>
+        /// Pretties the save XML.
+        /// </summary>
+        /// <param name="xmlDocumentStream">The XML document stream.</param>
+        /// <remarks></remarks>
+        public static string PrettyXml(this MemoryStream xmlDocumentStream) {
+            xmlDocumentStream.Seek(0, SeekOrigin.Begin);
+            var tempDocument = XDocument.Load(xmlDocumentStream);;
+            return tempDocument.ToString();
+        }
+
+        public static string ToXml<T>(this T obj) {
+            var attributeOverrides = new XmlAttributeOverrides();
+
+            attributeOverrides.Add(typeof(T), new XmlAttributes {
+                XmlRoot = new XmlRootAttribute {
+                    ElementName = "CompositionRules"
+                }
+            });
+
+            var xmlSerializer = new XmlSerializer(typeof(T), attributeOverrides);
+
+            using (var ms = new MemoryStream()) {
+                using (var writer = XmlWriter.Create(ms)) {
+                    xmlSerializer.Serialize(writer, obj);
+                    writer.WriteEndDocument();
+                    writer.Close();
+                    return ms.PrettyXml();
+                }
+            }
+        }
+
+        public static T FromXml<T>(this string xmlText) where T : class {
+            return new XmlSerializer(typeof(T)).Deserialize(new StringReader(xmlText)) as T;
+        }
     }
 }

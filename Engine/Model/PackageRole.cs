@@ -8,7 +8,7 @@
 // </license>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Engine {
+namespace CoApp.Toolkit.Engine.Model {
     /// <summary>
     /// Different types of package roles
     /// </summary>
@@ -17,21 +17,39 @@ namespace CoApp.Toolkit.Engine {
         /// <summary>
         /// Shared Library (.NET Assembly, or native DLL)
         /// </summary>
-        SharedLib,
+        Assembly,
         
         /// <summary>
         /// Developer Library (.NET assembly or .lib/.h files)
         /// </summary>
-        DeveloperLib,
+        DeveloperLibrary,
         
         /// <summary>
         /// Source Code MSI
         /// </summary>
-        Source,
+        SourceCode,
         
         /// <summary>
         /// Application (binaries, etc)
         /// </summary>
-        Application
+        Application,
+
+        /// <summary>
+        /// Device Driver
+        /// </summary>
+        Driver,
+
+        /// <summary>
+        /// A web-application (registers with a web server)
+        /// </summary>
+        WebApplication,
+
+        /// <summary>
+        /// Win32 Service (registers with SC)
+        /// </summary>
+        Service,
+
     }
 }
+
+

@@ -85,8 +85,8 @@ namespace CoApp.Toolkit.Network {
         public readonly Uri RemoteLocation;
         private readonly string _localDirectory;
         private string _filename;
-        private Task _getTask;
-        private bool IsCancelled;
+        private Task _getTask = null;
+        private bool IsCancelled = false;
         private string _fullPath;
         private DateTime _lastModified;
         private long _contentLength;

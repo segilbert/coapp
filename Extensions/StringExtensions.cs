@@ -21,6 +21,7 @@
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
@@ -315,12 +316,13 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         public static bool NewIsWildcardMatch(this string text, string wildcardMask, bool isMatchingLocation = false, string currentLocation = null) {
             string key;
-
+            
             if (!isMatchingLocation) {
                 key = (currentLocation ?? "" )+ wildcardMask;
                 if (!_newWildcards.ContainsKey(key)) {
                     _newWildcards.Add(key, WildcardToRegex(key));
                 }
+                
                 return _newWildcards[key].IsMatch(text);
             }
 
@@ -330,8 +332,9 @@ namespace CoApp.Toolkit.Extensions {
                     ? @".*[\\|\/]"
                     : Regex.Escape((currentLocation.EndsWith("\\") || currentLocation.EndsWith("/")
                         ? currentLocation : currentLocation + (text.Contains("\\") ? "\\" : (text.Contains("/") ? "/" : ""))));
-                _newWildcards.Add(key, WildcardToRegex(key, prefix));
+                _newWildcards.Add(key, WildcardToRegex(wildcardMask, prefix));
             }
+            
             return _newWildcards[key].IsMatch(text);
         }
 
@@ -615,9 +618,12 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string MakeSafeFileName(this string input ) {
-            return new Regex(@"-+").Replace(new Regex(@"[^\d\w_\-\.]").Replace(input, "-"), "-");
+            return new Regex(@"-+").Replace(new Regex(@"[^\d\w_\-\. ]").Replace(input, "-"), "-");
         }
 
+        public static string MakeAttractiveFilename(this string input) {
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.MakeSafeFileName().ToLower());
+        }
         /// <summary>
         /// Checks if a string is a valid version string x.x.x.x
         /// TODO: this allows x to have values LARGER than the max number
@@ -629,11 +635,6 @@ namespace CoApp.Toolkit.Extensions {
         /// <remarks></remarks>
         public static bool IsValidVersion(this string input, bool strict = true) {
             return input.VersionStringToUInt64().UInt64VersiontoString().Equals(input);
-            /*
-            var verParts = input.Split('.');
-            //too many parts!
-            return verParts.Length <= 4 && verParts.All(part => part.IsValidVersionPart());
-             */
         }
 
 
@@ -646,31 +647,6 @@ namespace CoApp.Toolkit.Extensions {
         /// <remarks></remarks>
         public static string ExtendVersion(this string input) {
             return input.VersionStringToUInt64().UInt64VersiontoString();
-            /*
-            if (!input.IsValidVersion(false)) {
-                return null;
-            }
-
-            var partList = input.SplitToList('.');
-
-            if (partList.Count == 4) {
-                return input;
-            }
-
-            while (partList.Count != 4) {
-                partList.Add("0");
-            }
-
-            var output = new StringBuilder();
-            for (var i = 0; i < 4; i++) {
-                output.Append(partList[i]);
-                if (i != 3) {
-                    output.Append(".");
-                }
-            }
-
-            return output.ToString();
-             */
         }
 
 
@@ -890,17 +866,74 @@ namespace CoApp.Toolkit.Extensions {
             return HttpUtility.UrlDecode(s);
         }
 
-        public static string CamelCaseToDashed(this string camelCaseText) {
-            return new string(camelCaseToDashed(camelCaseText).ToArray());
+        public static string CamelCaseToDashed(this string camelCaseText, char separator = '-') {
+            return new string(camelCaseToDashed(camelCaseText,separator).ToArray());
         }
 
-        private static IEnumerable<char> camelCaseToDashed(this string camelCaseText ) {
+        private static IEnumerable<char> camelCaseToDashed(this string camelCaseText, char separator='-' ) {
             foreach( var ch in camelCaseText ) {
                 if( Char.IsUpper(ch) ) {
-                    yield return '-';
+                    yield return separator;
                 }
                 yield return Char.ToLower(ch);
             }
+        }
+
+        public delegate string GetMacroValueDelegate(string valueName);
+
+        
+
+        private static readonly Regex Macro = new Regex(@"(\$\{(.*?)\})");
+
+        public static string FormatWithMacros(this string value, GetMacroValueDelegate getMacroValue , object eachItem = null) {
+            if (getMacroValue == null) {
+                return value; // no macro handler?, just return 
+            }
+
+
+            bool keepGoing;
+            do {
+                keepGoing = false;
+
+                var matches = Macro.Matches(value);
+                foreach (var m in matches) {
+                    var match = m as Match;
+                    var innerMacro = match.Groups[2].Value;
+                    var outerMacro = match.Groups[1].Value;
+                    var replacement = getMacroValue(innerMacro);
+                    if (eachItem != null) {
+                        // try resolving it as an ${each.property} style.
+                        // the element at the front is the 'this' value
+                        // just trim off whatever is at the front up to and including the first dot.
+                        try {
+                            if (innerMacro.Contains(".")) {
+                                innerMacro = innerMacro.Substring(innerMacro.IndexOf('.') + 1).Trim();
+                                var r = eachItem.SimpleEval(innerMacro).ToString();
+                                value = value.Replace(outerMacro, r);
+                                keepGoing = true;
+                            }
+                        } catch {
+                            // meh. screw em'
+                        }
+                    }
+
+                    if (replacement != null) {
+                        value = value.Replace(outerMacro, replacement);
+                        keepGoing = true;
+                        break;
+                    }
+                }
+            } while (keepGoing);
+            return value;
+        }
+
+        public static Uri ToUri(this string stringUri) {
+            try {
+                return new Uri(stringUri);
+            } catch {
+                
+            }
+            return null;
         }
     }
 }

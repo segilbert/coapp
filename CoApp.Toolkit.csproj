@@ -311,6 +311,7 @@
     <Compile Include="Win32\VarHeader.cs" />
     <Compile Include="Win32\VirtualKeys.cs" />
     <Compile Include="Win32\VsFixedfileinfo.cs" />
+    <Compile Include="Win32\WinCrypt.cs" />
     <Compile Include="Win32\WindowInfo.cs" />
     <Compile Include="Win32\WindowStyles.cs" />
     <Compile Include="Win32\WindowsVersionInfo.cs" />

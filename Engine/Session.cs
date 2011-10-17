@@ -669,24 +669,28 @@ namespace CoApp.Toolkit.Engine {
         private void SendPackageDetails(Package package) {
             var msg = new UrlEncodedMessage("package-details") {
                 {"canonical-name", package.CanonicalName},
-                {"description", package.PackageDetails.FullDescription},
+                {"description", package.PackageDetails.Description},
                 {"summary", package.PackageDetails.SummaryDescription},
-                {"display-name", package.PackageDetails.DisplayName},
+                {"display-name", package.CosmeticName},
                 {"copyright", package.PackageDetails.CopyrightStatement},
                 {"author-version", package.PackageDetails.AuthorVersion},
-                {"icon", package.PackageDetails.Base64IconData},
-                {"license", package.PackageDetails.License},
-                {"license-url", package.PackageDetails.LicenseUrl},
+                {"icon", package.PackageDetails.Icon},
+                // {"license", package.PackageDetails.License},
+                // {"license-url", package.PackageDetails.LicenseUrl},
+                {"license", "Comming soon: License Data Is changing to support multiple licenses."},
+                {"license-url", "http://Comming_soon_License_Data_Is_changing_to_support_multiple_licenses."},
+
                 {"publish-date", package.PackageDetails.PublishDate.ToFileTime().ToString()},
                 {"publisher-name", package.PackageDetails.Publisher.Name},
-                {"publisher-url", package.PackageDetails.Publisher.Url},
+                {"publisher-url", package.PackageDetails.Publisher.Location.AbsoluteUri},
                 {"publisher-email", package.PackageDetails.Publisher.Email},
             };
 
             msg.AddCollection("tags", package.PackageDetails.Tags);
+
             if (!package.PackageDetails.Contributors.IsNullOrEmpty()) {
                 msg.AddCollection("contributor-name", package.PackageDetails.Contributors.Select(each => each.Name));
-                msg.AddCollection("contributor-url", package.PackageDetails.Contributors.Select(each => each.Url));
+                msg.AddCollection("contributor-url", package.PackageDetails.Contributors.Select(each => each.Location.AbsoluteUri));
                 msg.AddCollection("contributor-email", package.PackageDetails.Contributors.Select(each => each.Email));
             }
             WriteAsync(msg);

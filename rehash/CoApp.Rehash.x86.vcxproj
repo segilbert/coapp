@@ -88,6 +88,11 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>REM Sign the rehash binaries if possible, and copy them to the solution folder.
+if exist "$(SolutionDir)..\solution\scripts\$(ConfigurationName)-sign-rehash.js" cscript //e:jscript "$(SolutionDir)..\solution\scripts\$(ConfigurationName)-sign-rehash.js"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Rehash.c" />

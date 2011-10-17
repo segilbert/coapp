@@ -21,34 +21,13 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using Microsoft.Deployment.WindowsInstaller;
     using Tasks;
 
-    /// <summary>
-    /// Extension methods to access the contents of a dataset.
-    /// </summary>
-    /// <remarks></remarks>
-    internal static class DataSetExtensions {
-        /// <summary>
-        /// Gets the value from the property table.
-        /// </summary>
-        /// <param name="dataSet">The data set.</param>
-        /// <param name="propertyName">Name of the property.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        internal static string GetProperty(this DataSet dataSet, string propertyName) {
-            return (from property in dataSet.Tables["property"].AsEnumerable()
-                where property.Field<string>("Property") == propertyName
-                select property).FirstOrDefault().Field<string>("Value") ?? string.Empty;
+
+    internal class MsiProperties : Dictionary<string, string> {
+        internal string Filename { get; private set; }
+        internal MsiProperties(string fileName ) {
+            Filename = fileName;
         }
 
-        /// <summary>
-        /// finds the requested table as a set of datarows.
-        /// </summary>
-        /// <param name="dataSet">The data set.</param>
-        /// <param name="tableName">Name of the table.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        internal static IEnumerable<DataRow> GetTable(this DataSet dataSet, string tableName) {
-            return dataSet.Tables[tableName].AsEnumerable();
-        }
     }
 
     /// <summary>
@@ -56,16 +35,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     /// </summary>
     /// <remarks></remarks>
     internal class MSIBase : IPackageFormatHandler {
-        /// <summary>
-        /// Table names that are significant to CoApp
-        /// </summary>
-        private static readonly IEnumerable<string> SignificantTables = new[] {"CO_*", "property", "MsiAssembly*"};
-
-        /// <summary>
-        /// cache for filenames with the MSI dataset for each file.
-        /// </summary>
-        // private static readonly Dictionary<string, DataSet> MSIData = new Dictionary<string, DataSet>();
-
         /// <summary>
         /// Initializes a new instance of the <see cref="T:System.Object"/> class.
         /// </summary>
@@ -114,10 +83,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <param name="productCode">The product code.</param>
         /// <returns><c>true</c> if the specified product code is installed; otherwise, <c>false</c>.</returns>
         /// <remarks></remarks>
-        public bool IsInstalled(string productCode) {
+        public bool IsInstalled(Guid productCode) {
             try {
                 lock (typeof(MSIBase)) {
-                    Installer.OpenProduct(productCode).Close();
+                    Installer.OpenProduct(productCode.ToString("B")).Close();
                     return true;
                 }
             }
@@ -143,12 +112,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
             foreach (var product in products) {
                 var p = product;
-
                 try {
-                    /* if (Tasklet.IsCancellationRequested) {
-                        return;
-                    }*/
-
                     int percent = ((n++)*100)/total;
                     PackageManagerMessages.Invoke.ScanningPackagesProgress(p.LocalPackage,percent);
                     Package.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
@@ -157,6 +121,84 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 }
             }
         }
+
+        /// <summary>
+        /// Installs the specified package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="progress">The progress.</param>
+        /// <remarks></remarks>
+        public virtual void Install(Package package, Action<int> progress) {
+            Console.WriteLine("YOU SHOULD NOT SEE THIS!");
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Removes the specified package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <param name="progress">The progress.</param>
+        /// <remarks></remarks>
+        public virtual void Remove(Package package, Action<int> progress) {
+            Console.WriteLine("YOU SHOULD NOT SEE THIS!");
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Gets the MSI data as a stanard dataset
+        /// </summary>
+        /// <param name="localPackagePath">The local package path.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public static MsiProperties GetMsiProperties(string localPackagePath) {
+            lock (typeof(MSIBase)) {
+                localPackagePath = localPackagePath.ToLower();
+                var result = SessionCache<MsiProperties>.Value[localPackagePath];
+
+                if (result != null) {
+                    return result;
+                }
+
+                try {
+                    using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
+                        var info = database.Tables["Property"];
+                        var view = database.OpenView(info.SqlSelectString);
+                        view.Execute();
+
+
+                        result = new MsiProperties(localPackagePath);
+
+                        foreach( var each in view ) {
+                            result.Add(each["Property"].ToString(), each["Value"].ToString());
+                        }
+                        
+                        //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
+                        if (SessionCache<MsiProperties>.Value[localPackagePath] != null) {
+                            return SessionCache<MsiProperties>.Value[localPackagePath];
+                        }
+
+                        SessionCache<MsiProperties>.Value[localPackagePath] = result;
+                        return result;
+                    }
+                } catch (InstallerException) {
+                    throw new InvalidPackageException(InvalidReason.NotValidMSI, localPackagePath);
+                }
+            }
+        }
+
+
+#if FALSE
+        
+        /// <summary>
+        /// Table names that are significant to CoApp
+        /// </summary>
+        // private static readonly IEnumerable<string> SignificantTables = new[] {"CO_*", "property", "MsiAssembly*"};
+
+        /// <summary>
+        /// cache for filenames with the MSI dataset for each file.
+        /// </summary>
+        // private static readonly Dictionary<string, DataSet> MSIData = new Dictionary<string, DataSet>();
+
 
         /// <summary>
         /// Gets the content of an MSI as a *dynamic*dataset
@@ -168,57 +210,9 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return new DynamicDataSet(GetMSIData(localPackagePath));
         }
 
-        /// <summary>
-        /// Gets the MSI data as a stanard dataset
-        /// </summary>
-        /// <param name="localPackagePath">The local package path.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public static DataSet GetMSIData(string localPackagePath) {
-            lock (typeof(MSIBase)) {
-                localPackagePath = localPackagePath.ToLower();
+       
 
-                var result = SessionCache<DataSet>.Value[localPackagePath];
 
-                if (result != null) {
-                    return result;
-                }
-
-                try {
-                    using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
-                        var dataSet = new DataSet(localPackagePath) {
-                            EnforceConstraints = false
-                        };
-
-                        foreach (var t in database.Tables) {
-                            try {
-                                if (!t.Columns[0].IsTemporary) {
-                                    if (SignificantTables.Any(tn => t.Name.IsWildcardMatch(tn))) {
-                                        using (var dr = new MSIDataReader(database, t)) {
-                                            dataSet.Tables.Add(t.Name).Load(dr);
-                                        }
-                                    }
-                                }
-                            }
-                            catch (Exception) {
-                                // some tables not play nice.
-                            }
-                        }
-
-                        //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
-                        if (SessionCache<DataSet>.Value[localPackagePath] != null) {
-                            return SessionCache<DataSet>.Value[localPackagePath];
-                        }
-
-                        SessionCache<DataSet>.Value[localPackagePath] = dataSet;
-                        return dataSet;
-                    }
-                }
-                catch (InstallerException) {
-                    throw new InvalidPackageException(InvalidReason.NotValidMSI, localPackagePath);
-                }
-            }
-        }
 
         #region Nested type: MSIDataReader
 
@@ -272,7 +266,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 _columnCount = tableInfo.Columns.Count;
             }
 
-            #region IDataReader Members
+        #region IDataReader Members
 
             /// <summary>
             /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
@@ -746,31 +740,46 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 get { return -1; }
             }
 
-            #endregion
+        #endregion
         }
 
         #endregion
 
+#endif
+
+
+    }
+}
+
+
+#if FALSE
+    /// <summary>
+    /// Extension methods to access the contents of a dataset.
+    /// </summary>
+    /// <remarks></remarks>
+    internal static class DataSetExtensions {
         /// <summary>
-        /// Installs the specified package.
+        /// Gets the value from the property table.
         /// </summary>
-        /// <param name="package">The package.</param>
-        /// <param name="progress">The progress.</param>
+        /// <param name="dataSet">The data set.</param>
+        /// <param name="propertyName">Name of the property.</param>
+        /// <returns></returns>
         /// <remarks></remarks>
-        public virtual void Install(Package package, Action<int> progress) {
-            Console.WriteLine("YOU SHOULD NOT SEE THIS!");
-            throw new NotImplementedException();
+        internal static string GetProperty(this DataSet dataSet, string propertyName) {
+            return (from property in dataSet.Tables["property"].AsEnumerable()
+                where property.Field<string>("Property") == propertyName
+                select property).FirstOrDefault().Field<string>("Value") ?? string.Empty;
         }
 
         /// <summary>
-        /// Removes the specified package.
+        /// finds the requested table as a set of datarows.
         /// </summary>
-        /// <param name="package">The package.</param>
-        /// <param name="progress">The progress.</param>
+        /// <param name="dataSet">The data set.</param>
+        /// <param name="tableName">Name of the table.</param>
+        /// <returns></returns>
         /// <remarks></remarks>
-        public virtual void Remove(Package package, Action<int> progress) {
-            Console.WriteLine("YOU SHOULD NOT SEE THIS!");
-            throw new NotImplementedException();
+        internal static IEnumerable<DataRow> GetTable(this DataSet dataSet, string tableName) {
+            return dataSet.Tables[tableName].AsEnumerable();
         }
     }
-}
+#endif

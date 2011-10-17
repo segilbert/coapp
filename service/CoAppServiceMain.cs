@@ -8,6 +8,8 @@ namespace CoApp.Service {
     using System;
     using System.Collections.Generic;
     using System.Configuration.Install;
+    using System.Diagnostics;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.ServiceProcess;
@@ -100,9 +102,10 @@ CoApp.Service [options]
                     case "load-config":
                         break;
 
-//                    case "nologo":
-//                        this.Assembly().SetLogo("");
-//                        break;
+                    case "auto-install":
+                        RequiresAdmin("--auto-install");
+                        Environment.Exit(AutoInstall());
+                        break;
 
                     case "start":
                         start = true;
@@ -215,8 +218,6 @@ CoApp.Service [options]
                 } 
             }
 
-          
-
             if (start) {
                 RequiresAdmin("--start");
                 if (CoAppService.IsInstalled) {
@@ -244,6 +245,150 @@ CoApp.Service [options]
             }
 
             return 0;
+        }
+
+        private int AutoInstall() {
+            if (CoAppService.IsInstalled) {
+                CoAppService.StartService();
+                return 0;
+            }
+
+            var coAppRootDirectory = PackageManagerSettings.CoAppRootDirectory;
+            if( !Directory.Exists(coAppRootDirectory )) {
+                // no coapp directory? 
+                // no way.
+                return 100;
+            }
+
+            var binDir = Path.Combine(coAppRootDirectory, "bin");
+            var canonicalExePath = Path.Combine(binDir, "coapp.service.exe");
+
+            if( Directory.Exists(binDir)) {
+                if (AutoInstallService(canonicalExePath)) {
+                    // yay!
+                    return 0;
+                }
+            }
+
+            Directory.CreateDirectory(binDir);
+            if( !Directory.Exists(binDir)) {
+                // we couldn't make the bin dir? 
+                // I don't wann live in such a world...
+                return 200;
+            }
+
+            // it's either not in the bin directory, or it was, and it didn't install.
+            // time for plan B.
+            var installedDir = Path.Combine(coAppRootDirectory, ".installed");
+            if( !Directory.Exists(installedDir)) {
+                var searchDirectory = Path.Combine(installedDir, "outercurve foundation");
+                if (!Directory.Exists(searchDirectory)) {
+                    // hmm. No outercurve directory.
+                    // lets just use the .installed directory 
+                    searchDirectory = installedDir;
+                }
+
+                // get all of the coapp.service.exes and pick the one with the highest version
+                var serviceExes = searchDirectory.FindFilesSmarter(@"**\coapp.service.exe");
+                if (!serviceExes.IsNullOrEmpty()) {
+                    // ah, so we found some did we?
+                    serviceExes = serviceExes.OrderByDescending(Version);
+
+                    foreach (var path in serviceExes) {
+                        // try to create the canonical symlink.
+                        Symlink.MakeFileLink(canonicalExePath, path);
+
+                        if (AutoInstallService(canonicalExePath)) {
+                            // yay!
+                            return 0;
+                        }
+                        // :(
+                    }
+                }
+            }
+
+            // ok, so we tried installing every exe we could find.
+            // What about the EXE we're currently running? 
+            // if it's somewhere in the %coapp% directory, 
+            // I vote we try creating a symlink for this, and install it.
+            var thisEXE = Assembly.GetExecutingAssembly().Location;
+            if( thisEXE.StartsWith(coAppRootDirectory, StringComparison.CurrentCultureIgnoreCase)) {
+                // it's here somewhere.
+                // do it.
+                Symlink.MakeFileLink(canonicalExePath, thisEXE);
+
+                if( AutoInstallService(canonicalExePath)) {
+                    // yay!
+                    return 0;
+                }
+            }
+
+            // fargle-bargle.
+            // Ok, I'm thinkin' there is not really any coapp installed at all.
+            // we're outta here.
+            return 300;
+        }
+
+        private bool AutoInstallService(string path) {
+            if( File.Exists(path)) {
+                try {
+                    // hey we found one where it's supposed to be!
+                    var processStartInfo = new ProcessStartInfo(path) {
+                        Arguments = "--start",
+                        CreateNoWindow = true,
+                        WindowStyle = ProcessWindowStyle.Hidden
+                    };
+
+                    var process = Process.Start(processStartInfo);
+                    process.WaitForExit();
+
+                    // after it exits, lets see if we've got an installed service
+                    if (CoAppService.IsInstalled) {
+                        // YAY!. We're outta here!
+                        CoAppService.StartService();
+                        return true;
+                    }
+
+                } catch {
+                    // hmm. not working...
+                }
+            }
+            return false;
+        }
+
+        private static int PositionOfFirstCharacterNotIn(string str, char[] characters) {
+            var p = 0;
+            while (p < str.Length) {
+                if (!characters.Contains(str[p])) {
+                    return p;
+                }
+                p++;
+            }
+            return p;
+        }
+
+        private static ulong Version(string path) {
+            try {
+                var info = FileVersionInfo.GetVersionInfo(path);
+                var fv = info.FileVersion;
+                if (!String.IsNullOrEmpty(fv)) {
+                    fv = fv.Substring(0, PositionOfFirstCharacterNotIn(fv, "0123456789.".ToCharArray()));
+                }
+
+                if (String.IsNullOrEmpty(fv)) {
+                    return 0;
+                }
+
+                var vers = fv.Split('.');
+                var major = vers.Length > 0 ? vers[0].ToInt32() : 0;
+                var minor = vers.Length > 1 ? vers[1].ToInt32() : 0;
+                var build = vers.Length > 2 ? vers[2].ToInt32() : 0;
+                var revision = vers.Length > 3 ? vers[3].ToInt32() : 0;
+
+                return (((UInt64)major) << 48) + (((UInt64)minor) << 32) + (((UInt64)build) << 16) + (UInt64)revision;
+            } catch {
+                return 0;
+            }
         }
 
         #region fail/help/logo

@@ -40,6 +40,7 @@
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -151,6 +152,7 @@
     <Compile Include="DynamicXml\DynamicDataRow.cs" />
     <Compile Include="DynamicXml\DynamicDataSet.cs" />
     <Compile Include="DynamicXml\DynamicDataTable.cs" />
+    <Compile Include="Engine\EngineServiceManager.cs" />
     <Compile Include="Engine\Exceptions\ConfigurationException.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -192,11 +194,20 @@
     </Compile>
     <Compile Include="Engine\Exceptions\UnableToStartServiceException.cs" />
     <Compile Include="Engine\Feeds\AtomPackageFeed.cs" />
-    <Compile Include="Engine\Feeds\Atom\AtomFeed.cs" />
-    <Compile Include="Engine\Feeds\Atom\AtomItem.cs" />
+    <Compile Include="Engine\Model\Architecture.cs" />
+    <Compile Include="Engine\Model\Atom\AtomFeed.cs" />
+    <Compile Include="Engine\Model\Atom\AtomItem.cs" />
+    <Compile Include="Engine\Model\CompositionAction.cs" />
+    <Compile Include="Engine\Model\CompositionRule.cs" />
+    <Compile Include="Engine\Model\Identity.cs" />
+    <Compile Include="Engine\Model\License.cs" />
+    <Compile Include="Engine\Model\LicenseId.cs" />
+    <Compile Include="Engine\Model\LocationAttribute.cs" />
+    <Compile Include="Engine\Model\PackageModel.cs" />
+    <Compile Include="Engine\Model\PackageRole.cs" />
+    <Compile Include="Engine\Model\Role.cs" />
     <Compile Include="Engine\PackageName.cs" />
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />
-    <Compile Include="Engine\CompositionRule.cs" />
     <Compile Include="Engine\EngineService.cs" />
     <Compile Include="Engine\PackageManagerSession.cs" />
     <Compile Include="Exceptions\PathIsNotFileUriException.cs" />
@@ -209,7 +220,6 @@
     <Compile Include="Engine\PackageCollectionExtensions.cs" />
     <Compile Include="Engine\PackageManagerMessages.cs" />
     <Compile Include="Engine\PackageManagerSettings.cs" />
-    <Compile Include="Engine\PackageRole.cs" />
     <Compile Include="Engine\PermissionPolicy.cs" />
     <Compile Include="Engine\Recognizer.cs" />
     <Compile Include="Engine\PackageAssemblyInfo.cs" />
@@ -236,8 +246,6 @@
     <Compile Include="PackageFormatHandlers\LegacyMSI.cs" />
     <Compile Include="PackageFormatHandlers\MSIBase.cs" />
     <Compile Include="PackageFormatHandlers\PackageFormatHandler.cs" />
-    <Compile Include="Package\Huid.cs" />
-    <Compile Include="Package\PackageType.cs" />
     <Compile Include="Properties\Engine.AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
     <Compile Include="Engine\Properties\Resources.Designer.cs">
@@ -319,6 +327,7 @@
     <Compile Include="Win32\TokenMandatoryLabel.cs" />
     <Compile Include="Win32\User32.cs" />
     <Compile Include="Win32\Win32StreamId.cs" />
+    <Compile Include="Win32\WinCrypt.cs" />
     <Compile Include="Win32\WindowsVersionInfo.cs" />
     <Compile Include="Win32\WinTrust.cs" />
   </ItemGroup>
@@ -336,6 +345,9 @@
     </EmbeddedResource>
     <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
     <EmbeddedResource Include="Properties\Resources.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Package\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -86,7 +86,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             get {
                 return string.IsNullOrEmpty( _collectionName )
                     ? NoCollection  // this makes it so there is a 1-element collection for things that don't have a collection. 
-                    : (ParentPropertySheet.NeedCollection != null ? ParentPropertySheet.NeedCollection(_collectionName)
+                    : (ParentPropertySheet.GetCollection != null ? ParentPropertySheet.GetCollection(_collectionName)
                     : Enumerable.Empty<object>()); // this is so that when there is supposed to be a collection, but nobody is listening, we get an empty set back.
             }
         }
@@ -210,7 +210,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public string Value { get {
-            return this[string.Empty].Value;
+            var v = this[string.Empty];
+            return v == null ? null : this[string.Empty].Value;
         }}
 
         public IEnumerable<string> Values {
@@ -226,6 +227,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         public bool HasValues {
+            get {
+                return _propertyValues.Count > 0;
+            }
+        }
+
+        public bool HasValue {
             get {
                 return _propertyValues.Count > 0;
             }

@@ -177,11 +177,11 @@ namespace CoApp.Toolkit.Utility {
 
             var ver = minimumVersion.VersionStringToUInt64();
 
-            var files = _commonSearchLocations.Union(_searchLocations).AsParallel().SelectMany(
-                directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.TopDirectoryOnly))
+            var files = _commonSearchLocations.Union(_searchLocations).SelectMany(
+                directory => directory.DirectoryEnumerateFilesSmarter("**\\"+filename, SearchOption.TopDirectoryOnly))
                 .Union(
                     _recursiveSearchLocations.AsParallel().SelectMany(
-                        directory => directory.DirectoryEnumerateFilesSmarter(filename, SearchOption.AllDirectories)));
+                        directory => directory.DirectoryEnumerateFilesSmarter("**\\"+filename, SearchOption.AllDirectories)));
 
             if (executableType != ExecutableInfo.none || ver != 0) {
                 files =

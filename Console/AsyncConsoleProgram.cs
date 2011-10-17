@@ -157,7 +157,7 @@ namespace CoApp.Toolkit.Console {
             
             int x = 6;
             while( x-- > 0 || !CancellationTokenSource.Token.WaitHandle.WaitOne( 500 ) ) {
-                Console.Write(".");
+                // Console.Write("");
             }
 
             return 1;

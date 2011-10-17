@@ -75,6 +75,7 @@ namespace CoApp.Toolkit.Extensions {
         /// </summary>
         private static readonly Regex _invalidDoubleWcRx = new Regex(@"\\.+\*\*|\*\*[^\\]+\\|\*\*\\\*\*");
 
+        private static char[] wildcard_chars = new[] {'*', '?'};
 
         /// <summary>
         /// Determines if the childPath is a sub path of the rootPath
@@ -247,6 +248,33 @@ namespace CoApp.Toolkit.Extensions {
             return result.format(parameters);
         }
 
+        public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, SearchOption searchOption) {
+            // finds all the files in a set of subdirectories, softly skipping when access is blocked
+            var files = Enumerable.Empty<string>();
+            try {
+                files = Directory.EnumerateFiles(path);
+            } catch {
+            }
+
+            foreach( var file in files ) {
+                yield return file;
+            }
+
+            if (searchOption == SearchOption.AllDirectories) {
+                var directories = Enumerable.Empty<string>();
+                try {
+                    directories = Directory.EnumerateDirectories(path);
+                }
+                catch {
+                }
+                foreach (var directory in directories) {
+                    files = DirectoryEnumerateFilesSmarter(directory, searchOption);
+                    foreach (var file in files) {
+                        yield return file;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Enumerates files in a directory, smarter than Direcotry.EnumerateFiles (ie, doesn't throw, when it can't access something)
@@ -257,48 +285,44 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="skipPathPatterns">The skip path patterns.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption,
-            IEnumerable<string> skipPathPatterns = null) {
-            var result = Enumerable.Empty<string>();
-
-            try {
-                if (skipPathPatterns != null ? skipPathPatterns.Any(pattern => path.IsWildcardMatch(pattern)) : false) {
-                    return result;
-                }
-
-                result = Directory.EnumerateFiles(path, searchPattern, SearchOption.TopDirectoryOnly);
-            }
-            catch {
-            }
-
-            if (searchOption == SearchOption.AllDirectories) {
-                try {
-                    result =
-                        result.Union(Directory.EnumerateDirectories(path).Aggregate(result,
-                            (current, directory) =>
-                                current.Union(DirectoryEnumerateFilesSmarter(directory, searchPattern, SearchOption.AllDirectories))));
-                }
-                catch {
-                }
-            }
-            return result;
+        public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption) {
+            return DirectoryEnumerateFilesSmarter(path, searchOption).Where(file => file.ToLower().NewIsWildcardMatch(searchPattern, true, path));
         }
 
 
-
         /// <summary>
-        /// A front end to DirectoryEnumerateFilesSmarter that allows for wildcards in the path (and expands it out to a full path first.)
+        /// A front end to DirectoryEnumerateFilesSmarter that allows for wildcards in the path or serarch mask (and expands it out to a full path first.)
+        /// 
+        /// it also constrains the path as much as possible to keep from enumerating directories that will never match files.
         /// </summary>
         /// <param name="pathMask">The path mask.</param>
         /// <param name="searchOption">The search option.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static IEnumerable<string> FindFilesSmarter(this string pathMask, SearchOption searchOption = SearchOption.TopDirectoryOnly) {
-            var path = (pathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$")).Replace("$$STAR$$", "*").Replace("$$QUERY$$", "?").GetFullPath();
-            var mask = path.Substring(path.LastIndexOf("\\") + 1);
+        public static IEnumerable<string> FindFilesSmarter(this string pathMask, string subpathMask = null) {
 
-            path = path.Substring(0, path.LastIndexOf("\\"));
-            return path.DirectoryEnumerateFilesSmarter(mask, searchOption);
+            var path = pathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$");
+            if( !string.IsNullOrEmpty(subpathMask)) {
+                path = Path.Combine(path, subpathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$"));
+            }
+            path = path.GetFullPath().Replace("$$STAR$$", "*").Replace("$$QUERY$$", "?");
+
+            var i = path.IndexOfAny(wildcard_chars);
+            if( i == -1) {
+                // then there isn't any wildcards in the search. That should probably be pretty easy :S
+                i = path.Length;
+            }
+            // find the last slash before the first wildcard.
+            var j = path.LastIndexOf("\\", i);
+
+            // the mask is everything past that point
+            var mask = path.Substring(j + 1);
+            
+            // the root path is everything before 
+            path = path.Substring(0, j);
+
+            // call DEFS with the minimally constrained path & mask
+            return path.ToLower().DirectoryEnumerateFilesSmarter(mask.ToLower(), mask.IndexOf("**") > -1 ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
         }
 
         /// <summary>
@@ -747,7 +771,6 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static IEnumerable<string> GetMinimalPaths( this IEnumerable<string> paths ) {
-
             if (paths.Any() && paths.Skip(1).Any()) {
                 IEnumerable<IEnumerable<string>> newPaths = paths.Select(each => each.GetFullPath()).Select(each => each.Split('\\'));
                 while (newPaths.All(each => each.FirstOrDefault() == newPaths.FirstOrDefault().FirstOrDefault())) {
@@ -756,6 +779,28 @@ namespace CoApp.Toolkit.Extensions {
                 return newPaths.Select(each => each.Aggregate((current, value) => current + "\\" + value));
             }
             return paths.Select(Path.GetFileName);
+        }
+
+    }
+
+    public class DisposableFilename : IDisposable {
+        public string Filename { get; private set; }
+
+        public DisposableFilename() {
+            Filename = Path.GetTempFileName();
+        }
+
+        public DisposableFilename(string filename) {
+            Filename = Path.Combine(Path.GetTempPath(), Path.GetFileName(filename) ); 
+            if( File.Exists(Filename)) {
+                filename.TryHardToDeleteFile();
+            }
+        }
+
+        public void Dispose() {
+            if( File.Exists(Filename)) {
+                Filename.TryHardToDeleteFile();
+            }
         }
     }
 }

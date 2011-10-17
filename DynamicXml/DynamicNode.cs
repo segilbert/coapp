@@ -77,6 +77,37 @@ namespace CoApp.Toolkit.DynamicXml {
         }
 
         /// <summary>
+        /// Provides an indexer to get a child element by it's an attribute value 
+        /// 
+        /// 
+        /// </summary>
+        /// <param name="query">must be in the form of "attributename=attributevalue"
+        /// so to find the child element with the attribute 'Name' of 'foo'
+        /// value should be : 
+        ///      "Name=foo"
+        /// 
+        /// If no '=' is in the string, it defaults to assuming that the attribute is 'id'
+        /// and the value is the whole query parameter.
+        /// 
+        /// If there are multiple '=' characters, value ends up being the content after the last '='
+        /// </param>
+        /// <returns></returns>
+        public DynamicNode this[string query] {
+            get {
+                var p = query.Split('=');
+                var attr = "id";
+                if (p.Length > 1 ) {
+                    attr = p[0];
+                }
+                var value = p[p.Length - 1] ;
+
+                var match = _element.Descendants().Where(each => each.Attributes().Where(a => a.Name == attr && a.Value == value).Any()).FirstOrDefault();
+
+                return match == null ? null : new DynamicNode(match);
+            }
+        }
+
+        /// <summary>
         ///   Provides the implementation for operations that set member values. Classes derived from the DynamicObject class can override this method to specify dynamic behavior for operations such as setting a value for a property.
         /// </summary>
         /// <param name = "binder">Provides information about the object that called the dynamic operation. The binder.Name property provides the name of the member to which the value is being assigned. For example, for the statement sampleObject.SampleProperty = "Test", where sampleObject is an instance of the class derived from the DynamicObject class, binder.Name returns "SampleProperty". The binder.IgnoreCase property specifies whether the member name is case-sensitive.</param>
@@ -115,26 +146,11 @@ namespace CoApp.Toolkit.DynamicXml {
             return true;
         }
 
-        public dynamic Attributes { get {
-            if (attributes == null) {
-                attributes = new DynamicAttributes(_element);
-            }
-            return attributes;
-        }}
-
-        /// <summary>
-        ///   Gets the dynamic attributes for an XML Node
-        /// </summary>
-        /// <param name = "result">The Attributes object</param>
-        /// <returns>true if successful</returns>
-        private bool TryGetAttributes(out object result) {
-            if(attributes == null) {
-                attributes = new DynamicAttributes(_element);
-            }
-
-            result = attributes;
-            return true;
+        public dynamic Attributes {
+            get { return attributes ?? (attributes = new DynamicAttributes(_element)); }
         }
+
+       
 
         /// <summary>
         ///   Some sort of casting thing.
@@ -208,6 +224,11 @@ namespace CoApp.Toolkit.DynamicXml {
             return new DynamicNode(element);
         }
 
+        public DynamicNode Add(string name, string value) {
+            var e = new XElement(name) {Value = value};
+            _element.Add(e);
+            return new DynamicNode(e);
+        }
     }
 
     /* internal static class DynamicTypeAssigner {

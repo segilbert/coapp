@@ -11,6 +11,7 @@
 namespace CoApp.Toolkit.Extensions
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
     public static class ObjectExtensions
@@ -46,6 +47,59 @@ namespace CoApp.Toolkit.Extensions
             }
 
             return objects.Skip(10).Aggregate(hashCodesWithPrimes, (result, obj) => result + (obj == null ? 0 : obj.GetHashCode()));    
+        }
+
+        public static T With<T>(this T item, Action<T> action) {
+            action(item);
+            return item;
+        }
+
+        public static object SimpleEval(this object instance, string simpleCode) {
+            var cmd = simpleCode.Split('.');
+            var subString = cmd[0];
+            object returnValue;
+            var t = instance.GetType();
+            if (subString.Contains("(")) {
+                var paramString = subString.Split('(');
+                var parameters = paramString[1].Replace(")", "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                var hasNoParams = parameters.Length == 0;
+
+                List<Type> typeArray = null;
+                if (hasNoParams) {
+                    typeArray = new List<Type>();
+                }
+                foreach (var parameter in parameters.Where(parameter => parameter.Contains(":"))) {
+                    if (typeArray == null) {
+                        typeArray = new List<Type>();
+                    }
+                    var typeValue = parameter.Split(':');
+                    var paramType = Type.GetType(typeValue[0].Replace('_', '.'));
+
+                    typeArray.Add(paramType);
+                }
+                var info = typeArray == null ? t.GetMethod(paramString[0]) : t.GetMethod(paramString[0], typeArray.ToArray());
+                var pInfo = info.GetParameters();
+                var paramList = new List<object>();
+                for (var i = 0; i < pInfo.Length; i++) {
+                    var currentParam = parameters[i];
+                    if (currentParam.Contains(":")) {
+                        currentParam = currentParam.Split(':')[1];
+                    }
+                    var pram = pInfo[i];
+                    var pType = pram.ParameterType;
+                    var obj = Convert.ChangeType(currentParam, pType);
+                    paramList.Add(obj);
+                }
+                returnValue = info.Invoke(instance, paramList.ToArray());
+            } else {
+                var pi = t.GetProperty(subString);
+                returnValue = pi == null ? null : pi.GetValue(instance, null);
+            }
+            if (returnValue == null || cmd.Length == 1) {
+                return returnValue;
+            }
+            returnValue = SimpleEval(returnValue, simpleCode.Replace(cmd[0] + ".", ""));
+            return returnValue;
         }
     }
 }

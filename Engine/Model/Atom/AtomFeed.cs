@@ -8,7 +8,7 @@
 // </license>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Engine.Feeds.Atom {
+namespace CoApp.Toolkit.Engine.Model.Atom {
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -18,7 +18,7 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
     using Extensions;
 
     public class AtomFeed : SyndicationFeed {
-        private readonly List<AtomItem> _items = new List<AtomItem>();
+        // private readonly List<AtomItem> _items = new List<AtomItem>();
         private readonly string _outputFilename;
         private readonly string _packageUrlPrefix;
         private readonly string _actualUrl;
@@ -60,22 +60,14 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             _outputFilename = outputFilename;
         }
 
-        public static AtomFeed Load(string localPath) {
-            XmlReader reader = null;
-            StringReader sr = null;
+        public static AtomFeed LoadFile(string localPath) {
+            return File.Exists(localPath) ? Load(File.ReadAllText(localPath)) : null;
+        }
 
-            if( File.Exists(localPath) ) {
-                sr = new StringReader(File.ReadAllText(localPath));
-                reader = XmlReader.Create(sr);
+        public static AtomFeed Load(string xmlDocument) {
+            using (var sr = new StringReader(xmlDocument)) {
+                return Load<AtomFeed>(XmlReader.Create(sr));
             }
-            
-            if( reader != null) {
-                var result = Load<AtomFeed>(reader);
-                sr.Dispose();
-                return result;
-            }
-            
-            return null;
         }
 
         public void Save() {
@@ -83,6 +75,14 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
         }
 
         public void Save(string localPath ) {
+            File.WriteAllText(localPath, ToString());
+        }
+
+        public override string ToString() {
+            foreach (var item in from each in Items where (each as AtomItem) != null select each as AtomItem) {
+                item.SyncFromModel();
+            }
+
             using (var ms = new MemoryStream()) {
                 var writer = XmlWriter.Create(ms);
                 var formatter = GetAtom10Formatter();
@@ -90,26 +90,14 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
                 formatter.WriteTo(writer);
                 writer.WriteEndDocument();
                 writer.Close();
-                ms.PrettySaveXml(localPath);
-            }
-        }
-
-        internal void AddPackages(IEnumerable<Package>packages) {
-            foreach (var p in packages)
-                AddPackage(p);
-        }
-
-        internal void AddPackage(Package package, string relativePath = null) {
-            var item = CreateItem() as AtomItem;
-            item.Populate(package, relativePath, _packageUrlPrefix);
-
-            // TODO: set lastupdatedtime to the last package timestamp?
-            _items.Add(item);
-            Items = _items;
+                return ms.PrettyXml();
+            } 
         }
 
         protected override void WriteAttributeExtensions(XmlWriter writer, string version) {
-            writer.WriteAttributeString("xmlns", "package", null, "http://coapp.org/atom-package-feed-1.0");
+            writer.WriteAttributeString("xmlns", "coapp", null, "http://coapp.org/atom-package-feed-1.0");
+            writer.WriteAttributeString("xmlns", "xsi", null, "http://www.w3.org/2001/XMLSchema-instanceb");
+            writer.WriteAttributeString("xmlns", "xsd", null, "http://www.w3.org/2001/XMLSchema");
         }
         protected override SyndicationCategory CreateCategory() {
             return base.CreateCategory();
@@ -123,6 +111,46 @@ namespace CoApp.Toolkit.Engine.Feeds.Atom {
             return base.CreatePerson();
         }
 
+        /// <summary>
+        /// This adds a new package model to the feed. The package model doesn't have to be completed when added,
+        ///  but the caller must fill in the values before the feed is generated, or it's kinda pointless. :)
+        /// 
+        /// Use this when trying to create feeds.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public AtomItem Add(PackageModel model) {
+            var item = new AtomItem(model);
+            Items = Items.Union(item.SingleItemAsEnumerable()).ToArray();
+            return item;
+        }
+
+#if COAPP_ENGINE_CORE 
+        /// <summary>
+        /// This takes an existing package object and creates a package model from it and inserts it into the feed.
+        /// </summary>
+        /// <param name="package"></param>
+        /// <returns></returns>
+        public AtomItem Add(Package package) {
+            var item = new AtomItem(package); 
+            Items = Items.Union(item.SingleItemAsEnumerable()).ToArray();
+            return item;
+        }
+
+        public void Add(IEnumerable<Package> packages) {
+            Items = Items.Union(packages.Select(each => new AtomItem(each))).ToArray();
+        }
+        
+        public IEnumerable<Package> Packages {
+            get {
+                return Items.Select(each => {
+                    var atomItem = each as AtomItem;
+                    return atomItem != null ? atomItem.Package : null;
+                });
+            }
+        } 
+
+#endif 
         protected override SyndicationItem CreateItem() {
             return new AtomItem();
         }

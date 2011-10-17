@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Engine {
     using System.IO;
     using System.Threading.Tasks;
     using Extensions;
-    using Feeds.Atom;
+    using Model.Atom;
     using PackageFormatHandlers;
     using Tasks;
 
@@ -181,7 +181,7 @@ namespace CoApp.Toolkit.Engine {
                             if (localPath.IsXmlFile()) {
                                 try {
                                     // this could be an atom feed
-                                    var feed = AtomFeed.Load(localPath);
+                                    var feed = AtomFeed.LoadFile(localPath);
                                     if (feed != null) {
                                         result.IsPackageFeed = true;
                                         result.IsAtom = true;

@@ -22,10 +22,10 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         private static readonly Regex Macro = new Regex(@"(\$\{(.*?)\})");
         private readonly List<Rule> _rules = new List<Rule>();
 
-        public delegate string NeedMacroValueDelegate(string valueName);
-        public delegate IEnumerable<object> NeedCollectionDelegate(string collectionName);
-        public NeedMacroValueDelegate NeedMacroValue;
-        public NeedCollectionDelegate NeedCollection;
+        public delegate IEnumerable<object> GetCollectionDelegate(string collectionName);
+
+        public StringExtensions.GetMacroValueDelegate GetMacroValue;
+        public GetCollectionDelegate GetCollection;
 
         public string Filename { get; internal set; }
 
@@ -73,7 +73,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         internal string ResolveMacros(string value, object eachItem = null) {
-            if (NeedMacroValue == null) {
+            if (GetMacroValue == null) {
                 return value; // no macro handler?, just return 
             }
 
@@ -86,7 +86,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     var match = m as Match;
                     var innerMacro = match.Groups[2].Value;
                     var outerMacro =  match.Groups[1].Value;
-                    var replacement = NeedMacroValue(innerMacro);
+                    var replacement = GetMacroValue(innerMacro);
                     if( eachItem != null ) {
                         // try resolving it as an ${each.property} style.
                         // the element at the front is the 'this' value
@@ -94,12 +94,9 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                         try {
                             if (innerMacro.Contains(".")) {
                                 innerMacro = innerMacro.Substring(innerMacro.IndexOf('.') + 1).Trim();
-                                var r = SimpleEval(eachItem, innerMacro).ToString();
+                                var r = eachItem.SimpleEval(innerMacro).ToString();
                                 value = value.Replace(outerMacro, r);
                                 keepGoing = true;
-                            } else {
-                                // if there isn't any dots, just assume the object is the value.
-                               //  value = value.Replace(outerMacro, eachItem.ToString());
                             }
                         } catch {
                             // meh. screw em'
@@ -114,54 +111,6 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 }
             } while (keepGoing);
             return value;
-        }
-
-        private static object SimpleEval(object instance, string simpleCode) {
-            var cmd = simpleCode.Split('.');
-            var subString = cmd[0];
-            object returnValue;
-            var t = instance.GetType();
-            if (subString.Contains("(")) {
-                var paramString = subString.Split('(');
-                var parameters = paramString[1].Replace(")", "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                var hasNoParams = parameters.Length == 0;
-
-                List<Type> typeArray = null;
-                if (hasNoParams) {
-                    typeArray = new List<Type>();
-                }
-                foreach (var parameter in parameters.Where(parameter => parameter.Contains(":"))) {
-                    if (typeArray == null) {
-                        typeArray = new List<Type>();
-                    }
-                    var typeValue = parameter.Split(':');
-                    var paramType = Type.GetType(typeValue[0].Replace('_', '.'));
-
-                    typeArray.Add(paramType);
-                }
-                var info = typeArray == null ? t.GetMethod(paramString[0]) : t.GetMethod(paramString[0], typeArray.ToArray());
-                var pInfo = info.GetParameters();
-                var paramList = new List<object>();
-                for (var i = 0; i < pInfo.Length; i++) {
-                    var currentParam = parameters[i];
-                    if (currentParam.Contains(":")) {
-                        currentParam = currentParam.Split(':')[1];
-                    }
-                    var pram = pInfo[i];
-                    var pType = pram.ParameterType;
-                    var obj = Convert.ChangeType(currentParam, pType);
-                    paramList.Add(obj);
-                }
-                returnValue = info.Invoke(instance, paramList.ToArray());
-            } else {
-                var pi = t.GetProperty(subString);
-                returnValue = pi == null ? null : pi.GetValue(instance, null);
-            }
-            if (returnValue == null || cmd.Length == 1) {
-                return returnValue;
-            }
-            returnValue = SimpleEval(returnValue, simpleCode.Replace(cmd[0] + ".", ""));
-            return returnValue;
         }
 
         public override string ToString() {

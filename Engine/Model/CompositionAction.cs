@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright company="CoApp Project">
 //     Copyright (c) 2011 Garrett Serack . All rights reserved.
 // </copyright>
@@ -7,41 +7,34 @@
 //     You may not use the software except in compliance with the License. 
 // </license>
 //-----------------------------------------------------------------------
-/*
-namespace CoApp.Toolkit.Engine
-{
+
+namespace CoApp.Toolkit.Engine {
     /// <summary>
-    /// 
-    /// 
-    /// 
+    /// The type of action for this composition rule
     /// </summary>
-    /// <remarks>
-    /// Storage Class.
-    /// 
-    /// Note: Is this actually required? Should we normalize the use of this with Package itself?
-    /// </remarks>
-    public class PackageAssemblyInfo
-    {
+    /// <remarks></remarks>
+    public enum CompositionAction {
         /// <summary>
-        /// 
+        /// Create a symlink to a file
         /// </summary>
-        public string Name;
+        SymlinkFile,
         /// <summary>
-        /// 
+        /// Create a symlink to a folder
         /// </summary>
-        public string Architecture;
+        SymlinkFolder,
         /// <summary>
-        /// 
+        /// Create a .lnk shortcut to a file
         /// </summary>
-        public string Type;
+        Shortcut,
+
         /// <summary>
-        /// 
+        /// Creates an evironment variable
         /// </summary>
-        public string Version;
+        EnvironmentVariable,
+
         /// <summary>
-        /// 
+        /// Creates a registry key
         /// </summary>
-        public string PublicKeyToken;
+        Registry,
     }
 }
-*/

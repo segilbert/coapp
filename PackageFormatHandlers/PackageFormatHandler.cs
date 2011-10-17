@@ -17,6 +17,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         void Remove(Package package, Action<int> progress = null);
         IEnumerable<CompositionRule> GetCompositionRules(Package package);
 
-        bool IsInstalled(string productCode);
+        bool IsInstalled(Guid productCode);
     }
 }
