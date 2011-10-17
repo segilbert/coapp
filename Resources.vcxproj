@@ -69,7 +69,7 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <NoEntryPoint>true</NoEntryPoint>
-      <TargetMachine>NotSet</TargetMachine>
+      <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -90,7 +90,7 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <NoEntryPoint>true</NoEntryPoint>
-      <TargetMachine>NotSet</TargetMachine>
+      <TargetMachine>MachineX86</TargetMachine>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <ManifestFile>
       </ManifestFile>
