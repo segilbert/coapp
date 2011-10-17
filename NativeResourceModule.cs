@@ -18,7 +18,7 @@ namespace CoApp.Bootstrapper {
     public class NativeResourceModule {
         private readonly SafeModuleHandle _moduleHandle;
         public NativeResourceModule( string filename ) {
-            _moduleHandle = NativeMethods.LoadLibraryEx("coapp.resources.dll", IntPtr.Zero, NativeMethods.LOAD_LIBRARY_AS_DATAFILE); 
+            _moduleHandle = NativeMethods.LoadLibraryEx(filename, IntPtr.Zero, NativeMethods.LOAD_LIBRARY_AS_DATAFILE); 
             if( _moduleHandle.IsInvalid ) {
                 throw new FileNotFoundException("Unable to find native resource module", filename);
             }

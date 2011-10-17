@@ -17,6 +17,7 @@ namespace CoApp.Bootstrapper {
     using System.Net;
     using System.Reflection;
     using System.Runtime.InteropServices;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -27,31 +28,39 @@ namespace CoApp.Bootstrapper {
     using System.Windows.Media;
     using Microsoft.Win32;
 
+    internal enum LocalizedMessage {
+        IDS_ERROR_CANT_OPEN_PACKAGE = 500,
+        IDS_MISSING_MSI_FILE_ON_COMMANDLINE,
+        IDS_REQUIRES_ADMIN_RIGHTS,
+        IDS_SOMETHING_ODD,
+        IDS_FRAMEWORK_INSTALL_CANCELLED,
+        IDS_UNABLE_TO_DOWNLOAD_FRAMEWORK,
+        IDS_UNABLE_TO_FIND_SECOND_STAGE,
+        IDS_MAIN_MESSAGE,
+        IDS_CANT_CONTINUE,
+        IDS_FOR_ASSISTANCE,
+        IDS_OK_TO_CANCEL,
+        IDS_CANCEL,
+        IDS_UNABLE_TO_ACQUIRE_COAPP_INSTALLER,
+        IDS_UNABLE_TO_LOCATE_INSTALLER_UI,
+        IDS_UNABLE_TO_ACQUIRE_RESOURCES,
+        IDS_CANCELLING,
+        IDS_MSI_FILE_NOT_FOUND,
+        IDS_MSI_FILE_NOT_VALID,
+    }
+
+
     /// <summary>
     ///   Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow {
-// ReSharper disable InconsistentNaming
-        internal const int IDS_ERROR_CANT_OPEN_PACKAGE = 500;
-
-        internal const int IDS_MISSING_MSI_FILE_ON_COMMANDLINE = 501;
-        internal const int IDS_REQUIRES_ADMIN_RIGHTS = 502;
-        internal const int IDS_SOMETHING_ODD = 503;
-        internal const int IDS_FRAMEWORK_INSTALL_CANCELLED = 504;
-        internal const int IDS_UNABLE_TO_DOWNLOAD_FRAMEWORK = 505;
-        internal const int IDS_UNABLE_TO_FIND_SECOND_STAGE = 506;
-        internal const int IDS_MAIN_MESSAGE = 507;
-        internal const int IDS_CANT_CONTINUE = 508;
-        internal const int IDS_FOR_ASSISTANCE = 509;
-        internal const int IDS_OK_TO_CANCEL = 510;
-        internal const int IDS_CANCEL = 511;
-        internal const int IDS_UNABLE_TO_ACQUIRE_COAPP_INSTALLER = 512;
-        internal const int IDS_UNABLE_TO_LOCATE_INSTALLER_UI = 513;
-// ReSharper restore InconsistentNaming
-
         internal static string MsiFilename;
         internal static string MsiFolder;
         internal static string BootstrapFolder;
+        internal static Task InstallTask;
+        internal static bool Cancelling;
+        internal static bool ReadyToInstall;
+        internal static MainWindow MainWin;
 
         private const string CoAppUrl = "http://coapp.org/resources/";
         private const string HelpUrl = "http://coapp.org/help/";
@@ -59,135 +68,108 @@ namespace CoApp.Bootstrapper {
         private static int _progressDirection = 1;
         private static int _currentTotalTicks = -1;
         private static int _currentProgress;
-        private static int _actualPercent;
+        private static int _actualPercent = 0;
 
-        internal static bool _cancelling;
-        internal static MainWindow _mainwindow;
-        private static readonly Lazy<string> _bootstrapServerUrl = new Lazy<string>(() => GetRegistryValue(@"Software\CoApp", "BootstrapServerUrl"));
-        static internal Task InstallTask;
-        private static readonly Lazy<NativeResourceModule> _resources = new Lazy<NativeResourceModule>(() => {
+        private static readonly Lazy<string> BootstrapServerUrl = new Lazy<string>(() => GetRegistryValue(@"Software\CoApp", "BootstrapServerUrl"));
+        private static readonly Lazy<NativeResourceModule> NativeResources = new Lazy<NativeResourceModule>(() => {
             try {
-                return new NativeResourceModule(AcquireFile("coapp.resources.dll"));
+                return new NativeResourceModule(AcquireFile("CoApp.Resources.dll"));
             }
             catch {
                 return null;
             }
         }, LazyThreadSafetyMode.PublicationOnly);
 
-        private static readonly Lazy<string> _coAppRootFolder = new Lazy<string>(() => {
+        private static readonly Lazy<string> CoAppRootFolder = new Lazy<string>(() => {
             var result = GetRegistryValue(@"Software\CoApp", "Root");
-            if (String.IsNullOrEmpty(result)) {
+
+            if (string.IsNullOrEmpty(result)) {
                 result = String.Format("{0}\\apps", Environment.GetEnvironmentVariable("SystemDrive"));
-                SetRegistryValue(@"Software\CoApp", "Root", result);
+                try {
+                    var registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).CreateSubKey(@"Software\CoApp");
+                    if (registryKey != null) {
+                        registryKey.SetValue("Root", result);
+                    }
+                } catch {
+                }
             }
+
             if (!Directory.Exists(result)) {
                 Directory.CreateDirectory(result);
             }
+
             return result;
         });
+
+        // [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        // public static extern void OutputDebugString(string message);
 
         public MainWindow() {
             InitializeComponent();
             Opacity = 0;
-            if (_resources.Value != null) {
-                containerPanel.Background.SetValue(ImageBrush.ImageSourceProperty, _resources.Value.GetBitmapImage(1201));
-                logoImage.SetValue(Image.SourceProperty, _resources.Value.GetBitmapImage(1202));
+            if (NativeResources.Value != null) {
+                containerPanel.Background.SetValue(ImageBrush.ImageSourceProperty, NativeResources.Value.GetBitmapImage(1201));
+                logoImage.SetValue(Image.SourceProperty, NativeResources.Value.GetBitmapImage(1202));
             }
-            
-            Loaded += (o, e) => { _mainwindow = this; };
+            // try to short circuit early
+            if( ReadyToInstall) {
+                SetProgress(100); // kill our UI
+                TryInstaller();
+            }
+
+            Loaded += (o, e) => {
+                // try to short circuit before we get far...
+                if (ReadyToInstall) {
+                    SetProgress(100); // kill our UI
+                    TryInstaller();
+                }
+
+                MainWin = this;
+                if( !Cancelling ) {
+                    SetProgress(_actualPercent);
+                }
+            };
         }
 
-        internal static bool IsCoAppInstalled {
-            get {
-                try {
-                    // we're going to update this version, only when absolutely required.
-                    Assembly.Load("CoApp.Toolkit, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857");
-                    return true;
-                }
-                catch {
-                }
-                return false;
+        // this should only be called on the main thread
+        internal static void TryInstaller() {
+            if (MainWin != null && !MainWin.Dispatcher.CheckAccess()) {
+                // this call came in on the wrong thread.
+                // reroute it to the GUI thread.
+                MainWin.Dispatcher.Invoke((Action)(TryInstaller));
+                // but we'll wait for it to end.
+                return;
             }
-        }
+            lock (typeof(MainWindow)) {
+            try {
+                
+                    // we're gonna look around to see if we have a CoApp.Toolkit.Engine.Client.dll first, 'cause if we've got one, we will try that.
+                    // this allows us to code + debug without wanting to blow our brains out.
 
-        private static string InstallerUiPath {
-            get {
-                string path;
+                    var localAssembly = AcquireFile("CoApp.Toolkit.Engine.Client.dll");
 
-                // check the PreferredInstallerPath in the registry
-                try {
-                    path = GetRegistryValue(@"Software\CoApp", "PreferredInstaller");
-                    if (ValidFileExists(path)) {
-                        return path;
+                    Debug.WriteLine("Local Assembly: " + localAssembly);
+
+                    if (string.IsNullOrEmpty(localAssembly)) {
+                        // use strong named assembly
+                        AppDomain.CreateDomain("tmp" + DateTime.Now.Ticks).CreateInstanceAndUnwrap(
+                            "CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857",
+                            "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] {MsiFilename}, null, null);
+                    } else {
+                        // use the one found locally.
+                        AppDomain.CreateDomain("tmp" + DateTime.Now.Ticks).CreateInstanceFromAndUnwrap(
+                            localAssembly,
+                            "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] {MsiFilename}, null, null);
                     }
+                    // since we've done everything we need to do, we're out of here. Right Now.
+                    Environment.Exit(0);
+                
+                } catch {
                 }
-                catch {
-                }
-                SetRegistryValue(@"Software\CoApp", "PreferredInstaller", null);
-
-                // check the DefaultInstallerPath in the registry
-                try {
-                    path = GetRegistryValue(@"Software\CoApp", "DefaultInstaller");
-                    if (ValidFileExists(path)) {
-                        return path;
-                    }
-                }
-                catch {
-                }
-                SetRegistryValue(@"Software\CoApp", "DefaultInstaller", null);
-
-                // look in the PATH
-                try {
-                    path = FindInPath("CoApp.InstallerUI.exe");
-                    if (!string.IsNullOrEmpty(path)) {
-                        // remember this location, it was found in a good spot.
-                        SetRegistryValue(@"Software\CoApp", "DefaultInstaller", path);
-                        return path;
-                    }
-                }
-                catch {
-                }
-
-                // look in the $COAPPROOT\bin
-                try {
-                    path = Path.Combine(_coAppRootFolder.Value, "CoApp.InstallerUI.exe");
-                    if (ValidFileExists(path)) {
-                        // remember this location, it was found in a good spot.
-                        SetRegistryValue(@"Software\CoApp", "DefaultInstaller", path);
-                        return path;
-                    }
-                }
-                catch {
-                }
-
-                // look in the $COAPPROOT\.installed\OuterCurve Foundation\* folders 
-                try {
-                    path =
-                        (from each in
-                            Directory.EnumerateFiles(Path.Combine(_coAppRootFolder.Value, ".installed\\Outercurve Foundation"), "CoApp.InstallerUI.exe",
-                                SearchOption.AllDirectories)
-                            let version = Version(each)
-                            where ValidFileExists(each)
-                            orderby version descending
-                            select each).FirstOrDefault();
-
-                    if (!string.IsNullOrEmpty(path)) {
-                        // remember this location, it was found in a good spot.
-                        SetRegistryValue(@"Software\CoApp", "DefaultInstaller", path);
-                        return path;
-                    }
-                }
-
-                catch {
-
-                }
-                return null;
             }
         }
 
         private static string AcquireFile(string filename, Action<int> progressCompleted = null) {
-            OutputDebugString(string.Format("==> Trying to acquire {0}", filename));
-
             var name = Path.GetFileNameWithoutExtension(filename);
             var extension = Path.GetExtension(filename);
             var lcid = CultureInfo.CurrentCulture.LCID;
@@ -245,8 +227,8 @@ namespace CoApp.Bootstrapper {
             //------------------------
 
             // try localized file off the bootstrap server
-            if (!String.IsNullOrEmpty(_bootstrapServerUrl.Value)) {
-                f = Download(_bootstrapServerUrl.Value, localizedName,progressCompleted);
+            if (!String.IsNullOrEmpty(BootstrapServerUrl.Value)) {
+                f = Download(BootstrapServerUrl.Value, localizedName,progressCompleted);
                 if (ValidFileExists(f)) {
                     return f;
                 }
@@ -259,8 +241,8 @@ namespace CoApp.Bootstrapper {
             }
 
             // try normal file off the bootstrap server
-            if (!String.IsNullOrEmpty(_bootstrapServerUrl.Value)) {
-                f = Download(_bootstrapServerUrl.Value, filename,progressCompleted);
+            if (!String.IsNullOrEmpty(BootstrapServerUrl.Value)) {
+                f = Download(BootstrapServerUrl.Value, filename,progressCompleted);
                 if (ValidFileExists(f)) {
                     return f;
                 }
@@ -275,12 +257,8 @@ namespace CoApp.Bootstrapper {
             return null;
         }
 
-        [DllImport("kernel32.dll")]
-        static extern void OutputDebugString(string lpOutputString);
-
         private static string Download(string serverUrl, string filename, Action<int> percentCompleteAction = null) {
             try {
-                OutputDebugString(string.Format("Trying to HEAD {0}", filename));
                 // the whole URL to the target download
                 var uri = new Uri(new Uri(serverUrl), filename);
 
@@ -292,8 +270,6 @@ namespace CoApp.Bootstrapper {
                 rq.Method = "HEAD";
                 rq.GetResponse(); // this will throw on anything other than OK
 
-                OutputDebugString(string.Format("Trying to actually download {0}", filename));
-
                 var finished = new ManualResetEvent(false);
                 
                 var tempFilenme = Path.Combine(Path.GetTempPath(), filename);
@@ -304,7 +280,7 @@ namespace CoApp.Bootstrapper {
                 var webclient = new WebClient();
 
                 webclient.DownloadProgressChanged += (o, downloadProgressChangedEventArgs) => {
-                    if( _cancelling ) {
+                    if( Cancelling ) {
                         webclient.CancelAsync();
                         return;
                     }
@@ -326,7 +302,7 @@ namespace CoApp.Bootstrapper {
                 webclient.DownloadFileAsync(uri, tempFilenme);
 
                 while(!finished.WaitOne(100)) {
-                    if( _cancelling) {
+                    if( Cancelling) {
                         webclient.CancelAsync();
                         return null;
                     }
@@ -338,7 +314,6 @@ namespace CoApp.Bootstrapper {
             }
             catch {
             }
-            OutputDebugString(string.Format("Failed to download {0}", filename));
             return null;
         }
 
@@ -395,92 +370,56 @@ namespace CoApp.Bootstrapper {
             }
         }
 
-        private static bool ValidFileExists(string fileName) {
+        internal static bool ValidFileExists(string fileName) {
+            Debug.WriteLine("Checking for file: " + fileName);
             if (!String.IsNullOrEmpty(fileName) && File.Exists(fileName)) {
+               try {
 #if DEBUG
-                return true;
+                   Debug.WriteLine("    RESULT (assumed): True" );
+                   return true;
 #else
-                try {
                     var wtd = new WinTrustData(fileName);
                     var result = NativeMethods.WinVerifyTrust(new IntPtr(-1), new Guid("{00AAC56B-CD44-11d0-8CC2-00C04FC295EE}"), wtd);
+                    Debug.WriteLine("    RESULT (a): " + (result == WinVerifyTrustResult.Success));
                     return (result == WinVerifyTrustResult.Success);
-                }
-                catch {
-
-                }
 #endif
+               }
+                catch {
+                }
             }
+            Debug.WriteLine("    RESULT (a): False" );
             return false;
         }
 
-        public static void Fail(uint message, string messageText ) {
-            if (!_cancelling) {
-                _cancelling = true;
-                messageText = GetString(message, messageText);
+        internal static void Fail(LocalizedMessage message, string messageText) {
+            if (!Cancelling) {
+                Task.Factory.StartNew( () => {
+                    Cancelling = true;
+                    messageText = GetString(message, messageText);
 
-                while( _mainwindow == null ) {
-                    Thread.Sleep(50);
-                }
+                    while (MainWin == null) {
+                        Thread.Sleep(20);
+                    }
 
-                Invoke(() => {
-                    
-                    _mainwindow.containerPanel.Background = new SolidColorBrush(new Color {
-                        A = 255,
-                        R = 18,
-                        G = 112,
-                        B = 170
+                    MainWin.Dispatcher.Invoke((Action) delegate {
+                        MainWin.containerPanel.Background = new SolidColorBrush(
+                            new Color {
+                                A = 255,
+                                R = 18,
+                                G = 112,
+                                B = 170
+                            });
+                                
+                        MainWin.progressPanel.Visibility = Visibility.Collapsed;
+                        MainWin.failPanel.Visibility = Visibility.Visible;
+                        MainWin.messageText.Text = messageText;
+                        MainWin.helpLink.NavigateUri = new Uri(HelpUrl + (message + 100));
+                        MainWin.helpLink.Inlines.Clear();
+                        MainWin.helpLink.Inlines.Add(new Run(HelpUrl + (message + 100)));
+                        MainWin.Visibility = Visibility.Visible;
+                        MainWin.Opacity = 1;
                     });
-                    _mainwindow.progressPanel.Visibility = Visibility.Collapsed;
-                    _mainwindow.failPanel.Visibility = Visibility.Visible;
-                    _mainwindow.messageText.Text = messageText;
-                    _mainwindow.helpLink.NavigateUri =new Uri(HelpUrl + (message+100));
-                    _mainwindow.helpLink.Inlines.Clear();
-                    _mainwindow.helpLink.Inlines.Add(new Run(HelpUrl + (message+100)));
-                    _mainwindow.Opacity = 1;
-                    });
-                
-            }
-        }
-
-        protected internal static void Invoke(Action action) {
-            _mainwindow.Dispatcher.Invoke(action);
-        }
-
-        private static string FindInPath(string filename) {
-            try {
-                var s = new StringBuilder(260); // MAX_PATH
-                IntPtr p;
-
-                NativeMethods.SearchPath(null, filename, null, s.Capacity, s, out p);
-                var result = s.ToString();
-                if (ValidFileExists(result)) {
-                    return result;
-                }
-            }
-            catch {
-            }
-            return string.Empty;
-        }
-
-
-        public static void RunInstaller() {
-            var installer = InstallerUiPath;
-            if( string.IsNullOrEmpty(installer)) {
-                if (App.Instance.IsValueCreated) {
-                    // fail and forget.
-                    Fail(IDS_UNABLE_TO_LOCATE_INSTALLER_UI, "Unable to find the CoApp Installer Executable.");
-                    return;
-                } else {
-                    // we never showed the UI yet...
-                    App.Instance.Value.Activated += (o, e) => {
-                        Fail(IDS_UNABLE_TO_LOCATE_INSTALLER_UI, "Unable to find the CoApp Installer Executable.");
-                    };
-                    App.Instance.Value.Run();
-                    return;
-                }
-            }
-            if (!_cancelling) {
-                Process.Start(InstallerUiPath, MsiFilename);
+                });
             }
         }
 
@@ -496,102 +435,116 @@ namespace CoApp.Bootstrapper {
             return null;
         }
 
-        private static void SetRegistryValue(string key, string valueName, string value) {
-            try {
-                var registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).CreateSubKey(key);
-                if (registryKey != null) {
-                    registryKey.SetValue(valueName, value);
+        internal static string GetString(LocalizedMessage resourceId, string defaultString) {
+            return NativeResources.Value != null ? (NativeResources.Value.GetString((uint)resourceId) ?? defaultString) : defaultString;
+        }
+
+        private static bool IsCoAppToolkitMSI(string filename ) {
+            if( !ValidFileExists(filename)) {
+                return false;
+            }
+
+            // First, check to see if the msi we've got *is* the coapp.toolkit msi file :)
+            var cert = new X509Certificate2(filename);
+            // CN=OUTERCURVE FOUNDATION, OU=CoApp Project, OU=Digital ID Class 3 - Microsoft Software Validation v2, O=OUTERCURVE FOUNDATION, L=Redmond, S=Washington, C=US
+            if (cert.Subject.StartsWith("CN=OUTERCURVE FOUNDATION") && cert.Subject.Contains("OU=CoApp Project")) {
+                int hProduct;
+                if (NativeMethods.MsiOpenPackageEx(filename, 1, out hProduct) == 0) {
+                    var sb = new StringBuilder(1024);
+                    uint size = 1024;
+                    NativeMethods.MsiGetProperty(hProduct, "ProductName", sb, ref size);
+                    NativeMethods.MsiCloseHandle(hProduct);
+
+                    if (sb.ToString() == "CoApp.Toolkit") {
+                        return true;
+                    }
                 }
             }
-            catch {
+            return false;
+        }
+
+        private static void SetProgress(int progress) {
+            if (MainWin != null) {
+                if (MainWin.Dispatcher.CheckAccess()) {
+                    if (progress > 0 && progress < 100) {
+                        MainWin.Opacity = 1;
+                        MainWin.installationProgress.Value = progress;
+                    }
+
+                    if (progress >= 100) {
+                        MainWin.Visibility = Visibility.Hidden;
+                        // hide when we are finished here.
+                    }
+                } else {
+                    // tell it to get on the right thread, but we're not waiting for it.
+                    MainWin.Dispatcher.BeginInvoke((Action)(() => SetProgress(progress)));
+                }
+                Thread.Sleep(20); // give a chance to have the UI update?
             }
         }
 
-        private static int PositionOfFirstCharacterNotIn(string str, char[] characters) {
-            var p = 0;
-            while (p < str.Length) {
-                if (!characters.Contains(str[p])) {
-                    return p;
-                }
-                p++;
-            }
-            return p;
-        }
+        // we need to keep this around, otherwise the garbage collector gets triggerhappy and cleans up the delegate before the installer is done.
+        private static NativeExternalUIHandler uihandler;
 
-        private static ulong Version(string path) {
-            try {
-                var info = FileVersionInfo.GetVersionInfo(path);
-                var fv = info.FileVersion;
-                if (!string.IsNullOrEmpty(fv)) {
-                    fv = fv.Substring(0, PositionOfFirstCharacterNotIn(fv, "0123456789.".ToCharArray()));
-                }
-
-                if (string.IsNullOrEmpty(fv)) {
-                    return 0;
-                }
-
-                var vers = fv.Split('.');
-                var major = vers.Length > 0 ? ToInt32(vers[0]) : 0;
-                var minor = vers.Length > 1 ? ToInt32(vers[1]) : 0;
-                var build = vers.Length > 2 ? ToInt32(vers[2]) : 0;
-                var revision = vers.Length > 3 ? ToInt32(vers[3]) : 0;
-
-                return (((UInt64) major) << 48) + (((UInt64) minor) << 32) + (((UInt64) build) << 16) + (UInt64) revision;
-            }
-            catch {
-                return 0;
-            }
-        }
-
-        internal static string GetString(uint resourceId, string defaultString) {
-            return _resources.Value != null ? (_resources.Value.GetString(resourceId) ?? defaultString) : defaultString;
-        }
-
-        public static void InstallCoApp() {
+        internal static void InstallCoApp() {
             InstallTask = Task.Factory.StartNew(() => {
                 try {
-                    if (!_cancelling) {
-                        // get coapp.toolkit.msi
-                        var file = AcquireFile("CoApp.toolkit.msi",
-                            (percentDownloaded) => {
-                                if (_mainwindow != null) {
-                                    Invoke(() => {
-                                        if (percentDownloaded > 0) {
-                                            _mainwindow.Opacity = 1;
-                                            _mainwindow.installationProgress.Value = percentDownloaded/10;
-                                        }
-                                    });
-                                }
-                            });
+                    NativeMethods.MsiSetInternalUI(2, IntPtr.Zero);
+                    NativeMethods.MsiSetExternalUI((context, messageType, message) => 1, 0x400, IntPtr.Zero);
 
-                        if (!ValidFileExists(file)) {
-                            // eew. crappy block 
-                            while( _mainwindow == null ) {
-                                Thread.Sleep(50);
+                    if (!Cancelling) {
+                        var file = MsiFilename;
+
+                        // if this is the CoApp MSI, we don't need to fetch the CoApp MSI.
+                        if (!IsCoAppToolkitMSI(MsiFilename)) {
+                            // get coapp.toolkit.msi
+                            file = AcquireFile("CoApp.toolkit.msi", percentDownloaded => SetProgress(percentDownloaded/10));
+
+                            if (!IsCoAppToolkitMSI(file)) {
+                                Fail(LocalizedMessage.IDS_UNABLE_TO_ACQUIRE_COAPP_INSTALLER, "Unable to download the CoApp Installer MSI");
+                                return;
+                            }
+                        }
+
+                        // We made it past downloading.
+                        _actualPercent = 10;
+                        SetProgress(_actualPercent);
+
+                        // bail if someone has told us to. (good luck!)
+                        if (Cancelling) {
+                            return;
+                        }
+                        
+                        // get a reference to the delegate. 
+                        uihandler = UiHandler;
+                        NativeMethods.MsiSetExternalUI(uihandler, 0x400, IntPtr.Zero); 
+
+                        // install CoApp.Toolkit msi. Don't blink, this can happen FAST!
+                        var result = NativeMethods.MsiInstallProduct(file, String.Format(@"TARGETDIR=""{0}\.installed\"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", CoAppRootFolder.Value));
+
+                        // set the ui hander back to nothing.
+                        NativeMethods.MsiSetExternalUI(null, 0x400, IntPtr.Zero);
+
+                        // did we succeed?
+                        if( result == 0 ) {
+                            ReadyToInstall = true; // if the UI has not shown, it will try short circuit in the window constructor.
+
+                            _actualPercent = 100;
+                            SetProgress(_actualPercent); // hides any UI that might be showing, tells it not to show if it's not shown yet.
+                            
+                            if( MainWin == null ) {
+                                Thread.Sleep(5000); 
+                                // if the main window hasn't started up yet, we'll wait for a really long time
+                                // before we try to continue.
+                                // When it does run, either it will have shortcircuited us, (and hence, the thread will be busy until the installer is done)
+                                // or ... somehow we managed to not call the installer, in which case, we'll try it one last time
+                                // and it should work. If it doesn't ... well, sometimes life is like that.
                             }
 
-                            Fail(IDS_UNABLE_TO_ACQUIRE_COAPP_INSTALLER, "Unable to download the CoApp Installer MSI");
-                            return;
+                            TryInstaller(); // if it manages to call it here, good. If not, well, this is a baaaad day.
                         }
 
-                        // install msi
-                        NativeMethods.MsiSetInternalUI(2, IntPtr.Zero);
-                        NativeMethods.MsiSetExternalUI(UiHandler, 0x400, IntPtr.Zero);
-                        NativeMethods.MsiInstallProduct(file,
-                            String.Format(@"TARGETDIR=""{0}\.installed\"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", _coAppRootFolder.Value));
-
-                        if (_cancelling) {
-                            return;
-                        }
-
-                        // If we can, run coapp InstallerUi
-                        if (IsCoAppInstalled) {
-                            RunInstaller();
-                            Application.Current.Shutdown();
-                        }
-                        else {
-                            Fail(IDS_SOMETHING_ODD, "Can't install CoApp Service.");
-                        }
+                        Fail(LocalizedMessage.IDS_SOMETHING_ODD, "Can't install CoApp Service.");
                     }
                 }
                 finally {
@@ -600,57 +553,45 @@ namespace CoApp.Bootstrapper {
             });
         }
 
-        private static int ToInt32(string str) {
-            int i;
-            return Int32.TryParse(str, out i) ? i : 0;
-        }
-
         internal static int UiHandler(IntPtr context, int messageType, string message) {
-            // var uiFlags = 0x00FFFFFF & messageType;
-            switch ((0xFF000000 & (uint) messageType)) {
-                case 0x0A000000:
-                    if (message.Length >= 2) {
-                        var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(ToInt32).ToArray();
+            if ((0xFF000000 & (uint)messageType) == 0x0A000000 && message.Length >= 2) {
+                int i;
+                var msg = message.Split(": ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select(each => Int32.TryParse(each, out i) ? i : 0).ToArray();
 
-                        switch (msg[1]) {
-                                // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
-                            case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
-                                _currentTotalTicks = msg[3];
-                                _currentProgress = 0;
-                                if (msg.Length >= 6) {
-                                    _progressDirection = msg[5] == 0 ? 1 : -1;
-                                }
-                                break;
-                            case 1:
-                                //Provides information related to progress messages to be sent by the current action.
-                                break;
-                            case 2: //Increments the progress bar.
-                                if (_currentTotalTicks == -1) {
-                                    break;
-                                }
-                                _currentProgress += msg[3]*_progressDirection;
-                                break;
-                            case 3:
-                                //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
-                                break;
+                switch (msg[1]) {
+                        // http://msdn.microsoft.com/en-us/library/aa370354(v=VS.85).aspx
+                    case 0: //Resets progress bar and sets the expected total number of ticks in the bar.
+                        _currentTotalTicks = msg[3];
+                        _currentProgress = 0;
+                        if (msg.Length >= 6) {
+                            _progressDirection = msg[5] == 0 ? 1 : -1;
                         }
-                    }
+                        break;
+                    case 1:
+                        //Provides information related to progress messages to be sent by the current action.
+                        break;
+                    case 2: //Increments the progress bar.
+                        if (_currentTotalTicks == -1) {
+                            break;
+                        }
+                        _currentProgress += msg[3]*_progressDirection;
+                        break;
+                    case 3:
+                        //Enables an action (such as CustomAction) to add ticks to the expected total number of progress of the progress bar.
+                        break;
+                }
+            }
 
-                    if (_currentTotalTicks > 0) {
-                        var newPercent = (_currentProgress*90/_currentTotalTicks)+10;
-                        if (_actualPercent < newPercent) {
-                            _actualPercent = newPercent;
-                            if (_mainwindow != null) {
-                                Invoke(() => { _mainwindow.installationProgress.Value = _actualPercent; });
-                            }
-                        }
-                    }
-                    break;
+            if (_currentTotalTicks > 0) {
+                var newPercent = (_currentProgress*90/_currentTotalTicks)+10;
+                if (_actualPercent < newPercent) {
+                    _actualPercent = newPercent;
+                    SetProgress(_actualPercent);
+                }
             }
-            if( _cancelling ) {
-                return 2; // IDCANCEL
-            }
-            return 1;
+            
+            // if the cancel flag is set, tell MSI
+            return Cancelling ? 2 : 1;
         }
 
         private void HeaderMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
@@ -659,10 +600,10 @@ namespace CoApp.Bootstrapper {
 
         private void CloseBtnClick(object sender, RoutedEventArgs e) {
             // stop the download/install...
-            if( !_cancelling ) {
+            if( !Cancelling ) {
                 // check first.
                 if( new AreYouSure().ShowDialog() != true ) {
-                    _cancelling = true; // prevents any other errors/messages.
+                    Cancelling = true; // prevents any other errors/messages.
                     // wait for MSI to clean up ?
                     if( InstallTask != null ) {
                         InstallTask.Wait();

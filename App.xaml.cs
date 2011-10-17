@@ -14,11 +14,7 @@ namespace CoApp.Bootstrapper {
     using System.IO;
     using System.Reflection;
     using System.Runtime.InteropServices;
-    using System.Threading.Tasks;
-    using System.Windows;
     using Microsoft.Win32;
-
-
 
     /// <summary>
     /// Interaction logic for App.xaml
@@ -62,11 +58,8 @@ namespace CoApp.Bootstrapper {
                     }.Start();
                     Environment.Exit(0); // since this didn't throw, we know the kids got off to school ok. :)
                 }
-                catch (Exception e) {
-                    // user cancelled the elevation.
-                    // MessageBox.Show("Admin Priviliges are required.", "Warning!", MessageBoxButtons.OK, MessageBoxIcon.Error,MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification );
-                    // Environment.Exit(0);
-                    Task.Factory.StartNew(() => Bootstrapper.MainWindow.Fail(Bootstrapper.MainWindow.IDS_REQUIRES_ADMIN_RIGHTS, "The installer requires administrator permissions."));
+                catch {
+                    Bootstrapper.MainWindow.Fail(LocalizedMessage.IDS_REQUIRES_ADMIN_RIGHTS, "The installer requires administrator permissions.");
                 }
             }
         }
@@ -77,31 +70,34 @@ namespace CoApp.Bootstrapper {
             app.InitializeComponent();
             return app;
         });
-
-        [DllImport("kernel32.dll")]
-        static extern void OutputDebugString(string lpOutputString);
-        
-        [System.STAThreadAttribute]
+ 
+        [STAThreadAttribute]
         public static void Main( string[] args ) {
+            // Ensure that we are elevated. If the app returns from here, we are.
             ElevateSelf(args);
 
-            File.Delete("coapp.resources.dll");
+            // get the folder of the bootstrap EXE
             Bootstrapper.MainWindow.BootstrapFolder = Path.GetDirectoryName(Path.GetFullPath(Assembly.GetExecutingAssembly().Location));
 
-            if (args.Length == 0 || !File.Exists(Path.GetFullPath(args[0])) ) {
-                Task.Factory.StartNew(() => Bootstrapper.MainWindow.Fail(Bootstrapper.MainWindow.IDS_MISSING_MSI_FILE_ON_COMMANDLINE, "Missing MSI package name on command line!"));
-            }
-            else {
+            if (args.Length == 0) {
+                Bootstrapper.MainWindow.Fail(LocalizedMessage.IDS_MISSING_MSI_FILE_ON_COMMANDLINE, "Missing MSI package name on command line!");
+            } else if (!File.Exists(Path.GetFullPath(args[0]))) {
+                Bootstrapper.MainWindow.Fail(LocalizedMessage.IDS_MSI_FILE_NOT_FOUND, "Specified MSI package name does not exist!");
+            } else if (!Bootstrapper.MainWindow.ValidFileExists(Path.GetFullPath(args[0]))) {
+                Bootstrapper.MainWindow.Fail(LocalizedMessage.IDS_MSI_FILE_NOT_VALID, "Specified MSI package is not signed with a valid certificate!");
+            } else { // have a valid MSI file. Alrighty!
                 Bootstrapper.MainWindow.MsiFilename = Path.GetFullPath(args[0]);
                 Bootstrapper.MainWindow.MsiFolder = Path.GetDirectoryName(Bootstrapper.MainWindow.MsiFilename);
 
-                if (Bootstrapper.MainWindow.IsCoAppInstalled) {
-                    Bootstrapper.MainWindow.RunInstaller();
-                    return;
-                }
+                // if this installer is present, this will exit right after.
+                Bootstrapper.MainWindow.TryInstaller();
+
+                // if CoApp isn't there, we gotta get it.
+                // this is a quick call, since it spins off a task in the background.
                 Bootstrapper.MainWindow.InstallCoApp();
             }
-            
+
+            // start showin' the GUI.
             Instance.Value.Run();
         }
     }

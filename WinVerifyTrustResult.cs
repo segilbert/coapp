@@ -49,7 +49,7 @@ namespace CoApp.Bootstrapper {
         private uint StateAction = 0;
         private IntPtr StateData = IntPtr.Zero;
         private String URLReference;
-        private uint ProvFlags = 0x00000100;
+        private uint ProvFlags = 0x00000040; // check revocation chain.
         private uint UIContext = 0;
 
         // constructor for silent WinTrustDataChoice.File check

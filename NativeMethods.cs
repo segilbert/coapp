@@ -45,6 +45,12 @@ namespace CoApp.Bootstrapper {
         internal static extern MainWindow.NativeExternalUIHandler MsiSetExternalUI(
             [MarshalAs(UnmanagedType.FunctionPtr)] MainWindow.NativeExternalUIHandler puiHandler, uint dwMessageFilter, IntPtr pvContext);
 
+        [DllImport("msi.dll", CharSet = CharSet.Unicode)]
+        internal static extern uint MsiOpenPackageEx(string szPackagePath, uint dwOptions, out int hProduct);
+
+        [DllImport("msi.dll", CharSet = CharSet.Unicode)]
+        internal static extern uint MsiGetProperty(int hInstall, string szName, StringBuilder szValueBuf, ref uint cchValueBuf);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         internal static extern int LoadString(SafeModuleHandle hInstance, uint uID, StringBuilder lpBuffer, int nBufferMax);
 
