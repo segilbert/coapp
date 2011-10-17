@@ -375,7 +375,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                     }
                         break;
                     default:
-                        //Console.WriteLine("Fetching:" + ResolvedUri.AbsoluteUri);
+                        Console.WriteLine("Fetching:" + ResolvedUri.AbsoluteUri);
                         var wr = (HttpWebRequest) WebRequest.Create(ResolvedUri);
                         wr.UserAgent = "Mozilla/4.0 (compatible;);";
                         wr.Timeout = 10000; // in case this is running in an ASPX page.
@@ -455,7 +455,7 @@ namespace CoApp.Toolkit.Text.Sgml {
         /// <returns>The next character that is not whitespace.</returns>
         public char SkipWhitespace() {
             var ch = m_lastchar;
-            while(ch != EOF && (ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t')) {
+            while(ch !=  Entity.EOF && (ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t')) {
                 ch = ReadChar();
             }
             return ch;
@@ -483,7 +483,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                 throw new SgmlParseException(string.Format(CultureInfo.CurrentUICulture, "Invalid name start character '{0}'", ch));
             }
 
-            while(ch != EOF && term.IndexOf(ch) < 0) {
+            while(ch !=  Entity.EOF && term.IndexOf(ch) < 0) {
                 if(!nmtoken || ch == '_' || ch == '.' || ch == '-' || ch == ':' || char.IsLetterOrDigit(ch)) {
                     sb.Append(ch);
                 }
@@ -510,7 +510,7 @@ namespace CoApp.Toolkit.Text.Sgml {
 
             sb.Length = 0;
             var ch = ReadChar();
-            while(ch != EOF && ch != quote) {
+            while(ch !=  Entity.EOF && ch != quote) {
                 if(ch == '&') {
                     ch = ReadChar();
                     if(ch == '#') {
@@ -556,7 +556,7 @@ namespace CoApp.Toolkit.Text.Sgml {
             var ch = ReadChar();
             var state = 0;
             var next = terminators[state];
-            while(ch != EOF) {
+            while(ch !=  Entity.EOF) {
                 if(ch == next) {
                     state++;
                     if(state >= terminators.Length) {
@@ -637,7 +637,7 @@ namespace CoApp.Toolkit.Text.Sgml {
             var v = 0;
             if(ch == 'x') {
                 ch = ReadChar();
-                for(; ch != EOF && ch != ';'; ch = ReadChar()) {
+                for(; ch != Entity.EOF && ch != ';'; ch = ReadChar()) {
                     var p = 0;
                     if(ch >= '0' && ch <= '9') {
                         p = (ch - '0');
@@ -657,7 +657,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                 }
             }
             else {
-                for(; ch != EOF && ch != ';'; ch = ReadChar()) {
+                for(; ch != Entity.EOF && ch != ';'; ch = ReadChar()) {
                     if(ch >= '0' && ch <= '9') {
                         v = (v*10) + (ch - '0');
                     }
@@ -711,7 +711,7 @@ namespace CoApp.Toolkit.Text.Sgml {
         /// <param name = "ch">The unexpected character causing the error.</param>
         /// <exception cref = "SgmlParseException">Always thrown.</exception>
         public void Error(string msg, char ch) {
-            var str = (ch == EOF) ? "EOF" : char.ToString(ch);
+            var str = (ch == Entity.EOF) ? "EOF" : char.ToString(ch);
             throw new SgmlParseException(string.Format(CultureInfo.CurrentUICulture, msg, str), this);
         }
 
@@ -2312,7 +2312,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                         ch = this.m_current.ReadChar();
                         break;
                     case '%':
-                        var e = ParseParameterEntity(WhiteSpace);
+                        var e = ParseParameterEntity(SgmlDtd.WhiteSpace);
                         try {
                             PushEntity(this.m_current.ResolvedUri, e);
                         }
@@ -2610,14 +2610,14 @@ namespace CoApp.Toolkit.Text.Sgml {
                     // which is then expanded to a name)                    
                     ch = this.m_current.SkipWhitespace();
                     if(ch == '%') {
-                        var e = ParseParameterEntity(ngterm);
+                        var e = ParseParameterEntity(SgmlDtd.ngterm);
                         PushEntity(this.m_current.ResolvedUri, e);
                         ParseNameList(names, nmtokens);
                         PopEntity();
                         ch = this.m_current.Lastchar;
                     }
                     else {
-                        var token = this.m_current.ScanToken(this.m_sb, ngterm, nmtokens);
+                        var token = this.m_current.ScanToken(this.m_sb, SgmlDtd.ngterm, nmtokens);
                         token = token.ToUpperInvariant();
                         names.Add(token);
                     }
@@ -2629,7 +2629,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                 this.m_current.ReadChar(); // consume ')'
             }
             else {
-                var name = this.m_current.ScanToken(this.m_sb, WhiteSpace, nmtokens);
+                var name = this.m_current.ScanToken(this.m_sb, SgmlDtd.WhiteSpace, nmtokens);
                 name = name.ToUpperInvariant();
                 names.Add(name);
             }
@@ -2642,14 +2642,14 @@ namespace CoApp.Toolkit.Text.Sgml {
             while(ch != Entity.EOF) {
                 string name;
                 if(ch == '%') {
-                    var e = ParseParameterEntity(ngterm);
+                    var e = ParseParameterEntity(SgmlDtd.ngterm);
                     PushEntity(this.m_current.ResolvedUri, e);
                     ParseNameList(names, nmtokens);
                     PopEntity();
                     ch = this.m_current.Lastchar;
                 }
                 else {
-                    name = this.m_current.ScanToken(this.m_sb, ngterm, true);
+                    name = this.m_current.ScanToken(this.m_sb, SgmlDtd.ngterm, true);
                     name = name.ToUpperInvariant();
                     names.Add(name);
                 }
@@ -2675,13 +2675,13 @@ namespace CoApp.Toolkit.Text.Sgml {
                 }
             }
             else if(ch == '%') {
-                var e = ParseParameterEntity(dcterm);
+                var e = ParseParameterEntity(SgmlDtd.dcterm);
                 PushEntity(this.m_current.ResolvedUri, e);
                 cm = ParseContentModel(this.m_current.Lastchar);
                 PopEntity(); // bugbug should be at EOF.
             }
             else {
-                var dc = ScanName(dcterm);
+                var dc = ScanName(SgmlDtd.dcterm);
                 cm.SetDeclaredContent(dc);
             }
             return cm;
@@ -2700,7 +2700,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                     this.m_current.Error("Content Model was not closed");
                 }
                 if(ch == '%') {
-                    var e = ParseParameterEntity(cmterm);
+                    var e = ParseParameterEntity(SgmlDtd.cmterm);
                     PushEntity(this.m_current.ResolvedUri, e);
                     ParseModel(Entity.EOF, cm);
                     PopEntity();
@@ -2731,10 +2731,10 @@ namespace CoApp.Toolkit.Text.Sgml {
                     string token;
                     if(ch == '#') {
                         ch = this.m_current.ReadChar();
-                        token = "#" + this.m_current.ScanToken(this.m_sb, cmterm, true); // since '#' is not a valid name character.
+                        token = "#" + this.m_current.ScanToken(this.m_sb, SgmlDtd.cmterm, true); // since '#' is not a valid name character.
                     }
                     else {
-                        token = this.m_current.ScanToken(this.m_sb, cmterm, true);
+                        token = this.m_current.ScanToken(this.m_sb, SgmlDtd.cmterm, true);
                     }
 
                     token = token.ToUpperInvariant();
@@ -2776,7 +2776,7 @@ namespace CoApp.Toolkit.Text.Sgml {
             var ch = this.m_current.SkipWhitespace();
             while(ch != term) {
                 if(ch == '%') {
-                    var e = ParseParameterEntity(peterm);
+                    var e = ParseParameterEntity(SgmlDtd.peterm);
                     PushEntity(this.m_current.ResolvedUri, e);
                     ParseAttList(list, Entity.EOF);
                     PopEntity();
@@ -2795,7 +2795,7 @@ namespace CoApp.Toolkit.Text.Sgml {
 
         private AttDef ParseAttDef(char ch) {
             ch = this.m_current.SkipWhitespace();
-            var name = ScanName(WhiteSpace);
+            var name = ScanName(SgmlDtd.WhiteSpace);
             name = name.ToUpperInvariant();
             var attdef = new AttDef(name);
 
@@ -2823,7 +2823,7 @@ namespace CoApp.Toolkit.Text.Sgml {
 
         private void ParseAttType(char ch, AttDef attdef) {
             if(ch == '%') {
-                var e = ParseParameterEntity(WhiteSpace);
+                var e = ParseParameterEntity(SgmlDtd.WhiteSpace);
                 PushEntity(this.m_current.ResolvedUri, e);
                 ParseAttType(this.m_current.Lastchar, attdef);
                 PopEntity(); // bugbug - are we at the end of the entity?
@@ -2837,7 +2837,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                 attdef.SetEnumeratedType(ParseNameGroup(ch, false), AttributeType.ENUMERATION);
             }
             else {
-                var token = ScanName(WhiteSpace);
+                var token = ScanName(SgmlDtd.WhiteSpace);
                 if(string.Equals(token, "NOTATION", StringComparison.OrdinalIgnoreCase)) {
                     ch = this.m_current.SkipWhitespace();
                     if(ch != '(') {
@@ -2855,7 +2855,7 @@ namespace CoApp.Toolkit.Text.Sgml {
 
         private void ParseAttDefault(char ch, AttDef attdef) {
             if(ch == '%') {
-                var e = ParseParameterEntity(WhiteSpace);
+                var e = ParseParameterEntity(SgmlDtd.WhiteSpace);
                 PushEntity(this.m_current.ResolvedUri, e);
                 ParseAttDefault(this.m_current.Lastchar, attdef);
                 PopEntity(); // bugbug - are we at the end of the entity?
@@ -2866,7 +2866,7 @@ namespace CoApp.Toolkit.Text.Sgml {
             var hasdef = true;
             if(ch == '#') {
                 this.m_current.ReadChar();
-                var token = this.m_current.ScanToken(this.m_sb, WhiteSpace, true);
+                var token = this.m_current.ScanToken(this.m_sb, SgmlDtd.WhiteSpace, true);
                 hasdef = attdef.SetPresence(token);
                 ch = this.m_current.SkipWhitespace();
             }
@@ -2877,7 +2877,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                     ch = this.m_current.SkipWhitespace();
                 }
                 else {
-                    var name = this.m_current.ScanToken(this.m_sb, WhiteSpace, false);
+                    var name = this.m_current.ScanToken(this.m_sb, SgmlDtd.WhiteSpace, false);
                     name = name.ToUpperInvariant();
                     attdef.Default = name; // bugbug - must be one of the enumerated names.
                     ch = this.m_current.SkipWhitespace();

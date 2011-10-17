@@ -935,5 +935,10 @@ namespace CoApp.Toolkit.Extensions {
             }
             return null;
         }
+
+        public static string IfNullOrEmpty(this string text, string defaultText) {
+            return string.IsNullOrEmpty(text) ? defaultText : text;
+        }
+
     }
 }

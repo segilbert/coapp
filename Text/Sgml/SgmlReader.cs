@@ -301,7 +301,9 @@ namespace CoApp.Toolkit.Text.Sgml {
         /// <summary>
         ///   The value returned when a namespace is queried and none has been specified.
         /// </summary>
-        [SuppressMessage("Microsoft.Naming", "CA1705", Justification = "SgmlReader's standards for constants are different to Microsoft's and in line with older C++ style constants naming conventions.  Visually, constants using this style are more easily identifiable as such.")] [SuppressMessage("Microsoft.Naming", "CA1707", Justification = "SgmlReader's standards for constants are different to Microsoft's and in line with older C++ style constants naming conventions.  Visually, constants using this style are more easily identifiable as such.")] public const string UNDEFINED_NAMESPACE = "#unknown";
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1705", Justification = "SgmlReader's standards for constants are different to Microsoft's and in line with older C++ style constants naming conventions.  Visually, constants using this style are more easily identifiable as such.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707", Justification = "SgmlReader's standards for constants are different to Microsoft's and in line with older C++ style constants naming conventions.  Visually, constants using this style are more easily identifiable as such.")]
+        public const string UNDEFINED_NAMESPACE = "#unknown";
 
         private SgmlDtd m_dtd;
         private Entity m_current;
@@ -1403,14 +1405,14 @@ namespace CoApp.Toolkit.Text.Sgml {
         private bool ParseStartTag(char ch) {
             string name = null;
             if(m_state != State.PseudoStartTag) {
-                if(tagterm.IndexOf(ch) >= 0) {
+                if(SgmlReader.tagterm.IndexOf(ch) >= 0) {
                     this.m_sb.Length = 0;
                     this.m_sb.Append('<');
                     this.m_state = State.PartialText;
                     return false;
                 }
 
-                name = ScanName(tagterm);
+                name = ScanName(SgmlReader.tagterm);
             }
             else {
                 // TODO: Changes by mindtouch mean that  this.startTag is never non-null.  The effects of this need checking.
@@ -1439,7 +1441,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                     break;
                 }
 
-                var aname = ScanName(aterm);
+                var aname = ScanName(SgmlReader.aterm);
                 ch = this.m_current.SkipWhitespace();
                 if(string.Equals(aname, ",", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(aname, "=", StringComparison.OrdinalIgnoreCase) ||
@@ -1461,7 +1463,7 @@ namespace CoApp.Toolkit.Text.Sgml {
                         value = ScanLiteral(this.m_sb, ch);
                     }
                     else if(ch != '>') {
-                        var term = avterm;
+                        var term = SgmlReader.avterm;
                         value = this.m_current.ScanToken(this.m_sb, term, false);
                     }
                 }
@@ -1503,7 +1505,7 @@ namespace CoApp.Toolkit.Text.Sgml {
         private bool ParseEndTag() {
             this.m_state = State.EndTag;
             this.m_current.ReadChar(); // consume '/' char.
-            var name = this.ScanName(tagterm);
+            var name = this.ScanName(SgmlReader.tagterm);
             var ch = this.m_current.SkipWhitespace();
             if(ch != '>') {
                 Log("Expected empty start tag '/>' sequence instead of '{0}'", ch);
@@ -1927,6 +1929,37 @@ namespace CoApp.Toolkit.Text.Sgml {
                     ch = this.m_current.ReadChar();
                 }
                 var name = this.m_name.ToString();
+
+
+ // TODO (steveb): don't lookup amp, gt, lt, quote
+                switch (name) {
+                    case "amp":
+                        sb.Append("&");
+                        if (ch != terminator && ch != '&' && ch != Entity.EOF)
+                            ch = this.m_current.ReadChar();
+                        return;
+                    case "lt":
+                        sb.Append("<");
+                        if (ch != terminator && ch != '&' && ch != Entity.EOF)
+                            ch = this.m_current.ReadChar();
+                        return;
+                    case "gt":
+                        sb.Append(">");
+                        if (ch != terminator && ch != '&' && ch != Entity.EOF)
+                            ch = this.m_current.ReadChar();
+                        return;
+                    case "quot":
+                        sb.Append("\"");
+                        if (ch != terminator && ch != '&' && ch != Entity.EOF)
+                            ch = this.m_current.ReadChar();
+                        return;
+                    case "apos":
+                        sb.Append("'");
+                        if (ch != terminator && ch != '&' && ch != Entity.EOF)
+                            ch = this.m_current.ReadChar();
+                        return;
+                }
+
                 if(this.m_dtd != null && !string.IsNullOrEmpty(name)) {
                     var e = this.m_dtd.FindEntity(name);
                     if(e != null) {

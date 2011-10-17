@@ -180,8 +180,8 @@ namespace CoApp.Toolkit.Network {
                 return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, (Func<IAsyncResult, WebResponse>)webRequest.BetterEndGetResponse , this).ContinueWith(asyncResult => {
                     if (messages != null) {
                         messages.Register();
-                        
-                        try {
+                    }
+                    try {
                             if (IsCancelled) {
                                 _cancel();
                             }
@@ -259,7 +259,7 @@ namespace CoApp.Toolkit.Network {
                             Console.WriteLine(e.Message);
                             Console.WriteLine(e.StackTrace);
                         }
-                    }
+                    
                 }, TaskContinuationOptions.AttachedToParent);
             }
         }

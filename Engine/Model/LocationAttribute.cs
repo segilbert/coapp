@@ -11,7 +11,7 @@
 namespace CoApp.Toolkit.Engine.Model {
     using System;
 
-    internal class LocationAttribute : Attribute {
+    public class LocationAttribute : Attribute {
         public string Url;
         public LocationAttribute(string url) {
             Url = url;

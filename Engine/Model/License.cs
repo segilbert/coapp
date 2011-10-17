@@ -16,21 +16,25 @@ namespace CoApp.Toolkit.Engine.Model {
     [XmlRoot(ElementName = "License", Namespace = "http://coapp.org/atom-package-feed-1.0")]
     public class License {
         [XmlElement(IsNullable = false)]
-        public LicenseId LicenseType { get; set; }
+        public LicenseId LicenseId { get; set; }
+
         [XmlElement(IsNullable = false)]
-        public string LicenseText { get; set; }
+        public string Name { get; set; }
+
+        [XmlElement(IsNullable = false)]
+        public string Text { get; set; }
 
         [XmlElement(ElementName = "LicenseUrl")]
         public string _licenseUrl {
             get {
-                return LicenseUrl.AbsoluteUri;
+                return Location.AbsoluteUri;
             }
             set {
-                LicenseUrl = value.ToUri();
+                Location = value.ToUri();
             }
         }
 
         [XmlIgnore]
-        public Uri LicenseUrl { get; set; }
+        public Uri Location { get; set; }
     }
 }

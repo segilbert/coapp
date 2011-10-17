@@ -118,6 +118,9 @@ namespace CoApp.Toolkit.Engine.Model {
         public string AuthorVersion { get; set; }
 
         [XmlElement(IsNullable = false)]
+        public string BugTracker { get; set; }
+
+        [XmlElement(IsNullable = false)]
         public string Icon { get; set; }
 
         [XmlArray(IsNullable = false)]
@@ -130,7 +133,7 @@ namespace CoApp.Toolkit.Engine.Model {
         /// -100 = DEATHLY_UNSTABLE ... 0 == release ... +100 = CERTIFIED_NEVER_GONNA_GIVE_YOU_UP.
         /// </summary>
         [XmlElement(IsNullable = false)]
-        public byte Stability { get; set; }
+        public sbyte Stability { get; set; }
 
         [XmlIgnore]
         public string SummaryDescription { get; set; }
