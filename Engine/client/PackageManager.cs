@@ -142,8 +142,8 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            //Debug.WriteLine("Response:{0}".format(responseMessage.ToString()));
-                            Console.WriteLine("Response:{0}".format(responseMessage.ToString()));
+                            Debug.WriteLine("Response:{0}".format(responseMessage.ToString()));
+                            // Console.WriteLine("Response:{0}".format(responseMessage.ToString()));
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
