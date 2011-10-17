@@ -32,7 +32,7 @@ CoApp.CopyFiles([
 // strong name everything else.
 print("Strong naming everything else");
 CoApp.StrongNameBinary([
-    // CoApp.$RELEASEDIR("autopackage.exe"),
+    CoApp.$RELEASEDIR("autopackage.exe"),
     CoApp.$RELEASEDIR("Azure.exe"),
     CoApp.$RELEASEDIR("CoApp.CCI.dll"),
     CoApp.$RELEASEDIR("CoApp.Developer.Toolkit.dll"),
