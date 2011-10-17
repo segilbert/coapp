@@ -353,7 +353,7 @@ int ShowGUI( HINSTANCE hInstance ) {
 
 	resourceDll = AcquireFile(L"CoApp.Resources.dll", TRUE, NULL);
 	if( resourceDll == NULL ) {
-		TerminateApplicationWithError(IDS_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to find or download CoApp.Resources.DLL");
+		TerminateApplicationWithError(IDS_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to find or download CoApp.Resources.dll");
 		return 0;
 	}
 
@@ -824,7 +824,7 @@ void TerminateApplicationWithError(int errorLevel, wchar_t* defaultText) {
 	wchar_t* resourceDll;
 
 	// stop doing anything we were doing!
-	IsShuttingDown = TRUE;
+	Cancel();
 
 	if( resourceModule == NULL ) { 
 		// if the resourceModule isn't loaded, and can't be, it's not *super* critical... 
