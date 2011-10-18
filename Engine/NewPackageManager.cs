@@ -13,6 +13,7 @@ namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -403,7 +404,10 @@ namespace CoApp.Toolkit.Engine {
                                             }
                                         }
                                     }
-                                    catch /* (PackageInstallFailedException pife)  */ {
+                                    catch (Exception e ) /* (PackageInstallFailedException pife)  */ {
+                                        Debug.WriteLine("FAILED INSTALL {0}", e.Message);
+                                        Debug.WriteLine("==> {0}", e.StackTrace);
+
                                         PackageManagerMessages.Invoke.FailedPackageInstall(pkg.CanonicalName, validLocation, "Package failed to install.");
                                         pkg.PackageSessionData.PackageFailedInstall = true;
 

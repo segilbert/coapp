@@ -12,6 +12,7 @@ namespace CoApp.Toolkit.Engine {
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using Configuration;
@@ -44,7 +45,8 @@ namespace CoApp.Toolkit.Engine {
         public string Architecture { get; internal set; }
         public string PublicKeyToken { get; internal  set; }
         public Guid? ProductCode { get; internal set; }
-        
+
+        internal string PublisherDirectory { get; set; }
 
         /// <summary>
         /// Gets the package details object.
@@ -251,18 +253,25 @@ namespace CoApp.Toolkit.Engine {
 
                 PackageHandler.Install(this, progress);
                 IsInstalled = true;
-                    
+                
+                Debug.WriteLine("MSI Install of package [{0}] SUCCEEDED.", CanonicalName );
+
                 if (Version > currentVersion) {
                     SetPackageCurrent();
+                    DoPackageComposition(true);
+                    Debug.WriteLine("Set Current Version [{0}] SUCCEEDED.", CanonicalName);
                 }
                 else {
                     DoPackageComposition(false);
+                    Debug.WriteLine("Package Composition [{0}] SUCCEEDED.", CanonicalName);
                 }
                 if( PackageSessionData.IsClientSpecified ) {
                     IsRequired = true;
                 }
             }
-            catch (Exception) {
+            catch (Exception e) {
+                Debug.WriteLine("Package Install Failure [{0}] => [{1}].\r\n{2}", CanonicalName, e.Message, e.StackTrace);
+                
                 //we could get here and the MSI had installed but nothing else
                 PackageHandler.Remove(this, null);
                 IsInstalled = false;
@@ -309,44 +318,44 @@ namespace CoApp.Toolkit.Engine {
                 return string.Empty;
 
             //System Constants:
-            // {$APPS} CoApp Application directory (c:\apps)
-            // {$BIN} CoApp bin directory (in PATH) ({$APPS}\bin)
-            // {$LIB} CoApp lib directory ({$APPS}\lib)
-            // {$DOTNETASSEMBLIES} CoApp .NET Reference Assembly directory ({$APPS}\.NET\Assemblies)
-            // {$INCLUDE} CoApp include directory ({$APPS}\include)
-            // {$INSTALL} CoApp .installed directory ({$APPS}\.installed)
-            // {$ALLPROGRAMS} The Programs directory for all users 
+            // ${APPS} CoApp Application directory (c:\apps)
+            // ${BIN} CoApp bin directory (in PATH) (${APPS}\bin)
+            // ${LIB} CoApp lib directory (${APPS}\lib)
+            // ${DOTNETASSEMBLIES} CoApp .NET Reference Assembly directory (${APPS}\.NET\Assemblies)
+            // ${INCLUDE} CoApp include directory (${APPS}\include)
+            // ${INSTALL} CoApp .installed directory (${APPS}\.installed)
+            // ${ALLPROGRAMS} The Programs directory for all users 
             //                  (usually C:\ProgramData\Microsoft\Windows\Start Menu\Programs)
             // Package Variables:
-            // {$PUBLISHER}         Publisher name (CN of the certificate used to sign the package)
-            // {$PRODUCTNAME}       Name of product being installed
-            // {$VERSION}           Version of package being installed. (##.##.##.##)
-            // {$ARCH}              Platform of package being installed -- one of [x86, x64, any]
-            // {$COSMETICNAME}      Complete name ({$PRODUCTNAME}-{$VERSION}-{$PLATFORM})
+            // ${PUBLISHER}         Publisher name (CN of the certificate used to sign the package)
+            // ${PRODUCTNAME}       Name of product being installed
+            // ${VERSION}           Version of package being installed. (##.##.##.##)
+            // ${ARCH}              Platform of package being installed -- one of [x86, x64, any]
+            // ${COSMETICNAME}      Complete name (${PRODUCTNAME}-${VERSION}-${PLATFORM})
 
-            // {$PACKAGEDIR}        Where the product is getting installed into
-            // {$CANONICALPACKAGEDIR} The "publicly visible location" of the "current" version of the package.
+            // ${PACKAGEDIR}        Where the product is getting installed into
+            // ${CANONICALPACKAGEDIR} The "publicly visible location" of the "current" version of the package.
             
 
             var result = text;
 
-            result = result.Replace(@"{$PKGDIR}", @"{$PACKAGEDIR}");
-            result = result.Replace(@"{$PACKAGEDIR}", @"{$INSTALL}\{$PUBLISHER}\{$PRODUCTNAME}-{$VERSION}-{$ARCH}\");
-            result = result.Replace(@"{$CANONICALPACKAGEDIR}", @"{$APPS}\{$PRODUCTNAME}\");
+            result = result.Replace(@"${PKGDIR}", @"${PACKAGEDIR}");
+            result = result.Replace(@"${PACKAGEDIR}", @"${INSTALL}\${PUBLISHER}\${PRODUCTNAME}-${VERSION}-${ARCH}\");
+            result = result.Replace(@"${CANONICALPACKAGEDIR}", @"${APPS}\${PRODUCTNAME}\");
 
-            result = result.Replace(@"{$INCLUDE}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "include"));
-            result = result.Replace(@"{$LIB}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "lib"));
-            result = result.Replace(@"{$DOTNETASSEMBLIES}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, @".NET\Assemblies"));
-            result = result.Replace(@"{$BIN}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin"));
-            result = result.Replace(@"{$APPS}", PackageManagerSettings.CoAppRootDirectory);
-            result = result.Replace(@"{$INSTALL}", PackageManagerSettings.CoAppInstalledDirectory);
-            result = result.Replace(@"{$ALLPROGRAMS}", KnownFolders.GetFolderPath(KnownFolder.CommonPrograms));
+            result = result.Replace(@"${INCLUDE}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "include"));
+            result = result.Replace(@"${LIB}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "lib"));
+            result = result.Replace(@"${DOTNETASSEMBLIES}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, @".NET\Assemblies"));
+            result = result.Replace(@"${BIN}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin"));
+            result = result.Replace(@"${APPS}", PackageManagerSettings.CoAppRootDirectory);
+            result = result.Replace(@"${INSTALL}", PackageManagerSettings.CoAppInstalledDirectory);
+            result = result.Replace(@"${ALLPROGRAMS}", KnownFolders.GetFolderPath(KnownFolder.CommonPrograms));
 
-            result = result.Replace(@"{$PUBLISHER}", PackageDetails.Publisher.Name);
-            result = result.Replace(@"{$PRODUCTNAME}", Name);
-            result = result.Replace(@"{$VERSION}", Version.UInt64VersiontoString());
-            result = result.Replace(@"{$ARCH}", Architecture);
-            result = result.Replace(@"{$COSMETICNAME}", "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+            result = result.Replace(@"${PUBLISHER}", PublisherDirectory);
+            result = result.Replace(@"${PRODUCTNAME}", Name);
+            result = result.Replace(@"${VERSION}", Version.UInt64VersiontoString());
+            result = result.Replace(@"${ARCH}", Architecture);
+            result = result.Replace(@"${COSMETICNAME}", "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
 
             return result;
         }
@@ -373,8 +382,9 @@ namespace CoApp.Toolkit.Engine {
                         case PackageRole.Application:
                             yield return new CompositionRule() {
                                 Action = CompositionAction.SymlinkFolder,
-                                Link = "{$CANONICALPACKAGEDIR}",
-                                Target = "{$PACKAGEDIR}",
+                                Link = "${CANONICALPACKAGEDIR}",
+                                Target = "${PACKAGEDIR}",
+                                Category = null,
                             };
                             break;
                         case PackageRole.DeveloperLibrary:

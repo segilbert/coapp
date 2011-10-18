@@ -66,6 +66,9 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             if( result == null ) {
                 throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
             }
+            // set things that only we can do here...
+            result.InternalPackageData.LocalLocation = localPackagePath;
+            result.PackageHandler = Instance;
 
             return result;
         }
@@ -89,7 +92,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, package.PackageSessionData.LocalValidatedLocation);
             }
 
-            return compositionRulesText.FromXml<List<CompositionRule>>();
+            return compositionRulesText.FromXml<List<CompositionRule>>("CompositionRules");
         }
 
 

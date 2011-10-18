@@ -31,6 +31,10 @@ namespace CoApp.Toolkit.Engine {
         [XmlElement(IsNullable = false)]
         public string Parameters { get; set; }
 
+        [XmlElement(IsNullable = false)]
+        public string Category { get; set; }
+
+
 #if COAPP_ENGINE_CORE
         public string GetResolvedLink(Package p) {
             return p.ResolveVariables(Link);

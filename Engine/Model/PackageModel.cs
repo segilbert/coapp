@@ -40,6 +40,9 @@ namespace CoApp.Toolkit.Engine.Model {
         [XmlAttribute]
         public string PublicKeyToken { get; set; }
 
+        [XmlAttribute]
+        public string PublisherDirectory { get; set; }
+
         [XmlElement(IsNullable = false)]
         public UInt64 BindingPolicyMinVersion { get; set; }
 

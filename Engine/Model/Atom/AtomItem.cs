@@ -209,6 +209,7 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
             var arch = Architecture.Unknown;
             Enum.TryParse(package.Architecture, true, out arch);
             Model.Architecture = arch;
+            Model.PublisherDirectory = package.PublisherDirectory;
 
             Model.Version = package.Version;
             Model.PublicKeyToken = package.PublicKeyToken;
@@ -243,6 +244,7 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
                 var package = Package.GetPackage(Model.Name, Model.Version, Model.Architecture, Model.PublicKeyToken, Model.ProductCode);
 
                 // lets copy what details we have into that package.
+                package.PublisherDirectory = Model.PublisherDirectory;
 
                 package.InternalPackageData.PolicyMinimumVersion = Model.BindingPolicyMinVersion;
                 package.InternalPackageData.PolicyMaximumVersion = Model.BindingPolicyMaxVersion;

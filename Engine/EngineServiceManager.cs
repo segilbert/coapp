@@ -157,7 +157,12 @@ namespace CoApp.Toolkit.Engine {
         public static bool IsServiceResponding {
             get {
                 lock (typeof (EngineServiceManager)) {
-                    if (IsServiceRunning | Process.GetProcessesByName("coapp.service").Any()) {
+                    if (IsServiceRunning | Process.GetProcessesByName("coapp.service").Any() 
+#if DEBUG
+ || Process.GetProcessesByName("coapp.service.vshost").Any()                        
+#endif 
+                        
+                        ) {
                         var testPipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous,
                             TokenImpersonationLevel.Impersonation);
                         try {
@@ -219,10 +224,17 @@ namespace CoApp.Toolkit.Engine {
                             return;
                         }
 
-                        // Tried to install it, and it still didn't work?
-                        throw new UnableToStartServiceException("Couldn't start the service in any manner.");
-                    }
+                        if (!IsServiceResponding) {
+                            // NOTE TODO REMOVE FOR RELEASE it's probably one started interactively before...
+                            TryToRunServiceInteractively();
 
+                        }
+
+                        if (!IsServiceResponding) {
+                            // Tried to install it, and it still didn't work?
+                            throw new UnableToStartServiceException("Couldn't start the service in any manner.");
+                        }
+                    }
                 }
             }
         }

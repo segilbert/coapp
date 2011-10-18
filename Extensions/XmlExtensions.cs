@@ -402,14 +402,15 @@ namespace CoApp.Toolkit.Extensions {
             return tempDocument.ToString();
         }
 
-        public static string ToXml<T>(this T obj) {
+        public static string ToXml<T>(this T obj, string elementName = null) {
             var attributeOverrides = new XmlAttributeOverrides();
-
-            attributeOverrides.Add(typeof(T), new XmlAttributes {
-                XmlRoot = new XmlRootAttribute {
-                    ElementName = "CompositionRules"
-                }
-            });
+            if (elementName != null) {
+                attributeOverrides.Add(typeof(T), new XmlAttributes {
+                    XmlRoot = new XmlRootAttribute {
+                        ElementName = elementName
+                    }
+                });
+            }
 
             var xmlSerializer = new XmlSerializer(typeof(T), attributeOverrides);
 
@@ -423,8 +424,19 @@ namespace CoApp.Toolkit.Extensions {
             }
         }
 
-        public static T FromXml<T>(this string xmlText) where T : class {
-            return new XmlSerializer(typeof(T)).Deserialize(new StringReader(xmlText)) as T;
+        public static T FromXml<T>(this string xmlText, string elementName = null) where T : class {
+            var attributeOverrides = new XmlAttributeOverrides();
+            if (elementName != null) {
+                attributeOverrides.Add(typeof (T), new XmlAttributes {
+                    XmlRoot = new XmlRootAttribute {
+                        ElementName = elementName
+                    }
+                });
+            }
+
+            var xmlSerializer = new XmlSerializer(typeof(T), attributeOverrides);
+
+            return xmlSerializer.Deserialize(new StringReader(xmlText)) as T;
         }
     }
 }
