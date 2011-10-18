@@ -69,7 +69,7 @@ namespace CoApp.CLI {
             if( System.Diagnostics.Debugger.IsAttached) {
                 // wait for service to start if we're attached to the debugger
                 // (it could be starting still)
-                Thread.Sleep(2000);
+                Thread.Sleep(1000);
             }
             return new CoAppMain().Startup(args);
         }
