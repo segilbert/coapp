@@ -44,9 +44,9 @@
                 </StackPanel >
                 <StackPanel Name="progressPanel" >
                     <StackPanel Margin="10,0,10,00" Height="140" HorizontalAlignment="Center" VerticalAlignment="Center" >
-                        <TextBlock Height="140" Name="textOneMoment" Text="It will be a moment while CoApp configures the system components required to install the software." Style="{StaticResource largerText}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock Height="140" Name="textOneMoment" Text="It will be a moment while CoApp configures the system components required to install the software." Style="{StaticResource largerText}"  HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </StackPanel>
-                    <ProgressBar  Height="30" Name="installationProgress" Width="550" />
+                    <ProgressBar  Height="30" Name="installationProgress" Width="550"  />
 
                     <Grid HorizontalAlignment="Center" Margin="0,30,0,0" >
                         <Grid.ColumnDefinitions>

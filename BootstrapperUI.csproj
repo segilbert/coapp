@@ -29,6 +29,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>..\output\any\release\bin\</OutputPath>
@@ -68,7 +69,9 @@
     <Compile Include="AreYouSure.xaml.cs">
       <DependentUpon>AreYouSure.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Gac.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="SingleStep.cs" />
     <Compile Include="WinVerifyTrustResult.cs" />
     <Page Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
