@@ -7,8 +7,7 @@ CoApp.StrongNameBinary([
     CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.dll"),
     CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.Client.dll"),
     CoApp.$RELEASEDIR("CoApp.Service.exe"),
-    CoApp.$RELEASEDIR("CoApp.exe"),
-    CoApp.$RELEASEDIR("InstallerUI.exe")
+    CoApp.$RELEASEDIR("CoApp.exe")
  ]);
 
 /// Every time we do a release-sign, we increment the build number.
