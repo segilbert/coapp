@@ -249,6 +249,8 @@ namespace CoApp.Toolkit.Engine {
         #region Install/Remove
         public void Install(Action<int> progress = null) {
             try {
+                EnsureCanonicalFoldersArePresent();
+
                 var currentVersion = GetCurrentPackageVersion(Name, PublicKeyToken);
 
                 PackageHandler.Install(this, progress);
@@ -305,7 +307,52 @@ namespace CoApp.Toolkit.Engine {
         }
         #endregion
 
+        static private readonly string[] CanonicalFolders = new string[] { ".installed", ".cache", "assemblies", "x86", "x64", "bin", "powershell", "lib", "include", "etc" };
+        
+
+        internal static void EnsureCanonicalFoldersArePresent() {
+            var root = PackageManagerSettings.CoAppRootDirectory;
+            foreach (var path in CanonicalFolders.Select(folder => Path.Combine(root, folder)).Where(path => !Directory.Exists(path))) {
+                Directory.CreateDirectory(path);
+            }
+            // make sure system paths are updated.
+            var binPath = Path.Combine(root, "bin");
+            var psPath = Path.Combine(root, "powershell");
+            var changed = false;
+            if (!SearchPath.SystemPath.Contains(binPath)) {
+                SearchPath.SystemPath = SearchPath.SystemPath.Prepend(binPath);
+                changed = true;
+            }
+            if (!SearchPath.PowershellModulePath.Contains(psPath)) {
+                SearchPath.PowershellModulePath = SearchPath.PowershellModulePath.Prepend(psPath);
+                changed = true;
+            }
+            if( changed ) {
+                SearchPath.BroadcastChange();
+            }
+        }
+
         #region Package Composition 
+
+
+        private static Lazy<Dictionary<string, string>> DefaultMacros    = new Lazy<Dictionary<string, string>>(() => {
+            var root = PackageManagerSettings.CoAppRootDirectory;
+            return new Dictionary<string, string>() {
+                { "apps" , root },
+                { "installed" , Path.Combine(root, ".installed" )},
+                { "cache" , Path.Combine(root, ".cache" )},
+                { "assemblies" , Path.Combine(root, "assemblies" )},
+                { "x86", Path.Combine(root, "x86" )},
+                { "x64", Path.Combine(root, "x64" )},
+                { "bin", Path.Combine(root, "bin" )},
+                { "powershell", Path.Combine(root, "powershell" )},
+                { "lib", Path.Combine(root, "lib" )},
+                { "include", Path.Combine(root, "include" )},
+                { "etc", Path.Combine(root, "etc" )},
+                { "allprograms", KnownFolders.GetFolderPath(KnownFolder.CommonPrograms)},
+                
+            };
+        });
 
             /// <summary>
         /// V1 of the Variable Resolver.
@@ -314,50 +361,44 @@ namespace CoApp.Toolkit.Engine {
         /// <param name="text"></param>
         /// <returns></returns>
         internal string ResolveVariables(string text) {
-            if (string.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text)) {
                 return string.Empty;
+            }
 
-            //System Constants:
-            // ${APPS} CoApp Application directory (c:\apps)
-            // ${BIN} CoApp bin directory (in PATH) (${APPS}\bin)
-            // ${LIB} CoApp lib directory (${APPS}\lib)
-            // ${DOTNETASSEMBLIES} CoApp .NET Reference Assembly directory (${APPS}\.NET\Assemblies)
-            // ${INCLUDE} CoApp include directory (${APPS}\include)
-            // ${INSTALL} CoApp .installed directory (${APPS}\.installed)
-            // ${ALLPROGRAMS} The Programs directory for all users 
-            //                  (usually C:\ProgramData\Microsoft\Windows\Start Menu\Programs)
-            // Package Variables:
-            // ${PUBLISHER}         Publisher name (CN of the certificate used to sign the package)
-            // ${PRODUCTNAME}       Name of product being installed
-            // ${VERSION}           Version of package being installed. (##.##.##.##)
-            // ${ARCH}              Platform of package being installed -- one of [x86, x64, any]
-            // ${COSMETICNAME}      Complete name (${PRODUCTNAME}-${VERSION}-${PLATFORM})
+            return text.FormatWithMacros((macro) => {
+                if(DefaultMacros.Value.ContainsKey(macro) ) {
+                    return DefaultMacros.Value[macro];
+                }
 
-            // ${PACKAGEDIR}        Where the product is getting installed into
-            // ${CANONICALPACKAGEDIR} The "publicly visible location" of the "current" version of the package.
-            
+                switch( macro ) {
+                    case "packagedir":
+                    case "packagedirectory":
+                    case "packagefolder":
+                        return @"${installed}\${publishername}\${productname}-${version}-${arch}\";
 
-            var result = text;
+                    case "publishedpackagedir":
+                    case "publishedpackagedirectory":
+                    case "publishedpackagefolder":
+                        return @"${apps}\${productname}";
 
-            result = result.Replace(@"${PKGDIR}", @"${PACKAGEDIR}");
-            result = result.Replace(@"${PACKAGEDIR}", @"${INSTALL}\${PUBLISHER}\${PRODUCTNAME}-${VERSION}-${ARCH}\");
-            result = result.Replace(@"${CANONICALPACKAGEDIR}", @"${APPS}\${PRODUCTNAME}\");
+                    case "publishername":
+                        return PublisherDirectory;
 
-            result = result.Replace(@"${INCLUDE}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "include"));
-            result = result.Replace(@"${LIB}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "lib"));
-            result = result.Replace(@"${DOTNETASSEMBLIES}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, @".NET\Assemblies"));
-            result = result.Replace(@"${BIN}", Path.Combine(PackageManagerSettings.CoAppRootDirectory, "bin"));
-            result = result.Replace(@"${APPS}", PackageManagerSettings.CoAppRootDirectory);
-            result = result.Replace(@"${INSTALL}", PackageManagerSettings.CoAppInstalledDirectory);
-            result = result.Replace(@"${ALLPROGRAMS}", KnownFolders.GetFolderPath(KnownFolder.CommonPrograms));
+                    case "productname":
+                        return Name;
 
-            result = result.Replace(@"${PUBLISHER}", PublisherDirectory);
-            result = result.Replace(@"${PRODUCTNAME}", Name);
-            result = result.Replace(@"${VERSION}", Version.UInt64VersiontoString());
-            result = result.Replace(@"${ARCH}", Architecture);
-            result = result.Replace(@"${COSMETICNAME}", "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant());
+                    case "version" :
+                        return Version.UInt64VersiontoString();
 
-            return result;
+                    case "arch" :
+                        return Architecture;
+
+                    case "cosmeticname" :
+                        return "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture).ToLowerInvariant();
+
+                }
+                return null;
+            });
         }
 
         internal void UpdateDependencyFlags() {

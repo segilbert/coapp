@@ -26,13 +26,26 @@ namespace CoApp.Toolkit.Win32 {
         private const Int32 SMTO_ABORTIFHUNG = 0x0002;
 #endif
 
-        private static void BroadcastChange() {
+        internal static void BroadcastChange() {
 #if COAPP_ENGINE_CORE
             Rehash.ForceProcessToReloadEnvironment("explorer");
             Rehash.ForceProcessToReloadEnvironment("services");
 #else
             Task.Factory.StartNew(() => { User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero); });
 #endif
+        }
+
+        public static IEnumerable<string> PowershellModulePath {
+            get {
+                var path = _systemEnvironment["#PSModulePath"].StringValue;
+                return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+            }
+            set {
+                var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
+                if (newValue != _systemEnvironment["#PSModulePath"].StringValue) {
+                    _systemEnvironment["#PSModulePath"].StringValue = newValue;
+                }
+            }
         }
 
         public static IEnumerable<string> SystemPath {
@@ -44,7 +57,6 @@ namespace CoApp.Toolkit.Win32 {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
                 if (newValue != _systemEnvironment["#Path"].StringValue) {
                     _systemEnvironment["#Path"].StringValue = newValue;
-                    BroadcastChange();
                 }
             }
         }
@@ -58,7 +70,6 @@ namespace CoApp.Toolkit.Win32 {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
                 if (newValue != _userEnvironment["#Path"].StringValue) {
                     _userEnvironment["#Path"].StringValue = newValue;
-                    BroadcastChange();
                 }
             }
         }
