@@ -310,7 +310,7 @@ namespace CoApp.Bootstrapper {
                     }
                 };
 
-                webclient.DownloadFileAsync(uri, tempFilenme);
+                webclient.DownloadFileAsync(uri, tempFilenme, uri.AbsoluteUri + tempFilenme);
 
                 while (!finished.WaitOne(100)) {
                     OutputDebugString("");
