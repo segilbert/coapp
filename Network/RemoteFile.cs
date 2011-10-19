@@ -233,9 +233,11 @@ namespace CoApp.Toolkit.Network {
                                 }
                             }
                             // this is not good. 
-                            throw new Exception("Status Code other than OK");
+                        RemoteFileMessages.Invoke.Failed(RemoteLocation);
+                        
                         }
                         catch (AggregateException e) {
+                            RemoteFileMessages.Invoke.Failed(RemoteLocation);
                             // at this point, we've failed somehow
                             if (_lastStatus == HttpStatusCode.NotImplemented) {
                                 // we never got started. Probably not found.

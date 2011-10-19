@@ -286,7 +286,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption) {
-            return DirectoryEnumerateFilesSmarter(path, searchOption).Where(file => file.ToLower().NewIsWildcardMatch(searchPattern, true, path));
+            return DirectoryEnumerateFilesSmarter(path.ToLower(), searchOption).Where(file => file.ToLower().NewIsWildcardMatch(searchPattern.ToLower(), true, path.ToLower()));
         }
 
 

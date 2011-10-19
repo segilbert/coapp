@@ -1001,16 +1001,23 @@ namespace CoApp.Toolkit.Engine {
         
        
         internal IEnumerable<PackageFeed> Feeds { get {
-            // ensure that the system feeds actually get loaded.
-            Task.WaitAll(LoadSystemFeeds().ToArray());
+            try {
+                // ensure that the system feeds actually get loaded.
+                Task.WaitAll(LoadSystemFeeds().ToArray());
 
-            var canFilterSession = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds);
-            var canFilterSystem = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds);
-            var feedFilters = BlockedScanLocations;
+                var canFilterSession = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSessionFeeds);
+                var canFilterSystem = PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.EditSystemFeeds);
+                var feedFilters = BlockedScanLocations;
 
-            return new PackageFeed[] { SessionPackageFeed.Instance,InstalledPackageFeed.Instance }.Union(
-                from feed in Cache<PackageFeed>.Value.Values where !canFilterSystem || !feed.IsLocationMatch(feedFilters) select feed).Union(
-                from feed in SessionCache<PackageFeed>.Value.SessionValues where !canFilterSession || !feed.IsLocationMatch(feedFilters) select feed);
+                return new PackageFeed[] {
+                    SessionPackageFeed.Instance, InstalledPackageFeed.Instance
+                }.Union(from feed in Cache<PackageFeed>.Value.Values where !canFilterSystem || !feed.IsLocationMatch(feedFilters) select feed).Union(
+                    from feed in SessionCache<PackageFeed>.Value.SessionValues where !canFilterSession || !feed.IsLocationMatch(feedFilters) select feed);
+            } catch( Exception e ) {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace );
+                throw;
+            }
         }}
 
 

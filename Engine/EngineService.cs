@@ -105,18 +105,22 @@ namespace CoApp.Toolkit.Engine {
             _cancellationTokenSource = new CancellationTokenSource();
             _isRunning = true;
 
-            try {
-                OutputDebugString("Gonna make sure stuff is setup right.");
-                // this ensures that composition rules are run for toolkit.
-                Package.EnsureCanonicalFoldersArePresent();
+            // make sure coapp is properly set up.
+            Task.Factory.StartNew(() => {
+                try {
+                    OutputDebugString("Gonna make sure stuff is setup right.");
+                    // this ensures that composition rules are run for toolkit.
+                    Package.EnsureCanonicalFoldersArePresent();
 
-                OutputDebugString("Getting Version of CoApp.");
-                var v = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
-                OutputDebugString("CoApp Version : "+v);
-            }
-            catch {
-                
-            }
+                    OutputDebugString("Getting Version of CoApp.");
+                    var v = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
+                    OutputDebugString("CoApp Version : " + v);
+                } catch {
+
+                }
+            });
+
+
             _engineService = Task.Factory.StartNew(() => {
                 _pipeSecurity = new PipeSecurity();
 //                SecurityIdentifier sid = new SecurityIdentifier(WellKnownSidType.WorldSid,null );
