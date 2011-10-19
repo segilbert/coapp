@@ -11,6 +11,7 @@
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.IO.Pipes;
+    using System.Runtime.InteropServices;
     using System.Security.AccessControl;
     using System.Security.Principal;
     using System.Text;
@@ -87,6 +88,10 @@ namespace CoApp.Toolkit.Engine {
             get { return _instance.Value._isRunning; }
         }
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern void OutputDebugString(string message);
+
+
         /// <summary>
         /// Mains this instance.
         /// </summary>
@@ -100,6 +105,18 @@ namespace CoApp.Toolkit.Engine {
             _cancellationTokenSource = new CancellationTokenSource();
             _isRunning = true;
 
+            try {
+                OutputDebugString("Gonna make sure stuff is setup right.");
+                // this ensures that composition rules are run for toolkit.
+                Package.EnsureCanonicalFoldersArePresent();
+
+                OutputDebugString("Getting Version of CoApp.");
+                var v = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
+                OutputDebugString("CoApp Version : "+v);
+            }
+            catch {
+                
+            }
             _engineService = Task.Factory.StartNew(() => {
                 _pipeSecurity = new PipeSecurity();
 //                SecurityIdentifier sid = new SecurityIdentifier(WellKnownSidType.WorldSid,null );

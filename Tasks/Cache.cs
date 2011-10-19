@@ -137,8 +137,23 @@ namespace CoApp.Toolkit.Tasks {
     }
 
     public class SessionCache<T> : Cache<T> where T : class  {
+        private static Dictionary<Type, object> _nullSessionCache = new Dictionary<Type, object>();
         public new static SessionCache<T> Value { get {
-            return (SessionCacheMessages.Invoke.GetInstance(typeof(T), () => new SessionCache<T>())) as SessionCache<T>;
+            SessionCache<T> result  = null;
+            try {
+                result = (SessionCacheMessages.Invoke.GetInstance(typeof (T), () => new SessionCache<T>())) as SessionCache<T>;
+            } catch {
+            }
+            if( result == null ) {
+                var type = typeof (T);
+                lock (_nullSessionCache) {
+                    if (!_nullSessionCache.ContainsKey(type)) {
+                        _nullSessionCache.Add(type, new SessionCache<T>());
+                    }
+                    result = _nullSessionCache[type] as SessionCache<T>;
+                }
+            }
+            return result;
         }}
 
         public override T this[string index] {

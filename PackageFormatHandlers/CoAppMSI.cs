@@ -36,8 +36,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <returns><c>true</c> if [is co app package file] [the specified path]; otherwise, <c>false</c>.</returns>
         /// <remarks></remarks>
         internal static bool IsCoAppPackageFile(string path) {
-            var packageProperties = GetMsiProperties(path);
-            return (packageProperties.ContainsKey("CoAppCompositionRules") && packageProperties.ContainsKey("CoAppPackageFeed"));
+            try {
+                var packageProperties = GetMsiProperties(path);
+                return (packageProperties.ContainsKey("CoAppCompositionRules") && packageProperties.ContainsKey("CoAppPackageFeed"));
+            } catch {
+            }
+            return false;
         }
 
         /// <summary>
@@ -48,11 +52,11 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <returns></returns>
         /// <remarks></remarks>
         internal static Package GetCoAppPackageFileInformation(string localPackagePath) {
-            var packageProperties = GetMsiProperties(localPackagePath);
-
-            if (!(packageProperties.ContainsKey("CoAppCompositionRules") && packageProperties.ContainsKey("CoAppPackageFeed"))) {
+            if (!IsCoAppPackageFile(localPackagePath)) {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
             }
+
+            var packageProperties = GetMsiProperties(localPackagePath);
 
             // pull out the rules & feed, send the info to the pm. 
             // var name = packageProperties["ProductName"];
@@ -81,11 +85,11 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <remarks>
         /// </remarks>
         public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
-            var packageProperties = GetMsiProperties(package.PackageSessionData.LocalValidatedLocation);
-
-            if (!(packageProperties.ContainsKey("CoAppCompositionRules") && packageProperties.ContainsKey("CoAppPackageFeed"))) {
+            if (!IsCoAppPackageFile(package.PackageSessionData.LocalValidatedLocation)) {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, package.PackageSessionData.LocalValidatedLocation);
             }
+
+            var packageProperties = GetMsiProperties(package.PackageSessionData.LocalValidatedLocation);
 
             var compositionRulesText = packageProperties["CoAppCompositionRules"];
             if (string.IsNullOrEmpty(compositionRulesText)) {
@@ -156,7 +160,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                 try {
                     Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation,
-                        @"TARGETDIR=""{0}"" COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
+                        @"TARGETDIR=""{0}"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
                             package.PackageSessionData.IsClientSpecified ? "ADD_TO_ARP=1" : ""));
                 }
                 finally {
@@ -221,7 +225,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 }), InstallLogModes.Progress);
 
                 try {
-                    Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation, @"REMOVE=ALL COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS");
+                    Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation, @"REMOVE=ALL COAPP_INSTALLED=1 ALLUSERS=1 REBOOT=REALLYSUPPRESS");
                 }
                 finally {
                     SetUIHandlersToSilent();

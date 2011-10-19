@@ -319,16 +319,16 @@ namespace CoApp.Toolkit.Engine {
             var binPath = Path.Combine(root, "bin");
             var psPath = Path.Combine(root, "powershell");
             var changed = false;
-            if (!SearchPath.SystemPath.Contains(binPath)) {
-                SearchPath.SystemPath = SearchPath.SystemPath.Prepend(binPath);
+            if (!EnvironmentUtility.SystemPath.Contains(binPath)) {
+                EnvironmentUtility.SystemPath = EnvironmentUtility.SystemPath.Prepend(binPath);
                 changed = true;
             }
-            if (!SearchPath.PowershellModulePath.Contains(psPath)) {
-                SearchPath.PowershellModulePath = SearchPath.PowershellModulePath.Prepend(psPath);
+            if (!EnvironmentUtility.PowershellModulePath.Contains(psPath)) {
+                EnvironmentUtility.PowershellModulePath = EnvironmentUtility.PowershellModulePath.Prepend(psPath);
                 changed = true;
             }
             if( changed ) {
-                SearchPath.BroadcastChange();
+                EnvironmentUtility.BroadcastChange();
             }
         }
 
@@ -434,6 +434,12 @@ namespace CoApp.Toolkit.Engine {
                             break;
                         case PackageRole.SourceCode:
                             break;
+                        case PackageRole.Driver:
+                            break;
+                        case PackageRole.Service:
+                            break;
+                        case PackageRole.WebApplication:
+                            break;
                     }
                 }
             }
@@ -443,11 +449,11 @@ namespace CoApp.Toolkit.Engine {
             // GS01: if package composition fails, and we're in the middle of installing a package
             // we should roll back the package install.
 
-            var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this));
+            var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this)).ToArray();
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)) {
-                var link = rule.GetResolvedLink(this).GetFullPath();
-                var dir = rule.GetResolvedTarget(this).GetFullPath();
+                var link = ResolveVariables(rule.Link).GetFullPath();
+                var dir = ResolveVariables(rule.Target).GetFullPath();
 
                 if (Directory.Exists(dir) && (makeCurrent || !Directory.Exists(link))) {
                     try {
@@ -463,8 +469,8 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)) {
-                var file = rule.GetResolvedTarget(this).GetFullPath();
-                var link = rule.GetResolvedLink(this).GetFullPath();
+                var file = ResolveVariables(rule.Target).GetFullPath();
+                var link = ResolveVariables(rule.Link).GetFullPath();
                 if (File.Exists(file) && (makeCurrent || !File.Exists(link))) {
                     if (!Directory.Exists(Path.GetDirectoryName(link))) {
                         Directory.CreateDirectory(Path.GetDirectoryName(link));
@@ -482,8 +488,8 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.Shortcut)) {
-                var target = rule.GetResolvedTarget(this).GetFullPath();
-                var link = rule.GetResolvedLink(this).GetFullPath();
+                var target = ResolveVariables(rule.Target).GetFullPath();
+                var link = ResolveVariables(rule.Link).GetFullPath();
 
                 if (File.Exists(target) && (makeCurrent || !File.Exists(link))) {
                     if (!Directory.Exists(Path.GetDirectoryName(link))) {
@@ -493,30 +499,87 @@ namespace CoApp.Toolkit.Engine {
                     ShellLink.CreateShortcut(link, target);
                 }
             }
+
+            foreach (var rule in rules.Where(r => r.Action == CompositionAction.EnvironmentVariable)) {
+                var environmentVariable = ResolveVariables(rule.Link);
+                var environmentValue = ResolveVariables(rule.Target);
+
+                switch( environmentVariable.ToLower() ) {
+                    case "path":
+                    case "pathext":
+                    case "psmodulepath":
+                    case "comspec":
+                    case "temp":
+                    case "tmp":
+                    case "username":
+                    case "windir":
+                    case "allusersprofile":
+                    case "appdata":
+                    case "commonprogramfiles":
+                    case "commonprogramfiles(x86)":
+                    case "commonprogramw6432":
+                    case "computername":
+                    case "current_cpu":
+                    case "FrameworkVersion":
+                    case "homedrive":
+                    case "homepath":
+                    case "logonserver":
+                    case "number_of_processors":
+                    case "os":
+                    case "processor_architecture":
+                    case "processor_identifier":
+                    case "processor_level":
+                    case "processor_revision":
+                    case "programdata":
+                    case "programfiles":
+                    case "programfiles(x86)":
+                    case "programw6432":
+                    case "prompt":
+                    case "public":
+                    case "systemdrive":
+                    case "systemroot":
+                    case "userdomain":
+                    case "userprofile":
+                        break;
+
+                    default:
+                        EnvironmentUtility.SetSystemEnvironmentVariable(environmentVariable, environmentValue);
+                        break;
+                }
+            }
+
+            var view = RegistryView.System["SOFTWARE"];
+            foreach (var rule in rules.Where(r => r.Action == CompositionAction.Registry)) {
+                var regKey = ResolveVariables(rule.Link);
+                var regValue= ResolveVariables(rule.Target);
+
+                view[regKey].StringValue = regValue;
+            }
+
         }
 
         public void UndoPackageComposition() {
             var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this));
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.Shortcut)
-                let target = rule.GetResolvedTarget(this).GetFullPath()
-                let link = rule.GetResolvedLink(this).GetFullPath()
+                let target = this.ResolveVariables(rule.Target).GetFullPath()
+                let link = this.ResolveVariables(rule.Link).GetFullPath()
                 where ShellLink.PointsTo(link, target)
                 select link) {
                 link.TryHardToDeleteFile();
             }
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)
-                let target = rule.GetResolvedTarget(this).GetFullPath()
-                let link = rule.GetResolvedLink(this).GetFullPath()
+                let target = this.ResolveVariables(rule.Target).GetFullPath()
+                let link = this.ResolveVariables(rule.Link).GetFullPath()
                 where File.Exists(target) && File.Exists(link) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
                 select link) {
                 Symlink.DeleteSymlink(link);
             }
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)
-                let target = rule.GetResolvedTarget(this).GetFullPath()
-                let link = rule.GetResolvedLink(this).GetFullPath()
+                let target = this.ResolveVariables(rule.Target).GetFullPath()
+                let link = this.ResolveVariables(rule.Link).GetFullPath()
                 where File.Exists(target) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
                 select link) {
                 Symlink.DeleteSymlink(link);

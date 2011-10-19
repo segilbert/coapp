@@ -153,10 +153,14 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         public static MsiProperties GetMsiProperties(string localPackagePath) {
             lock (typeof(MSIBase)) {
                 localPackagePath = localPackagePath.ToLower();
-                var result = SessionCache<MsiProperties>.Value[localPackagePath];
-
-                if (result != null) {
-                    return result;
+                try {
+                    var result = SessionCache<MsiProperties>.Value[localPackagePath];
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                catch {
+                    // no worry.
                 }
 
                 try {
@@ -166,18 +170,22 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                         view.Execute();
 
 
-                        result = new MsiProperties(localPackagePath);
+                        var result = new MsiProperties(localPackagePath);
 
                         foreach( var each in view ) {
                             result.Add(each["Property"].ToString(), each["Value"].ToString());
                         }
-                        
-                        //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
-                        if (SessionCache<MsiProperties>.Value[localPackagePath] != null) {
-                            return SessionCache<MsiProperties>.Value[localPackagePath];
-                        }
 
-                        SessionCache<MsiProperties>.Value[localPackagePath] = result;
+                        try {
+                            //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
+                            if (SessionCache<MsiProperties>.Value[localPackagePath] != null) {
+                                return SessionCache<MsiProperties>.Value[localPackagePath];
+                            }
+
+                            SessionCache<MsiProperties>.Value[localPackagePath] = result;
+                        } catch {
+                            
+                        }
                         return result;
                     }
                 } catch (InstallerException) {

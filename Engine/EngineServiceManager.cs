@@ -157,7 +157,7 @@ namespace CoApp.Toolkit.Engine {
         public static bool IsServiceResponding {
             get {
                 lock (typeof (EngineServiceManager)) {
-                    if (IsServiceRunning | Process.GetProcessesByName("coapp.service").Any() 
+                    if (IsServiceRunning || Process.GetProcessesByName("coapp.service").Any() 
 #if DEBUG
  || Process.GetProcessesByName("coapp.service.vshost").Any()                        
 #endif 
@@ -269,7 +269,7 @@ namespace CoApp.Toolkit.Engine {
 
 
         private static void TryToRunServiceInteractively() {
-            if (!IsServiceRunning | !Process.GetProcessesByName("coapp.service").Any()) {
+            if (!IsServiceRunning || !Process.GetProcessesByName("coapp.service").Any()) {
                 var path = Path.GetDirectoryName((Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Location);
                 var file = Path.Combine(path, "coapp.service.exe");
                 

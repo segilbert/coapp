@@ -16,9 +16,9 @@ namespace CoApp.Toolkit.Win32 {
     using Configuration;
     using Extensions;
 
-    public static class SearchPath {
-        private static readonly RegistryView _systemEnvironment = RegistryView.System[@"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"];
-        private static readonly RegistryView _userEnvironment = RegistryView.User[@"Environment"];
+    public static class EnvironmentUtility {
+        private static readonly RegistryView SystemEnvironment = RegistryView.System[@"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"];
+        private static readonly RegistryView UserEnvironment = RegistryView.User[@"Environment"];
 
 #if !COAPP_ENGINE_CORE
         private const Int32 HWND_BROADCAST = 0xffff;
@@ -26,7 +26,7 @@ namespace CoApp.Toolkit.Win32 {
         private const Int32 SMTO_ABORTIFHUNG = 0x0002;
 #endif
 
-        internal static void BroadcastChange() {
+        public static void BroadcastChange() {
 #if COAPP_ENGINE_CORE
             Rehash.ForceProcessToReloadEnvironment("explorer");
             Rehash.ForceProcessToReloadEnvironment("services");
@@ -35,41 +35,49 @@ namespace CoApp.Toolkit.Win32 {
 #endif
         }
 
+        public static string GetSystemEnvironmentVariable(string name) {
+            return SystemEnvironment["#" + name].StringValue;
+        }
+
+        public static void SetSystemEnvironmentVariable(string name, string value) {
+            SystemEnvironment["#" + name].StringValue = value;
+        }
+
         public static IEnumerable<string> PowershellModulePath {
             get {
-                var path = _systemEnvironment["#PSModulePath"].StringValue;
+                var path = SystemEnvironment["#PSModulePath"].StringValue;
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
-                if (newValue != _systemEnvironment["#PSModulePath"].StringValue) {
-                    _systemEnvironment["#PSModulePath"].StringValue = newValue;
+                if (newValue != SystemEnvironment["#PSModulePath"].StringValue) {
+                    SystemEnvironment["#PSModulePath"].StringValue = newValue;
                 }
             }
         }
 
         public static IEnumerable<string> SystemPath {
             get {
-                var path = _systemEnvironment["#Path"].StringValue;
+                var path = SystemEnvironment["#Path"].StringValue;
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
-                if (newValue != _systemEnvironment["#Path"].StringValue) {
-                    _systemEnvironment["#Path"].StringValue = newValue;
+                if (newValue != SystemEnvironment["#Path"].StringValue) {
+                    SystemEnvironment["#Path"].StringValue = newValue;
                 }
             }
         }
 
         public static IEnumerable<string> UserPath {
             get {
-                var path = _userEnvironment["#Path"].StringValue;
+                var path = UserEnvironment["#Path"].StringValue;
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
-                if (newValue != _userEnvironment["#Path"].StringValue) {
-                    _userEnvironment["#Path"].StringValue = newValue;
+                if (newValue != UserEnvironment["#Path"].StringValue) {
+                    UserEnvironment["#Path"].StringValue = newValue;
                 }
             }
         }

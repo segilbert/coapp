@@ -127,6 +127,7 @@
     <Compile Include="Win32\Dialogtemplate.cs" />
     <Compile Include="Win32\DIBColors.cs" />
     <Compile Include="Win32\EditControlStyles.cs" />
+    <Compile Include="Win32\EnvironmentUtility.cs" />
     <Compile Include="Win32\ExtendedDialogStyles.cs" />
     <Compile Include="Win32\FileGrpIconDir.cs" />
     <Compile Include="Win32\FileGrpIconDirEntry.cs" />
@@ -301,7 +302,6 @@
     <Compile Include="Win32\Rect.cs" />
     <Compile Include="Win32\ReparseData.cs" />
     <Compile Include="Win32\ReparsePointError.cs" />
-    <Compile Include="Win32\SearchPath.cs" />
     <Compile Include="Win32\SecurityAttributes.cs" />
     <Compile Include="Win32\SizeT.cs" />
     <Compile Include="Win32\SmallRect.cs" />

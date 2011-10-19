@@ -315,7 +315,7 @@
     <Compile Include="Win32\SafeHGlobalHandle.cs" />
     <Compile Include="Win32\SafeNativeMethods.cs" />
     <Compile Include="Win32\SafeTokenHandle.cs" />
-    <Compile Include="Win32\SearchPath.cs" />
+    <Compile Include="Win32\EnvironmentUtility.cs" />
     <Compile Include="Win32\SecurityImpersonationLevel.cs" />
     <Compile Include="Win32\SidAndAttributes.cs" />
     <Compile Include="Win32\SizeT.cs" />

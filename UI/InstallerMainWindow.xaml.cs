@@ -32,7 +32,6 @@
                 // maybe show a message? 
             }
 
-
             InitializeComponent();
 
             _messages = new PackageManagerMessages {
@@ -153,12 +152,7 @@
 
         private void CloseBtnClick(object sender, RoutedEventArgs e) {
             // stop the download/install...
-            ((Storyboard)FindResource("hideWindow")).Completed += (ss, ee) => {
-                Invoke(
-                    () => {
-                        Close();
-                    });
-            };
+            ((Storyboard)FindResource("hideWindow")).Completed += (ss, ee) => { Invoke(Close); };
             ((Storyboard)FindResource("hideWindow")).Begin();
             //Application.Current.Shutdown();
         }
