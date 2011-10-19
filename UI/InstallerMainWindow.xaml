@@ -38,7 +38,7 @@
                 Storyboard.TargetProperty="Opacity"
                 From="1"
                 To="0"
-                Duration="0:0:0:.75" />
+                Duration="0:0:0:.5" />
                     </Storyboard>
                     <Storyboard x:Key="slideTrans" Name="SlideStoryboard" >
                         <DoubleAnimationUsingKeyFrames Duration="0:0:1.6" Storyboard.TargetName="CancelButton" Storyboard.TargetProperty="(Button.RenderTransform).(TranslateTransform.X)" >

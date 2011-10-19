@@ -44,6 +44,10 @@ namespace CoApp.Toolkit.Engine.Client {
                 // app.StartupUri = new Uri("InstallerMainWindow.xaml", UriKind.Relative);
                 var window = new InstallerMainWindow(filename);
                 window.ShowDialog();
+
+                if (Application.Current != null) {
+                    Application.Current.Shutdown(0);
+                }
             } catch (Exception e) {
                 MessageBox.Show(e.StackTrace, e.Message);
             }

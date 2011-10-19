@@ -142,7 +142,7 @@ namespace CoApp.Toolkit.Engine {
                     _controller.Value.Start();
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
-                    }
+                    }   
                     catch (TimeoutException) {
                         if (secondAttempt) {
                             throw new UnableToStartServiceException(
