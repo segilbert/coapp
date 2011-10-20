@@ -30,9 +30,51 @@ namespace CoApp.Toolkit.Engine.Client {
         internal Task InstallTask;
         private PackageManagerMessages _messages;
         public event PropertyChangedEventHandler PropertyChanged;
-        public event PropertyChangedEventHandler PackageUpdated;
+        public event PropertyChangedEventHandler Ready;
+        public event PropertyChangedEventHandler Finished;
+
         private PackageManager packageManager;
-        private Package _package;
+        private Package _specifiedPackage;
+        private Package _upgradedPackage;
+        private bool _automaticallyUpgrade = true;
+
+        public bool AutomaticallyUpgrade {
+            get { return _automaticallyUpgrade; }
+            set {
+                _automaticallyUpgrade = value;
+                OnPropertyChanged();
+                ProbeForNewerPackageInfo();
+            }
+        }
+
+        public Package UpgradedPackage {
+            get { return _upgradedPackage; }
+            set {
+                _upgradedPackage = value;
+                if (AutomaticallyUpgrade) {
+                    OnPropertyChanged();
+                }
+                OnPropertyChanged("UpgradedPackage");
+            }
+        }
+
+        public Package SpecifiedPackage {
+            get { return _specifiedPackage; }
+            set {
+                _specifiedPackage = value;
+                if (!AutomaticallyUpgrade) {
+                    OnPropertyChanged();
+                }
+                OnPropertyChanged("SpecifiedPackage");
+            }
+        }
+
+
+        public Package Package { get {
+            return AutomaticallyUpgrade ?  UpgradedPackage ?? SpecifiedPackage : SpecifiedPackage;
+        } }
+
+        public bool HasPackage { get { return Package != null; }}
 
         public Installer(string filename)   {
             // we'll take it from here...
@@ -48,7 +90,6 @@ namespace CoApp.Toolkit.Engine.Client {
                 InstallTask = Task.Factory.StartNew(StartInstall);
                 
                 // if we got this far, CoApp must be running. 
-
                 Application.ResourceAssembly = Assembly.GetExecutingAssembly();
                 var window = new InstallerMainWindow(this);
                 window.ShowDialog();
@@ -61,6 +102,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
+
         /// <summary>
         /// Main install process 
         /// </summary>
@@ -70,37 +112,78 @@ namespace CoApp.Toolkit.Engine.Client {
             ConnectToPackageManager();
 
             LoadPackageDetails();
-
-            ProbeForNewerPackageInfo();
         }
 
         private void ProbeForNewerPackageInfo() {
-            
+            if (AutomaticallyUpgrade) {
+                packageManager.GetPackages(SpecifiedPackage.Name + "-*-" +SpecifiedPackage.Architecture + "-"+SpecifiedPackage.PublicKeyToken , latest: true, forceScan: true, messages: _messages).ContinueWith((antecedent) => {
+                    if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty()) {
+                        UpgradedPackage = null;
+                        // DOERROR
+                        OnReady();
+                        return;
+                    }
+
+                    packageManager.GetPackageDetails(antecedent.Result.FirstOrDefault().CanonicalName, _messages).ContinueWith((antecedent2) => {
+                        if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty()) {
+                            OnReady();
+                            // DOERROR
+                            return;
+                        }
+
+                        try {
+                            UpgradedPackage = antecedent.Result.FirstOrDefault();
+                            ExtractTrickyPackageInfo();
+                        } catch {
+
+                        }
+                        OnPropertyChanged();
+                        OnReady();
+                    }, TaskContinuationOptions.AttachedToParent);
+                }, TaskContinuationOptions.AttachedToParent);
+            }
         }
 
         private void LoadPackageDetails() {
             packageManager.GetPackages(Path.GetFullPath(MsiFilename), latest: false, messages: _messages).ContinueWith((antecedent) => {
                 if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty() ) {
                     // DOERROR
+                    OnReady();
                     return;
                 }
 
                 packageManager.GetPackageDetails(antecedent.Result.FirstOrDefault().CanonicalName, _messages).ContinueWith((antecedent2) => {
                     if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty()) {
+                        OnReady();
                         // DOERROR
                         return;
                     }
 
-                    _package = antecedent.Result.FirstOrDefault();
-                    ExtractTrickyPackageInfo();
-                    OnPropertyChanged();
-                    if (PackageUpdated != null) {
-                        PackageUpdated(this, new PropertyChangedEventArgs("package"));
+                    try {
+                        SpecifiedPackage = antecedent.Result.FirstOrDefault();
+                        ExtractTrickyPackageInfo();
+                    } catch {
+                        
                     }
-                },
-                    TaskContinuationOptions.AttachedToParent);
+                    ProbeForNewerPackageInfo();
+                    OnPropertyChanged();
+                    OnReady();
+                }, TaskContinuationOptions.AttachedToParent);
     
             }, TaskContinuationOptions.AttachedToParent);
+        }
+
+        private void OnReady() {
+            if (Ready != null) {
+                Ready(this, new PropertyChangedEventArgs("package"));
+            }
+        }
+
+        private void OnFinished() {
+            IsWorking = false;
+            if (Finished != null) {
+                Finished(this, new PropertyChangedEventArgs("Finished"));
+            }
         }
 
         private void ConnectToPackageManager() {
@@ -136,11 +219,10 @@ namespace CoApp.Toolkit.Engine.Client {
                 var image = new BitmapImage();
                 // Property changes outside of Begin/EndInit are ignored
                 image.BeginInit();
-                var srcStream = new MemoryStream(Convert.FromBase64String(_package.Icon));
+                var srcStream = new MemoryStream(Convert.FromBase64String(Package.Icon));
                 image.StreamSource = srcStream;
                 image.EndInit();
                 image.Freeze();
-                var x = image.PixelWidth;
                 _packageIcon = image;
             } catch {
                 // didn't take?
@@ -188,14 +270,100 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-        public string Organization { get { return _package == null ? string.Empty :  _package.PublisherName; } }
-        public string Description { get { return _package == null ? string.Empty : _package.Description; } }
+        public bool ReadyToInstall {
+            get { return HasPackage && (AutomaticallyUpgrade ? UpgradedPackage != null && !UpgradedPackage.IsInstalled : !Package.IsInstalled); }
+        }
+        
+        public bool CanUpgrade {
+            get {
+                return _specifiedPackage != null && (_specifiedPackage.IsInstalled && (_upgradedPackage != null && !_upgradedPackage.IsInstalled));
+            }
+        }
 
+        private int _progress;
+        public int Progress {
+            get { return _progress; } set { _progress = value; OnPropertyChanged("Progress");}
+        }
+
+        public Visibility RemoveButtonVisibility { get { return HasPackage && Package.IsInstalled ? Visibility.Visible : Visibility.Hidden; }}
+        public Visibility CancelButtonVisibility { get { return CancelRequested ? Visibility.Hidden : Visibility.Visible; } }
+
+        public string InstallButtonText {
+            get {
+                if( _specifiedPackage != null ) {
+                    if (_specifiedPackage.IsInstalled) {
+                        if( _upgradedPackage != null ) {
+                            if (!_upgradedPackage.IsInstalled) {
+                                return "Upgrade";
+                            }
+                        }
+                    }
+                    
+                }
+                return "Install";
+            }
+        }
+
+        public bool IsInstalled { get { return HasPackage && Package.IsInstalled; }}
+        public string Organization { get { return HasPackage ? Package.PublisherName : string.Empty; } }
+        public string Description { get { return HasPackage ? Package.Description: string.Empty; } }
 
         public string Product {
             get {
-                return _package == null
-                    ? string.Empty : "{0} - {1}".format(_package.DisplayName, string.IsNullOrEmpty(_package.AuthorVersion) ? _package.Version : _package.AuthorVersion);
+                return HasPackage ? "{0} - {1}".format(Package.DisplayName, string.IsNullOrEmpty(Package.AuthorVersion) ? Package.Version : Package.AuthorVersion) : string.Empty;
+            }
+        }
+
+        public string ProductVersion {
+            get {
+                return HasPackage ? Package.Version : string.Empty;
+            }
+        }
+
+        private bool _working;
+
+        public bool IsWorking {
+            get { return _working; }
+            set {
+                _working = value;
+                OnPropertyChanged("Working");
+            }
+        }
+
+        private bool _cancel;
+
+        public bool CancelRequested {
+            get { return _cancel; }
+            set {
+                _cancel = value;
+                OnPropertyChanged("CancelRequested");
+                OnPropertyChanged("CancelButtonVisibility");
+
+                if( !IsWorking ) {
+                    OnFinished();
+                }
+            }
+        }
+
+        public void Install() {
+            if( !IsWorking) {
+                IsWorking = true;
+                packageManager.InstallPackage(Package.CanonicalName, autoUpgrade: false, messages: new PackageManagerMessages {
+                    InstallingPackageProgress = (canonicalName, progress, overallProgress) => { Progress = overallProgress; },
+                }.Extend(_messages)).ContinueWith(antecedent => OnFinished(), TaskContinuationOptions.AttachedToParent);
+            }
+        }
+
+        public void Remove() {
+            if (!IsWorking) {
+                IsWorking = true;
+                packageManager.RemovePackage(Package.CanonicalName, messages: new PackageManagerMessages {
+                    RemovingPackageProgress= (canonicalName, progress) => {
+                        Progress = progress;
+                    },
+                }).ContinueWith(antecedent => {
+                    OnFinished();
+                }, TaskContinuationOptions.AttachedToParent);
             }
         }
 
@@ -211,6 +379,43 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
     }
+
+    /*
+              PackageManager.Instance.InstallPackage(
+                  _canonicalname, autoUpgrade: UpgradeToLatestVersion.IsChecked, messages: new PackageManagerMessages {
+                      InstallingPackageProgress = (name, progress, total) => {
+                          Invoke(
+                              new Action(
+                                  () => {
+                                      InstallationProgress.Value = total;
+                                  }));
+                      },
+                      InstalledPackage = (pkgName) => {
+                          string s = pkgName;
+                      },
+                      UnexpectedFailure = (anExeption) => {
+                          Invoke(
+                              () => {
+                                  Error(anExeption);
+                              });
+                      }, // failure
+                      Error = (name, argument, reason) => {
+                          Invoke(
+                              () => {
+                                  MessageBox.Show("Error: " + argument + " because of " + reason, name);
+                              });
+                      },
+                      // failure
+                      FailedPackageInstall =
+                          (name, argument, reason) => {
+                              Invoke(
+                                  () => {
+                                      MessageBox.Show("FailedPackageInstall:\n" + argument + " because of \n" + reason, name);
+                                  });
+                          } // failure
+                  }.Extend(_messages));
+              // .ContinueWith((antecedent) => { /Invoke(() => { CloseBtnClick(null, null); }); });
+               * */
 
     /* 
      * #if DEBUG

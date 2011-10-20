@@ -1,28 +1,18 @@
 ﻿namespace CoApp.Toolkit.UI {
     using System;
-    using System.Diagnostics;
-    using System.IO;
-    using System.IO.Pipes;
-    using System.Linq;
-    using System.Security.Principal;
-    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
+    using System.Windows.Controls.Primitives;
     using System.Windows.Data;
     using System.Windows.Input;
     using System.Windows.Media.Animation;
-    using System.Windows.Media.Imaging;
-    using Engine;
     using Engine.Client;
-    using Exceptions;
-    using Extensions;
-    using Network;
 
     /// <summary>
     ///   Interaction logic for InstallerMainWindow.xaml
     /// </summary>
     public partial class InstallerMainWindow : Window {
-        private bool _clickedInstall;
+        private bool _actionTaken;
         public Installer Installer;
 
         public InstallerMainWindow(Installer installer) {
@@ -34,21 +24,39 @@
             ProductName.SetBinding(TextBlock.TextProperty, new Binding("Product") { Source = Installer });
             PackageIcon.SetBinding(Image.SourceProperty, new Binding("PackageIcon") { Source = Installer });
             DescriptionText.SetBinding(TextBlock.TextProperty, new Binding("Description") { Source = Installer });
+            UpgradeToLatestVersion.SetBinding(ToggleButton.IsCheckedProperty, new Binding("AutomaticallyUpgrade") { Source = Installer });
+            ProductVersion.SetBinding(TextBlock.TextProperty, new Binding("ProductVersion") { Source = Installer });
+            InstallButton.SetBinding(UIElement.IsEnabledProperty, new Binding("ReadyToInstall") { Source = Installer });
+            InstallButton.SetBinding(FrameworkElement.ToolTipProperty , new Binding("InstallButtonText") { Source = Installer });
+            InstallText.SetBinding(TextBlock.TextProperty, new Binding("InstallButtonText") { Source = Installer });
+            RemoveButton.SetBinding(Button.VisibilityProperty, new Binding("RemoveButtonVisibility") { Source = Installer });
+            InstallationProgress.SetBinding(ProgressBar.ValueProperty, new Binding("Progress") { Source = Installer });
+            CancelButton.SetBinding(Button.VisibilityProperty, new Binding("CancelButtonVisibility") { Source = Installer });
 
-            // DescriptionBrowser.NavigateToString("This is a test of the text");
-            // DescriptionBrowser.Navigate("http://slashdot.org");
-
-            Installer.PackageUpdated += (src, evnt) => Invoke(() => {
-               if (Opacity < 1) {
+            try {
+                VisibilityAnimation.SetAnimationType(RemoveButton, VisibilityAnimation.AnimationType.Fade);
+                VisibilityAnimation.SetAnimationType(InstallButton, VisibilityAnimation.AnimationType.Fade);
+                VisibilityAnimation.SetAnimationType(InstallationProgress, VisibilityAnimation.AnimationType.Fade);
+                VisibilityAnimation.SetAnimationType(UpgradeToLatestVersion, VisibilityAnimation.AnimationType.Fade);
+                VisibilityAnimation.SetAnimationType(CancelButton, VisibilityAnimation.AnimationType.Fade);
+            } catch {
+                
+            }
+            Installer.Ready += (src, evnt) => Invoke(() => {
+               if (!(Opacity > 0)) {
                    ((Storyboard)FindResource("showWindow")).Begin();
                }
-               
            });
+
+            Installer.Finished += (src, evnt) => Invoke(() => {
+                ((Storyboard)FindResource("hideWindow")).Completed += (ss, ee) => { Invoke(Close); };
+                ((Storyboard)FindResource("hideWindow")).Begin(); 
+            });
+
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e) {
-            // ((Storyboard)FindResource("showWindow")).Completed += (ss, ee) => { Invoke(Close); };
-            //((Storyboard)FindResource("showWindow")).Begin();
+            
         }
 
 
@@ -57,69 +65,35 @@
         }
 
         private void CloseBtnClick(object sender, RoutedEventArgs e) {
-            // stop the download/install...
-            ((Storyboard)FindResource("hideWindow")).Completed += (ss, ee) => {  Invoke(Close); };
-            ((Storyboard)FindResource("hideWindow")).Begin();
-            //Application.Current.Shutdown();
+            Installer.CancelRequested = true;
         }
 
         private void InstallButtonClick(object sender, RoutedEventArgs e) {
-            if (!_clickedInstall) {
-                _clickedInstall = true;
-
-                InstallationProgress.Visibility = Visibility.Visible;
-                ((Storyboard)FindResource("showProgress")).Begin();
-                ((Storyboard)FindResource("hideCheckbox")).Completed += (s, ev) => {
-                    UpgradeToLatestVersion.Visibility = Visibility.Hidden;
-                };
-                ((Storyboard)FindResource("hideCheckbox")).Begin();
-
-                ((Storyboard)FindResource("hideInstall")).Completed += (s, ev) => {
-                    InstallButton.Visibility = Visibility.Hidden;
-                };
-                ((Storyboard)FindResource("hideInstall")).Begin();
-                ((Storyboard)FindResource("slideTrans")).Begin();
-                /*
-                PackageManager.Instance.InstallPackage(
-                    _canonicalname, autoUpgrade: UpgradeToLatestVersion.IsChecked, messages: new PackageManagerMessages {
-                        InstallingPackageProgress = (name, progress, total) => {
-                            Invoke(
-                                new Action(
-                                    () => {
-                                        InstallationProgress.Value = total;
-                                    }));
-                        },
-                        InstalledPackage = (pkgName) => {
-                            string s = pkgName;
-                        },
-                        UnexpectedFailure = (anExeption) => {
-                            Invoke(
-                                () => {
-                                    Error(anExeption);
-                                });
-                        }, // failure
-                        Error = (name, argument, reason) => {
-                            Invoke(
-                                () => {
-                                    MessageBox.Show("Error: " + argument + " because of " + reason, name);
-                                });
-                        },
-                        // failure
-                        FailedPackageInstall =
-                            (name, argument, reason) => {
-                                Invoke(
-                                    () => {
-                                        MessageBox.Show("FailedPackageInstall:\n" + argument + " because of \n" + reason, name);
-                                    });
-                            } // failure
-                    }.Extend(_messages));
-                // .ContinueWith((antecedent) => { /Invoke(() => { CloseBtnClick(null, null); }); });
-                 * */
+            if (!_actionTaken) {
+                TakeAction();
+                Installer.Install();
             }
         }
 
         protected void Invoke(Action action) {
             Dispatcher.Invoke(action);
+        }
+
+        private void TakeAction() {
+            _actionTaken = true;
+
+            InstallationProgress.Visibility = Visibility.Visible;
+            UpgradeToLatestVersion.Visibility = Visibility.Hidden;
+            InstallButton.Visibility = Visibility.Hidden;
+            RemoveButton.Visibility = Visibility.Hidden;
+            ((Storyboard)FindResource("slideTrans")).Begin();
+        }
+
+        private void RemoveButtonClick(object sender, RoutedEventArgs e) {
+            if (!_actionTaken) {
+                TakeAction();
+                Installer.Remove();
+            }
         }
     }
 }

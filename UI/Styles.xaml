@@ -115,9 +115,6 @@
     <Geometry x:Key="PathClose">F1 M 171.964,69.0358L 169.982,67.0534L 166.988,70.047L 164.01,67.0694L 162.02,69.0599L 164.997,72.0375L 162.028,75.0071L 164.01,76.9895L 166.98,74.0199L 169.973,77.0135L 171.964,75.0231L 168.97,72.0294L 171.964,69.0358 Z</Geometry>
     <Geometry x:Key="PathCheckmark">F1 M 303.787,398.635L 305.06,400.314C 305.06,400.314 307.13,396.088 310.394,394.416C 310.315,395.61 309.996,396.645 310.553,397.919C 309.12,398.237 306.175,401.82 305.22,403.571C 303.866,401.899 302.274,400.626 301.159,400.228L 303.787,398.635 Z</Geometry>
 
-    
-    
-
     <Style x:Key="MetroPathButton" TargetType="{x:Type Button}">
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
@@ -130,7 +127,7 @@
                                 <VisualState x:Name="Normal">
                                     <Storyboard>
                                         <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="content">
-                                            <EasingDoubleKeyFrame KeyTime="0" Value="0.7"/>
+                                            <EasingDoubleKeyFrame KeyTime="0"  Value="0.7"/>
                                         </DoubleAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>

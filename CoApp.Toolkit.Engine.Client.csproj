@@ -90,6 +90,7 @@
     <Compile Include="UI\InstallerMainWindow.xaml.cs">
       <DependentUpon>InstallerMainWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\VisibilityAnimation.cs" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\logo-only1.png" />
