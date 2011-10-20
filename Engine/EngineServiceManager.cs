@@ -15,6 +15,7 @@ namespace CoApp.Toolkit.Engine {
     using System.IO.Pipes;
     using System.Linq;
     using System.Reflection;
+    using System.Runtime.InteropServices;
     using System.Security.Principal;
     using System.ServiceProcess;
     using System.Threading;
@@ -50,8 +51,11 @@ namespace CoApp.Toolkit.Engine {
                 throw new UnableToStartServiceException("{0} is not installed".format(CoAppServiceName));
             }
 
+            OutputDebugString("==[Trying to start Win32 Service]==");
+
             switch (_controller.Value.Status) {
                 case ServiceControllerStatus.ContinuePending:
+                    OutputDebugString("==[State:Continuing]==");
                     // wait for it to continue.
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
@@ -69,6 +73,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                     break;
                 case ServiceControllerStatus.PausePending:
+                    OutputDebugString("==[State:Pausing]==");
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Paused, new TimeSpan(0, 0, 0, 10));
                     }
@@ -88,6 +93,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                     break;
                 case ServiceControllerStatus.Paused:
+                    OutputDebugString("==[State:Paused]==");
                     _controller.Value.Continue();
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
@@ -102,10 +108,12 @@ namespace CoApp.Toolkit.Engine {
                     break;
 
                 case ServiceControllerStatus.Running:
+                    OutputDebugString("==[State:Running]==");
                     // duh!
                     break;
 
                 case ServiceControllerStatus.StartPending:
+                    OutputDebugString("==[State:Starting]==");
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
                     }
@@ -119,6 +127,7 @@ namespace CoApp.Toolkit.Engine {
                     break;
 
                 case ServiceControllerStatus.StopPending:
+                    OutputDebugString("==[State:Stopping]==");
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Stopped, new TimeSpan(0, 0, 0, 10));
                     }
@@ -139,6 +148,7 @@ namespace CoApp.Toolkit.Engine {
                     break;
 
                 case ServiceControllerStatus.Stopped:
+                    OutputDebugString("==[State:Stopped]==");
                     _controller.Value.Start();
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
@@ -154,31 +164,36 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern void OutputDebugString(string message);
+
+
         public static bool IsServiceResponding {
             get {
                 lock (typeof (EngineServiceManager)) {
-                    if (IsServiceRunning || Process.GetProcessesByName("coapp.service").Any() 
-#if DEBUG
- || Process.GetProcessesByName("coapp.service.vshost").Any()                        
-#endif 
-                        
-                        ) {
-                        var testPipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous,
-                            TokenImpersonationLevel.Impersonation);
-                        try {
-                            testPipe.Connect(100);
-                            testPipe.Close();
-                            testPipe.Dispose();
+                    OutputDebugString("==[Checking For Process]==");
+                    if (IsServiceRunning || Process.GetProcessesByName("coapp.service").Any()) {
+                        OutputDebugString("==[Looks like the process is running]==");
+                        for (var i = 60; i > 0; i--) {
+                            var testPipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous,
+                                TokenImpersonationLevel.Impersonation);
+                            try {
+                                OutputDebugString("==[Checking For Pipe]==");
+                                testPipe.Connect(100);
+                                testPipe.Close();
+                                testPipe.Dispose();
+                                OutputDebugString("==[Service Seems to be running]==");
+                                return true;
+                            } catch (System.TimeoutException) {
+                                OutputDebugString("Waiting for service. To Go: " + i);
+                            }
                         }
-                        catch (System.TimeoutException) {
-                            return false;
-                        }
-                        return true;
                     }
-                    return false;
                 }
+                return false;
             }
         }
+
 
         public static void EnsureServiceIsResponding(bool forceInteractive = false) {
             if (forceInteractive ) {
@@ -263,27 +278,24 @@ namespace CoApp.Toolkit.Engine {
                     
                 }
             }
-
             // uh, if we got here, we're not going to be able start Coapp...
         }
 
 
         private static void TryToRunServiceInteractively() {
-            if (!IsServiceRunning || !Process.GetProcessesByName("coapp.service").Any()) {
-                var path = Path.GetDirectoryName((Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Location);
-                var file = Path.Combine(path, "coapp.service.exe");
-                
-                if( !File.Exists(file)) {
-                    file = Path.Combine(Environment.CurrentDirectory, "coapp.service.exe");
-                    if (!File.Exists(file)) {
-                        throw new FileNotFoundException("Can't find CoApp Service EXE");
-                    }
-                }
-                Process.Start(file, "--interactive");
-                for (var i = 0; i < 10 && !IsServiceResponding; i++) {
-                    Thread.Sleep(300); // give it a chance to startup.
+            var path = Path.GetDirectoryName((Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Location);
+            var file = Path.Combine(path, "coapp.service.exe");
+
+            if (!File.Exists(file)) {
+                file = Path.Combine(Environment.CurrentDirectory, "coapp.service.exe");
+                if (!File.Exists(file)) {
+                    throw new FileNotFoundException("Can't find CoApp Service EXE");
                 }
             }
+            OutputDebugString("==[Starting Service '"+ file +"' Interactively]==");
+            var process = Process.Start(file, "--interactive");
+            Thread.Sleep(500);
+            var isRunning = IsServiceResponding;
         }
 
     }

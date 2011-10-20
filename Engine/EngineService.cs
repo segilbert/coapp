@@ -131,6 +131,7 @@ namespace CoApp.Toolkit.Engine {
                 // start two listeners by default--each listener will also spawn a new empty one.
                 StartListener();
                 StartListener();
+                StartListener();
                    
             }, _cancellationTokenSource.Token).AutoManage();
 
