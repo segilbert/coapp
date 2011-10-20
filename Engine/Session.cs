@@ -683,7 +683,7 @@ namespace CoApp.Toolkit.Engine {
 
                 {"publish-date", package.PackageDetails.PublishDate.ToFileTime().ToString()},
                 {"publisher-name", package.PackageDetails.Publisher.Name},
-                {"publisher-url", package.PackageDetails.Publisher.Location.AbsoluteUri},
+                {"publisher-url", package.PackageDetails.Publisher.Location == null ? string.Empty : package.PackageDetails.Publisher.Location.AbsoluteUri},
                 {"publisher-email", package.PackageDetails.Publisher.Email},
                 {"package-item-text", package.PackageDetails.GetAtomItemText(package) },
             };
