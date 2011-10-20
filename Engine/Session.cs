@@ -672,7 +672,7 @@ namespace CoApp.Toolkit.Engine {
                 {"canonical-name", package.CanonicalName},
                 {"description", package.PackageDetails.Description},
                 {"summary", package.PackageDetails.SummaryDescription},
-                {"display-name", package.CosmeticName},
+                {"display-name", package.DisplayName},
                 {"copyright", package.PackageDetails.CopyrightStatement},
                 {"author-version", package.PackageDetails.AuthorVersion},
                 {"icon", package.PackageDetails.Icon},

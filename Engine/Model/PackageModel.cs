@@ -41,6 +41,9 @@ namespace CoApp.Toolkit.Engine.Model {
         public string PublicKeyToken { get; set; }
 
         [XmlAttribute]
+        public string DisplayName { get; set; }
+
+        [XmlAttribute]
         public string PublisherDirectory { get; set; }
 
         [XmlElement(IsNullable = false)]

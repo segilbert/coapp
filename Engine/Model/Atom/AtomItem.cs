@@ -245,6 +245,7 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
 
                 // lets copy what details we have into that package.
                 package.PublisherDirectory = Model.PublisherDirectory;
+                package.DisplayName = Model.DisplayName;
 
                 package.InternalPackageData.PolicyMinimumVersion = Model.BindingPolicyMinVersion;
                 package.InternalPackageData.PolicyMaximumVersion = Model.BindingPolicyMaxVersion;

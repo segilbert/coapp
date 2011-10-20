@@ -46,6 +46,7 @@ namespace CoApp.Toolkit.Engine {
         public string PublicKeyToken { get; internal  set; }
         public Guid? ProductCode { get; internal set; }
 
+        internal string DisplayName { get; set; }
         internal string PublisherDirectory { get; set; }
 
         /// <summary>
@@ -194,17 +195,13 @@ namespace CoApp.Toolkit.Engine {
 
             lock (_packages) {
                 pkg = (_packages.Where(package =>
-                    package.Architecture == architecture &&
-                    package.Version == version &&
-                    package.PublicKeyToken == publicKeyToken &&
-                    package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
-            }
-            
-            // we've tried finding it a couple of ways, and got back nothing for our trouble.
-            // we'll create an package with the details we have, and pass that back.
-            if (pkg == null) {
-                pkg = new Package(packageName, architecture, version, publicKeyToken, productCode);
-                lock(_packages) {
+                            package.Architecture == architecture && package.Version == version && package.PublicKeyToken == publicKeyToken &&
+                                package.Name.Equals(packageName, StringComparison.CurrentCultureIgnoreCase))).FirstOrDefault();
+
+                // we've tried finding it a couple of ways, and got back nothing for our trouble.
+                // we'll create an package with the details we have, and pass that back.
+                if (pkg == null) {
+                    pkg = new Package(packageName, architecture, version, publicKeyToken, productCode);
                     _packages.Add(pkg);
                 }
             }
