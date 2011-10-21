@@ -15,7 +15,7 @@ namespace CoApp.Bootstrapper {
     using System.Reflection;
     using System.Runtime.InteropServices;
     using Microsoft.Win32;
-
+    using System.Linq;
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
@@ -25,21 +25,23 @@ namespace CoApp.Bootstrapper {
         [STAThreadAttribute]
         [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
         public static void Main( string[] args ) {
-            SingleStep.OutputDebugString("Startup");
+            var commandline = args.Aggregate(string.Empty, (current, each) => current + " " + each).Trim();
+
+            SingleStep.OutputDebugString("Startup :" + commandline);
             // Ensure that we are elevated. If the app returns from here, we are.
-            SingleStep.ElevateSelf(args);
+            SingleStep.ElevateSelf(commandline);
 
             // get the folder of the bootstrap EXE
             SingleStep.BootstrapFolder = Path.GetDirectoryName(Path.GetFullPath(Assembly.GetExecutingAssembly().Location));
 
-            if (args.Length == 0) {
+            if (commandline.Length == 0) {
                 Bootstrapper.MainWindow.Fail(LocalizedMessage.IDS_MISSING_MSI_FILE_ON_COMMANDLINE, "Missing MSI package name on command line!");
-            } else if (!File.Exists(Path.GetFullPath(args[0]))) {
+            } else if (!File.Exists(Path.GetFullPath(commandline))) {
                 Bootstrapper.MainWindow.Fail(LocalizedMessage.IDS_MSI_FILE_NOT_FOUND, "Specified MSI package name does not exist!");
-            } else if (!SingleStep.ValidFileExists(Path.GetFullPath(args[0]))) {
+            } else if (!SingleStep.ValidFileExists(Path.GetFullPath(commandline))) {
                 Bootstrapper.MainWindow.Fail(LocalizedMessage.IDS_MSI_FILE_NOT_VALID, "Specified MSI package is not signed with a valid certificate!");
             } else { // have a valid MSI file. Alrighty!
-                SingleStep.MsiFilename = Path.GetFullPath(args[0]);
+                SingleStep.MsiFilename = Path.GetFullPath(commandline);
                 SingleStep.MsiFolder = Path.GetDirectoryName(SingleStep.MsiFilename);
 
                 // if this installer is present, this will exit right after.

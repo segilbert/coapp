@@ -48,7 +48,7 @@ namespace CoApp.Bootstrapper {
             }
         }
 
-        internal static void ElevateSelf(string[] args) {
+        internal static void ElevateSelf(string args) {
             try {
                 // I'm too lazy to check for admin priviliges, lets let the OS figure it out.
                 RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).CreateSubKey(@"Software\CoApp\temp").SetValue("", DateTime.Now.Ticks);
@@ -60,7 +60,7 @@ namespace CoApp.Bootstrapper {
                             WorkingDirectory = Environment.CurrentDirectory,
                             FileName = ExeName,
                             Verb = "runas",
-                            Arguments = args[0],
+                            Arguments = args,
                             ErrorDialog = true,
                             ErrorDialogParentHandle = GetForegroundWindow(),
                             WindowStyle = ProcessWindowStyle.Maximized,
@@ -219,7 +219,7 @@ namespace CoApp.Bootstrapper {
 
             // try localized file off the bootstrap server
             if (!String.IsNullOrEmpty(BootstrapServerUrl.Value)) {
-                f = Download(BootstrapServerUrl.Value, localizedName, progressCompleted);
+                f = AsyncDownloader.Download(BootstrapServerUrl.Value, localizedName, progressCompleted);
                 OutputDebugString("   (on boostrap server?):" + f);
                 if (ValidFileExists(f)) {
                     OutputDebugString("   Yes.");
@@ -228,7 +228,7 @@ namespace CoApp.Bootstrapper {
             }
 
             // try localized file off the coapp server
-            f = Download(CoAppUrl, localizedName, progressCompleted);
+            f = AsyncDownloader.Download(CoAppUrl, localizedName, progressCompleted);
             OutputDebugString("   (on coapp server?):" + f);
             if (ValidFileExists(f)) {
                 OutputDebugString("   Yes.");
@@ -237,7 +237,7 @@ namespace CoApp.Bootstrapper {
 
             // try normal file off the bootstrap server
             if (!String.IsNullOrEmpty(BootstrapServerUrl.Value)) {
-                f = Download(BootstrapServerUrl.Value, filename, progressCompleted);
+                f = AsyncDownloader.Download(BootstrapServerUrl.Value, filename, progressCompleted);
                 OutputDebugString("   (on bootstrap server?):" + f);
                 if (ValidFileExists(f)) {
                     OutputDebugString("   Yes.");
@@ -246,7 +246,7 @@ namespace CoApp.Bootstrapper {
             }
 
             // try normal file off the coapp server
-            f = Download(CoAppUrl, filename, progressCompleted);
+            f = AsyncDownloader.Download(CoAppUrl, filename, progressCompleted);
             OutputDebugString("   (on coapp server?):" + f);
             if (ValidFileExists(f)) {
                 OutputDebugString("   Yes.");
@@ -254,79 +254,6 @@ namespace CoApp.Bootstrapper {
             }
 
             OutputDebugString("NOT FOUND:" + filename);
-            return null;
-        }
-
-        private static string Download(string serverUrl, string filename, Action<int> percentCompleteAction = null) {
-            try {
-                // the whole URL to the target download
-                var uri = new Uri(new Uri(serverUrl), filename);
-
-                OutputDebugString("Trying to download: "+uri.AbsoluteUri);
-
-                // we'll first check to see if the file is there with HEAD 
-                // since getting errors back from WebClient is virtually impossible.
-
-                OutputDebugString("TRYING HEAD: " + uri.AbsoluteUri);
-                var rq = WebRequest.Create(uri);
-
-                rq.Method = "HEAD";
-                rq.GetResponse(); // this will throw on anything other than OK
-
-                OutputDebugString("HEAD OK: " + uri.AbsoluteUri);
-
-                var finished = new ManualResetEvent(false);
-                
-                var tempFilenme = Path.Combine(Path.GetTempPath(), filename);
-                if (File.Exists(tempFilenme)) {
-                    File.Delete(tempFilenme);
-                }
-
-                var webclient = new WebClient();
-
-
-                webclient.DownloadProgressChanged += (o, downloadProgressChangedEventArgs) => {
-                    if (Cancelling) {
-                        webclient.CancelAsync();
-                        return;
-                    }
-
-                    if (percentCompleteAction != null) {
-                        percentCompleteAction(downloadProgressChangedEventArgs.ProgressPercentage);
-                    }
-                };
-
-                webclient.DownloadFileCompleted += (o, asyncCompletedEventArgs) => {
-                    OutputDebugString("Webclient Complete.");
-
-                    try {
-                        if (asyncCompletedEventArgs.Cancelled || asyncCompletedEventArgs.Error != null) {
-                            if (File.Exists(tempFilenme)) {
-                                File.Delete(tempFilenme);
-                            }
-                        }
-                    } finally {
-                        finished.Set();    
-                    }
-                };
-
-                webclient.DownloadFileAsync(uri, tempFilenme, uri.AbsoluteUri + tempFilenme);
-
-                while (!finished.WaitOne(100)) {
-                    OutputDebugString("");
-                    if (Cancelling) {
-                        webclient.CancelAsync();
-                        return null;
-                    }
-                }
-
-                if (File.Exists(tempFilenme)) {
-                    return tempFilenme;
-                }
-            } catch (Exception e) {
-                OutputDebugString("(probably normal) Downloading Exception: " + e.Message);
-                OutputDebugString(e.StackTrace);
-            }
             return null;
         }
 
@@ -557,5 +484,7 @@ namespace CoApp.Bootstrapper {
             return false;
         }
     }
+
+ 
 }
 

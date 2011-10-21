@@ -69,6 +69,7 @@
     <Compile Include="AreYouSure.xaml.cs">
       <DependentUpon>AreYouSure.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AsyncDownloader.cs" />
     <Compile Include="Gac.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="SingleStep.cs" />
