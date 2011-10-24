@@ -29,6 +29,12 @@ namespace CoApp.Toolkit.Win32 {
     ///   Predefined resource types.
     /// </summary>
     public enum ResourceTypes {
+
+        /// <summary>
+        /// For resource types not covered by the standard integer types. (binres?)
+        /// </summary>
+        RT_OTHER = 0,
+
         /// <summary>
         ///   Hardware-dependent cursor resource.
         /// </summary>

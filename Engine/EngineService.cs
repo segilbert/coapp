@@ -115,7 +115,9 @@ namespace CoApp.Toolkit.Engine {
                     OutputDebugString("Getting Version of CoApp.");
                     var v = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
                     OutputDebugString("CoApp Version : " + v);
-                } catch {
+                } catch (Exception e ) {
+                    OutputDebugString("Startup CoApp Exception : " + e.Message);
+                    OutputDebugString("stacktrace: " + e.StackTrace);
 
                 }
             });
