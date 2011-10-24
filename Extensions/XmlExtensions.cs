@@ -354,17 +354,19 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns><c>true</c> if [is XML file] [the specified filename]; otherwise, <c>false</c>.</returns>
         /// <remarks></remarks>
         public static bool IsXmlFile(this string filename) {
-            if( File.Exists(filename)) {
-                using( var s = File.OpenText(filename)) {
-                    try {
+            try {
+                if (File.Exists(filename)) {
+                    using (var s = File.OpenText(filename)) {
                         var xr = XmlReader.Create(s);
                         xr.Read();
                         xr.Read();
                         return true;
-                    } catch {
                     }
                 }
             }
+            catch {
+            }
+
             return false;
         }
 
