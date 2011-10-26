@@ -556,12 +556,7 @@ HRESULT MonitorChainedInstaller( HANDLE process ) {
         }		
     }
 fin:
-	if (mmioData->m_hrInstallFinished != S_OK) {
-        result = mmioData->m_hrInstallFinished;
-    }
-    else {
-        result = mmioData->m_hrDownloadFinished;
-    }
+    result = mmioData->m_hrInstallFinished;
 
 	if (mmioData) {
         UnmapViewOfFile(mmioData);
