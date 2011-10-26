@@ -22,6 +22,7 @@ namespace CoApp.CLI {
     using Toolkit.Engine.Client;
     using Toolkit.Exceptions;
     using Toolkit.Extensions;
+    using Toolkit.Logging;
     using Toolkit.Network;
 
     /// <summary>
@@ -170,6 +171,9 @@ namespace CoApp.CLI {
 
                         case "verbose":
                             _verbose = lastAsBool;
+                            Logger.Errors = true;
+                            Logger.Messages = true;
+                            Logger.Warnings = true;
                             break;
 
                         case "dependencies":
@@ -241,6 +245,10 @@ namespace CoApp.CLI {
                 if (!PackageManager.Instance.IsReady.WaitOne(5000)) {
                     Verbose("# not connected...");
                     throw new ConsoleException("# Unable to connect to CoApp Service.");
+                }
+
+                if( _verbose) {
+                    PackageManager.Instance.SetLogging(true, true, true);
                 }
 
                 Verbose("# Connected to Service...");
