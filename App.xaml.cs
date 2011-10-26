@@ -14,20 +14,25 @@ namespace CoApp.Bootstrapper {
     using System.IO;
     using System.Reflection;
     using System.Runtime.InteropServices;
+    using System.Windows.Input;
     using Microsoft.Win32;
     using System.Linq;
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App {
-    
-      
         [STAThreadAttribute]
         [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
         public static void Main( string[] args ) {
+            if (Keyboard.Modifiers == ModifierKeys.Control) {
+                Logger.Errors = true;
+                Logger.Messages = true;
+                Logger.Warnings = true;
+            }
+
             var commandline = args.Aggregate(string.Empty, (current, each) => current + " " + each).Trim();
 
-            SingleStep.OutputDebugString("Startup :" + commandline);
+            Logger.Warning("Startup :" + commandline);
             // Ensure that we are elevated. If the app returns from here, we are.
             SingleStep.ElevateSelf(commandline);
 
@@ -52,7 +57,6 @@ namespace CoApp.Bootstrapper {
 
                 // if CoApp isn't there, we gotta get it.
                 // this is a quick call, since it spins off a task in the background.
-                //SingleStep.OutputDebugString("Start Installer");
                 SingleStep.InstallCoApp();
             }
 

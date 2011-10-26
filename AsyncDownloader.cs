@@ -19,7 +19,8 @@ namespace CoApp.Bootstrapper {
         internal long contentLength;
 
         internal static string Download(string serverUrl, string filename, Action<int> percentComplete = null) {
-            var tempFilenme = Path.Combine(Path.GetTempPath(), filename);
+            var tempFilenme = Path.GetTempFileName() + filename;
+            
             if (File.Exists(tempFilenme)) {
                 File.Delete(tempFilenme);
             }
@@ -54,13 +55,11 @@ namespace CoApp.Bootstrapper {
                                 tcs.Iterate(AsyncReadImpl());
                                 return;
                             } catch (Exception e) {
-                                SingleStep.OutputDebugString("Exception in download :" + e.Message);
-                                SingleStep.OutputDebugString(" :" + e.StackTrace);
+                                Logger.Warning(e);
                             }
                         }
                     } catch (Exception e) {
-                        SingleStep.OutputDebugString("Exception in download :"+e.Message);
-                        SingleStep.OutputDebugString(" :" + e.StackTrace);
+                        Logger.Warning(e);
                     }
 
                 }, TaskContinuationOptions.AttachedToParent).Wait();
@@ -102,9 +101,7 @@ namespace CoApp.Bootstrapper {
                     File.SetLastWriteTime(Filename, httpWebResponse.LastModified);
                     tcs.SetResult(null);
                 } catch (Exception e) {
-                    SingleStep.OutputDebugString("Exception in tcs :" + e.Message);
-                    SingleStep.OutputDebugString(" :" + e.StackTrace);
-
+                    Logger.Warning(e);
                     tcs.SetException(e);
                 }
             }

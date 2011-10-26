@@ -14,6 +14,7 @@ namespace CoApp.Bootstrapper {
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows;
+    using System.Windows.Input;
     using Microsoft.Win32;
 
     internal class SingleStep {
@@ -32,6 +33,53 @@ namespace CoApp.Bootstrapper {
         private static int _currentProgress;
         internal static bool Cancelling;
         internal static Task InstallTask;
+
+        [STAThreadAttribute]
+        [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
+        public static void Main(string[] args) {
+            if (Keyboard.Modifiers == ModifierKeys.Shift) {
+                Logger.Errors = true;
+                Logger.Messages = true;
+                Logger.Warnings = true;
+            }
+
+            var commandline = args.Aggregate(string.Empty, (current, each) => current + " " + each).Trim();
+
+            Logger.Warning("Startup :" + commandline);
+            // Ensure that we are elevated. If the app returns from here, we are.
+            ElevateSelf(commandline);
+
+            // get the folder of the bootstrap EXE
+            BootstrapFolder = Path.GetDirectoryName(Path.GetFullPath(Assembly.GetExecutingAssembly().Location));
+            if (!Cancelling) {
+                if (commandline.Length == 0) {
+                    MainWindow.Fail(LocalizedMessage.IDS_MISSING_MSI_FILE_ON_COMMANDLINE, "Missing MSI package name on command line!");
+                } else if (!File.Exists(Path.GetFullPath(commandline))) {
+                    MainWindow.Fail(LocalizedMessage.IDS_MSI_FILE_NOT_FOUND, "Specified MSI package name does not exist!");
+                } else if (!ValidFileExists(Path.GetFullPath(commandline))) {
+                    MainWindow.Fail(LocalizedMessage.IDS_MSI_FILE_NOT_VALID, "Specified MSI package is not signed with a valid certificate!");
+                } else {
+                    // have a valid MSI file. Alrighty!
+                    MsiFilename = Path.GetFullPath(commandline);
+                    MsiFolder = Path.GetDirectoryName(MsiFilename);
+
+                    // if this installer is present, this will exit right after.
+                    if (IsCoAppInstalled) {
+                        RunInstaller(1);
+                        return;
+                    }
+
+                    // if CoApp isn't there, we gotta get it.
+                    // this is a quick call, since it spins off a task in the background.
+                    InstallCoApp();
+                }
+            }
+            // start showin' the GUI.
+            // Application.ResourceAssembly = Assembly.GetExecutingAssembly();
+            new Application {
+                StartupUri = new Uri("MainWindow.xaml", UriKind.Relative)
+            }.Run();
+        }
 
         private static string ExeName {
             get {
@@ -104,11 +152,8 @@ namespace CoApp.Bootstrapper {
             return null;
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        public static extern void OutputDebugString(string message);
-
         internal static void RunInstaller(int path) {
-            OutputDebugString("Running CoApp :"+path);
+            Logger.Warning("Running CoApp :" + path);
             lock (typeof(SingleStep)) {
                 try {
                     if (MainWindow.MainWin != null) {
@@ -117,38 +162,38 @@ namespace CoApp.Bootstrapper {
                     
 #if DEBUG
                 var localAssembly = AcquireFile("CoApp.Toolkit.Engine.Client.dll");
-                Debug.WriteLine("Local Assembly: " + localAssembly);
+                Logger.Message("Local Assembly: " + localAssembly);
                 if (!string.IsNullOrEmpty(localAssembly)) {
                     // use the one found locally.
                     AppDomain.CreateDomain("tmp" + DateTime.Now.Ticks).CreateInstanceFromAndUnwrap( localAssembly, "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] {MsiFilename}, null, null);
                     // if it didn't throw here, we can assume that the CoApp service is running, and we can get to our assembly.
-                    OutputDebugString("Done Creating (local) Appdomain");
-                    OutputDebugString("Exiting!");
+                    Logger.Warning("Done Creating (local) Appdomain");
+                    Logger.Warning("Exiting!");
                     Environment.Exit(0);
                 }
 #endif
 
-                    OutputDebugString("Creating Domain:" + path);
+                Logger.Warning("Creating Domain:" + path);
                     // use strong named assembly
                     AppDomain.CreateDomain("tmp" + DateTime.Now.Ticks).CreateInstanceAndUnwrap(
                         "CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857",
                         "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] { MsiFilename }, null, null);
 
                     // since we've done everything we need to do, we're out of here. Right Now.
-                    OutputDebugString("Exiting:"+path);
+                    Logger.Warning("Exiting:" + path);
 
                     if( Application.Current != null ) {
                         Application.Current.Shutdown(0);
                     }
                     Environment.Exit(0);
                 } catch (Exception e) {
-                    OutputDebugString("Failed:" + path);
+                    Logger.Warning(e);
                 }
             }
         }
 
         internal static string AcquireFile(string filename, Action<int> progressCompleted = null) {
-            OutputDebugString("Trying to Acquire:" + filename);
+            Logger.Warning("Trying to Acquire:" + filename);
             var name = Path.GetFileNameWithoutExtension(filename);
             var extension = Path.GetExtension(filename);
             var lcid = CultureInfo.CurrentCulture.LCID;
@@ -158,9 +203,9 @@ namespace CoApp.Bootstrapper {
             // is the localized file in the bootstrap folder?
             if (!String.IsNullOrEmpty(BootstrapFolder)) {
                 f = Path.Combine(BootstrapFolder, localizedName);
-                OutputDebugString("   (in Bootstrap folder?):" + f);
+                Logger.Warning("   (in Bootstrap folder?):" + f);
                 if (ValidFileExists(f)) {
-                    OutputDebugString("   Yes.");
+                    Logger.Warning("   Yes.");
                     return f;
                 }
             }
@@ -168,17 +213,17 @@ namespace CoApp.Bootstrapper {
             // is the localized file in the msi folder?
             if (!String.IsNullOrEmpty(MsiFolder)) {
                 f = Path.Combine(MsiFolder, localizedName);
-                OutputDebugString("   (in Msi folder?):" + f);
+                Logger.Warning("   (in Msi folder?):" + f);
                 if (ValidFileExists(f)) {
-                    OutputDebugString("   Yes.");
+                    Logger.Warning("   Yes.");
                     return f;
                 }
             }
             // try the MSI for the localized file 
             f = GetFileFromMSI(localizedName);
-            OutputDebugString("   (in Msi?):" + f);
+            Logger.Warning("   (in Msi?):" + f);
             if (ValidFileExists(f)) {
-                OutputDebugString("   Yes.");
+                Logger.Warning("   Yes.");
                 return f;
             }
 
@@ -189,9 +234,9 @@ namespace CoApp.Bootstrapper {
             // is the standard file in the bootstrap folder?
             if (!String.IsNullOrEmpty(BootstrapFolder)) {
                 f = Path.Combine(BootstrapFolder, filename);
-                OutputDebugString("   (in Bootstrap folder?):" + f);
+                Logger.Warning("   (in Bootstrap folder?):" + f);
                 if (ValidFileExists(f)) {
-                    OutputDebugString("   Yes.");
+                    Logger.Warning("   Yes.");
                     return f;
                 }
             }
@@ -199,17 +244,17 @@ namespace CoApp.Bootstrapper {
             // is the standard file in the msi folder?
             if (!String.IsNullOrEmpty(MsiFolder)) {
                 f = Path.Combine(MsiFolder, filename);
-                OutputDebugString("   (in Msi folder?):" + f);
+                Logger.Warning("   (in Msi folder?):" + f);
                 if (ValidFileExists(f)) {
-                    OutputDebugString("   Yes.");
+                    Logger.Warning("   Yes.");
                     return f;
                 }
             }
             // try the MSI for the regular file 
             f = GetFileFromMSI(filename);
-            OutputDebugString("   (in MSI?):" + f);
+            Logger.Warning("   (in MSI?):" + f);
             if (ValidFileExists(f)) {
-                OutputDebugString("   Yes.");
+                Logger.Warning("   Yes.");
                 return f;
             }
 
@@ -220,40 +265,40 @@ namespace CoApp.Bootstrapper {
             // try localized file off the bootstrap server
             if (!String.IsNullOrEmpty(BootstrapServerUrl.Value)) {
                 f = AsyncDownloader.Download(BootstrapServerUrl.Value, localizedName, progressCompleted);
-                OutputDebugString("   (on boostrap server?):" + f);
+                Logger.Warning("   (on boostrap server?):" + f);
                 if (ValidFileExists(f)) {
-                    OutputDebugString("   Yes.");
+                    Logger.Warning("   Yes.");
                     return f;
                 }
             }
 
             // try localized file off the coapp server
             f = AsyncDownloader.Download(CoAppUrl, localizedName, progressCompleted);
-            OutputDebugString("   (on coapp server?):" + f);
+            Logger.Warning("   (on coapp server?):" + f);
             if (ValidFileExists(f)) {
-                OutputDebugString("   Yes.");
+                Logger.Warning("   Yes.");
                 return f;
             }
 
             // try normal file off the bootstrap server
             if (!String.IsNullOrEmpty(BootstrapServerUrl.Value)) {
                 f = AsyncDownloader.Download(BootstrapServerUrl.Value, filename, progressCompleted);
-                OutputDebugString("   (on bootstrap server?):" + f);
+                Logger.Warning("   (on bootstrap server?):" + f);
                 if (ValidFileExists(f)) {
-                    OutputDebugString("   Yes.");
+                    Logger.Warning("   Yes.");
                     return f;
                 }
             }
 
             // try normal file off the coapp server
             f = AsyncDownloader.Download(CoAppUrl, filename, progressCompleted);
-            OutputDebugString("   (on coapp server?):" + f);
+            Logger.Warning("   (on coapp server?):" + f);
             if (ValidFileExists(f)) {
-                OutputDebugString("   Yes.");
+                Logger.Warning("   Yes.");
                 return f;
             }
 
-            OutputDebugString("NOT FOUND:" + filename);
+            Logger.Warning("NOT FOUND:" + filename);
             return null;
         }
 
@@ -310,22 +355,22 @@ namespace CoApp.Bootstrapper {
         }
 
         internal static bool ValidFileExists(string fileName) {
-            Debug.WriteLine("Checking for file: " + fileName);
+            Logger.Message("Checking for file: " + fileName);
             if (!String.IsNullOrEmpty(fileName) && File.Exists(fileName)) {
                 try {
 #if DEBUG
-                   Debug.WriteLine("   Validity RESULT (assumed): True" );
+                   Logger.Message("   Validity RESULT (assumed): True");
                    return true;
 #else
                     var wtd = new WinTrustData(fileName);
                     var result = NativeMethods.WinVerifyTrust(new IntPtr(-1), new Guid("{00AAC56B-CD44-11d0-8CC2-00C04FC295EE}"), wtd);
-                    Debug.WriteLine("    RESULT (a): " + (result == WinVerifyTrustResult.Success));
+                    Logger.Message("    RESULT (a): " + (result == WinVerifyTrustResult.Success));
                     return (result == WinVerifyTrustResult.Success);
 #endif
                 } catch {
                 }
             }
-            Debug.WriteLine("    RESULT (a): False");
+            Logger.Message("    RESULT (a): False");
             return false;
         }
 
@@ -358,7 +403,9 @@ namespace CoApp.Bootstrapper {
         internal static void InstallCoApp() {
             InstallTask = Task.Factory.StartNew(() => {
                 try {
-                    //OutputDebugString("Started Installer");
+
+                    Logger.Warning("Started Toolkit Installer");
+                    Thread.Sleep(4000);
                     NativeMethods.MsiSetInternalUI(2, IntPtr.Zero);
                     NativeMethods.MsiSetExternalUI((context, messageType, message) => 1, 0x400, IntPtr.Zero);
 
@@ -388,14 +435,14 @@ namespace CoApp.Bootstrapper {
                         uihandler = UiHandler;
                         NativeMethods.MsiSetExternalUI(uihandler, 0x400, IntPtr.Zero);
 
-                        OutputDebugString("Running MSI");
+                        Logger.Warning("Running MSI");
                         // install CoApp.Toolkit msi. Don't blink, this can happen FAST!
                         var result = NativeMethods.MsiInstallProduct(file, String.Format(@"TARGETDIR=""{0}\.installed\"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", CoAppRootFolder.Value));
                         ActualPercent = 100;  // if the UI has not shown, it will try short circuit in the window constructor.
 
                         // set the ui hander back to nothing.
                         NativeMethods.MsiSetExternalUI(null, 0x400, IntPtr.Zero);
-                        OutputDebugString("Done Installing MSI.");
+                        Logger.Warning("Done Installing MSI.");
 
                         // did we succeed?
                         if (result == 0) {

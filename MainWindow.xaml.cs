@@ -66,9 +66,9 @@ namespace CoApp.Bootstrapper {
         }, LazyThreadSafetyMode.PublicationOnly);
 
         public MainWindow() {
-            // SingleStep.OutputDebugString("In Window Constructor.");
+            Logger.Warning("In Window Constructor.");
             InitializeComponent();
-            // SingleStep.OutputDebugString("Component Initialized.");
+            Logger.Warning("Component Initialized.");
             Opacity = 0;
 
             Task.Factory.StartNew(() => {
@@ -80,7 +80,7 @@ namespace CoApp.Bootstrapper {
                 }
             });
 
-            // SingleStep.OutputDebugString("Loaded Resources.");
+            Logger.Warning("Loaded Resources.");
             // try to short circuit early
             if( CurrentProgress >= 100 && !SingleStep.Cancelling ) {
                 SingleStep.RunInstaller(2);                // you might as well not even show this.
