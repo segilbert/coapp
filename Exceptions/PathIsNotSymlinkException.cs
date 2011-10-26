@@ -11,7 +11,7 @@
 namespace CoApp.Toolkit.Exceptions {
     using System;
 
-    public class PathIsNotSymlinkException : Exception {
+    public class PathIsNotSymlinkException : CoAppException {
         public string Path { get; set; }
 
         public PathIsNotSymlinkException(string path) {

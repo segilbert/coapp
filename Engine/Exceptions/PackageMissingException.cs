@@ -10,8 +10,9 @@
 
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
+    using Toolkit.Exceptions;
 
-    internal class PackageMissingException : Exception {
+    internal class PackageMissingException : CoAppException {
         public string Arch { get; set; }
         public string PublicKeyToken { get; set; }
         public string Name { get; set; }

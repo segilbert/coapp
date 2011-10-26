@@ -21,6 +21,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading;
     using Exceptions;
     using Extensions;
+    using Logging;
     using TimeoutException = System.TimeoutException;
 
     public static class EngineServiceManager {
@@ -46,16 +47,17 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+       
         public static void TryToStartService(bool secondAttempt = false) {
             if (!IsServiceInstalled) {
                 throw new UnableToStartServiceException("{0} is not installed".format(CoAppServiceName));
             }
 
-            OutputDebugString("==[Trying to start Win32 Service]==");
+            Logger.Warning("==[Trying to start Win32 Service]==");
 
             switch (_controller.Value.Status) {
                 case ServiceControllerStatus.ContinuePending:
-                    OutputDebugString("==[State:Continuing]==");
+                    Logger.Warning("==[State:Continuing]==");
                     // wait for it to continue.
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
@@ -73,7 +75,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                     break;
                 case ServiceControllerStatus.PausePending:
-                    OutputDebugString("==[State:Pausing]==");
+                    Logger.Warning("==[State:Pausing]==");
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Paused, new TimeSpan(0, 0, 0, 10));
                     }
@@ -93,7 +95,7 @@ namespace CoApp.Toolkit.Engine {
                     }
                     break;
                 case ServiceControllerStatus.Paused:
-                    OutputDebugString("==[State:Paused]==");
+                    Logger.Warning("==[State:Paused]==");
                     _controller.Value.Continue();
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
@@ -108,12 +110,12 @@ namespace CoApp.Toolkit.Engine {
                     break;
 
                 case ServiceControllerStatus.Running:
-                    OutputDebugString("==[State:Running]==");
+                    Logger.Warning("==[State:Running]==");
                     // duh!
                     break;
 
                 case ServiceControllerStatus.StartPending:
-                    OutputDebugString("==[State:Starting]==");
+                    Logger.Warning("==[State:Starting]==");
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
                     }
@@ -127,7 +129,7 @@ namespace CoApp.Toolkit.Engine {
                     break;
 
                 case ServiceControllerStatus.StopPending:
-                    OutputDebugString("==[State:Stopping]==");
+                    Logger.Warning("==[State:Stopping]==");
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Stopped, new TimeSpan(0, 0, 0, 10));
                     }
@@ -148,7 +150,7 @@ namespace CoApp.Toolkit.Engine {
                     break;
 
                 case ServiceControllerStatus.Stopped:
-                    OutputDebugString("==[State:Stopped]==");
+                    Logger.Warning("==[State:Stopped]==");
                     _controller.Value.Start();
                     try {
                         _controller.Value.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 0, 10));
@@ -164,28 +166,31 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        public static extern void OutputDebugString(string message);
-
-
         public static bool IsServiceResponding {
             get {
                 lock (typeof (EngineServiceManager)) {
-                    OutputDebugString("==[Checking For Process]==");
-                    if (IsServiceRunning || Process.GetProcessesByName("coapp.service").Any()) {
-                        OutputDebugString("==[Looks like the process is running]==");
+                    Logger.Warning("==[Checking For Process]==");
+                    if (IsProcessOrServiceRunning) {
+                        Logger.Warning("==[Looks like the process is running]==");
                         for (var i = 60; i > 0; i--) {
+                            if (!IsServerPipeConnectionAvailable) {
+                                Thread.Sleep(50); // pause to let the service do what it needs to.
+                                if (!IsProcessOrServiceRunning) {
+                                    // hmm, it's gone away. 
+                                    // let's get out of here
+                                    return false;
+                                }
+                            }
                             var testPipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous,
                                 TokenImpersonationLevel.Impersonation);
                             try {
-                                OutputDebugString("==[Checking For Pipe]==");
+                                Logger.Warning("==[Checking For Pipe Response]==");
                                 testPipe.Connect(100);
                                 testPipe.Close();
                                 testPipe.Dispose();
-                                OutputDebugString("==[Service Seems to be running]==");
+                                Logger.Warning("==[Service Seems to be responding]==");
                                 return true;
                             } catch (System.TimeoutException) {
-                                OutputDebugString("Waiting for service. To Go: " + i);
                             }
                         }
                     }
@@ -194,20 +199,27 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        private static bool IsProcessRunning { get { return Process.GetProcessesByName("coapp.service").Any(); }}
+        private static bool IsServerPipeConnectionAvailable { get { return System.IO.Directory.GetFiles(@"\\.\pipe\").Where(each => each.StartsWith(@"\\.\pipe\CoAppInstaller")).Any(); } }
+        private static bool IsProcessOrServiceRunning { get { return IsServiceRunning || IsProcessRunning; } }
 
         public static void EnsureServiceIsResponding(bool forceInteractive = false) {
-            if (forceInteractive ) {
-                if (IsServiceInstalled && IsServiceRunning) {
-                    TryToStopService();
-                }
-                if (!IsServiceResponding) {
-                    // it's probably one started interactively before...
-                    TryToRunServiceInteractively();
-                }
-                return;
-            }
+            lock (typeof(EngineServiceManager)) {
 
-            lock (typeof (EngineServiceManager)) {
+                if (forceInteractive) {
+                    if (IsServiceInstalled && IsServiceRunning) {
+                        TryToStopService();
+                        while (IsProcessOrServiceRunning) {
+                            Thread.Sleep(20);
+                        }
+                    }
+                    if (!IsServiceResponding) {
+                        // it's probably one started interactively before...
+                        TryToRunServiceInteractively();
+                    }
+                    return;
+                }
+
                 if (IsServiceInstalled) {
                     if (IsServiceRunning) {
                         if (!IsServiceResponding) {
@@ -292,7 +304,7 @@ namespace CoApp.Toolkit.Engine {
                     throw new FileNotFoundException("Can't find CoApp Service EXE");
                 }
             }
-            OutputDebugString("==[Starting Service '"+ file +"' Interactively]==");
+            Logger.Warning("==[Starting Service '" + file + "' Interactively]==");
             var process = Process.Start(file, "--interactive");
             Thread.Sleep(500);
             var isRunning = IsServiceResponding;

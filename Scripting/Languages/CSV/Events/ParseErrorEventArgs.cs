@@ -22,7 +22,7 @@
 namespace CoApp.Toolkit.Scripting.Languages.CSV.Events
 {
     using System;
-    using Exceptions;
+    using Toolkit.Exceptions;
 
     /// <summary>
 	/// Provides data for the <see cref="M:CsvReader.ParseError"/> event.

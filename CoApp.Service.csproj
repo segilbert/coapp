@@ -45,20 +45,20 @@
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Web">
       <HintPath>..\..\..\..\Windows\Microsoft.NET\Framework\v4.0.30319\System.Web.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Service\ProjectInstaller.cs">
+    <Compile Include="Service\CoAppService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service\CoAppService.cs">
+    <Compile Include="Service\CoAppServiceInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Service\CoAppServiceMain.cs" />

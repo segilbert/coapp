@@ -11,8 +11,9 @@
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
     using System.Collections.Generic;
+    using Toolkit.Exceptions;
 
-    internal class PackageHasPotentialUpgradesException : Exception {
+    internal class PackageHasPotentialUpgradesException : CoAppException {
         internal Package UnsatisfiedPackage;
         internal IEnumerable<Package> SatifactionOptions;
 

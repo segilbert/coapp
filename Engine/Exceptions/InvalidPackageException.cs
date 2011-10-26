@@ -10,6 +10,7 @@
 
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
+    using Toolkit.Exceptions;
 
     /// <summary>
     ///   Represents th reason that the package file is considered invalid.
@@ -38,7 +39,7 @@ namespace CoApp.Toolkit.Engine.Exceptions {
     /// </summary>
     /// <remarks>
     /// </remarks>
-    public class InvalidPackageException : Exception {
+    public class InvalidPackageException : CoAppException {
         /// <summary>
         ///   the path to the file that is invalid
         /// </summary>
@@ -56,7 +57,7 @@ namespace CoApp.Toolkit.Engine.Exceptions {
         /// <param name = "packagePath">The package path.</param>
         /// <remarks>
         /// </remarks>
-        public InvalidPackageException(InvalidReason reason, string packagePath) {
+        public InvalidPackageException(InvalidReason reason, string packagePath) : base(true) {
             PackagePath = packagePath;
             Reason = reason;
         }

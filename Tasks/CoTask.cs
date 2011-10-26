@@ -17,6 +17,7 @@ namespace CoApp.Toolkit.Tasks {
     using System.Threading;
     using System.Threading.Tasks;
     using Exceptions;
+    using Logging;
 
     public static class CoTask {
         private static readonly FieldInfo _parentTaskField = typeof (Task).GetField("m_parent", BindingFlags.NonPublic | BindingFlags.DeclaredOnly | BindingFlags.Instance);
@@ -75,7 +76,7 @@ namespace CoApp.Toolkit.Tasks {
                         if (cls.Namespace.Contains("Tasks")) {
                             continue;
                         }
-                        Debug.WriteLine("Unneccesary Automanage() in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
+                        Logger.Warning("Unneccesary Automanage() in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
                         break;
                     }
                 }
@@ -179,7 +180,7 @@ namespace CoApp.Toolkit.Tasks {
                         if (cls.Namespace.Contains("Tasks")) {
                             continue;
                         }
-                        Debug.WriteLine("Info: Registering a MessageHandler where no parent task exists in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
+                        Logger.Warning("Info: Registering a MessageHandler where no parent task exists in (in {2}.{3}) call at {0}:{1} ", frame.GetFileName(), frame.GetFileLineNumber(), cls.Name, fnName);
                         break;
                     }
                 }

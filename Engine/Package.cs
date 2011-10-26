@@ -20,10 +20,12 @@ namespace CoApp.Toolkit.Engine {
     using Exceptions;
     using Extensions;
     using Feeds;
+    using Logging;
     using Model;
     using PackageFormatHandlers;
     using Shell;
     using Tasks;
+    using Toolkit.Exceptions;
     using Win32;
 
     public class Package : NotifiesPackageManager {
@@ -253,23 +255,23 @@ namespace CoApp.Toolkit.Engine {
                 PackageHandler.Install(this, progress);
                 IsInstalled = true;
                 
-                Debug.WriteLine("MSI Install of package [{0}] SUCCEEDED.", CanonicalName );
+                Logger.Error("MSI Install of package [{0}] SUCCEEDED.", CanonicalName );
 
                 if (Version > currentVersion) {
                     SetPackageCurrent();
                     DoPackageComposition(true);
-                    Debug.WriteLine("Set Current Version [{0}] SUCCEEDED.", CanonicalName);
+                    Logger.Error("Set Current Version [{0}] SUCCEEDED.", CanonicalName);
                 }
                 else {
                     DoPackageComposition(false);
-                    Debug.WriteLine("Package Composition [{0}] SUCCEEDED.", CanonicalName);
+                    Logger.Error("Package Composition [{0}] SUCCEEDED.", CanonicalName);
                 }
                 if( PackageSessionData.IsClientSpecified ) {
                     IsRequired = true;
                 }
             }
             catch (Exception e) {
-                Debug.WriteLine("Package Install Failure [{0}] => [{1}].\r\n{2}", CanonicalName, e.Message, e.StackTrace);
+                Logger.Error("Package Install Failure [{0}] => [{1}].\r\n{2}", CanonicalName, e.Message, e.StackTrace);
                 
                 //we could get here and the MSI had installed but nothing else
                 PackageHandler.Remove(this, null);
@@ -297,7 +299,7 @@ namespace CoApp.Toolkit.Engine {
                 }
                 catch /* (Exception e) */ {
                     // boooo!
-                    Console.WriteLine("failed setting active package for {0}-{1}", Name, PublicKeyToken);
+                    Logger.Error("failed setting active package for {0}-{1}", Name, PublicKeyToken);
                     PackageManagerSettings.PerPackageSettings.DeleteSubkey(GeneralName);
                 }
             }
@@ -457,10 +459,7 @@ namespace CoApp.Toolkit.Engine {
                         Symlink.MakeDirectoryLink(link, dir);
                     }
                     catch (Exception) {
-                        Console.WriteLine("Warning: Directory Symlink Link Failed. [{0}] => [{1}]", link, dir);
-                        // Console.WriteLine(e.Message);
-                        // Console.WriteLine(e.StackTrace);
-
+                        Logger.Error("Warning: Directory Symlink Link Failed. [{0}] => [{1}]", link, dir);
                     }
                 }
             }
@@ -477,9 +476,7 @@ namespace CoApp.Toolkit.Engine {
                         Symlink.MakeFileLink(link, file);
                     }
                     catch (Exception) {
-                        Console.WriteLine("Warning: File Symlink Link Failed. [{0}] => [{1}]", link, file);
-                        // Console.WriteLine(e.Message);
-                        // Console.WriteLine(e.StackTrace);
+                        Logger.Error("Warning: File Symlink Link Failed. [{0}] => [{1}]", link, file);
                     }
                 }
             }

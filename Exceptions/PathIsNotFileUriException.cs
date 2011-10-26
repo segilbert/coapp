@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 namespace CoApp.Toolkit.Exceptions {
-    public class PathIsNotFileUriException: Exception {
+    public class PathIsNotFileUriException: CoAppException {
         public string Path;
         public Uri Uri;
         public PathIsNotFileUriException( string path, Uri uri ) {

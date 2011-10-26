@@ -150,6 +150,12 @@ namespace CoApp.Toolkit.Pipes {
                 : Command.UrlEncode();
         }
 
+        public string ToSmallerString() {
+            return Data.Any()
+                ? Data.Keys.Aggregate(Command.UrlEncode().ToLower() + "?", (current, k) => current + (!string.IsNullOrEmpty(Data[k]) ? (k.UrlEncode() + "=" + Data[k].Substring(0, Math.Min(Data[k].Length, 512)).UrlEncode() + "&") : string.Empty))
+                : Command.UrlEncode();
+        }
+
         /// <summary>
         /// Returns an enumerator that iterates through a collection.
         /// </summary>

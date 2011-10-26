@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Exceptions {
     using Extensions;
     using Scripting.Languages.PropertySheet;
     
-    public class EndUserRuleException : Exception {
+    public class EndUserRuleException : CoAppException {
         public Rule Rule;
         public EndUserRuleException(Rule rule, string errorcode, string message, params object[] parameters)
             : base("{0}({1},{2}):{3}:{4}".format(rule.SourceLocation.SourceFile, rule.SourceLocation.Row, rule.SourceLocation.Column, errorcode, message.format(parameters))) {

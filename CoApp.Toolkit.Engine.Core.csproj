@@ -36,6 +36,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
@@ -207,6 +208,9 @@
     <Compile Include="Engine\Model\PackageRole.cs" />
     <Compile Include="Engine\Model\Role.cs" />
     <Compile Include="Engine\PackageName.cs" />
+    <Compile Include="Exceptions\CoAppException.cs" />
+    <Compile Include="Exceptions\OperationCompletedBeforeResultException.cs" />
+    <Compile Include="Logging\Logger.cs" />
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />
     <Compile Include="Engine\EngineService.cs" />
     <Compile Include="Engine\PackageManagerSession.cs" />
@@ -282,7 +286,6 @@
     <Compile Include="Tasks\Cache.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
     <Compile Include="Tasks\CoTask.cs" />
-    <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Tasks\TriggeredProperty.cs" />
     <Compile Include="Text\HttpUtility.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
@@ -348,6 +351,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Package\" />
+    <Folder Include="service\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

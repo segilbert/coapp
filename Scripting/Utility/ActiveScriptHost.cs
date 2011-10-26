@@ -14,6 +14,7 @@ namespace CoApp.Toolkit.Scripting {
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Runtime.InteropServices.ComTypes;
+    using Exceptions;
     using DISPPARAMS = System.Runtime.InteropServices.ComTypes.DISPPARAMS;
     using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
@@ -249,7 +250,7 @@ namespace CoApp.Toolkit.Scripting {
                         scriptEngine = new VBScript();
                         break;
                     default:
-                        throw new Exception("Invalid Script Language");
+                        throw new CoAppException("Invalid Script Language");
                 }
                 EXCEPINFO info;
                 ActiveScriptParse.InitNew();

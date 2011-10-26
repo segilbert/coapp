@@ -42,6 +42,12 @@
             } catch {
                 
             }
+            Loaded += (src, evnt) => {
+                if (!(Opacity > 0) && Installer.ReadyToDisplay) {
+                    ((Storyboard)FindResource("showWindow")).Begin();
+                }
+            };
+
             Installer.Ready += (src, evnt) => Invoke(() => {
                if (!(Opacity > 0)) {
                    ((Storyboard)FindResource("showWindow")).Begin();

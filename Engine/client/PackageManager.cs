@@ -20,8 +20,10 @@ namespace CoApp.Toolkit.Engine.Client {
     using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
+    using Logging;
     using Pipes;
     using Tasks;
+    using Toolkit.Exceptions;
 
     public class PackageManager {
         internal class ManualEventQueue : Queue<UrlEncodedMessage>, IDisposable {
@@ -34,7 +36,7 @@ namespace CoApp.Toolkit.Engine.Client {
                 IsCompleted.Reset();
                 var tid = Task.CurrentId.GetValueOrDefault();
                 if (tid == 0) {
-                    throw new Exception("Cannot create a ManualEventQueue outside of a task.");
+                    throw new CoAppException("Cannot create a ManualEventQueue outside of a task.");
                 }
                 lock (EventQueues) {
                     EventQueues.Add(tid, this);
@@ -114,7 +116,7 @@ namespace CoApp.Toolkit.Engine.Client {
                 }
                 catch {
                     _pipe = null;
-                    throw new Exception("Unable to connect to CoApp Service");
+                    throw new CoAppException("Unable to connect to CoApp Service");
                 }
 
                 IsDisconnected.Reset();
@@ -142,8 +144,8 @@ namespace CoApp.Toolkit.Engine.Client {
 
                             var responseMessage = new UrlEncodedMessage(rawMessage);
                             int? rqid = responseMessage["rqid"];
-                            Debug.WriteLine("Response:{0}".format(responseMessage.ToString()));
-                            // Console.WriteLine("Response:{0}".format(responseMessage.ToString()));
+
+                            Logger.Message("Response:{0}".format(responseMessage.ToSmallerString()));
 
                             try {
                                 var mreq = ManualEventQueue.GetQueueForTaskId(rqid.GetValueOrDefault());
@@ -566,6 +568,23 @@ namespace CoApp.Toolkit.Engine.Client {
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("suppress-feed") {
                         {"location", location},
+                        {"rqid", Task.CurrentId},
+                    });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task SetLogging( bool? Messages, bool? Warnings, bool? Errors ) {
+            IsCompleted.Reset();
+            return Task.Factory.StartNew(() => {
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("set-logging") {
+                        {"messages", Messages},
+                        {"warnings", Warnings},
+                        {"errors", Errors},
                         {"rqid", Task.CurrentId},
                     });
 

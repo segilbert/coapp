@@ -21,6 +21,7 @@ namespace CoApp.Toolkit.Win32 {
     using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
+    using Logging;
     using Microsoft.Win32.SafeHandles;
 
     internal static class Rehash {
@@ -120,6 +121,7 @@ namespace CoApp.Toolkit.Win32 {
             // Create some space in target memory space
             var processType = GetProcessProcessorType(processHandle);
             if(!_reHashDlls.ContainsKey(processType)) {
+                Logger.Error("Rehash: Unable to get rehash DLL for {0}", processType);
                 return false;
             }
 
@@ -130,6 +132,7 @@ namespace CoApp.Toolkit.Win32 {
             // let's make sure we get out module/fn pointers ok.
             var moduleHandle = Kernel32.GetModuleHandle("kernel32");
             if( moduleHandle.IsInvalid ) {
+                Logger.Error("Rehash: Can't get Kernel32 Module Handle");
                 // failed to get Module Handle to Kernel32? Whoa.
                 return false;
             }
@@ -137,12 +140,14 @@ namespace CoApp.Toolkit.Win32 {
             var fnLoadLibrary = Kernel32.GetProcAddress(moduleHandle , "LoadLibraryA");
             if (fnLoadLibrary == IntPtr.Zero) {
                 // Failed to get LoadLibraryA ptr.
+                Logger.Error("Rehash: Can't get LoadLibraryA Handle");
                 return false;
             }
 
             var remoteMemory = Kernel32.VirtualAllocEx(processHandle, IntPtr.Zero, length, AllocationType.Reserve | AllocationType.Commit, MemoryProtection.ExecuteReadWrite);
             if (remoteMemory == IntPtr.Zero) {
                 // Target alloc mem error
+                Logger.Error("Rehash: Can't allocate memory in process pid:{0}",processId);
                 return false;
             }
 
@@ -151,6 +156,7 @@ namespace CoApp.Toolkit.Win32 {
                 // Target write mem error.
                 // cleanup what we allocated?
                 // var err = Marshal.GetLastWin32Error();
+                Logger.Error("Rehash: Can't write memory in process pid:{0}", processId);
                 Kernel32.VirtualFreeEx(processHandle, remoteMemory, length, AllocationType.Release);
                 return false;
             }
@@ -161,8 +167,10 @@ namespace CoApp.Toolkit.Win32 {
 
             // tell the remote process to load our DLL (which does the actual rehash!)
             if (Kernel32.CreateRemoteThread(processHandle, IntPtr.Zero, 0, fnLoadLibrary, remoteMemory, CreateRemoteThreadFlags.None , out threadId).IsInvalid) {
+                Logger.Error("Rehash: Can't create remote thread in pid:{0}", processId);
                 return false;
             }
+            Logger.Warning("Rehash: Success with pid:{0}", processId);
            
             return true;
         }

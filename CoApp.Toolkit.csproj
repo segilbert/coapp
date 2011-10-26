@@ -50,7 +50,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collections\ExpiringList.cs" />
     <Compile Include="Collections\LazyEnumerable.cs" />
     <Compile Include="Collections\NullableCollectionDictionary.cs" />
     <Compile Include="Collections\EasyDictionary.cs" />
@@ -59,6 +58,7 @@
     <Compile Include="Console\ConsoleApi.cs" />
     <Compile Include="Crypto\CryptoConvert.cs" />
     <Compile Include="Crypto\StrongName.cs" />
+    <Compile Include="Exceptions\CoAppException.cs" />
     <Compile Include="Exceptions\ConsoleException.cs" />
     <Compile Include="Crypto\PfxStoreLoader.cs" />
     <Compile Include="Crypto\Verifier.cs" />
@@ -98,6 +98,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\XmlExtensions.cs" />
+    <Compile Include="Logging\Logger.cs" />
     <Compile Include="Network\Ftp.cs" />
     <Compile Include="Network\HttpServer.cs" />
     <Compile Include="Network\RemoteFile.cs" />
@@ -164,8 +165,8 @@
     <Compile Include="Scripting\Languages\CSV\CsvReader.DataReaderValidations.cs" />
     <Compile Include="Scripting\Languages\CSV\CsvReader.RecordEnumerator.cs" />
     <Compile Include="Scripting\Languages\CSV\Events\ParseErrorEventArgs.cs" />
-    <Compile Include="Scripting\Languages\CSV\Exceptions\MalformedCsvException.cs" />
-    <Compile Include="Scripting\Languages\CSV\Exceptions\MissingFieldCsvException.cs" />
+    <Compile Include="Exceptions\MalformedCsvException.cs" />
+    <Compile Include="Exceptions\MissingFieldCsvException.cs" />
     <Compile Include="Scripting\Languages\CSV\MissingFieldAction.cs" />
     <Compile Include="Scripting\Languages\CSV\ParseErrorAction.cs" />
     <Compile Include="Scripting\Languages\CSV\Resources\ExceptionMessage.Designer.cs" />
@@ -229,7 +230,7 @@
     <Compile Include="Scripting\Languages\PropertySheet\PropertySheetItem.cs" />
     <Compile Include="Tasks\CoTask.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
-    <Compile Include="Tasks\OperationCompletedBeforeResultException.cs" />
+    <Compile Include="Exceptions\OperationCompletedBeforeResultException.cs" />
     <Compile Include="Text\HttpUtility.cs" />
     <Compile Include="Text\Sgml\SgmlParser.cs">
       <SubType>Code</SubType>
@@ -341,6 +342,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Installer\" />
+    <Folder Include="Scripting\Languages\CSV\Exceptions\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />

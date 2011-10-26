@@ -10,13 +10,14 @@
 
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
+    using Toolkit.Exceptions;
 
     /// <summary>
     ///   Exception thrown when the location of a feed isn't recognizable as a package feed.
     /// </summary>
     /// <remarks>
     /// </remarks>
-    public class InvaildFeedLocationException : Exception {
+    public class InvaildFeedLocationException : CoAppException {
         /// <summary>
         ///   The location attemped to use as a feed location
         /// </summary>

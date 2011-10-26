@@ -11,8 +11,9 @@
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
     using System.Collections.Generic;
+    using Toolkit.Exceptions;
 
-    internal class MultiplePackagesMatchException : Exception {
+    internal class MultiplePackagesMatchException : CoAppException {
         internal string PackageMask;
         internal IEnumerable<Package> PackageMatches;
 

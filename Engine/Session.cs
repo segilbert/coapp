@@ -20,8 +20,10 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
+    using Logging;
     using Pipes;
     using Tasks;
+    using Toolkit.Exceptions;
     using Win32;
 
     /// <summary>
@@ -95,7 +97,7 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public static void CancelAll() {
-            while (_activeSessions.Any()) {
+            while (HasActiveSessions) {
                 var session = _activeSessions.FirstOrDefault();
                 if (session != null) {
                     session.End();
@@ -108,6 +110,15 @@ namespace CoApp.Toolkit.Engine {
                 _activeSessions.Add(session);
             }
         }
+
+        public static void NotifyClientsOfRestart() {
+            foreach( var s in _activeSessions.ToArray()) {
+                // cancel everyone.
+                s._cancellationTokenSource.Cancel();
+            }
+        }
+
+        public static bool HasActiveSessions { get { return _activeSessions.Any(); } }
 
         /// <summary>
         ///   Starts the session.
@@ -143,7 +154,7 @@ namespace CoApp.Toolkit.Engine {
                     // found just one session.
                     session._serverPipe = serverPipe;
                     session._responsePipe = responsePipe;
-                    Debug.WriteLine("Rejoining existing session...");
+                    Logger.Message("Rejoining existing session...");
                     session.SendSessionStarted(sessionId);
                     session.SendQueuedMessages();
                     session.Connected = true;
@@ -161,7 +172,7 @@ namespace CoApp.Toolkit.Engine {
             // no viable matching session.
             // Let's start a new one.
             Add(new Session(clientId, sessionId, serverPipe, responsePipe, userId, isElevated));
-            Debug.WriteLine("Starting new session...");
+            Logger.Message("Starting new session...");
         }
 
         public void End() {
@@ -173,7 +184,7 @@ namespace CoApp.Toolkit.Engine {
                     _activeSessions.Remove(this);
                 }
 
-                Debug.WriteLine("Ending Client: [{0}]-[{1}]".format( _clientId, _sessionId));
+                Logger.Message("Ending Client: [{0}]-[{1}]".format(_clientId, _sessionId));
 
                 // end any outstanding tasks as gracefully as we can.
                 _cancellationTokenSource.Cancel();
@@ -192,7 +203,7 @@ namespace CoApp.Toolkit.Engine {
         private void Disconnect() {
             if (Connected) {
                 Connected = false;
-                Debug.WriteLine("disposing of pipes: [{0}]-[{1}]".format( _clientId, _sessionId));
+                Logger.Message("disposing of pipes: [{0}]-[{1}]".format(_clientId, _sessionId));
                 try {
                     if (_serverPipe != null) {
                         _serverPipe.Close();
@@ -205,8 +216,9 @@ namespace CoApp.Toolkit.Engine {
                     _responsePipe = null;
 
                 }
-                catch /* (Exception e) */ {
-                    Console.WriteLine("Errors when disposing pipes.");
+                catch (Exception e) {
+                    Logger.Error(e);
+                    
                 }
             }
         }
@@ -280,7 +292,7 @@ namespace CoApp.Toolkit.Engine {
         private readonly Queue<UrlEncodedMessage> _outputQueue = new Queue<UrlEncodedMessage>();
 
         private void QueueResponseMessage(UrlEncodedMessage response) {
-            Console.WriteLine("adding message to queue: {0}".format( response));
+            Logger.Message("adding message to queue: {0}".format(response));
             Disconnect();
 
             lock (_outputQueue) {
@@ -393,7 +405,7 @@ namespace CoApp.Toolkit.Engine {
                         return;
                     }
 
-                    Debug.WriteLine("Waiting for client to reconnect.");
+                    Logger.Message("Waiting for client to reconnect.");
                     _resetEvent.WaitOne(_maxDisconenctedWait);
                     _waitingForClientResponse = true; // debug, always drop session on timeout.
 
@@ -406,7 +418,7 @@ namespace CoApp.Toolkit.Engine {
                     continue;
                 }
 
-                Debug.WriteLine("In Loop");
+                Logger.Message("In Loop");
 
                 try {
                     if (IsCancelled) {
@@ -427,7 +439,7 @@ namespace CoApp.Toolkit.Engine {
                                     return;
                                 }
                                 if (antecedent.Result >= EngineService.BufferSize) {
-                                    SendUnexpectedFailure(new Exception("Message size exceeds maximum size allowed."));
+                                    SendUnexpectedFailure(new CoAppException("Message size exceeds maximum size allowed."));
                                     return;
                                 }
 
@@ -459,8 +471,7 @@ namespace CoApp.Toolkit.Engine {
                                                 });
                                             }
                                         } catch(Exception e) {
-                                            Debug.WriteLine(e.Message);
-                                            Debug.WriteLine(e.StackTrace);
+                                            Logger.Error(e);
                                             // supress any exceptions.
                                         }
                                     });
@@ -497,16 +508,13 @@ namespace CoApp.Toolkit.Engine {
                         if (e.GetType() == typeof (IOException)) {
                             // pipe got disconnected.
                         }
-                        Console.WriteLine("\r\n----------------\r\nAggregate:");
-                        Console.WriteLine("   {0} -> {1}\r\n{2}", e.GetType(), e.Message, e.StackTrace);
+                        Logger.Error(e);
                     }
                 }
 
                 catch (Exception e) {
                     // something broke. Could be a closed pipe.
-                    Console.Write(e.GetType());
-                    Console.WriteLine(e.Message);
-                    Console.WriteLine(e.StackTrace);
+                    Logger.Error(e);
                 }
             }
         }
@@ -515,9 +523,7 @@ namespace CoApp.Toolkit.Engine {
             task.ContinueWith(antecedent => {
                 if (antecedent.Exception != null) {
                     foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof (AggregateException))) {
-                        Console.Write(failure.GetType());
-                        Console.WriteLine(failure.Message);
-                        Console.WriteLine(failure.StackTrace);
+                        Logger.Error(failure);
                         WriteAsync(new UrlEncodedMessage("unexpected-failure") {
                             {"type", failure.GetType().ToString()},
                             {"message", failure.Message},
@@ -535,7 +541,7 @@ namespace CoApp.Toolkit.Engine {
         /// <remarks>
         /// </remarks>
         private Task Dispatch(UrlEncodedMessage requestMessage) {
-            Debug.WriteLine("Req: {0}".format(requestMessage.Command));
+            Logger.Message("Request:{0}".format(requestMessage.ToSmallerString()));
 
             switch (requestMessage.Command) {
                 case "find-packages":
@@ -620,6 +626,30 @@ namespace CoApp.Toolkit.Engine {
                     }
                     return "Unable to Stop Service".AsResultTask();
 
+
+                case "set-logging" :
+                    try {
+                        var b = (bool?)requestMessage["messages"];
+                        if (b.HasValue) {
+                            SessionCache<string>.Value["LogMessages"] = b.ToString();
+                        }
+                        b = (bool?)requestMessage["errors"];
+                        if (b.HasValue) {
+                            SessionCache<string>.Value["LogErrors"] = b.ToString();
+                        }
+                        b = (bool?)requestMessage["warnings"];
+                        if (b.HasValue) {
+                            SessionCache<string>.Value["LogWarnings"] = b.ToString();
+                        }
+                        WriteAsync(new UrlEncodedMessage("done-set-logging") {
+                        {"is-logging-errors", Logger.Errors },
+                        {"is-logging-warnings", Logger.Warnings },
+                        {"is-logging-messages", Logger.Messages },
+                        {"rqid", requestMessage["rqid"].ToString() },
+                    });
+                    } catch {
+                    }
+                    return "set-logging".AsResultTask();
 
                 default:
                     // not recognized command, return error code.

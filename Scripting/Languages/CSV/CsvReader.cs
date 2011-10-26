@@ -30,8 +30,9 @@ namespace CoApp.Toolkit.Scripting.Languages.CSV
     using System.Globalization;
     using System.IO;
     using Events;
-    using Exceptions;
+    using Logging;
     using Resources;
+    using Toolkit.Exceptions;
 
     /// <summary>
 	/// Represents a reader that provides fast, non-cached, forward-only access to CSV data.  
@@ -2448,7 +2449,7 @@ namespace CoApp.Toolkit.Scripting.Languages.CSV
 		~CsvReader()
 		{
 #if DEBUG
-			Debug.WriteLine("FinalizableObject was not disposed" + _allocStack.ToString());
+            Logger.Message("FinalizableObject was not disposed" + _allocStack.ToString());
 #endif
 
 			Dispose(false);

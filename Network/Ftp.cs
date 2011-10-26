@@ -78,6 +78,8 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
 namespace CoApp.Toolkit.Network {
+    using Exceptions;
+
     public class FTP {
         #region Public Variables
 
@@ -200,7 +202,7 @@ namespace CoApp.Toolkit.Network {
         
         private void Fail() {
             Disconnect();
-            throw new Exception(responseStr);
+            throw new CoAppException(responseStr);
         }
 
 
@@ -240,7 +242,7 @@ namespace CoApp.Toolkit.Network {
                 // no data comming.
                 if (msecs_passed > Timeout) {
                     Disconnect();
-                    throw new Exception("Timed out waiting on server to respond.");
+                    throw new CoAppException("Timed out waiting on server to respond.");
                 }
             }
 
@@ -330,12 +332,12 @@ namespace CoApp.Toolkit.Network {
                 }
                 catch (Exception) {
                     Disconnect();
-                    throw new Exception("Malformed PASV response: " + responseStr);
+                    throw new CoAppException("Malformed PASV response: " + responseStr);
                 }
 
                 if (pasv.Length < 6) {
                     Disconnect();
-                    throw new Exception("Malformed PASV response: " + responseStr);
+                    throw new CoAppException("Malformed PASV response: " + responseStr);
                 }
 
                 server = String.Format("{0}.{1}.{2}.{3}", pasv[0], pasv[1], pasv[2], pasv[3]);
@@ -369,7 +371,7 @@ namespace CoApp.Toolkit.Network {
 #endif
                 }
                 catch (Exception ex) {
-                    throw new Exception("Failed to connect for data transfer: " + ex.Message);
+                    throw new CoAppException("Failed to connect for data transfer: " + ex.Message);
                 }
             }
             else		// #######################################
@@ -395,7 +397,7 @@ namespace CoApp.Toolkit.Network {
                     string sLocAddr = mainSock.LocalEndPoint.ToString();
                     int ix = sLocAddr.IndexOf(':');
                     if (ix < 0) {
-                        throw new Exception("Failed to parse the local address: " + sLocAddr);
+                        throw new CoAppException("Failed to parse the local address: " + sLocAddr);
                     }
                     string sIPAddr = sLocAddr.Substring(0, ix);
                     // let the system automatically assign a port number (setting port = 0)
@@ -405,7 +407,7 @@ namespace CoApp.Toolkit.Network {
                     sLocAddr = listeningSock.LocalEndPoint.ToString();
                     ix = sLocAddr.IndexOf(':');
                     if (ix < 0) {
-                        throw new Exception("Failed to parse the local address: " + sLocAddr);
+                        throw new CoAppException("Failed to parse the local address: " + sLocAddr);
                     }
                     int nPort = int.Parse(sLocAddr.Substring(ix + 1));
 #if (FTP_DEBUG)
@@ -423,7 +425,7 @@ namespace CoApp.Toolkit.Network {
                         Fail();
                 }
                 catch (Exception ex) {
-                    throw new Exception("Failed to connect for data transfer: " + ex.Message);
+                    throw new CoAppException("Failed to connect for data transfer: " + ex.Message);
                 }
             }
         }
@@ -443,7 +445,7 @@ namespace CoApp.Toolkit.Network {
                 listeningSock = null;
 
                 if (dataSock == null) {
-                    throw new Exception("Winsock error: " +
+                    throw new CoAppException("Winsock error: " +
                         Convert.ToString(System.Runtime.InteropServices.Marshal.GetLastWin32Error()));
                 }
 #if (FTP_DEBUG)
@@ -451,7 +453,7 @@ namespace CoApp.Toolkit.Network {
 #endif
             }
             catch (Exception ex) {
-                throw new Exception("Failed to connect for data transfer: " + ex.Message);
+                throw new CoAppException("Failed to connect for data transfer: " + ex.Message);
             }
         }
 
@@ -501,9 +503,9 @@ namespace CoApp.Toolkit.Network {
         /// </summary>
         public void Connect() {
             if (Server == null)
-                throw new Exception("No server has been set.");
+                throw new CoAppException("No server has been set.");
             if (User == null)
-                throw new Exception("No username has been set.");
+                throw new CoAppException("No username has been set.");
 
             if (mainSock != null)
                 if (mainSock.Connected)
@@ -516,7 +518,7 @@ namespace CoApp.Toolkit.Network {
                 mainSock.Connect(mainIpEndPoint);
             }
             catch (Exception ex) {
-                throw new Exception(ex.Message);
+                throw new CoAppException(ex.Message);
             }
 
             ReadResponse();
@@ -530,7 +532,7 @@ namespace CoApp.Toolkit.Network {
                 case 331:
                     if (Password == null) {
                         Disconnect();
-                        throw new Exception("No password has been set.");
+                        throw new CoAppException("No password has been set.");
                     }
                     SendCommand("PASS " + Password);
                     ReadResponse();
@@ -567,7 +569,7 @@ namespace CoApp.Toolkit.Network {
                     break;
                 default:
                     CloseDataSocket();
-                    throw new Exception(responseStr);
+                    throw new CoAppException(responseStr);
             }
             ConnectDataSocket();		// #######################################
 
@@ -579,7 +581,7 @@ namespace CoApp.Toolkit.Network {
                 // no data comming.
                 if (msecsPassed > (Timeout / 10)) {
                     //CloseDataSocket();
-                    //throw new Exception("Timed out waiting on server to respond.");
+                    //throw new CoAppException("Timed out waiting on server to respond.");
 
                     //FILIPE MADUREIRA.
                     //If there are no files to list it gives timeout.
@@ -598,7 +600,7 @@ namespace CoApp.Toolkit.Network {
 
             ReadResponse();
             if (response != 226)
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
 
             foreach (string f in fileList.Split('\n')) {
                 if (f.Length > 0 && !Regex.Match(f, "^total").Success)
@@ -657,7 +659,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                 Console.Write("\r" + responseStr);
 #endif
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
             }
 
             return (this.responseStr.Substring(4));
@@ -696,7 +698,7 @@ namespace CoApp.Toolkit.Network {
             ReadResponse();
 
             if (response != 257)
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
 
             string pwd;
             try {
@@ -705,7 +707,7 @@ namespace CoApp.Toolkit.Network {
                 pwd = pwd.Replace("\"\"", "\""); // directories with quotes in the name come out as "" from the server
             }
             catch (Exception ex) {
-                throw new Exception("Uhandled PWD response: " + ex.Message);
+                throw new CoAppException("Uhandled PWD response: " + ex.Message);
             }
 
             return pwd;
@@ -733,7 +735,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                 Console.Write("\r" + responseStr);
 #endif
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
             }
         }
         /// <summary>
@@ -753,7 +755,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                     Console.Write("\r" + responseStr);
 #endif
-                    throw new Exception(responseStr);
+                    throw new CoAppException(responseStr);
             }
         }
         /// <summary>
@@ -768,7 +770,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                 Console.Write("\r" + responseStr);
 #endif
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
             }
         }
         /// <summary>
@@ -783,7 +785,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                 Console.Write("\r" + responseStr);
 #endif
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
             }
         }
         /// <summary>
@@ -800,7 +802,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                 Console.Write("\r" + responseStr);
 #endif
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
             }
             else {
                 SendCommand("RNTO " + newfilename);
@@ -809,7 +811,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                     Console.Write("\r" + responseStr);
 #endif
-                    throw new Exception(responseStr);
+                    throw new CoAppException(responseStr);
                 }
             }
         }
@@ -826,7 +828,7 @@ namespace CoApp.Toolkit.Network {
 #if (FTP_DEBUG)
                 Console.Write("\r" + responseStr);
 #endif
-                throw new Exception(responseStr);
+                throw new CoAppException(responseStr);
             }
 
             return Int64.Parse(responseStr.Substring(4));
@@ -868,7 +870,7 @@ namespace CoApp.Toolkit.Network {
             }
             catch (Exception ex) {
                 file = null;
-                throw new Exception(ex.Message);
+                throw new CoAppException(ex.Message);
             }
             fileSize = file.Length;
             UploadImpl(remote_filename, resume);
@@ -918,7 +920,7 @@ namespace CoApp.Toolkit.Network {
                 default:
                     file.Close();
                     file = null;
-                    throw new Exception(responseStr);
+                    throw new CoAppException(responseStr);
             }
             ConnectDataSocket();		// #######################################	
 
@@ -972,13 +974,13 @@ namespace CoApp.Toolkit.Network {
                 }
                 catch (Exception ex) {
                     file = null;
-                    throw new Exception(ex.Message);
+                    throw new CoAppException(ex.Message);
                 }
 
                 SendCommand("REST " + file.Length);
                 ReadResponse();
                 if (response != 350)
-                    throw new Exception(responseStr);
+                    throw new CoAppException(responseStr);
                 file.Seek(file.Length, SeekOrigin.Begin);
                 bytesTotal = file.Length;
             }
@@ -988,7 +990,7 @@ namespace CoApp.Toolkit.Network {
                 }
                 catch (Exception ex) {
                     file = null;
-                    throw new Exception(ex.Message);
+                    throw new CoAppException(ex.Message);
                 }
             }
 
@@ -1003,7 +1005,7 @@ namespace CoApp.Toolkit.Network {
                 default:
                     file.Close();
                     file = null;
-                    throw new Exception(responseStr);
+                    throw new CoAppException(responseStr);
             }
             ConnectDataSocket();		// #######################################	
 
@@ -1058,7 +1060,7 @@ namespace CoApp.Toolkit.Network {
                         case 250:
                             break;
                         default:
-                            throw new Exception(responseStr);
+                            throw new CoAppException(responseStr);
                     }
 
                     SetBinaryMode(false);
@@ -1098,7 +1100,7 @@ namespace CoApp.Toolkit.Network {
                         case 250:
                             break;
                         default:
-                            throw new Exception(responseStr);
+                            throw new CoAppException(responseStr);
                     }
 
                     SetBinaryMode(false);

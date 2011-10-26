@@ -14,6 +14,7 @@ namespace CoApp.Toolkit.Spec.Properties {
     using System.Linq;
     using System.Reflection;
     using Collections;
+    using Exceptions;
     using Extensions;
 
     /// <summary>
@@ -92,7 +93,7 @@ namespace CoApp.Toolkit.Spec.Properties {
                         return;
                     }
 
-                    throw new Exception("Should Expand this method to support the type you are using.");
+                    throw new CoAppException("Should Expand this method to support the type you are using.");
                 }
             }
         }

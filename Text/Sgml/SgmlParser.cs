@@ -22,12 +22,13 @@ namespace CoApp.Toolkit.Text.Sgml {
     using System.Security.Permissions;
     using System.Text;
     using System.Xml;
+    using Exceptions;
 
     /// <summary>
     ///   Thrown if any errors occur while parsing the source.
     /// </summary>
     [Serializable]
-    public class SgmlParseException : Exception {
+    public class SgmlParseException : CoAppException {
         private string m_entityContext;
 
         /// <summary>

@@ -13,6 +13,7 @@ namespace CoApp.Toolkit.Trace {
     using System.IO;
     using System.Linq;
     using System.Xml.Serialization;
+    using Exceptions;
     using Extensions;
 
     public partial class Trace {
@@ -53,7 +54,7 @@ namespace CoApp.Toolkit.Trace {
             lock (process) {
                 var result = process.Where(x => x.id == aProcess.id).LastOrDefault();
                 if (result != null) {
-                    throw new Exception("Duplicate Process IDs in Trace file not permitted.");
+                    throw new CoAppException("Duplicate Process IDs in Trace file not permitted.");
                 }
 
                 process.Add(aProcess);

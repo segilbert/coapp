@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Exceptions {
     using Extensions;
     using Scripting.Languages.PropertySheet;
     
-    public class EndUserException : Exception {
+    public class EndUserException : CoAppException {
         public EndUserException (string SourceFile, int SourceRow, int SourceColumn,string errorcode, string message, params object[] parameters)
             : base("{0}({1},{2}):{3}:{4}".format(SourceFile, SourceRow, SourceColumn, errorcode, message.format(parameters))) {
         }

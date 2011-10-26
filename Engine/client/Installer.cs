@@ -18,8 +18,10 @@ namespace CoApp.Toolkit.Engine.Client {
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows;
+    using System.Windows.Input;
     using System.Windows.Media.Imaging;
     using Extensions;
+    using Logging;
     using Network;
     using Toolkit.Exceptions;
     using UI;
@@ -32,11 +34,12 @@ namespace CoApp.Toolkit.Engine.Client {
         public event PropertyChangedEventHandler PropertyChanged;
         public event PropertyChangedEventHandler Ready;
         public event PropertyChangedEventHandler Finished;
-
+        private bool verbose;
         private PackageManager packageManager;
         private Package _specifiedPackage;
         private Package _upgradedPackage;
         private bool _automaticallyUpgrade = true;
+        public bool ReadyToDisplay { get; set; }
 
         public bool AutomaticallyUpgrade {
             get { return _automaticallyUpgrade; }
@@ -77,6 +80,13 @@ namespace CoApp.Toolkit.Engine.Client {
         public bool HasPackage { get { return Package != null; }}
 
         public Installer(string filename)   {
+            if (Keyboard.Modifiers == ModifierKeys.Shift) {
+                Logger.Errors = true;
+                Logger.Messages = true;
+                Logger.Warnings = true;
+                verbose = true;
+            }
+
             // we'll take it from here...
             try {
                 // First, see if the CoApp Service is running. If it's not, let's get it up and running.
@@ -86,6 +96,7 @@ namespace CoApp.Toolkit.Engine.Client {
 #else
                   EngineServiceManager.EnsureServiceIsResponding();
 #endif
+                
                 MsiFilename = filename;
                 InstallTask = Task.Factory.StartNew(StartInstall);
                 
@@ -174,6 +185,7 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         private void OnReady() {
+            ReadyToDisplay = true;
             if (Ready != null) {
                 Ready(this, new PropertyChangedEventArgs("package"));
             }
@@ -188,7 +200,10 @@ namespace CoApp.Toolkit.Engine.Client {
 
         private void ConnectToPackageManager() {
             packageManager = PackageManager.Instance;
-            PackageManager.Instance.Connect("PackageInstaller");
+            var t = PackageManager.Instance.Connect("PackageInstaller");
+            if (verbose) {
+                t.ContinueWith(antecedent => { packageManager.SetLogging(true, true, true); });
+            }
         }
 
         private void InitMessageHandlers() {
@@ -235,30 +250,31 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         private void UnknownPackage(string canonicalName) {
-            Debug.WriteLine("Unknown Package {0}", canonicalName);
+            Logger.Message("Unknown Package {0}", canonicalName);
         }
 
         private void BlockedPackage(string canonicalName) {
-            Debug.WriteLine("Package {0} is blocked", canonicalName);
+            Logger.Message("Package {0} is blocked", canonicalName);
         }
 
         private void CancellationRequested(string obj) {
-            Debug.WriteLine("Cancellation Requested.");
+            Logger.Message("Cancellation Requested.");
         }
 
         private void MessageArgumentError(string arg1, string arg2, string arg3) {
-            Debug.WriteLine("Message Argument Error {0}, {1}, {2}.", arg1, arg2, arg3);
+            Logger.Message("Message Argument Error {0}, {1}, {2}.", arg1, arg2, arg3);
         }
 
         private void OperationRequiresPermission(string policyName) {
-            Debug.WriteLine("Operation requires permission Policy:{0}", policyName);
+            Logger.Message("Operation requires permission Policy:{0}", policyName);
         }
 
         private void NoPackagesFound() {
-            Debug.WriteLine("Did not find any packages.");
+            Logger.Message("Did not find any packages.");
         }
 
         private void UnexpectedFailure(Exception obj) {
+            Logger.Error(obj);
             Error(new ConsoleException("SERVER EXCEPTION: {0}\r\n{1}", obj.Message, obj.StackTrace));
         }
 

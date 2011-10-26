@@ -66,18 +66,20 @@ unsigned __stdcall ListenForEvent(void* parameter) {
 	handle = CreateEvent( NULL, TRUE,FALSE, L"Global\\CoApp.Reload.Environment" ); 
 	
 	while( !Stopped  ) {
+		OutputDebugString(L"Rehash.DLL is waiting on global event");
 		switch( WaitForSingleObject( handle , INFINITE ) ) {
 			case WAIT_OBJECT_0:
+				OutputDebugString(L"Rehash.DLL is trying to force environment reload");
+				ForceEnvironmentReload();
 				if( IsExplorer ) { //GetShellWindow()
+					OutputDebugString(L"Rehash.DLL is trying send HWND_BROADCAST WM_SETTINGCHANGE");
 					SendMessageTimeoutA(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)"Environment", SMTO_ABORTIFHUNG, 1000, NULL);
-				}
-				else {
-					ForceEnvironmentReload();
 				}
 				Sleep(3000); // ensure there is plent of time between rehashes.
 			break;
 
 			default:
+				OutputDebugString(L"Rehash.DLL is ceasing to wait for events");
 				Stopped = TRUE;
 				break;
 		}

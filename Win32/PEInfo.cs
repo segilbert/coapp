@@ -22,7 +22,9 @@ namespace CoApp.Toolkit.Win32 {
     using System.IO;
     using System.Reflection;
     using Collections;
+    using Exceptions;
     using Extensions;
+    using Logging;
     using Scripting.Languages.CSV;
     using Utility;
 
@@ -93,7 +95,7 @@ namespace CoApp.Toolkit.Win32 {
                                 result |= ExecutableInfo.x64;
                                 break;
                             default:
-                                throw new Exception("Unrecognized Executable Machine Type.");
+                                throw new CoAppException("Unrecognized Executable Machine Type.");
                         }
                     }
 
@@ -117,7 +119,8 @@ namespace CoApp.Toolkit.Win32 {
                 using (var reader = new BinaryReader(File.OpenRead(_filename))) {
                     // Skip DOS Header and seek to PE signature
                     if (reader.ReadUInt16() != 0x5A4D) {
-                        throw new Exception("Invalid DOS header.");
+                        Logger.Warning("File '{0}' does not have a valid PE Header", _filename);
+                        throw new CoAppException("Invalid DOS header.", true);
                     }
 
                     reader.ReadBytes(58);
@@ -125,7 +128,7 @@ namespace CoApp.Toolkit.Win32 {
 
                     // Read "PE\0\0" signature
                     if (reader.ReadUInt32() != 0x00004550) {
-                        throw new Exception("File is not a portable executable.");
+                        throw new CoAppException("File is not a portable executable.");
                     }
 
                     // Read COFF header
@@ -390,7 +393,7 @@ namespace CoApp.Toolkit.Win32 {
                     return (SectionHeaders[i].PointerToRawData + (rva - SectionHeaders[i].VirtualAddress));
                 }
             }
-            throw new Exception("Invalid RVA address.");
+            throw new CoAppException("Invalid RVA address.");
         }
     }
 }

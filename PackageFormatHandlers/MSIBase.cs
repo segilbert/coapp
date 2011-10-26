@@ -18,6 +18,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using Engine;
     using Engine.Exceptions;
     using Extensions;
+    using Logging;
     using Microsoft.Deployment.WindowsInstaller;
     using Tasks;
 
@@ -129,7 +130,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <param name="progress">The progress.</param>
         /// <remarks></remarks>
         public virtual void Install(Package package, Action<int> progress) {
-            Console.WriteLine("YOU SHOULD NOT SEE THIS!");
+            Logger.Error("YOU SHOULD NOT SEE THIS!");
             throw new NotImplementedException();
         }
 
@@ -140,7 +141,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <param name="progress">The progress.</param>
         /// <remarks></remarks>
         public virtual void Remove(Package package, Action<int> progress) {
-            Console.WriteLine("YOU SHOULD NOT SEE THIS!");
+            Logger.Error("YOU SHOULD NOT SEE THIS!");
             throw new NotImplementedException();
         }
 
@@ -340,7 +341,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     case DbType.Binary:
                         return typeof (Byte[]);
                     default:
-                        throw new Exception("According to the DTF docs, this shouldn't happen.");
+                        throw new CoAppException("According to the DTF docs, this shouldn't happen.");
                 }
             }
 
@@ -362,7 +363,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                     case DbType.Binary:
                         return new byte[0]; // we're not pulling out binary data.
                     default:
-                        throw new Exception("According to the DTF docs, this shouldn't happen.");
+                        throw new CoAppException("According to the DTF docs, this shouldn't happen.");
                 }
             }
 

@@ -39,11 +39,12 @@ namespace CoApp.Toolkit.Extensions {
         /// a running counter of for funtions wanting to number files with increasing numbers.
         /// </summary>
         private static int _counter;
+
         /// <summary>
         /// A hashset of strings that has already been fullpath'd 
         /// </summary>
         private static readonly HashSet<string> _fullPathCache = new HashSet<string>();
-        
+
         /// <summary>
         /// the Kernel filename prefix string for paths that should not be interpreted. 
         /// Just nod, and keep goin'
@@ -55,19 +56,20 @@ namespace CoApp.Toolkit.Extensions {
         /// (needed for path normalization for reparse points)
         /// </summary>
         private static readonly Regex _uncPrefixRx = new Regex(@"\\\?\?\\UNC\\");
+
         /// <summary>
         /// regular expression to match a drive letter in a low level path
         /// (needed for path normalization for reparse points)
         /// </summary>
         private static readonly Regex _drivePrefixRx = new Regex(@"\\\?\?\\[a-z,A-Z]\:\\");
-        
-        #pragma warning disable 169
+
+#pragma warning disable 169
         /// <summary>
         /// regular expression to identify a volume mount point 
         /// (needed for path normalization for reparse points)
         /// </summary>
         private static readonly Regex _volumePrefixRx = new Regex(@"\\\?\?\\Volume");
-        #pragma warning restore 169
+#pragma warning restore 169
 
         /// <summary>
         /// Apparently, Eric has gone insane?
@@ -75,7 +77,50 @@ namespace CoApp.Toolkit.Extensions {
         /// </summary>
         private static readonly Regex _invalidDoubleWcRx = new Regex(@"\\.+\*\*|\*\*[^\\]+\\|\*\*\\\*\*");
 
-        private static char[] wildcard_chars = new[] {'*', '?'};
+        private static char[] wildcard_chars = new[] {
+            '*', '?'
+        };
+
+        private static List<string> _disposableFilenames = new List<string>();
+
+        public static void RemoveTemporaryFiles() {
+            foreach (var f in _disposableFilenames.Where(File.Exists)) {
+                f.TryHardToDeleteFile();
+            }
+        }
+
+        public static string MarkFileTemporary(this string filename) {
+            _disposableFilenames.Add(filename);
+            return filename;
+        }
+
+        public static string GetFileInTempFolder(this string filename) {
+            var p = Path.Combine(Path.GetTempPath(), filename);
+            if (File.Exists(p)) {
+                p.TryHardToDeleteFile();
+            }
+
+            return MarkFileTemporary(p);
+        }
+
+        public static string GenerateTemporaryFilename(this string filename) {
+            var p = Path.GetTempFileName();
+            p.TryHardToDeleteFile();
+            if( !string.IsNullOrEmpty(filename)) {
+                var ext = Path.GetExtension(filename);
+                if( !string.IsNullOrEmpty(ext) ) {
+                    ext = Path.GetExtension(p);
+                }
+                p = Path.Combine(Path.GetDirectoryName(p), Path.GetFileNameWithoutExtension(p) + "." + Path.GetFileNameWithoutExtension(filename) + ext);
+            }
+            
+            if (File.Exists(p)) {
+                p.TryHardToDeleteFile();
+            }
+
+            return MarkFileTemporary(p);
+        }
+
 
         /// <summary>
         /// Determines if the childPath is a sub path of the rootPath
@@ -113,8 +158,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static string ChangeFileExtensionTo(this string currentFilename, string newExtension) {
-            return Path.Combine(Path.GetDirectoryName(currentFilename) ?? "",
-                Path.GetFileNameWithoutExtension(currentFilename) + "." + newExtension);
+            return Path.Combine(Path.GetDirectoryName(currentFilename) ?? "", Path.GetFileNameWithoutExtension(currentFilename) + "." + newExtension);
         }
 
         /// <summary>
@@ -147,8 +191,7 @@ namespace CoApp.Toolkit.Extensions {
 
             for (; commonDirectories < Math.Min(currentDirectoryElements.Length, pathToMakeRelativeElements.Length); commonDirectories++) {
                 if (
-                    !currentDirectoryElements[commonDirectories].Equals(pathToMakeRelativeElements[commonDirectories],
-                        StringComparison.CurrentCultureIgnoreCase)) {
+                    !currentDirectoryElements[commonDirectories].Equals(pathToMakeRelativeElements[commonDirectories], StringComparison.CurrentCultureIgnoreCase)) {
                     break;
                 }
             }
@@ -188,7 +231,7 @@ namespace CoApp.Toolkit.Extensions {
         /// </remarks>
         public static string GenerateTemplatedFilename(this string filename, string filenameHint) {
             var result = filename;
-            
+
             if (!filenameHint.StartsWith("\\\\")) {
                 if (filenameHint.StartsWith("/") || filenameHint.StartsWith("\\")) {
                     filenameHint = Environment.CurrentDirectory.Substring(0, 2) + filenameHint;
@@ -256,7 +299,7 @@ namespace CoApp.Toolkit.Extensions {
             } catch {
             }
 
-            foreach( var file in files ) {
+            foreach (var file in files) {
                 yield return file;
             }
 
@@ -264,8 +307,7 @@ namespace CoApp.Toolkit.Extensions {
                 var directories = Enumerable.Empty<string>();
                 try {
                     directories = Directory.EnumerateDirectories(path);
-                }
-                catch {
+                } catch {
                 }
                 foreach (var directory in directories) {
                     files = DirectoryEnumerateFilesSmarter(directory, searchOption);
@@ -286,7 +328,9 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static IEnumerable<string> DirectoryEnumerateFilesSmarter(this string path, string searchPattern, SearchOption searchOption) {
-            return DirectoryEnumerateFilesSmarter(path.ToLower(), searchOption).Where(file => file.ToLower().NewIsWildcardMatch(searchPattern.ToLower(), true, path.ToLower()));
+            return
+                DirectoryEnumerateFilesSmarter(path.ToLower(), searchOption).Where(
+                    file => file.ToLower().NewIsWildcardMatch(searchPattern.ToLower(), true, path.ToLower()));
         }
 
 
@@ -302,13 +346,13 @@ namespace CoApp.Toolkit.Extensions {
         public static IEnumerable<string> FindFilesSmarter(this string pathMask, string subpathMask = null) {
 
             var path = pathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$");
-            if( !string.IsNullOrEmpty(subpathMask)) {
+            if (!string.IsNullOrEmpty(subpathMask)) {
                 path = Path.Combine(path, subpathMask.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$"));
             }
             path = path.GetFullPath().Replace("$$STAR$$", "*").Replace("$$QUERY$$", "?");
 
             var i = path.IndexOfAny(wildcard_chars);
-            if( i == -1) {
+            if (i == -1) {
                 // then there isn't any wildcards in the search. That should probably be pretty easy :S
                 i = path.Length;
             }
@@ -317,12 +361,13 @@ namespace CoApp.Toolkit.Extensions {
 
             // the mask is everything past that point
             var mask = path.Substring(j + 1);
-            
+
             // the root path is everything before 
             path = path.Substring(0, j);
 
             // call DEFS with the minimally constrained path & mask
-            return path.ToLower().DirectoryEnumerateFilesSmarter(mask.ToLower(), mask.IndexOf("**") > -1 ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            return path.ToLower().DirectoryEnumerateFilesSmarter(mask.ToLower(),
+                mask.IndexOf("**") > -1 ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
         }
 
         /// <summary>
@@ -336,12 +381,12 @@ namespace CoApp.Toolkit.Extensions {
         }
 
 #if !COAPP_ENGINE_CORE 
-        /// <summary>
-        ///   always call IsWildcardMatch with a prefix!!!!
-        /// </summary>
-        /// <param name = "pathMask"></param>
-        /// <param name = "pathPrefix"></param>
-        /// <returns></returns>
+    /// <summary>
+    ///   always call IsWildcardMatch with a prefix!!!!
+    /// </summary>
+    /// <param name = "pathMask"></param>
+    /// <param name = "pathPrefix"></param>
+    /// <returns></returns>
         public static IEnumerable<string> FindFilesSmarterComplex(this string pathMask, string pathPrefix = null) {
             //pathMask safety
             if (String.IsNullOrEmpty(pathMask)) {
@@ -434,8 +479,7 @@ namespace CoApp.Toolkit.Extensions {
         public static bool DirectoryExistsAndIsAccessible(this string path) {
             try {
                 return Directory.Exists(path);
-            }
-            catch {
+            } catch {
             }
             return false;
         }
@@ -452,7 +496,7 @@ namespace CoApp.Toolkit.Extensions {
             }
 
             using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read)) {
-                stream.Write(ms.GetBuffer(), 0, (int) ms.Length);
+                stream.Write(ms.GetBuffer(), 0, (int)ms.Length);
             }
         }
 
@@ -469,7 +513,7 @@ namespace CoApp.Toolkit.Extensions {
 
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                 ms.SetLength(stream.Length);
-                stream.Read(ms.GetBuffer(), 0, (int) stream.Length);
+                stream.Read(ms.GetBuffer(), 0, (int)stream.Length);
             }
         }
 
@@ -485,8 +529,7 @@ namespace CoApp.Toolkit.Extensions {
             if (File.Exists(filename)) {
                 try {
                     File.Delete(filename);
-                }
-                catch {
+                } catch {
                     // didn't take, eh?
                 }
             }
@@ -498,10 +541,8 @@ namespace CoApp.Toolkit.Extensions {
                     var tmpFilename = Path.GetTempFileName();
                     File.Delete(tmpFilename);
                     File.Move(filename, tmpFilename);
-                    Kernel32.MoveFileEx(File.Exists(tmpFilename) ? tmpFilename : filename, null,
-                        MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
-                }
-                catch {
+                    Kernel32.MoveFileEx(File.Exists(tmpFilename) ? tmpFilename : filename, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                } catch {
                     // really. Hmmm. 
                 }
             }
@@ -517,7 +558,7 @@ namespace CoApp.Toolkit.Extensions {
         public static void TryHardToMakeFileWriteable(this string filename) {
             filename = filename.GetFullPath();
 
-            if( File.Exists(filename )) {
+            if (File.Exists(filename)) {
                 var tmpFilename = Path.GetTempFileName();
                 File.Delete(tmpFilename);
                 File.Move(filename, tmpFilename);
@@ -552,8 +593,7 @@ namespace CoApp.Toolkit.Extensions {
             if (Directory.Exists(directoryName)) {
                 try {
                     Directory.Delete(directoryName);
-                }
-                catch {
+                } catch {
                     // didn't take, eh?
                 }
             }
@@ -565,10 +605,8 @@ namespace CoApp.Toolkit.Extensions {
                     var tmpFilename = Path.GetTempFileName();
                     File.Delete(tmpFilename);
                     Directory.Move(directoryName, tmpFilename);
-                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : directoryName, null,
-                        MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
-                }
-                catch {
+                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : directoryName, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                } catch {
                     // really. Hmmm. 
                 }
             }
@@ -602,8 +640,7 @@ namespace CoApp.Toolkit.Extensions {
             try {
                 path = Path.GetFullPath(path.Trim('"'));
                 _fullPathCache.Add(path);
-            }
-            catch {
+            } catch {
             }
             return path;
         }
@@ -645,27 +682,27 @@ namespace CoApp.Toolkit.Extensions {
             Uri pathUri = null;
             try {
                 pathUri = new Uri(path);
-                if( !pathUri.IsFile ) {
+                if (!pathUri.IsFile) {
                     // perhaps try getting the fullpath
                     try {
                         pathUri = new Uri(path.GetFullPath());
                     } catch {
-                        throw new PathIsNotFileUriException(path, pathUri);    
+                        throw new PathIsNotFileUriException(path, pathUri);
                     }
                 }
-                
+
                 // is this a unc path?
-                if( string.IsNullOrEmpty(pathUri.Host)) {
+                if (string.IsNullOrEmpty(pathUri.Host)) {
                     // no, this is a drive:\path path
                     // use API to resolve out the drive letter to see if it is a remote 
-                    var drive = pathUri.Segments[1].Replace('/','\\'); // the zero segment is always just '/' 
+                    var drive = pathUri.Segments[1].Replace('/', '\\'); // the zero segment is always just '/' 
 
                     var sb = new StringBuilder(512);
                     var size = sb.Capacity;
 
                     var error = MPR.WNetGetConnection(drive, sb, ref size);
                     if (error == 0) {
-                        if( pathUri.Segments.Length > 2 ) {
+                        if (pathUri.Segments.Length > 2) {
                             return pathUri.Segments.Skip(2).Aggregate(sb.ToString().Trim(), (current, item) => current + item);
                         }
                     }
@@ -673,10 +710,9 @@ namespace CoApp.Toolkit.Extensions {
                 // not a remote (or resovably-remote) path or 
                 // it is already a path that is in it's correct form (via localpath)
                 return pathUri.LocalPath;
-            }
-            catch(UriFormatException) {
+            } catch (UriFormatException) {
                 // we could try to see if it is a relative path...
-                if( IsPotentiallyRelativePath) {
+                if (IsPotentiallyRelativePath) {
                     return CanonicalizePath(path.GetFullPath(), false);
                 }
                 throw new ArgumentException("specified path can not be resolved as a file name or path (unc, url, localpath)", path);
@@ -694,8 +730,8 @@ namespace CoApp.Toolkit.Extensions {
         /// <remarks></remarks>
         private static Tuple<string, string> GetNextPart(this string path) {
             var indexOfSlash = path.IndexOf('\\');
-            return indexOfSlash == -1 ? new Tuple<string, string>(path, "") : 
-                new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
+            return indexOfSlash == -1
+                ? new Tuple<string, string>(path, "") : new Tuple<string, string>(path.Substring(0, indexOfSlash), path.Substring(indexOfSlash + 1));
         }
 
         /// <summary>
@@ -704,8 +740,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="filepath">The filepath.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string FixFilepathSlashes(this string filepath)
-        {
+        public static string FixFilepathSlashes(this string filepath) {
             return filepath.Replace(@"/", @"\");
         }
 
@@ -721,8 +756,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <param name="path">the path to check</param>
         /// <returns>True if it is a simple subpath, false otherwise.</returns>
         /// <remarks></remarks>
-        public static bool IsSimpleSubPath(this string path)
-        {
+        public static bool IsSimpleSubPath(this string path) {
             var temp = path.FixFilepathSlashes();
             if (temp.Contains(":") || temp.Contains("*"))
                 return false;
@@ -735,7 +769,7 @@ namespace CoApp.Toolkit.Extensions {
             return true;
         }
 
-        public static string EnsureFileIsLocal(this string filename, string localFolder= null) {
+        public static string EnsureFileIsLocal(this string filename, string localFolder = null) {
             localFolder = localFolder ?? Path.GetTempPath();
             var fullpath = filename.CanonicalizePath();
 
@@ -757,11 +791,10 @@ namespace CoApp.Toolkit.Extensions {
 
             try {
                 var fullpath = filename.CanonicalizePath();
-                if( !fullpath.StartsWith(@"\\") && File.Exists(fullpath) ) {
+                if (!fullpath.StartsWith(@"\\") && File.Exists(fullpath)) {
                     return fullpath;
-                } 
-            }
-            catch {
+                }
+            } catch {
             }
             return null;
         }
@@ -770,7 +803,7 @@ namespace CoApp.Toolkit.Extensions {
             return !string.IsNullOrEmpty(CanonicalizePathIfLocalAndExists(filename));
         }
 
-        public static IEnumerable<string> GetMinimalPaths( this IEnumerable<string> paths ) {
+        public static IEnumerable<string> GetMinimalPaths(this IEnumerable<string> paths) {
             if (paths.Any() && paths.Skip(1).Any()) {
                 IEnumerable<IEnumerable<string>> newPaths = paths.Select(each => each.GetFullPath()).Select(each => each.Split('\\'));
                 while (newPaths.All(each => each.FirstOrDefault() == newPaths.FirstOrDefault().FirstOrDefault())) {
@@ -783,24 +816,4 @@ namespace CoApp.Toolkit.Extensions {
 
     }
 
-    public class DisposableFilename : IDisposable {
-        public string Filename { get; private set; }
-
-        public DisposableFilename() {
-            Filename = Path.GetTempFileName();
-        }
-
-        public DisposableFilename(string filename) {
-            Filename = Path.Combine(Path.GetTempPath(), Path.GetFileName(filename) ); 
-            if( File.Exists(Filename)) {
-                filename.TryHardToDeleteFile();
-            }
-        }
-
-        public void Dispose() {
-            if( File.Exists(Filename)) {
-                Filename.TryHardToDeleteFile();
-            }
-        }
-    }
 }

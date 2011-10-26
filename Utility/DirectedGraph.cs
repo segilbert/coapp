@@ -13,6 +13,7 @@ namespace CoApp.Toolkit.Utility {
     using System.Collections.Generic;
     using System.Linq;
     using CoApp.Toolkit.Extensions;
+    using Exceptions;
 
     /// <summary>
     /// A directed graph implementation. Currently is used for cycle checking but could
@@ -140,7 +141,7 @@ namespace CoApp.Toolkit.Utility {
             private IEnumerable<TNode> DoesCycleExistFrom(TNode start, List<TNode> visited)
             {
                 if (!_graph.Contains(start))
-                    throw new Exception();
+                    throw new CoAppException();
 
                 var newVisit = new List<TNode>(visited) { start };
 

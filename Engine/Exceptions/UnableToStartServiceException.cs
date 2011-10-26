@@ -11,8 +11,9 @@
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
     using Extensions;
+    using Toolkit.Exceptions;
 
-    public class UnableToStartServiceException : System.Exception {
+    public class UnableToStartServiceException : CoAppException {
         public string Reason;
         
         public UnableToStartServiceException( string reason ) :base("Unable to start service: {0}".format(reason)) {

@@ -11,8 +11,9 @@
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
     using System.Collections.Generic;
+    using Toolkit.Exceptions;
 
-    internal class PackagesNotAvailableException : Exception {
+    internal class PackagesNotAvailableException : CoAppException {
         internal IEnumerable<Package> Packages;
 
         internal PackagesNotAvailableException(IEnumerable<Package> pkgs) {

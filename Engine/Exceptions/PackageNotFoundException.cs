@@ -10,8 +10,9 @@
 
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
+    using Toolkit.Exceptions;
 
-    public class PackageNotFoundException : Exception {
+    public class PackageNotFoundException : CoAppException {
         public string PackagePath;
 
         public PackageNotFoundException(string packagePath) {

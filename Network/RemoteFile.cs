@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Network {
     using System.Net.Configuration;
     using System.Reflection;
     using System.Threading.Tasks;
+    using Exceptions;
     using Extensions;
     using Tasks;
 
@@ -212,7 +213,7 @@ namespace CoApp.Toolkit.Network {
                                 try {
                                     // we should open the file here, so that it's ready when we start the async read cycle.
                                     if (_filestream != null) {
-                                        throw new Exception("THIS VERY BAD AND UNEXPECTED.");
+                                        throw new CoAppException("THIS VERY BAD AND UNEXPECTED.");
                                     }
 
                                     _filestream = File.Open(Filename, FileMode.Create);

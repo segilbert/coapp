@@ -10,8 +10,9 @@
 
 namespace CoApp.Toolkit.Engine.Exceptions {
     using System;
+    using Toolkit.Exceptions;
 
-    internal class PackageRemoveFailedException : Exception {
+    internal class PackageRemoveFailedException : CoAppException {
         internal Package FailedPackage;
 
         internal PackageRemoveFailedException(Package failedPackage) {

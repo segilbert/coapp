@@ -13,7 +13,7 @@ namespace CoApp.Toolkit.Exceptions {
     using Extensions;
     using Scripting.Utility;
 
-    public class EndUserParseException : Exception {
+    public class EndUserParseException : CoAppException {
         public Token Token;
         public EndUserParseException(Token token,string filename, string errorcode, string message, params object[] parameters)
             : base("{0}({1},{2}):{3}:{4}".format(filename, token.Row,token.Column, errorcode ,message.format(parameters))) {

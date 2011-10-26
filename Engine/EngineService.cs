@@ -10,13 +10,17 @@
 
 namespace CoApp.Toolkit.Engine {
     using System;
+    using System.Diagnostics;
     using System.IO.Pipes;
+    using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Security.AccessControl;
     using System.Security.Principal;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Extensions;
+    using Logging;
     using Pipes;
     using Tasks;
 
@@ -33,6 +37,8 @@ namespace CoApp.Toolkit.Engine {
         /// 
         /// </summary>
         private const string OutputPipeName = @"CoAppInstaller-";
+
+        public static bool IsInteractive { get; set; }
 
         /// <summary>
         /// 
@@ -75,8 +81,9 @@ namespace CoApp.Toolkit.Engine {
         /// Starts this instance.
         /// </summary>
         /// <remarks></remarks>
-        public static Task Start() {
+        public static Task Start(bool interactive = false) {
             // this should spin up a task and start listening for commands
+            IsInteractive = interactive;
             return _instance.Value.Main();
         }
 
@@ -87,10 +94,6 @@ namespace CoApp.Toolkit.Engine {
         public static bool IsRunning {
             get { return _instance.Value._isRunning; }
         }
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        public static extern void OutputDebugString(string message);
-
 
         /// <summary>
         /// Mains this instance.
@@ -108,25 +111,20 @@ namespace CoApp.Toolkit.Engine {
             // make sure coapp is properly set up.
             Task.Factory.StartNew(() => {
                 try {
-                    OutputDebugString("Gonna make sure stuff is setup right.");
+                    Logger.Warning("Gonna make sure stuff is setup right.");
                     // this ensures that composition rules are run for toolkit.
                     Package.EnsureCanonicalFoldersArePresent();
 
-                    OutputDebugString("Getting Version of CoApp.");
+                    Logger.Warning("Getting Version of CoApp.");
                     var v = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
-                    OutputDebugString("CoApp Version : " + v);
+                    Logger.Warning("CoApp Version : " + v);
                 } catch (Exception e ) {
-                    OutputDebugString("Startup CoApp Exception : " + e.Message);
-                    OutputDebugString("stacktrace: " + e.StackTrace);
-
+                    Logger.Error(e);
                 }
             });
 
-
             _engineService = Task.Factory.StartNew(() => {
                 _pipeSecurity = new PipeSecurity();
-//                SecurityIdentifier sid = new SecurityIdentifier(WellKnownSidType.WorldSid,null );
-
                 _pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid,null ), PipeAccessRights.ReadWrite, AccessControlType.Allow));
                 _pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().Owner, PipeAccessRights.FullControl, AccessControlType.Allow));
 
@@ -145,7 +143,6 @@ namespace CoApp.Toolkit.Engine {
             }, TaskContinuationOptions.AttachedToParent).AutoManage();
             return _engineService;
         }
-
 
         /// <summary>
         /// Starts the listener.
@@ -217,6 +214,63 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        public static bool DoesTheServiceNeedARestart {
+            get {
+                // is this the coapp win32 service process, or is this interactive
+                if( IsInteractive ) {
+                    return false;
+                }
+                
+                // what is the version of the process running?
+                var currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString().VersionStringToUInt64();
+
+                // what is the version of the installed toolkit
+                var installedVersion = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
+
+                return installedVersion > currentVersion;
+            }
+        }
+
+        public static void RestartService() {
+            Task.Factory.StartNew(() => {
+                try {
+                    Logger.Message("Service Restart Order Issued.");
+                    // make sure nobody else can connect.
+                    _instance.Value._cancellationTokenSource.Cancel();
+
+                    // tell the clients to go away.
+                    Logger.Message("Telling clients to go away.");
+                    Session.NotifyClientsOfRestart();
+
+                    Logger.Message("Waiting up to 30 seconds for clients to disconnect.");
+                    // I'll give you 30 seconds to get lost.
+                    for (var i = 0; i < 300 && Session.HasActiveSessions; i++) {
+                        Thread.Sleep(100);
+                    }
+                    if (Session.HasActiveSessions) {
+                        Logger.Message("Forcing Disconnection of clients.");
+                        Session.CancelAll();
+                    }
+                } catch(Exception e) {
+                    Logger.Error(e);
+                }
+                Logger.Message("Clients should be disconnected; forcing restart");
+
+                if (IsInteractive) {
+                    Process.Start(new ProcessStartInfo {
+                        FileName = Assembly.GetEntryAssembly().Location,
+                        Arguments = "--interactive"
+                    });
+                    Environment.Exit(0);
+                }
+                else {
+                    Process.Start(new ProcessStartInfo {
+                        FileName = Assembly.GetEntryAssembly().Location,
+                        Arguments = "--restart"
+                    });
+                }
+            });
+        }
 
         /// <summary>
         /// Starts the response pipe and process mesages.
@@ -238,9 +292,7 @@ namespace CoApp.Toolkit.Engine {
                     }, TaskContinuationOptions.AttachedToParent);
             }
             catch (Exception e) {
-                Console.Write(e.GetType());
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+                Logger.Error(e);
             }
         }
     }

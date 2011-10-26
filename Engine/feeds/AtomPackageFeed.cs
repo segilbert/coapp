@@ -19,6 +19,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
     using Model;
     using Model.Atom;
     using Tasks;
+    using Toolkit.Exceptions;
 
     /// <summary>
     /// A package feed represented by a atom XML file
@@ -58,7 +59,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     var uri = new Uri(location);
                     _remoteLocation = uri;
                 } catch {
-                    throw new Exception("Invalid Atom Feed Location");
+                    throw new CoAppException("Invalid Atom Feed Location");
                 }
             } 
         }
