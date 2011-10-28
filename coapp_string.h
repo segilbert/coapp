@@ -78,7 +78,7 @@ void _DebugPrintf(const wchar_t* format, ...) {
 	}
 }
 
-#define DebugPrintf(format, ... ) _DebugPrintf(L" [%s] => [%d] %s", __WFUNCTION__, __LINE__ , Sprintf( format, __VA_ARGS__ ) );
+#define DebugPrintf(format, ... ) _DebugPrintf(L" [%s] =» [%d] %s", __WFUNCTION__, __LINE__ , Sprintf( format, __VA_ARGS__ ) );
 
 
 const wchar_t* GetString( UINT resourceId, const wchar_t* defaultString ) {
