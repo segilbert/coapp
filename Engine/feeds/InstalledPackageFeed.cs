@@ -7,6 +7,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
     using System.IO;
     using Extensions;
     using PackageFormatHandlers;
+    using Win32;
 
     internal class InstalledPackageFeed : PackageFeed {
         internal static string CanonicalLocation = "CoApp://InstalledPackages";
@@ -46,6 +47,9 @@ namespace CoApp.Toolkit.Engine.Feeds {
 
                 var installedFiles = MSIBase.InstalledMSIFilenames.ToArray();
 
+                // add the cached package directory, 'cause on backlevel platform, they taint the MSI in the installed files folder.
+                installedFiles = installedFiles.Union(PackageManagerSettings.CoAppCacheDirectory.FindFilesSmarter("*.msi")).ToArray();
+                
                 for (var i = 0; i < installedFiles.Length;i++ ) {
                     var packageFilename = installedFiles[i];
 

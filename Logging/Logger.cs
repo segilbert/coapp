@@ -17,6 +17,7 @@ namespace CoApp.Toolkit.Logging {
         private static EventLog _eventLog;
         private static readonly string Source;
         private static bool _ready;
+        private static short pid;
         
 #if COAPP_ENGINE_CORE
         private static bool _messages;
@@ -44,12 +45,14 @@ namespace CoApp.Toolkit.Logging {
         internal static extern void OutputDebugString(string message);
 
         static Logger() {
+            pid = (short)Process.GetCurrentProcess().Id;
             Errors = true;
 #if DEBUG
             // by default, we'll turn warnings on only in a debug version.
             Warnings = true;
 #else
-            Warnings = false;
+            // Warnings = false;
+            Warnings = true; // let's just put this on until we get into RC.
 #endif
             Messages = true;
 
@@ -81,39 +84,47 @@ namespace CoApp.Toolkit.Logging {
         ///       displays raw data only in a combined hexadecimal and text format. 
         ///    </para> 
         /// </devdoc>
-        private static void WriteEntry(string message, EventLogEntryType type = EventLogEntryType.Information, int eventID = 0, short category = 0, byte[] rawData = null) {
-            if( message.Length > 4096 ) {
-                message = message.Substring(0, 4096) + "==>[SNIPPED FOR BEREVITY]";
-            }
-            if (!_ready) {
-                Task.Factory.StartNew(() => {
-                    for (var i = 0; i < 100 && !_ready; i++) {
-                        Thread.Sleep(50);
-                    }
-                    // go ahead and try, but don't whine if this gets dropped.
+        private static void WriteEntry(string message, EventLogEntryType type = EventLogEntryType.Information, short eventID = 0, short category = 0, byte[] rawData = null) {
+            try {
+                if (message.Length > 4096) {
+                    message = message.Substring(0, 4096) + "==>[SNIPPED FOR BEREVITY]";
+                }
+                if (!_ready) {
+                    Task.Factory.StartNew(() => {
+                        for (var i = 0; i < 100 && !_ready; i++) {
+                            Thread.Sleep(50);
+                        }
+                        // go ahead and try, but don't whine if this gets dropped.
+                        try {
+                            _eventLog.WriteEntry(message, type, (short)pid, (short)category, rawData);
+                        } catch {
+
+                        }
+                    });
+                } else {
                     try {
-                        _eventLog.WriteEntry(message, type, eventID, category, rawData);
+                        _eventLog.WriteEntry(message, type, (short)pid, (short)category, rawData);
                     } catch {
 
                     }
-                });
-            } else {
-                _eventLog.WriteEntry(message, type, eventID, category, rawData);
-            }
-
-            // we're gonna output this to dbgview too for now.
-            if (eventID == 0 && category == 0) {
-                OutputDebugString(string.Format("«{0}/{1}»-{2}", type, Source, message.Replace("\r\n","\r\n»")));
-            } else {
-                OutputDebugString(string.Format("«{0}/{1}»({2}/{3})-{4}", type, Source, eventID, category, message.Replace("\r\n", "\r\n»")));
-            }
-            if( !rawData.IsNullOrEmpty() ) {
-                var rd = rawData.ToUtf8String().Replace("\r\n", "\r\n»");
-                if( !string.IsNullOrEmpty(rd) && rd.Length < 2048 ) {
-                    OutputDebugString("   RawData:"+rd);
-                } else {
-                    OutputDebugString("   RawData is [] bytes" + rawData.Length);
                 }
+
+                // we're gonna output this to dbgview too for now.
+                if (eventID == 0 && category == 0) {
+                    OutputDebugString(string.Format("«{0}/{1}»-{2}", type, Source, message.Replace("\r\n", "\r\n»")));
+                } else {
+                    OutputDebugString(string.Format("«{0}/{1}»({2}/{3})-{4}", type, Source, eventID, category, message.Replace("\r\n", "\r\n»")));
+                }
+                if (!rawData.IsNullOrEmpty()) {
+                    var rd = rawData.ToUtf8String().Replace("\r\n", "\r\n»");
+                    if (!string.IsNullOrEmpty(rd) && rd.Length < 2048) {
+                        OutputDebugString("   »RawData:" + rd);
+                    } else {
+                        OutputDebugString("   »RawData is [] bytes" + rawData.Length);
+                    }
+                }
+            } catch {
+                
             }
         } 
 

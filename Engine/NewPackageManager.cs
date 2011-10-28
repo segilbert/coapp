@@ -258,7 +258,6 @@ namespace CoApp.Toolkit.Engine {
                     return;
                 }
 
-
                 var overallProgress = 0.0;
                 var eachTaskIsWorth = 0.0;
                 var numberOfPackagesToInstall = 0;
@@ -445,6 +444,14 @@ namespace CoApp.Toolkit.Engine {
                                 }
                                 if (!failed) {
                                     // W00T ... We did it!
+                                    // check for restart required...
+                                    if (EngineService.DoesTheServiceNeedARestart) {
+                                        // something has changed where we need restart the service before we can continue.
+                                        // and the one place we don't wanna be when we issue a shutdown in in Install :) ...
+                                        EngineService.RestartService();
+                                        PackageManagerMessages.Invoke.OperationCancelled("install-package");
+                                        return;
+                                    }
                                     return;
                                 }
 

@@ -43,16 +43,19 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         internal bool HasPermission {
             get {
-                
-                // manual check against administrator permissions.
-                if( groups.Contains(_administratorsGroup) ) {
-                    if(AdminPrivilege.IsProcessElevated()) {
-                        return true;
+                var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
+
+                if (WindowsVersionInfo.IsVistaOrBeyond) {
+                    // manual check against administrator permissions.
+                    if (groups.Contains(_administratorsGroup)) {
+                        if (AdminPrivilege.IsProcessElevated()) {
+                            return true;
+                        }
                     }
+                    return groups.Where(each => each != _administratorsGroup).Any(principal.IsInRole);
                 }
 
-                var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
-                return groups.Where(each => each != _administratorsGroup).Any(principal.IsInRole);
+                return groups.Any(principal.IsInRole);
             }
         }
 

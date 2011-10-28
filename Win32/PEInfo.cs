@@ -276,7 +276,7 @@ namespace CoApp.Toolkit.Win32 {
             get {
                 var depends = Environment.Is64BitOperatingSystem && (ExecutableInfo & ExecutableInfo.x64) == ExecutableInfo.x64
                     ? _dependsX64.Value : _dependsX86.Value;
-                var tmpFile = Path.GetTempFileName();
+                var tmpFile = "dependencyInfo".GenerateTemporaryFilename();
 
                 depends.Exec(@"/c /a:1 ""/oc:{0}"" /u:1 /f:1 ""{1}""", tmpFile, _filename);
 

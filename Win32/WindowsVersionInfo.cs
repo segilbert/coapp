@@ -33,6 +33,11 @@ namespace CoApp.Toolkit.Win32 {
             get { return Environment.OSVersion.Version.Major > 5; }
         }
 
+
+        public static bool IsVistaOrPrior {
+            get { return Environment.OSVersion.Version.Major < 6 || (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor == 0); }
+        }
+
         /// <summary>
         ///   Gets a value indicating whether this process is running as a 32 bit process.
         /// </summary>

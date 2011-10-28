@@ -504,6 +504,11 @@ namespace CoApp.Toolkit.Engine {
                     }
                 }
                 catch (AggregateException ae) {
+                    if (_cancellationTokenSource.IsCancellationRequested) {
+                        // ok, I'll assume you know what you're doing.
+                        return;
+                    }
+
                     foreach (var e in ae.Flatten().InnerExceptions) {
                         if (e.GetType() == typeof (IOException)) {
                             // pipe got disconnected.

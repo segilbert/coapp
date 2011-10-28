@@ -200,9 +200,12 @@ namespace CoApp.Toolkit.Engine.Client {
 
         private void ConnectToPackageManager() {
             packageManager = PackageManager.Instance;
-            var t = PackageManager.Instance.Connect("PackageInstaller");
-            if (verbose) {
-                t.ContinueWith(antecedent => { packageManager.SetLogging(true, true, true); });
+
+            if( !packageManager.IsConnected ) {
+                PackageManager.Instance.Connect("PackageInstaller").Wait();
+                // if (verbose) {
+                    packageManager.SetLogging(true, true, true);
+                // }    
             }
         }
 
@@ -258,7 +261,41 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         private void CancellationRequested(string obj) {
-            Logger.Message("Cancellation Requested.");
+            Logger.Message("Cancellation Requested (engine is restarting.)");
+            // we will try to just reload the window
+            LoadPackageDetails();
+        }
+
+        private void CancellationRequestedDuringInstall(string obj) {
+            Logger.Message("Cancellation Requested during install (engine is restarting.)");
+            // we *could* try to see if the service comes back here; or we could just kill this window.
+            // if we kill the window, we *could* do a restart of the msi just to make sure that it gets installed 
+            // (since, if the toolkit got updated as part of the install, the engine will restart)
+
+            if (Package.IsInstalled) {
+                // it was done, lets just quit nicely
+                OnFinished();
+                return;
+            }
+
+
+            ConnectToPackageManager();
+
+            // otherwise, try again?
+            Install();
+        }
+
+        private void CancellationRequestedDuringRemove(string obj) {
+            Logger.Message("Cancellation Requested during remove (engine is restarting.)");
+
+            if (!Package.IsInstalled) {
+                OnFinished();
+                return;
+            }
+
+            ConnectToPackageManager();
+            // otherwise, try again?
+            Remove();
         }
 
         private void MessageArgumentError(string arg1, string arg2, string arg3) {
@@ -351,6 +388,9 @@ namespace CoApp.Toolkit.Engine.Client {
         public bool CancelRequested {
             get { return _cancel; }
             set {
+                if( IsWorking) {
+                    // packageManager.StopInstall? 
+                }
                 _cancel = value;
                 OnPropertyChanged("CancelRequested");
                 OnPropertyChanged("CancelButtonVisibility");
@@ -366,6 +406,8 @@ namespace CoApp.Toolkit.Engine.Client {
                 IsWorking = true;
                 packageManager.InstallPackage(Package.CanonicalName, autoUpgrade: false, messages: new PackageManagerMessages {
                     InstallingPackageProgress = (canonicalName, progress, overallProgress) => { Progress = overallProgress; },
+                    InstalledPackage = (canonicalName) => { Package.GetPackage(canonicalName).IsInstalled = true; },
+                    OperationCancelled = CancellationRequestedDuringInstall,
                 }.Extend(_messages)).ContinueWith(antecedent => OnFinished(), TaskContinuationOptions.AttachedToParent);
             }
         }
@@ -377,6 +419,8 @@ namespace CoApp.Toolkit.Engine.Client {
                     RemovingPackageProgress= (canonicalName, progress) => {
                         Progress = progress;
                     },
+                    RemovedPackage = (canonicalName ) => { Package.GetPackage(canonicalName).IsInstalled = false; },
+                    OperationCancelled = CancellationRequestedDuringRemove,
                 }).ContinueWith(antecedent => {
                     OnFinished();
                 }, TaskContinuationOptions.AttachedToParent);

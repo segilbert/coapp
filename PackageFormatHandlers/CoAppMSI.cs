@@ -10,13 +10,16 @@
 
 namespace CoApp.Toolkit.PackageFormatHandlers {
     using System;
+    using System.IO;
     using System.Linq;
     using System.Collections.Generic;
+    using Crypto;
     using Engine;
     using Engine.Exceptions;
     using Engine.Model.Atom;
     using Extensions;
     using Microsoft.Deployment.WindowsInstaller;
+    using Win32;
 
     /// <summary>
     /// A representation of an CoApp MSI file
@@ -37,8 +40,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <remarks></remarks>
         internal static bool IsCoAppPackageFile(string path) {
             try {
-                var packageProperties = GetMsiProperties(path);
-                return (packageProperties.ContainsKey("CoAppCompositionRules") && packageProperties.ContainsKey("CoAppPackageFeed"));
+                if (Verifier.HasValidSignature(path)) {
+                    var packageProperties = GetMsiProperties(path);
+                    return (packageProperties.ContainsKey("CoAppCompositionRules") && packageProperties.ContainsKey("CoAppPackageFeed"));
+                }
             } catch {
             }
             return false;
@@ -65,11 +70,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             var productCode = new Guid( packageProperties["ProductCode"] );
 
             var feed = AtomFeed.Load(atomFeedText);
-            var result = feed.Packages.Where(each => each.ProductCode == productCode).FirstOrDefault();
+            var result = feed.Packages.Where(each => each.ProductCode == productCode).ToArray().FirstOrDefault();
             
             if( result == null ) {
                 throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, localPackagePath);
             }
+
             // set things that only we can do here...
             result.InternalPackageData.LocalLocation = localPackagePath;
             result.PackageHandler = Instance;
@@ -159,6 +165,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 }), InstallLogModes.Progress);
 
                 try {
+                    // if( WindowsVersionInfo.IsVistaOrPrior) {
+                        var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppCacheDirectory, package.CanonicalName + ".msi");
+                        if( !File.Exists(cachedInstaller)) {
+                            File.Copy(package.PackageSessionData.LocalValidatedLocation, cachedInstaller);   
+                        }
+                    // }
                     Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation,
                         @"TARGETDIR=""{0}"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
                             package.PackageSessionData.IsClientSpecified ? "ADD_TO_ARP=1" : ""));
@@ -226,6 +238,14 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                 try {
                     Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation, @"REMOVE=ALL COAPP_INSTALLED=1 ALLUSERS=1 REBOOT=REALLYSUPPRESS");
+
+                    // if (WindowsVersionInfo.IsVistaOrPrior) {
+                        var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppCacheDirectory, package.CanonicalName + ".msi");
+                        if (File.Exists(cachedInstaller)) {
+                            cachedInstaller.TryHardToDeleteFile();
+                        }
+                    // }
+
                 }
                 finally {
                     SetUIHandlersToSilent();

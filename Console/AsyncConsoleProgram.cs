@@ -53,8 +53,9 @@ namespace CoApp.Toolkit.Console {
                         }
                     }
                     y.Cancel = true;
+
                 };
-                task.Wait();
+                task.Wait(CancellationTokenSource.Token);
             }
             catch( AggregateException ae ) {
                 ae = ae.Flatten();
@@ -79,7 +80,12 @@ namespace CoApp.Toolkit.Console {
                 return true;
             }
 
-            Console.WriteLine("Unhandled Exception:  {0}", ex.Message);
+            if (ex is OperationCanceledException) {
+                // this has been handled before.
+                return true;
+            }
+
+            Console.WriteLine("Unhandled Exception : {0} {1}", ex.GetType() ,ex.Message);
             return false;
         }
 

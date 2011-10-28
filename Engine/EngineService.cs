@@ -81,9 +81,14 @@ namespace CoApp.Toolkit.Engine {
         /// Starts this instance.
         /// </summary>
         /// <remarks></remarks>
-        public static Task Start(bool interactive = false) {
+        public static Task Start() {
+            return Start(false);
+        }
+        
+        public static Task Start(bool interactive) {
             // this should spin up a task and start listening for commands
             IsInteractive = interactive;
+            Logger.Warning("Starting up Engine in mode: {0}." , interactive ? "[Interactive]":"[Service]");
             return _instance.Value.Main();
         }
 
@@ -128,7 +133,8 @@ namespace CoApp.Toolkit.Engine {
                 _pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid,null ), PipeAccessRights.ReadWrite, AccessControlType.Allow));
                 _pipeSecurity.AddAccessRule(new PipeAccessRule(WindowsIdentity.GetCurrent().Owner, PipeAccessRights.FullControl, AccessControlType.Allow));
 
-                // start two listeners by default--each listener will also spawn a new empty one.
+                // start a few listeners by default--each listener will also spawn a new empty one.
+                StartListener();
                 StartListener();
                 StartListener();
                 StartListener();
@@ -144,12 +150,16 @@ namespace CoApp.Toolkit.Engine {
             return _engineService;
         }
 
+
+        private int listenerCount;
         /// <summary>
         /// Starts the listener.
         /// </summary>
         /// <remarks></remarks>
         private void StartListener() {
             try {
+                Logger.Message("Starting New Listener {0}", listenerCount++);
+
                 if (_isRunning) {
                     var serverPipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, Instances, PipeTransmissionMode.Message, PipeOptions.Asynchronous,
                         BufferSize, BufferSize, _pipeSecurity);
@@ -216,16 +226,22 @@ namespace CoApp.Toolkit.Engine {
 
         public static bool DoesTheServiceNeedARestart {
             get {
+                
                 // is this the coapp win32 service process, or is this interactive
                 if( IsInteractive ) {
+                    Logger.Warning("Service doens't need a restart, since it's interactive");
                     return false;
                 }
-                
+
+                Logger.Warning("Checking to see if service needs a restart");
                 // what is the version of the process running?
                 var currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString().VersionStringToUInt64();
 
+                
+
                 // what is the version of the installed toolkit
                 var installedVersion = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
+                Logger.Warning("Running Version [{0}] == InstalledVersion [{1}]",currentVersion , installedVersion );
 
                 return installedVersion > currentVersion;
             }

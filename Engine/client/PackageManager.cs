@@ -24,6 +24,7 @@ namespace CoApp.Toolkit.Engine.Client {
     using Pipes;
     using Tasks;
     using Toolkit.Exceptions;
+    using Win32;
 
     public class PackageManager {
         internal class ManualEventQueue : Queue<UrlEncodedMessage>, IDisposable {
@@ -87,7 +88,7 @@ namespace CoApp.Toolkit.Engine.Client {
             get { return ManualEventQueue.IsCompleted; }
         }
 
-        private bool IsConnected {
+        public bool IsConnected {
             get { return _pipe != null && _pipe.IsConnected; }
         }
 
@@ -99,6 +100,11 @@ namespace CoApp.Toolkit.Engine.Client {
                 return _serviceTask;
             }
 
+            if (ManualEventQueue.EventQueues.Any()) {
+                Logger.Error("Manually clearing out event queues in client library. This is a symptom of something unsavory.");
+                ManualEventQueue.EventQueues.Clear();
+            }
+
 #if DEBUG
             EngineServiceManager.EnsureServiceIsResponding(true);
 #else
@@ -108,14 +114,19 @@ namespace CoApp.Toolkit.Engine.Client {
             sessionId = sessionId ?? DateTime.Now.Ticks.ToString();
 
             return _serviceTask = Task.Factory.StartNew(() => {
-                _pipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation);
 
-                try {
-                    _pipe.Connect();
-                    _pipe.ReadMode = PipeTransmissionMode.Message;
+                for (int count = 0; count < 8; count++) {
+                    _pipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation);
+                    try {
+                        _pipe.Connect(600);
+                        _pipe.ReadMode = PipeTransmissionMode.Message;
+                        break;
+                    } catch {
+                        _pipe = null;
+                    }
                 }
-                catch {
-                    _pipe = null;
+
+                if( _pipe == null ) {
                     throw new CoAppException("Unable to connect to CoApp Service");
                 }
 
@@ -174,12 +185,16 @@ namespace CoApp.Toolkit.Engine.Client {
 
         public void Disconnect() {
             lock (this) {
-                if (_pipe != null) {
-                    var pipe = _pipe;
-                    _pipe = null;
-                    pipe.Close();
-                    pipe.Dispose();
-                    IsDisconnected.Set();
+                try {
+                    if (_pipe != null) {
+                        var pipe = _pipe;
+                        _pipe = null;
+                        pipe.Close();
+                        pipe.Dispose();
+                        IsDisconnected.Set();
+                    }
+                } catch {
+                    // just close it!
                 }
             }
         }
@@ -650,6 +665,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     break;
 
                 case "installed-package":
+                    EnvironmentUtility.BroadcastChange();
                     PackageManagerMessages.Invoke.InstalledPackage(responseMessage["canonical-name"]);
                     break;
 
@@ -675,7 +691,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 case "operation-cancelled":
                     PackageManagerMessages.Invoke.OperationCancelled(responseMessage["message"]);
-                    break;
+                    return false;
 
                 case "operation-requires-permission":
                     PackageManagerMessages.Invoke.PermissionRequired(responseMessage["policy-required"]);

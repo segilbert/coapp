@@ -33,8 +33,17 @@ namespace CoApp.Toolkit.Engine {
 
         private static readonly Lazy<ServiceController> _controller = new Lazy<ServiceController>(() => new ServiceController(CoAppServiceName));
 
+        // some dumbass thought that they should just return the last value, forcing developers to 'refresh' to get the current value. 
+        // Not quite sure WHY THIS EVER SOUNDED LIKE A GOOD IDEA!? IF I WANTED THE LAST F$(*&%^*ING VALUE, I'D HAVE CACHED IT MYSELF DUMBASS!
+        public static ServiceControllerStatus Status { get {
+            _controller.Value.Refresh();
+            return _controller.Value.Status; 
+        }}
+
         public static bool IsServiceRunning {
-            get { return IsServiceInstalled && _controller.Value.Status == ServiceControllerStatus.Running; }
+            get {
+                return IsServiceInstalled && Status == ServiceControllerStatus.Running;
+            }
         }
 
         public static void TryToStopService() {
@@ -42,7 +51,7 @@ namespace CoApp.Toolkit.Engine {
                 throw new UnableToStopServiceException("{0} is not installed".format(CoAppServiceName));
             }
 
-            if (_controller.Value.Status != ServiceControllerStatus.Stopped && _controller.Value.CanStop) {
+            if (Status != ServiceControllerStatus.Stopped && _controller.Value.CanStop) {
                 _controller.Value.Stop();
             }
         }
@@ -55,7 +64,7 @@ namespace CoApp.Toolkit.Engine {
 
             Logger.Warning("==[Trying to start Win32 Service]==");
 
-            switch (_controller.Value.Status) {
+            switch (Status) {
                 case ServiceControllerStatus.ContinuePending:
                     Logger.Warning("==[State:Continuing]==");
                     // wait for it to continue.
@@ -64,12 +73,12 @@ namespace CoApp.Toolkit.Engine {
                     }
                     catch (TimeoutException) {
                         throw new UnableToStartServiceException(
-                            "Service is in the '{0}' state, and didn't respond before timing out.".format(_controller.Value.Status.ToString()));
+                            "Service is in the '{0}' state, and didn't respond before timing out.".format(Status.ToString()));
                     }
-                    if (_controller.Value.Status != ServiceControllerStatus.Running) {
+                    if (Status != ServiceControllerStatus.Running) {
                         if (secondAttempt) {
                             throw new UnableToStartServiceException(
-                                "Service is in the '{0}' state, and was expected to be in the 'Running' state.".format(_controller.Value.Status.ToString()));
+                                "Service is in the '{0}' state, and was expected to be in the 'Running' state.".format(Status.ToString()));
                         }
                         TryToStartService(true);
                     }
@@ -81,15 +90,15 @@ namespace CoApp.Toolkit.Engine {
                     }
                     catch (TimeoutException) {
                         throw new UnableToStartServiceException(
-                            "Service is in the '{0}' state, and didn't respond before timing out.".format(_controller.Value.Status.ToString()));
+                            "Service is in the '{0}' state, and didn't respond before timing out.".format(Status.ToString()));
                     }
-                    if (_controller.Value.Status == ServiceControllerStatus.Paused) {
+                    if (Status == ServiceControllerStatus.Paused) {
                         TryToStartService();
                     }
-                    if (_controller.Value.Status != ServiceControllerStatus.Running) {
+                    if (Status != ServiceControllerStatus.Running) {
                         if (secondAttempt) {
                             throw new UnableToStartServiceException(
-                                "Service is in the '{0}' state, and was expected to be in the 'Running' state.".format(_controller.Value.Status.ToString()));
+                                "Service is in the '{0}' state, and was expected to be in the 'Running' state.".format(Status.ToString()));
                         }
                         TryToStartService(true);
                     }
@@ -103,7 +112,7 @@ namespace CoApp.Toolkit.Engine {
                     catch (TimeoutException) {
                         if (secondAttempt) {
                             throw new UnableToStartServiceException(
-                                "Service is in the '{0}' state, and didn't respond before timing out.".format(_controller.Value.Status.ToString()));
+                                "Service is in the '{0}' state, and didn't respond before timing out.".format(Status.ToString()));
                         }
                         TryToStartService(true);
                     }
@@ -122,7 +131,7 @@ namespace CoApp.Toolkit.Engine {
                     catch (TimeoutException) {
                         if (secondAttempt) {
                             throw new UnableToStartServiceException(
-                                "Service is in the '{0}' state, and didn't respond before timing out.".format(_controller.Value.Status.ToString()));
+                                "Service is in the '{0}' state, and didn't respond before timing out.".format(Status.ToString()));
                         }
                         TryToStartService(true);
                     }
@@ -135,15 +144,15 @@ namespace CoApp.Toolkit.Engine {
                     }
                     catch (TimeoutException) {
                         throw new UnableToStartServiceException(
-                            "Service is in the '{0}' state, and didn't respond before timing out.".format(_controller.Value.Status.ToString()));
+                            "Service is in the '{0}' state, and didn't respond before timing out.".format(Status.ToString()));
                     }
-                    if (_controller.Value.Status == ServiceControllerStatus.Stopped) {
+                    if (Status == ServiceControllerStatus.Stopped) {
                         TryToStartService();
                     }
-                    if (_controller.Value.Status != ServiceControllerStatus.Running) {
+                    if (Status != ServiceControllerStatus.Running) {
                         if (secondAttempt) {
                             throw new UnableToStartServiceException(
-                                "Service is in the '{0}' state, and was expected to be in the 'Running' state.".format(_controller.Value.Status.ToString()));
+                                "Service is in the '{0}' state, and was expected to be in the 'Running' state.".format(Status.ToString()));
                         }
                         TryToStartService(true);
                     }
@@ -158,7 +167,7 @@ namespace CoApp.Toolkit.Engine {
                     catch (TimeoutException) {
                         if (secondAttempt) {
                             throw new UnableToStartServiceException(
-                                "Service is in the '{0}' state, and didn't respond before timing out.".format(_controller.Value.Status.ToString()));
+                                "Service is in the '{0}' state, and didn't respond before timing out.".format(Status.ToString()));
                         }
                         TryToStartService(true);
                     }
@@ -166,7 +175,7 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        public static bool IsServiceResponding {
+        public static bool IsEngineResponding {
             get {
                 lock (typeof (EngineServiceManager)) {
                     Logger.Warning("==[Checking For Process]==");
@@ -213,7 +222,7 @@ namespace CoApp.Toolkit.Engine {
                             Thread.Sleep(20);
                         }
                     }
-                    if (!IsServiceResponding) {
+                    if (!IsEngineResponding) {
                         // it's probably one started interactively before...
                         TryToRunServiceInteractively();
                     }
@@ -221,11 +230,16 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 if (IsServiceInstalled) {
-                    if (IsServiceRunning) {
-                        if (!IsServiceResponding) {
+                    if (IsProcessRunning) {
+                        if (!IsEngineResponding) {
                             // service is installed & running, but not responding. 
                             // let the client deal with it.
-                            throw new UnableToStartServiceException("Service is installed & running, but not responding to it's pipe.");
+                            try {
+                                // it's not running. try to make it go!
+                                TryToStartService();
+                            } catch {
+                                throw new UnableToStartServiceException("Service is installed & running, but not responding to it's pipe.");
+                            }
                         }
                         return; // it's running!
                     }
@@ -239,7 +253,7 @@ namespace CoApp.Toolkit.Engine {
                 }
 
                 // wouldn't/couldn't start. 
-                if (!IsServiceResponding) {
+                if (!IsEngineResponding) {
                     // Hmm. We've got to a point where the service isn't running, can seem to start it.
                     // its possible that we've gotten here because this is the first time 
                     // that CoApp is run, and we're just not installed yet.
@@ -247,17 +261,17 @@ namespace CoApp.Toolkit.Engine {
                     // lets find the service exe and ask it to install and start itself.
                     if (!IsServiceInstalled) {
                         InstallAndStartService();
-                        if (IsServiceResponding) {
+                        if (IsEngineResponding) {
                             return;
                         }
 
-                        if (!IsServiceResponding) {
+                        if (!IsEngineResponding) {
                             // NOTE TODO REMOVE FOR RELEASE it's probably one started interactively before...
                             TryToRunServiceInteractively();
 
                         }
 
-                        if (!IsServiceResponding) {
+                        if (!IsEngineResponding) {
                             // Tried to install it, and it still didn't work?
                             throw new UnableToStartServiceException("Couldn't start the service in any manner.");
                         }
@@ -307,7 +321,7 @@ namespace CoApp.Toolkit.Engine {
             Logger.Warning("==[Starting Service '" + file + "' Interactively]==");
             var process = Process.Start(file, "--interactive");
             Thread.Sleep(500);
-            var isRunning = IsServiceResponding;
+            var isRunning = IsEngineResponding;
         }
 
     }

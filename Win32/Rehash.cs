@@ -77,14 +77,20 @@ namespace CoApp.Toolkit.Win32 {
             // load the rehash dll into the target processes
             if( processes.Any()) {
                 foreach( var proc in processes ) {
+                    Logger.Message("Rehash: Going to rehash pid:{0} -- '{1}'",proc.Id, processName);
                     DoRehash(proc.Id);
                 }
             }
 
             // signal rehash to proceed.
-            Kernel32.SetEvent(_globalResetEvent);
+           
             Task.Factory.StartNew(() => {
-                Thread.Sleep(1500); // give everyone a chance to wake up and do their job
+                Logger.Message("Rehash: Waiting to trigger Global Event");
+                Thread.Sleep(2000);
+                Logger.Message("Rehash: Trigger Global Event");
+                Kernel32.SetEvent(_globalResetEvent);
+                Thread.Sleep(3000); // give everyone a chance to wake up and do their job
+                Logger.Message("Rehash: Resetting Global Event");
                 Kernel32.ResetEvent(_globalResetEvent);
             });
         }
@@ -166,12 +172,20 @@ namespace CoApp.Toolkit.Win32 {
             Kernel32.FlushInstructionCache(processHandle, IntPtr.Zero, 0);
 
             // tell the remote process to load our DLL (which does the actual rehash!)
-            if (Kernel32.CreateRemoteThread(processHandle, IntPtr.Zero, 0, fnLoadLibrary, remoteMemory, CreateRemoteThreadFlags.None , out threadId).IsInvalid) {
-                Logger.Error("Rehash: Can't create remote thread in pid:{0}", processId);
-                return false;
+            if (WindowsVersionInfo.IsVistaOrBeyond) {
+                if( 0 != Ntdll.RtlCreateUserThread(processHandle, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, fnLoadLibrary, remoteMemory, out threadId, IntPtr.Zero) ) {
+                    Logger.Error("Rehash: Can't create remote thread (via RtlCreateUserThread) in pid:{0}", processId);
+                    return false;
+                }
+            } else {
+                if (
+                    Kernel32.CreateRemoteThread(processHandle, IntPtr.Zero, 0, fnLoadLibrary, remoteMemory, CreateRemoteThreadFlags.None, out threadId).
+                        IsInvalid) {
+                    Logger.Error("Rehash: Can't create remote thread in pid:{0}", processId);
+                    return false;
+                }
             }
             Logger.Warning("Rehash: Success with pid:{0}", processId);
-           
             return true;
         }
     }

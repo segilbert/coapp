@@ -21,5 +21,9 @@ namespace CoApp.Toolkit.Win32 {
 
         [DllImport("ntdll.dll", CallingConvention = CallingConvention.StdCall)]
         public static extern UInt32 RtlReleasePrivilege(IntPtr ReturnedState);
+
+        [DllImport("ntdll.dll")]
+        //public static extern UInt32 RtlCreateUserThread(SafeProcessHandle processHandle, IntPtr lpThreadSecurity, bool createSuspended, int stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, out uint threadId, out IntPtr clientId);
+        public static extern UInt32 RtlCreateUserThread(SafeProcessHandle processHandle, IntPtr lpThreadSecurity, bool createSuspended, int stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, out uint threadId, IntPtr clientId);
     }
 }

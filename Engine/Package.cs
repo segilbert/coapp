@@ -255,16 +255,16 @@ namespace CoApp.Toolkit.Engine {
                 PackageHandler.Install(this, progress);
                 IsInstalled = true;
                 
-                Logger.Error("MSI Install of package [{0}] SUCCEEDED.", CanonicalName );
+                Logger.Message("MSI Install of package [{0}] SUCCEEDED.", CanonicalName );
 
                 if (Version > currentVersion) {
                     SetPackageCurrent();
                     DoPackageComposition(true);
-                    Logger.Error("Set Current Version [{0}] SUCCEEDED.", CanonicalName);
+                    Logger.Message("Set Current Version [{0}] SUCCEEDED.", CanonicalName);
                 }
                 else {
                     DoPackageComposition(false);
-                    Logger.Error("Package Composition [{0}] SUCCEEDED.", CanonicalName);
+                    Logger.Message("Package Composition [{0}] SUCCEEDED.", CanonicalName);
                 }
                 if( PackageSessionData.IsClientSpecified ) {
                     IsRequired = true;
@@ -326,9 +326,9 @@ namespace CoApp.Toolkit.Engine {
                 EnvironmentUtility.PowershellModulePath = EnvironmentUtility.PowershellModulePath.Prepend(psPath);
                 changed = true;
             }
-            if( changed ) {
+            //if( changed ) {
                 EnvironmentUtility.BroadcastChange();
-            }
+            //}
         }
 
         #region Package Composition 
@@ -381,15 +381,18 @@ namespace CoApp.Toolkit.Engine {
                         return @"${apps}\${productname}";
 
                     case "publishername":
+                    case "publisher":
                         return PublisherDirectory;
 
                     case "productname":
+                    case "packagename":
                         return Name;
 
                     case "version" :
                         return Version.UInt64VersiontoString();
 
                     case "arch" :
+                    case "architecture":
                         return Architecture;
 
                     case "cosmeticname" :
@@ -456,6 +459,7 @@ namespace CoApp.Toolkit.Engine {
 
                 if (Directory.Exists(dir) && (makeCurrent || !Directory.Exists(link))) {
                     try {
+                        Logger.Message("Creatign Directory Symlink [{0}] => [{1}]", link, dir);
                         Symlink.MakeDirectoryLink(link, dir);
                     }
                     catch (Exception) {
@@ -473,6 +477,7 @@ namespace CoApp.Toolkit.Engine {
                     }
 
                     try {
+                        Logger.Message("Creating file Symlink [{0}] => [{1}]", link, file);
                         Symlink.MakeFileLink(link, file);
                     }
                     catch (Exception) {
@@ -487,6 +492,7 @@ namespace CoApp.Toolkit.Engine {
 
                 if (File.Exists(target) && (makeCurrent || !File.Exists(link))) {
                     if (!Directory.Exists(Path.GetDirectoryName(link))) {
+                        Logger.Message("Creating Shortcut [{0}] => [{1}]", link, target);
                         Directory.CreateDirectory(Path.GetDirectoryName(link));
                     }
 

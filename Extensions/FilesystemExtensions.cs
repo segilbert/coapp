@@ -84,7 +84,7 @@ namespace CoApp.Toolkit.Extensions {
         private static List<string> _disposableFilenames = new List<string>();
 
         public static void RemoveTemporaryFiles() {
-            foreach (var f in _disposableFilenames.Where(File.Exists)) {
+            foreach (var f in _disposableFilenames.ToArray().Where(File.Exists)) {
                 f.TryHardToDeleteFile();
             }
         }
@@ -111,7 +111,7 @@ namespace CoApp.Toolkit.Extensions {
                 if( !string.IsNullOrEmpty(ext) ) {
                     ext = Path.GetExtension(p);
                 }
-                p = Path.Combine(Path.GetDirectoryName(p), Path.GetFileNameWithoutExtension(p) + "." + Path.GetFileNameWithoutExtension(filename) + ext);
+                p = Path.Combine(Path.GetDirectoryName(p), Path.GetFileNameWithoutExtension(p) + DateTime.Now.Ticks + "." + Path.GetFileNameWithoutExtension(filename) + ext);
             }
             
             if (File.Exists(p)) {
@@ -538,7 +538,7 @@ namespace CoApp.Toolkit.Extensions {
                 try {
                     // move the file to the tmp folder (which can be done even if locked)
                     // and tell the OS to remove it next reboot.
-                    var tmpFilename = Path.GetTempFileName();
+                    var tmpFilename = filename.GenerateTemporaryFilename();
                     File.Delete(tmpFilename);
                     File.Move(filename, tmpFilename);
                     Kernel32.MoveFileEx(File.Exists(tmpFilename) ? tmpFilename : filename, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
@@ -559,7 +559,7 @@ namespace CoApp.Toolkit.Extensions {
             filename = filename.GetFullPath();
 
             if (File.Exists(filename)) {
-                var tmpFilename = Path.GetTempFileName();
+                var tmpFilename = filename.GenerateTemporaryFilename();
                 File.Delete(tmpFilename);
                 File.Move(filename, tmpFilename);
                 File.Copy(tmpFilename, filename);
@@ -574,7 +574,7 @@ namespace CoApp.Toolkit.Extensions {
         public static string CreateBackupWorkingCopy(this string filename) {
             filename = filename.GetFullPath();
             if (File.Exists(filename)) {
-                var tmpFilename = Path.GetTempFileName();
+                var tmpFilename = filename.GenerateTemporaryFilename();
                 File.Delete(tmpFilename);
                 File.Copy(filename, tmpFilename);
                 return tmpFilename;
@@ -602,7 +602,7 @@ namespace CoApp.Toolkit.Extensions {
                 try {
                     // move the folder to the tmp folder (which can be done even if locked)
                     // and tell the OS to remove it next reboot.
-                    var tmpFilename = Path.GetTempFileName();
+                    var tmpFilename = directoryName.GenerateTemporaryFilename();
                     File.Delete(tmpFilename);
                     Directory.Move(directoryName, tmpFilename);
                     Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : directoryName, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
