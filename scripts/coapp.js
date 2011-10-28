@@ -60,46 +60,52 @@ var CoApp = {
     SignBinary: function (binaries) {
         var filenames = (typeof (binaries) == typeof ([])) ? binaries : [binaries];
 
+        var list = "";
+        
         for (var i = 0; i < filenames.length; i++) {
             var filename = filenames[i];
             if (!exists(filename)) {
                 return Assert.Fail("Can't sign binary '{0}' --does not exist", filename);
             }
-
+            
             print("Siging {0}", filename);
-            $$('"{0}" --sign-only "{1}"', this.$SIMPLESIGNER(), filename);
+            list = list + '"' + filename + '" ';
+        }
+        
+        $$('"{0}" --sign-only {1}', this.$SIMPLESIGNER(), list);
 
-            if ($ERRORLEVEL) {
-                for (var each in $StdOut) {
-                    print($StdOut[each]);
-                }
-                return Assert.Fail("Failed signing binary '{0}' ", filename);
-            } else {
-                print("   [SUCCESS]");
+        if ($ERRORLEVEL) {
+            for (var each in $StdOut) {
+                print($StdOut[each]);
             }
-
+            return Assert.Fail("Failed signing binary ..");
+        } else {
+            print("   [SUCCESS]");
         }
     },
 
     StrongNameBinary: function (binaries) {
         var filenames = (typeof (binaries) == typeof ([])) ? binaries : [binaries];
 
+        var list = "";
+        
         for (var i = 0; i < filenames.length; i++) {
             var filename = filenames[i];
             if (!exists(filename)) {
                 return Assert.Fail("Can't strong-name binary '{0}' --does not exist", filename);
             }
             print("Strong Naming {0}", filename);
-            $$('"{0}" "{1}"', this.$SIMPLESIGNER(), filename);
-            if ($ERRORLEVEL) {
-                for (var each in $StdOut) {
-                    print($StdOut[each]);
-                }
-                return Assert.Fail("Failed strong-naming binary '{0}' ", filename);
-            } else {
-                print("   [SUCCESS]");    
+            list = list + '"' + filename + '" ';
+        }
+        
+        $$('"{0}" {1}', this.$SIMPLESIGNER(), list);
+        if ($ERRORLEVEL) {
+            for (var each in $StdOut) {
+                print($StdOut[each]);
             }
-
+            return Assert.Fail("Failed strong-naming binary");
+        } else {
+            print("   [SUCCESS]");    
         }
     },
 
