@@ -54,7 +54,7 @@
                     for (var i = 0; i < 100 && !_ready; i++) {
                         Thread.Sleep(50);
                     }
-                    // go ahead and try, but don't whine if this gets dropped.
+                    // go ahead and try, but don't whine if this gets dropped. 
                     try {
                         _eventLog.WriteEntry(message, type, eventID, category, rawData);
                     } catch {
@@ -67,17 +67,17 @@
 
             // we're gonna output this to dbgview too for now.
             if (eventID == 0 && category == 0) {
-                OutputDebugString(string.Format("<{0}/{1}>-{2}", Source, type, message));
+                OutputDebugString(string.Format("«{0}/{1}»-{2}", Source, type, message.Replace("\r\n", "\r\n»")));
             } else {
-                OutputDebugString(string.Format("<{0}/{1}>({2}/{3})-{4}", Source, type, eventID, category, message));
+                OutputDebugString(string.Format("«{0}/{1}»({2}/{3})-{4}", Source, type, eventID, category, message.Replace("\r\n", "\r\n»")));
             }
             
             if( rawData != null && rawData.Length > 0  ) {
                 var rd = Encoding.UTF8.GetString(rawData);
                 if( !string.IsNullOrEmpty(rd) && rd.Length < 2048 ) {
-                    OutputDebugString("   RawData:"+rd);
+                    OutputDebugString("   »RawData:" + rd);
                 } else {
-                    OutputDebugString("   RawData is [] bytes" + rawData.Length);
+                    OutputDebugString("   »RawData is [] bytes" + rawData.Length);
                 }
             }
         } 

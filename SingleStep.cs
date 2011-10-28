@@ -440,6 +440,18 @@ namespace CoApp.Bootstrapper {
                         var result = NativeMethods.MsiInstallProduct(file, String.Format(@"TARGETDIR=""{0}\.installed\"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", CoAppRootFolder.Value));
                         ActualPercent = 100;  // if the UI has not shown, it will try short circuit in the window constructor.
 
+                        try {
+                            var CoAppCacheFolder = Path.Combine(CoAppRootFolder.Value, ".cache");
+                            Directory.CreateDirectory(CoAppCacheFolder);
+
+                            var cachedPath = Path.Combine(CoAppCacheFolder, MsiCanonicalName + ".msi");
+                            if (!File.Exists(cachedPath)) {
+                                File.Copy(file, cachedPath);
+                            }
+                        } catch(Exception e) {
+                            Logger.Error(e);
+                        }
+
                         // set the ui hander back to nothing.
                         NativeMethods.MsiSetExternalUI(null, 0x400, IntPtr.Zero);
                         Logger.Warning("Done Installing MSI.");
@@ -507,6 +519,8 @@ namespace CoApp.Bootstrapper {
             return Cancelling ? 2 : 1;
         }
 
+
+        private static string MsiCanonicalName;
         internal static bool IsCoAppToolkitMSI(string filename) {
             if (!ValidFileExists(filename)) {
                 return false;
@@ -519,11 +533,17 @@ namespace CoApp.Bootstrapper {
                 int hProduct;
                 if (NativeMethods.MsiOpenPackageEx(filename, 1, out hProduct) == 0) {
                     var sb = new StringBuilder(1024);
+                    
                     uint size = 1024;
                     NativeMethods.MsiGetProperty(hProduct, "ProductName", sb, ref size);
+                    
+                    size = 1024;
+                    var sb2 = new StringBuilder(1024);
+                    NativeMethods.MsiGetProperty(hProduct, "CanonicalName ", sb2, ref size);
                     NativeMethods.MsiCloseHandle(hProduct);
 
-                    if (sb.ToString().StartsWith("CoApp.Toolkit-")) {
+                    if (sb.ToString().Equals("CoApp.Toolkit")) {
+                        MsiCanonicalName = sb2.ToString();
                         return true;
                     }
                 }

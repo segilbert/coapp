@@ -105,9 +105,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>REM Sign the bootstrap binaries if possible, and copy them to the solution folder.
-if exist "$(SolutionDir)..\solution\scripts\$(ConfigurationName)-sign-bootstrap.js" cscript //e:jscript "$(SolutionDir)..\solution\scripts\$(ConfigurationName)-sign-bootstrap.js"
-</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
