@@ -37,7 +37,7 @@ namespace CoApp.Bootstrapper {
         [STAThreadAttribute]
         [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
         public static void Main(string[] args) {
-            if (Keyboard.Modifiers == ModifierKeys.Shift) {
+            if (Keyboard.Modifiers == ModifierKeys.Shift || Keyboard.Modifiers == ModifierKeys.Control) {
                 Logger.Errors = true;
                 Logger.Messages = true;
                 Logger.Warnings = true;
@@ -65,7 +65,7 @@ namespace CoApp.Bootstrapper {
 
                     // if this installer is present, this will exit right after.
                     if (IsCoAppInstalled) {
-                        RunInstaller(1);
+                        RunInstaller(true);
                         return;
                     }
 
@@ -83,23 +83,38 @@ namespace CoApp.Bootstrapper {
 
         private static string ExeName {
             get {
-                var target = Assembly.GetEntryAssembly().Location;
-                if (target.EndsWith(".exe", StringComparison.CurrentCultureIgnoreCase)) {
+                var src = Assembly.GetEntryAssembly().Location;
+                if (!src.EndsWith(".exe", StringComparison.CurrentCultureIgnoreCase)) {
+                    var target = Path.Combine(Path.GetTempPath(), "Installer." + Process.GetCurrentProcess().Id + ".exe");
+                    File.Copy(src, target);
                     return target;
                 }
-                // come up with a better EXE name that will work with ShellExecute
-                var fvi = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
-                target = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(String.IsNullOrEmpty(fvi.FileName)
-                    ? (String.IsNullOrEmpty(fvi.ProductName) ? Path.GetFileName(target) : fvi.ProductName) : fvi.FileName) + ".exe");
-                File.Copy(Assembly.GetEntryAssembly().Location, target);
-                return target;
+                return src;
             }
         }
 
+
+        [StructLayoutAttribute(LayoutKind.Sequential)]
+        public struct SidIdentifierAuthority {
+            [MarshalAsAttribute(UnmanagedType.ByValArray,SizeConst = 6,ArraySubType =UnmanagedType.I1)]
+            public byte[] Value;
+        }
+
+        [DllImportAttribute("advapi32.dll", EntryPoint = "AllocateAndInitializeSid")]
+        [return:MarshalAsAttribute(UnmanagedType.Bool)]
+        public static extern bool AllocateAndInitializeSid([In] ref SidIdentifierAuthority pIdentifierAuthority,byte nSubAuthorityCount,uint nSubAuthority0,uint nSubAuthority1,uint nSubAuthority2,uint nSubAuthority3,uint nSubAuthority4,uint nSubAuthority5,int nSubAuthority6,uint nSubAuthority7,out IntPtr pSid);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool CheckTokenMembership(IntPtr TokenHandle, IntPtr SidToCheck, out bool IsMember);
+
         internal static void ElevateSelf(string args) {
             try {
-                // I'm too lazy to check for admin priviliges, lets let the OS figure it out.
-                RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).CreateSubKey(@"Software\CoApp\temp").SetValue("", DateTime.Now.Ticks);
+                var ntAuth = new SidIdentifierAuthority();
+                var psid = IntPtr.Zero;
+                bool isAdmin;
+                if (AllocateAndInitializeSid(ref ntAuth, 2, 0x00000020, 0x00000220, 0, 0, 0, 0, 0, 0, out psid) && CheckTokenMembership(IntPtr.Zero, psid, out isAdmin) && isAdmin) {
+                    return; // yes, we're an elevated admin
+                }
             } catch {
                 try {
                     new Process {
@@ -148,48 +163,131 @@ namespace CoApp.Bootstrapper {
                     return openSubKey.GetValue(valueName).ToString();
                 }
             } catch {
+
             }
             return null;
         }
 
-        internal static void RunInstaller(int path) {
-            Logger.Warning("Running CoApp :" + path);
-            lock (typeof(SingleStep)) {
-                try {
-                    if (MainWindow.MainWin != null) {
-                        MainWindow.MainWin.Visibility = Visibility.Hidden;
-                    }
-                    
+       
+        /// <summary>
+        /// Ok, So I think I need to explain what the hell I'm doing here.
+        /// 
+        /// Once the bootstrapper has got the toolkit actually installed, we want to launch the installer 
+        /// in a new appdomain in the current process.
+        /// 
+        /// Unfortunately, the first run of the engine can take a bit of time to walk thru the list of MSI files
+        /// in the windows/installer directory
+        /// 
+        /// So, we first create the InstallerPrep type in the new AppDomain, and abuse the IComparable interface to 
+        /// get back an int so we can spin on the progress of the engine running thru the MSI files.
+        /// 
+        /// Once that's done, we create the Installer object and exit this process once it's finished whatever its
+        /// doing.
+        /// 
+        /// Yeah, kinda lame, but it saves me from having to define a new interface that both the engine and bootstrapper
+        /// will have. :p
+        /// </summary>
+        /// <param name="bypassingBootstrapUI"></param>
+        /// <returns></returns>
+        internal static void RunInstaller(bool bypassingBootstrapUI) {
+            if (Cancelling) {
+                return;
+            }
+
+            Logger.Warning("Running CoApp (bypassing UI:{0})", bypassingBootstrapUI);
+
+            Logger.Warning("Creating Domain");
+            var appDomain = AppDomain.CreateDomain("tmp" + DateTime.Now.Ticks);
+
+            // stage one: ensure the engine is running, and make sure that it's finshed warming up.
+            IComparable prep = null;
+
 #if DEBUG
-                var localAssembly = AcquireFile("CoApp.Toolkit.Engine.Client.dll");
-                Logger.Message("Local Assembly: " + localAssembly);
-                if (!string.IsNullOrEmpty(localAssembly)) {
-                    // use the one found locally.
-                    AppDomain.CreateDomain("tmp" + DateTime.Now.Ticks).CreateInstanceFromAndUnwrap( localAssembly, "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] {MsiFilename}, null, null);
-                    // if it didn't throw here, we can assume that the CoApp service is running, and we can get to our assembly.
-                    Logger.Warning("Done Creating (local) Appdomain");
-                    Logger.Warning("Exiting!");
-                    Environment.Exit(0);
-                }
+            var localAssembly = AcquireFile("CoApp.Toolkit.Engine.Client.dll");
+            Logger.Message("Local Assembly: " + localAssembly);
+            if (!string.IsNullOrEmpty(localAssembly)) {
+                // use the one found locally.
+                prep =
+                    appDomain.CreateInstanceFromAndUnwrap(localAssembly, "CoApp.Toolkit.Engine.Client.InstallerPrep", false, BindingFlags.Default, null, null,
+                        null, null) as IComparable;
+                // if it didn't throw here, we can assume that the CoApp service is running, and we can get to our assembly.
+                Logger.Warning("Done Creating (local) Appdomain");
+            }
 #endif
+            // if we didn't create one with the local assembly (debug)
+            if (prep == null) {
+                prep =
+                    appDomain.CreateInstanceAndUnwrap("CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857",
+                        "CoApp.Toolkit.Engine.Client.InstallerPrep", false, BindingFlags.Default, null, null, null, null) as IComparable;
+            }
 
-                Logger.Warning("Creating Domain:" + path);
-                    // use strong named assembly
-                    AppDomain.CreateDomain("tmp" + DateTime.Now.Ticks).CreateInstanceAndUnwrap(
-                        "CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857",
-                        "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] { MsiFilename }, null, null);
+            // if it didn't work!
+            if (prep == null) {
+                MainWindow.Fail(LocalizedMessage.IDS_UNABLE_TO_LOCATE_INSTALLER_UI, "CoApp Installer Failed to start up correctly");
+                return; // this will kick off the main window if we were bypassing the UI.
+            }
 
-                    // since we've done everything we need to do, we're out of here. Right Now.
-                    Logger.Warning("Exiting:" + path);
-
-                    if( Application.Current != null ) {
-                        Application.Current.Shutdown(0);
-                    }
-                    Environment.Exit(0);
-                } catch (Exception e) {
-                    Logger.Warning(e);
+            // ok, let's spin while we warm up the engine.
+            // if the UI is showing, it can monitor the progress.
+            var percentReady = 0;
+            while ((percentReady = prep.CompareTo(null)) < 100) {
+                Thread.Sleep(10); // yeah, I'm lazy. Get Bent.
+                ActualPercent = 80+(percentReady/5);
+                if (Cancelling) {
+                    return;
                 }
             }
+            // *try* to get the UI to look done.
+            ActualPercent = 100;
+
+            // engine is now warm. If we're bypassing the UI, then we can jump straight to the Installer.
+            if (bypassingBootstrapUI) {
+                // no gui was involved here.
+                InstallerStageTwo(appDomain);
+                return;
+            }
+
+            // otherwise, we have to hide the bootstrapper, and jump to the installer.
+            MainWindow.WhenReady += () => {
+                MainWindow.MainWin.Visibility = Visibility.Hidden;
+                InstallerStageTwo(appDomain);
+            };
+            Logger.Message("Installer Stage One Complete...");
+        }
+
+        private static void InstallerStageTwo(AppDomain appDomain) {
+            if( Cancelling ) {
+                return;
+            }
+            // stage two: close our bootstrap GUI, and start the Installer in the new AppDomain, 
+            // of course, this has all got to happen on the original thread. *sigh*
+            Logger.Message("Got to Installer Stage Two");
+#if DEBUG
+            var localAssembly = AcquireFile("CoApp.Toolkit.Engine.Client.dll");
+            Logger.Message("Local Assembly: " + localAssembly);
+
+            if (!string.IsNullOrEmpty(localAssembly)) {
+                // use the one found locally.
+                appDomain.CreateInstanceFromAndUnwrap(localAssembly, "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] { MsiFilename }, null, null);
+                // if it didn't throw here, we can assume that the CoApp service is running, and we can get to our assembly.
+                Logger.Warning("Done! Exiting  (debug)");
+                ExitQuick();
+            }
+#endif 
+            // meh. use strong named assembly
+            appDomain.CreateInstanceAndUnwrap( "CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857",
+                "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] { MsiFilename }, null, null);
+
+            // since we've done everything we need to do, we're out of here. Right Now.
+            Logger.Warning("Done! Exiting");
+            ExitQuick();
+        }
+
+        private static void ExitQuick() {
+            if (Application.Current != null) {
+                Application.Current.Shutdown(0);
+            }
+            Environment.Exit(0);
         }
 
         internal static string AcquireFile(string filename, Action<int> progressCompleted = null) {
@@ -403,9 +501,8 @@ namespace CoApp.Bootstrapper {
         internal static void InstallCoApp() {
             InstallTask = Task.Factory.StartNew(() => {
                 try {
-
                     Logger.Warning("Started Toolkit Installer");
-                    Thread.Sleep(4000);
+                    // Thread.Sleep(4000);
                     NativeMethods.MsiSetInternalUI(2, IntPtr.Zero);
                     NativeMethods.MsiSetExternalUI((context, messageType, message) => 1, 0x400, IntPtr.Zero);
 
@@ -435,11 +532,7 @@ namespace CoApp.Bootstrapper {
                         uihandler = UiHandler;
                         NativeMethods.MsiSetExternalUI(uihandler, 0x400, IntPtr.Zero);
 
-                        Logger.Warning("Running MSI");
-                        // install CoApp.Toolkit msi. Don't blink, this can happen FAST!
-                        var result = NativeMethods.MsiInstallProduct(file, String.Format(@"TARGETDIR=""{0}\.installed\"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", CoAppRootFolder.Value));
-                        ActualPercent = 100;  // if the UI has not shown, it will try short circuit in the window constructor.
-
+                        
                         try {
                             var CoAppCacheFolder = Path.Combine(CoAppRootFolder.Value, ".cache");
                             Directory.CreateDirectory(CoAppCacheFolder);
@@ -448,34 +541,44 @@ namespace CoApp.Bootstrapper {
                             if (!File.Exists(cachedPath)) {
                                 File.Copy(file, cachedPath);
                             }
-                        } catch(Exception e) {
+                        }
+                        catch (Exception e) {
                             Logger.Error(e);
                         }
 
+                        Logger.Warning("Running MSI");
+                        // install CoApp.Toolkit msi. Don't blink, this can happen FAST!
+                        var result = NativeMethods.MsiInstallProduct(file, String.Format(@"TARGETDIR=""{0}\.installed\"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", CoAppRootFolder.Value));
+
                         // set the ui hander back to nothing.
                         NativeMethods.MsiSetExternalUI(null, 0x400, IntPtr.Zero);
-                        Logger.Warning("Done Installing MSI.");
+                        InstallTask = null; // after this point, all you can do is exit the installer.
+
+                        Logger.Warning("Done Installing MSI (rc={0}.",result);
 
                         // did we succeed?
                         if (result == 0) {
+                            ActualPercent = 80;  // if the UI has not shown, it will try short circuit in the window constructor.
+
                             // bail if someone has told us to. (good luck!)
                             if (Cancelling) {
                                 return;
                             }
 
-                            if (MainWindow.MainWin != null) {
-                                MainWindow.MainWin.Dispatcher.BeginInvoke((Action)delegate { RunInstaller(4); });
-                            }
-
-                            // if mainwin *is* null, then it's still starting up, and we gotta let it figure out that it's suppose to start the installer.
-                            return;
+                            // we'll not be on the GUI thread when this runs.
+                            RunInstaller(false);
+                        } else {
+                            MainWindow.Fail(LocalizedMessage.IDS_CANT_CONTINUE, "Installation Engine failed to install. o_O");
                         }
-
-                        MainWindow.Fail(LocalizedMessage.IDS_SOMETHING_ODD, "Can't install CoApp Service.");
                     }
-                } finally {
+                } catch( Exception e ) {
+                    Logger.Error(e);
+                    MainWindow.Fail(LocalizedMessage.IDS_SOMETHING_ODD, "This can't be good.");
+                }
+                finally {
                     InstallTask = null;
                 }
+                // if we got to this point, kinda feels like we should be failing
             });
         }
 
@@ -509,7 +612,8 @@ namespace CoApp.Bootstrapper {
             }
 
             if (_currentTotalTicks > 0) {
-                var newPercent = (_currentProgress * 90 / _currentTotalTicks) + 10;
+                // this will only return #s between 10 and 80. The last 20% of progress is for warmup.
+                var newPercent = (_currentProgress * 70 / _currentTotalTicks) + 10;
                 if (ActualPercent < newPercent) {
                     ActualPercent = newPercent;
                 }
@@ -539,7 +643,7 @@ namespace CoApp.Bootstrapper {
                     
                     size = 1024;
                     var sb2 = new StringBuilder(1024);
-                    NativeMethods.MsiGetProperty(hProduct, "CanonicalName ", sb2, ref size);
+                    NativeMethods.MsiGetProperty(hProduct, "CanonicalName", sb2, ref size);
                     NativeMethods.MsiCloseHandle(hProduct);
 
                     if (sb.ToString().Equals("CoApp.Toolkit")) {

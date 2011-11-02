@@ -19,7 +19,7 @@
 
         static Logger() {
             Errors = true;
-            Warnings = false;
+            Warnings = true;
             Messages = true;
 
             Source = "BootstrapperUI";

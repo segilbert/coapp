@@ -52,7 +52,51 @@ namespace CoApp.Bootstrapper {
     ///   Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow {
-        internal static MainWindow MainWin;
+        private static MainWindow _mainwindow ;
+        internal static event Action _mainWindowReady;
+
+        // this allows us to have an event that we can add 
+        // actions to that will always call as soon as the UI is ready
+        // or instantly if the UI is ready now. 
+        
+        public static event Action WhenReady {
+            add {
+                lock (typeof(MainWindow)) {
+                    if (_mainwindow == null) {
+                        _mainWindowReady += value;
+                    } else {
+                        if( _mainwindow.Dispatcher.CheckAccess()) {
+                            value();    
+                        } else {
+                            _mainwindow.Dispatcher.BeginInvoke(value);
+                        }
+                    }
+                }
+            }
+            remove {
+                lock (typeof(MainWindow)) {
+                    if (_mainwindow == null) {
+                        _mainWindowReady -= value;
+                    }
+                }
+            }
+        }
+
+        internal static MainWindow MainWin {
+            get { return _mainwindow; }
+            
+            set {
+                lock (typeof(MainWindow)) {
+                    if (_mainwindow == null) {
+                        _mainwindow = value;
+                        if (_mainWindowReady != null) {
+                            _mainWindowReady();
+                        }
+                    }
+                }
+            }
+        }
+
         private const string HelpUrl = "http://coapp.org/help/";
         public int CurrentProgress { get { return SingleStep.ActualPercent; } set { SingleStep.ActualPercent = value; } }
         
@@ -78,63 +122,50 @@ namespace CoApp.Bootstrapper {
                         logoImage.SetValue(Image.SourceProperty, NativeResources.Value.GetBitmapImage(1202));
                     });
                 }
+                Logger.Warning("Loaded Resources.");
             });
 
-            Logger.Warning("Loaded Resources.");
+            
             // try to short circuit early
-            if( CurrentProgress >= 100 && !SingleStep.Cancelling ) {
-                SingleStep.RunInstaller(2);                // you might as well not even show this.
+            if( CurrentProgress >= 98 && !SingleStep.Cancelling ) {
                 MainWin = this;
                 return;
             }
 
             // after the window is shown...
             Loaded += (o, e) => {
-                //SingleStep.OutputDebugString("Window finally here.");
-                if (CurrentProgress < 80) {
+                // if we're really close to the end, let's not even bother with the progress window.
+                if (CurrentProgress < 95) {
                     Opacity = 1;
-                }
-
-                // try to short circuit before we get far...
-                if (CurrentProgress >= 100) {
-                   SingleStep.RunInstaller(3);
-                   return;
                 }
                 MainWin = this;
             };
         }
 
-   
-
         internal static void Fail(LocalizedMessage message, string messageText) {
             if (!SingleStep.Cancelling) {
-                Task.Factory.StartNew( () => {
+
+                WhenReady+= () => {
                     SingleStep.Cancelling = true;
                     messageText = GetString(message, messageText);
-
-                    while (MainWin == null) {
-                        Thread.Sleep(10);
-                    }
-
-                    MainWin.Dispatcher.Invoke((Action) delegate {
-                        MainWin.containerPanel.Background = new SolidColorBrush(
-                            new Color {
-                                A = 255,
-                                R = 18,
-                                G = 112,
-                                B = 170
-                            });
+                    
+                    MainWin.containerPanel.Background = new SolidColorBrush(
+                        new Color {
+                            A = 255,
+                            R = 18,
+                            G = 112,
+                            B = 170
+                        });
                                 
-                        MainWin.progressPanel.Visibility = Visibility.Collapsed;
-                        MainWin.failPanel.Visibility = Visibility.Visible;
-                        MainWin.messageText.Text = messageText;
-                        MainWin.helpLink.NavigateUri = new Uri(HelpUrl + (message + 100));
-                        MainWin.helpLink.Inlines.Clear();
-                        MainWin.helpLink.Inlines.Add(new Run(HelpUrl + (message + 100)));
-                        MainWin.Visibility = Visibility.Visible;
-                        MainWin.Opacity = 1;
-                    });
-                });
+                    MainWin.progressPanel.Visibility = Visibility.Collapsed;
+                    MainWin.failPanel.Visibility = Visibility.Visible;
+                    MainWin.messageText.Text = messageText;
+                    MainWin.helpLink.NavigateUri = new Uri(HelpUrl + (message + 100));
+                    MainWin.helpLink.Inlines.Clear();
+                    MainWin.helpLink.Inlines.Add(new Run(HelpUrl + (message + 100)));
+                    MainWin.Visibility = Visibility.Visible;
+                    MainWin.Opacity = 1;
+                };
             }
         }
 
@@ -153,8 +184,8 @@ namespace CoApp.Bootstrapper {
                 if( new AreYouSure().ShowDialog() != true ) {
                     SingleStep.Cancelling = true; // prevents any other errors/messages.
                     // wait for MSI to clean up ?
-                    if( SingleStep.InstallTask != null ) {
-                        SingleStep.InstallTask.Wait();
+                    while ( SingleStep.InstallTask != null ) {
+                        SingleStep.InstallTask.Wait(100);
                     }
                     Application.Current.Shutdown();        
                 }
