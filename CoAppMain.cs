@@ -80,6 +80,7 @@ namespace CoApp.CLI {
             return 1;
         }
 
+        private readonly PackageManager _pm = PackageManager.Instance;
         /// <summary>
         /// The (non-static) startup method
         /// </summary>
@@ -242,26 +243,18 @@ namespace CoApp.CLI {
                     return Help();
                 }
 
-
-                Verbose("# Contacting Service...");
-                PackageManager.Instance.Connect("command-line-client", "garrett");
-
-                Verbose("# Waiting for service to respond...");
-                if (!PackageManager.Instance.IsReady.WaitOne(5000)) {
-                    Verbose("# not connected...");
-                    throw new ConsoleException("# Unable to connect to CoApp Service.");
-                }
+                Verbose("# Connecting to Service...");
+                _pm.ConnectAndWait("coapp-cli-client", null, 5000);
+                Verbose("# Connected to Service...");
 
                 if( _verbose) {
-                    PackageManager.Instance.SetLogging(true, true, true);
+                    _pm.SetLogging(true, true, true);
                 }
-
-                Verbose("# Connected to Service...");
 
                 if (command.EndsWith(".msi") && File.Exists(command) && parameters.IsNullOrEmpty()) {
                     // assume install if the only thing given is a filename.
                     task =
-                        PackageManager.Instance.GetPackages(command, _minVersion, _maxVersion, _dependencies , _installed, _active, _required, _blocked, _latest, _location, _forceScan, messages: _messages).
+                        _pm.GetPackages(command, _minVersion, _maxVersion, _dependencies , _installed, _active, _required, _blocked, _latest, _location, _forceScan, messages: _messages).
                             ContinueWith(antecedent => Install(antecedent.Result));
                     return 0;
                 }
@@ -306,7 +299,7 @@ namespace CoApp.CLI {
                     case "list-package":
                     case "list-packages":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => ListPackages(antecedent.Result));
+                            _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => ListPackages(antecedent.Result));
                         break;
 
                     case "-i":
@@ -324,7 +317,7 @@ namespace CoApp.CLI {
                         }
 
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location, _forceScan, messages: _messages).
+                            _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location, _forceScan, messages: _messages).
                                 ContinueWith(antecedent => Install(antecedent.Result));
                         break;
 
@@ -339,7 +332,7 @@ namespace CoApp.CLI {
                             throw new ConsoleException(Resources.RemoveRequiresPackageName);
                         }
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion,_dependencies, true,  _active, _required, _blocked, _latest,_location,_forceScan,  messages: _messages).
+                            _pm.GetPackages(parameters, _minVersion, _maxVersion,_dependencies, true,  _active, _required, _blocked, _latest,_location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Remove(antecedent.Result));
 
                         break;
@@ -373,7 +366,7 @@ namespace CoApp.CLI {
                         // and then see if each one of those can be upgraded.
                         
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, false, _latest ,_location,_forceScan,  messages: _messages).
+                            _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, false, _latest ,_location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Upgrade(antecedent.Result));
                         break;
 
@@ -403,7 +396,7 @@ namespace CoApp.CLI {
                         if (parameters.Count() != 0) {
                             throw new ConsoleException(Resources.TrimErrorMessage);
                         }
-                        task = PackageManager.Instance.GetPackages("*", _minVersion, _maxVersion, _dependencies, true, _active, false, _blocked, _latest, _location,
+                        task = _pm.GetPackages("*", _minVersion, _maxVersion, _dependencies, true, _active, false, _blocked, _latest, _location,
                             _forceScan, messages: _messages).ContinueWith(antecedent => Remove(antecedent.Result));
                         break;
 
@@ -412,7 +405,7 @@ namespace CoApp.CLI {
                     case "activate-package":
                     case "activate-packages":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
+                            _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Activate(antecedent.Result));
 
                         break;
@@ -420,14 +413,14 @@ namespace CoApp.CLI {
                     case "-g":
                     case "get-packageinfo":
                     case "info":
-                        task = PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
+                        task = _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, _installed, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => GetPackageInfo(antecedent.Result));
                         break;
 
                     case "-b":
                     case "block-packages":
                     case "block-package":
                     case "block":
-                        task =PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages). ContinueWith(antecedent => Block(antecedent.Result));
+                        task =_pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages). ContinueWith(antecedent => Block(antecedent.Result));
 
                         break;
 
@@ -435,7 +428,7 @@ namespace CoApp.CLI {
                     case "unblock-packages":
                     case "unblock-package":
                     case "unblock":
-                        task = PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => UnBlock(antecedent.Result));
+                        task = _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).ContinueWith(antecedent => UnBlock(antecedent.Result));
 
                         break;
 
@@ -444,7 +437,7 @@ namespace CoApp.CLI {
                     case "mark-package":
                     case "mark":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
+                            _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => Mark(antecedent.Result));
                         break;
 
@@ -453,7 +446,7 @@ namespace CoApp.CLI {
                     case "unmark-package":
                     case "unmark":
                         task =
-                            PackageManager.Instance.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
+                            _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => UnMark(antecedent.Result));
                         break;
 
@@ -472,7 +465,7 @@ namespace CoApp.CLI {
                 if( _pause == true ) {
                     Console.ReadLine();
                 }
-                PackageManager.Instance.Disconnect();
+                _pm.Disconnect();
                 if (_pause == true) {
                     Console.ReadLine();
                 }
@@ -480,7 +473,7 @@ namespace CoApp.CLI {
             }
             catch (ConsoleException failure) {
                 CancellationTokenSource.Cancel();
-                PackageManager.Instance.Disconnect();
+                _pm.Disconnect();
                 Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
             }
             
@@ -496,7 +489,7 @@ namespace CoApp.CLI {
         }
 
         private Task AddFeed(IEnumerable<string> feeds) {
-            var tasks = feeds.Select(each => PackageManager.Instance.AddFeed(each, false, new PackageManagerMessages {
+            var tasks = feeds.Select(each => _pm.AddFeed(each, false, new PackageManagerMessages {
                 FeedAdded = (f) => { Console.WriteLine("Adding Feed: {0}", f); }
             }.Extend(_messages))).ToArray();
 
@@ -506,7 +499,7 @@ namespace CoApp.CLI {
         }
 
         private Task DeleteFeed(IEnumerable<string> feeds) {
-            var tasks = feeds.Select(each => PackageManager.Instance.RemoveFeed(each, false, new PackageManagerMessages {
+            var tasks = feeds.Select(each => _pm.RemoveFeed(each, false, new PackageManagerMessages {
                 FeedRemoved = (f) => { Console.WriteLine("Feed Removed: {0}", f); }
             }.Extend(_messages))).ToArray();
 
@@ -517,7 +510,7 @@ namespace CoApp.CLI {
 
         private object UnMark(IEnumerable<Package> packages) {
             if (packages.Any()) {
-                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName,required: false)).ToArray();
+                var remoteTasks = packages.Select(package => _pm.SetPackage(package.CanonicalName,required: false)).ToArray();
                 return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
             }
             return null;
@@ -525,7 +518,7 @@ namespace CoApp.CLI {
 
         private object Mark(IEnumerable<Package> packages) {
             if (packages.Any()) {
-                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName,required: true)).ToArray();
+                var remoteTasks = packages.Select(package => _pm.SetPackage(package.CanonicalName,required: true)).ToArray();
                 return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
             }
             return null;
@@ -533,7 +526,7 @@ namespace CoApp.CLI {
 
         private object UnBlock(IEnumerable<Package> packages) {
             if (packages.Any()) {
-                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName, blocked: false)).ToArray();
+                var remoteTasks = packages.Select(package => _pm.SetPackage(package.CanonicalName, blocked: false)).ToArray();
                 return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
             }
             return null;
@@ -541,7 +534,7 @@ namespace CoApp.CLI {
 
         private object Block(IEnumerable<Package> packages) {
             if (packages.Any()) {
-                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName, blocked: true)).ToArray();
+                var remoteTasks = packages.Select(package => _pm.SetPackage(package.CanonicalName, blocked: true)).ToArray();
                 return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
             }
             return null;
@@ -549,7 +542,7 @@ namespace CoApp.CLI {
 
         private Task Activate(IEnumerable<Package> packages) {
             if (packages.Any()) {
-                var remoteTasks = packages.Select(package => PackageManager.Instance.SetPackage(package.CanonicalName, active: true)).ToArray();
+                var remoteTasks = packages.Select(package => _pm.SetPackage(package.CanonicalName, active: true)).ToArray();
                 return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => { });
             }
             return null;
@@ -557,7 +550,7 @@ namespace CoApp.CLI {
 
         private Task GetPackageInfo(IEnumerable<Package> packages) {
             if(packages.Any()) {
-                var remoteTasks = packages.Select(package => PackageManager.Instance.GetPackageDetails(package.CanonicalName, _messages )).ToArray();
+                var remoteTasks = packages.Select(package => _pm.GetPackageDetails(package.CanonicalName, _messages )).ToArray();
                 return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => {
 
                 var length0 = packages.Max(each => Math.Max( Math.Max(each.Name.Length, each.Architecture.Length), each.PublisherName.Length)) + 1;
@@ -613,7 +606,7 @@ namespace CoApp.CLI {
             if (packages.Any()) {
                 var upgrades = new List<Package>();
                 
-                var anyUpgrades = packages.Where(each => each.IsClientRequired).Select(package => PackageManager.Instance.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
+                var anyUpgrades = packages.Where(each => each.IsClientRequired).Select(package => _pm.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
                     PackageInformation = (pkg) => {
                         if (pkg.Version.VersionStringToUInt64() > package.Version.VersionStringToUInt64()) {
                             upgrades.Add(pkg);
@@ -621,7 +614,7 @@ namespace CoApp.CLI {
                     }
                 }.Extend(_messages)));
 
-                var policyUpgrades = packages.Where(each => each.IsDependency).Select(package => PackageManager.Instance.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
+                var policyUpgrades = packages.Where(each => each.IsDependency).Select(package => _pm.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
                     PackageInformation = (pkg) => {
                         if (!pkg.SupercedentPackages.IsNullOrEmpty()) {
                             var pkgToAdd = pkg.SupercedentPackages.Select(Package.GetPackage).MaxElement(each => each.Version.VersionStringToUInt64());
@@ -640,11 +633,29 @@ namespace CoApp.CLI {
             return null;
         }
 
+        public class ActionWaitHandle : EventWaitHandle {
+            private Action _eventHandler;
+            public ActionWaitHandle(Action eventHandler ,  bool initialState = false) : base(initialState, EventResetMode.ManualReset) {
+                _eventHandler = eventHandler;
+                _eventHandler += OnAction;
+            }
+
+            protected void OnAction() {
+                Set();
+            }
+
+            protected override void Dispose(bool explicitDisposing) {
+                _eventHandler -= OnAction;
+                base.Dispose(explicitDisposing);
+            }
+        }
+
         private void WaitForPackageManagerToComplete() {
-            // wait for cancellation token, or service to disconnect
-            WaitHandle.WaitAny(new[] {
-                CancellationTokenSource.Token.WaitHandle, PackageManager.Instance.IsDisconnected, PackageManager.Instance.IsCompleted
-            });
+            using(var disconnected = new ActionWaitHandle(_pm.Disconnected, !_pm.IsConnected)) {
+                using (var lastCall = new ActionWaitHandle(_pm.Completed, _pm.ActiveCalls == 0)) {
+                    WaitHandle.WaitAny(new[] { CancellationTokenSource.Token.WaitHandle, disconnected, lastCall });
+                }
+            }
         }
 
         /// <summary>
@@ -695,7 +706,7 @@ namespace CoApp.CLI {
         }
 
         private Task ListFeeds() {
-            return PackageManager.Instance.ListFeeds(null, null, new PackageManagerMessages {
+            return _pm.ListFeeds(null, null, new PackageManagerMessages {
                 NoFeedsFound = () => { Console.WriteLine("No Feeds Found."); },
                 FeedDetails = (location, lastScanned, isSession, isSuppressed, isValidated) => {
                     Console.WriteLine("Feed: {0}", location);
@@ -713,7 +724,7 @@ namespace CoApp.CLI {
             var failedList = new List<string>();
 
             foreach( var package in parameters ) {
-                PackageManager.Instance.RemovePackage(package.CanonicalName, _force, new PackageManagerMessages {
+                _pm.RemovePackage(package.CanonicalName, _force, new PackageManagerMessages {
                     RemovingPackageProgress= (canonicalName, progress) => {
                         // installation progress
                         ConsoleExtensions.PrintProgressBar("Removing {0}".format(canonicalName), progress);
@@ -765,7 +776,7 @@ namespace CoApp.CLI {
                     foreach (var p in packages) {
                         var package = p;
 
-                        PackageManager.Instance.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, true, new PackageManagerMessages {
+                        _pm.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, true, new PackageManagerMessages {
                             PackageInformation = (pkg) => {
                                 // pretending to install package pkg
                                 pretendList.Add(pkg);
@@ -805,7 +816,7 @@ namespace CoApp.CLI {
                 foreach( var p in packages ) {
                     var package = p;
 
-                    PackageManager.Instance.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, _pretend, new PackageManagerMessages {
+                    _pm.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, _pretend, new PackageManagerMessages {
                         InstallingPackageProgress = (canonicalName, progress, overallProgress ) => {
                             // installation progress
                             ConsoleExtensions.PrintProgressBar("Installing: {0}".format(canonicalName), progress);
