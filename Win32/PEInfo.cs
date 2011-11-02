@@ -308,7 +308,7 @@ namespace CoApp.Toolkit.Win32 {
                         };
                     }
                 }
-                tmpFile.TryHardToDeleteFile();
+                tmpFile.TryHardToDelete();
             }
         }
 

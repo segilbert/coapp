@@ -89,13 +89,6 @@ namespace CoApp.Toolkit.Engine.Client {
 
             // we'll take it from here...
             try {
-                // First, see if the CoApp Service is running. If it's not, let's get it up and running.
-                // this will throw an exception if it's just not possible.
-#if DEBUG
-                EngineServiceManager.EnsureServiceIsResponding(true);
-#else
-                  EngineServiceManager.EnsureServiceIsResponding();
-#endif
                 
                 MsiFilename = filename;
                 InstallTask = Task.Factory.StartNew(StartInstall);
@@ -200,13 +193,8 @@ namespace CoApp.Toolkit.Engine.Client {
 
         private void ConnectToPackageManager() {
             packageManager = PackageManager.Instance;
-
-            if( !packageManager.IsConnected ) {
-                PackageManager.Instance.Connect("PackageInstaller").Wait();
-                // if (verbose) {
-                    packageManager.SetLogging(true, true, true);
-                // }    
-            }
+            PackageManager.Instance.ConnectAndWait("PackageInstaller", null, 5000);    
+            packageManager.SetLogging(true, true, true);
         }
 
         private void InitMessageHandlers() {

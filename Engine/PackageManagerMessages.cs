@@ -48,6 +48,7 @@ namespace CoApp.Toolkit.Engine {
         public Action<string,string> FileNotRecognized;
         public Action<string> Recognized;
         public Action<string> OperationCancelled;
+        public Action<int> EngineStatus;
         public Action<Exception> UnexpectedFailure;
         public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
         public Action<Package> UnableToDownloadPackage;

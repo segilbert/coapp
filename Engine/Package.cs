@@ -566,7 +566,7 @@ namespace CoApp.Toolkit.Engine {
                 let link = this.ResolveVariables(rule.Link).GetFullPath()
                 where ShellLink.PointsTo(link, target)
                 select link) {
-                link.TryHardToDeleteFile();
+                link.TryHardToDelete();
             }
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)

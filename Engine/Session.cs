@@ -20,6 +20,7 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading;
     using System.Threading.Tasks;
     using Extensions;
+    using Feeds;
     using Logging;
     using Pipes;
     using Tasks;
@@ -631,6 +632,24 @@ namespace CoApp.Toolkit.Engine {
                     }
                     return "Unable to Stop Service".AsResultTask();
 
+
+                case "get-engine-status" :
+                    return Task.Factory.StartNew(() => {
+                        // at this point the only thing we are monitoring is the InstalledPackagesFeed.
+                        new PackageManagerMessages {
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages).Register();
+
+                        var percent = 0;
+                        do {
+                            Thread.Sleep(10);
+                            var p = InstalledPackageFeed.Instance.Progress;
+                            if( p > percent) {
+                                percent =p ;
+                                WriteAsync(new UrlEncodedMessage("engine-status") { { "percent-complete", percent }, });
+                            }
+                        } while (percent < 100);
+                    });
 
                 case "set-logging" :
                     try {

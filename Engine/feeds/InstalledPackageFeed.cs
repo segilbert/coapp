@@ -40,20 +40,20 @@ namespace CoApp.Toolkit.Engine.Feeds {
             }
         }
 
+        public int Progress { get; set; }
 
         protected void Scan() {
             if (!Scanned) {
                 LastScanned = DateTime.Now;
 
-                var installedFiles = MSIBase.InstalledMSIFilenames.ToArray();
-
                 // add the cached package directory, 'cause on backlevel platform, they taint the MSI in the installed files folder.
-                installedFiles = installedFiles.Union(PackageManagerSettings.CoAppCacheDirectory.FindFilesSmarter("*.msi")).ToArray();
+                var installedFiles = MSIBase.InstalledMSIFilenames.Union(PackageManagerSettings.CoAppCacheDirectory.FindFilesSmarter("*.msi")).ToArray();
                 
                 for (var i = 0; i < installedFiles.Length;i++ ) {
                     var packageFilename = installedFiles[i];
 
-                    PackageManagerMessages.Invoke.ScanningPackagesProgress(packageFilename,  ((i) * 100) / installedFiles.Length);
+                    Progress = (i*100)/installedFiles.Length;
+                    PackageManagerMessages.Invoke.ScanningPackagesProgress(packageFilename,  Progress);
 
                     var lookup = File.GetCreationTime(packageFilename).Ticks + packageFilename.GetHashCode();
 
@@ -63,7 +63,10 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     }
 
                     try {
-                        _packageList.Add( Package.GetPackageFromFilename(packageFilename) );
+                        var pkg = Package.GetPackageFromFilename(packageFilename);
+                        if (pkg.IsInstalled) {
+                            _packageList.Add(pkg);
+                        }
                     }  catch /* (Exception e) */ {
                         // Console.WriteLine(e.Message);
                         // files that fail aren't coapp packages. 
@@ -73,7 +76,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 }
                 
                 SaveCache();
-
+                Progress = 100;
                 Scanned = true;
             }
         }

@@ -57,7 +57,7 @@ namespace CoApp.Toolkit.Win32 {
                             }
                         }
                         // hmm. This dont' look like the one that we want 
-                        dllFilename.TryHardToDeleteFile();
+                        dllFilename.TryHardToDelete();
                     }
 
                      // rewind the stream
@@ -85,12 +85,10 @@ namespace CoApp.Toolkit.Win32 {
             // signal rehash to proceed.
            
             Task.Factory.StartNew(() => {
-                Logger.Message("Rehash: Waiting to trigger Global Event");
-                Thread.Sleep(2000);
-                Logger.Message("Rehash: Trigger Global Event");
+                Thread.Sleep(1000);
+                Logger.Message("Rehash: Triggering Global Event");
                 Kernel32.SetEvent(_globalResetEvent);
-                Thread.Sleep(3000); // give everyone a chance to wake up and do their job
-                Logger.Message("Rehash: Resetting Global Event");
+                Thread.Sleep(1000); // give everyone a chance to wake up and do their job
                 Kernel32.ResetEvent(_globalResetEvent);
             });
         }

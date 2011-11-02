@@ -75,7 +75,7 @@ namespace CoApp.Toolkit.Win32 {
             }
 
             if (File.Exists(linkPath)) {
-                linkPath.TryHardToDeleteFile();
+                linkPath.TryHardToDelete();
             }
 
             Kernel32.CreateHardLink(linkPath, actualFilePath, IntPtr.Zero);
@@ -158,11 +158,11 @@ namespace CoApp.Toolkit.Win32 {
                 if (File.Exists(linkPath)) {
                     string canonicalFilePath;
                     var alternates = GetAlternateStreamData(linkPath, out canonicalFilePath).ToList();
-                    linkPath.TryHardToDeleteFile();
+                    linkPath.TryHardToDelete();
                     SetAlternateStreamData(canonicalFilePath, alternates);
                 }
                 else if (Directory.Exists(linkPath)) {
-                    linkPath.TryHardToDeleteDirectory();
+                    linkPath.TryHardToDelete();
                 }
             }
             else {

@@ -24,7 +24,7 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 if (File.Exists(targetFilename)) {
                     if (forceDownload) {
-                        targetFilename.TryHardToDeleteFile();
+                        targetFilename.TryHardToDelete();
                     }
                     else {
                         PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, "<file exists>",
@@ -59,7 +59,7 @@ namespace CoApp.Toolkit.Engine.Client {
                                 },
                                 Failed = (itemUri) => {
                                     if (File.Exists(targetFilename)) {
-                                        targetFilename.TryHardToDeleteFile();
+                                        targetFilename.TryHardToDelete();
                                         if( remoteFileMessages != null ) {
                                             remoteFileMessages.Failed(itemUri);
                                         }

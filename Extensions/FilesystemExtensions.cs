@@ -24,11 +24,15 @@ namespace CoApp.Toolkit.Extensions {
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
-#if ! COAPP_ENGINE_CORE 
+#if ! COAPP_ENGINE_CORE
+    using Logging;
     using Properties;
 #endif
     using Exceptions;
+    using Logging;
+    using Microsoft.Win32;
     using Win32;
+    using RegistryView = Configuration.RegistryView;
 
     /// <summary>
     /// Functions related to handling things regarding files and filesystems.
@@ -81,12 +85,21 @@ namespace CoApp.Toolkit.Extensions {
             '*', '?'
         };
 
+        static FilesystemExtensions() {
+            TryToHandlePendingRenames(true);
+        }
+
         private static List<string> _disposableFilenames = new List<string>();
+
+        private static bool _triedCleanup;
 
         public static void RemoveTemporaryFiles() {
             foreach (var f in _disposableFilenames.ToArray().Where(File.Exists)) {
-                f.TryHardToDeleteFile();
+                f.TryHardToDelete();
             }
+
+            // and try to clean up as we leave the process too.
+            TryToHandlePendingRenames(true);
         }
 
         public static string MarkFileTemporary(this string filename) {
@@ -95,30 +108,51 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string GetFileInTempFolder(this string filename) {
-            var p = Path.Combine(Path.GetTempPath(), filename);
+            var p = Path.Combine(TempPath, filename);
             if (File.Exists(p)) {
-                p.TryHardToDeleteFile();
+                p.TryHardToDelete();
             }
 
             return MarkFileTemporary(p);
         }
 
-        public static string GenerateTemporaryFilename(this string filename) {
-            var p = Path.GetTempFileName();
-            p.TryHardToDeleteFile();
-            if( !string.IsNullOrEmpty(filename)) {
-                var ext = Path.GetExtension(filename);
-                if( !string.IsNullOrEmpty(ext) ) {
-                    ext = Path.GetExtension(p);
+        private static string _tempPath;
+        private static string TempPath { get {
+            if( string.IsNullOrEmpty(_tempPath) ) {
+                _tempPath = Path.GetTempPath();
+                if(! Directory.Exists(_tempPath)) {
+                    Directory.CreateDirectory(_tempPath);
                 }
-                p = Path.Combine(Path.GetDirectoryName(p), Path.GetFileNameWithoutExtension(p) + DateTime.Now.Ticks + "." + Path.GetFileNameWithoutExtension(filename) + ext);
             }
+            return _tempPath;
+        }}
+
+        public static string GenerateTemporaryFilename(this string filename) {
             
-            if (File.Exists(p)) {
-                p.TryHardToDeleteFile();
+            string ext = null;
+            string name = null;
+            string folder = null;
+            
+            if(! string.IsNullOrEmpty(filename) ) {
+                ext = Path.GetExtension(filename);
+                name = Path.GetFileNameWithoutExtension(filename);
+                folder = Path.GetDirectoryName(filename);
             }
 
-            return MarkFileTemporary(p);
+            if( string.IsNullOrEmpty(ext)) {
+                ext = ".tmp";
+            }
+            if( string.IsNullOrEmpty(folder) ) {
+                folder = TempPath;
+            }
+
+            name = Path.Combine(folder, "tmpFile." + DateTime.Now.Ticks + (string.IsNullOrEmpty(name) ? ext : "." + name + ext));
+
+            if (File.Exists(name)) {
+                name.TryHardToDelete();
+            }
+
+            return MarkFileTemporary(name);
         }
 
 
@@ -516,38 +550,129 @@ namespace CoApp.Toolkit.Extensions {
                 stream.Read(ms.GetBuffer(), 0, (int)stream.Length);
             }
         }
+        
+        public static void TryToHandlePendingRenames(bool force = false) {
+            try {
+                if (force || !_triedCleanup) {
+                    _triedCleanup = true;
 
-        /// <summary>
-        /// Tries the hard to delete file.
-        /// 
-        /// This will try to delete a file.
-        /// Failing that, it will move the file out to a temp location and mark it for deletion on reboot.
-        /// </summary>
-        /// <param name="filename">The filename.</param>
-        /// <remarks></remarks>
-        public static void TryHardToDeleteFile(this string filename) {
-            if (File.Exists(filename)) {
+                    var localMachine = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64);
+                    var sessionManager = localMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager");
+                    if (sessionManager == null)
+                        return;
+
+                    if (sessionManager.GetValueNames().ContainsIgnoreCase("PendingFileRenameOperations")) {
+                        var pfrops = (String[])sessionManager.GetValue("PendingFileRenameOperations");
+                        var skipped = new List<string>();
+                        if (!pfrops.IsNullOrEmpty()) {
+                            for (var i = 0; i < pfrops.Length; i += 2) {
+                                var src = pfrops[i];
+                                var dest = pfrops[i + 1];
+
+                                try {
+                                    var srcNormal = NormalizePath(src);
+                                    if( Directory.Exists(srcNormal)) {
+                                        if (string.IsNullOrEmpty(dest)) {
+                                            Directory.Delete(srcNormal);
+                                            if (Directory.Exists(srcNormal)) {
+                                                // didn't delete? put it back in the list.
+                                                skipped.Add(src+"\0");
+                                            }
+                                            continue;
+                                        } 
+                                        // A directory rename operation. we'll leave these alone
+                                        skipped.Add(src);
+                                        skipped.Add(dest);
+                                        continue;
+                                    }
+
+                                    if (!File.Exists(srcNormal)) {
+                                        continue; // we're dropping files that don't exist anymore at all.
+                                    }
+
+                                    if (string.IsNullOrEmpty(dest)) {
+                                        // delete op
+                                        Kernel32.DeleteFile(srcNormal);
+                                        if (File.Exists(srcNormal)) {
+                                            // didn't work. No problem. Add it back to the list.
+                                            skipped.Add(src + "\0");
+                                        }
+                                        continue;
+                                    }
+
+                                    // it's a move op
+                                    Kernel32.MoveFileEx(srcNormal, NormalizePath(dest), MoveFileFlags.MOVEFILE_REPLACE_EXISTING);
+                                    if (File.Exists(srcNormal)) {
+                                        skipped.Add(src);
+                                        skipped.Add(dest);
+                                    }
+                                    continue;
+                                } catch (Exception e) {
+                                    skipped.Add(src);
+                                    skipped.Add(dest);
+                                }
+                            }
+                            sessionManager.SetValue("PendingFileRenameOperations", skipped.ToArray(), RegistryValueKind.MultiString);
+                        }
+                    }
+                    sessionManager.Close();
+                }
+            } catch {
+                // no worry if this doesn't go. it's a best-effort-kind of thing
+            }
+        }
+
+        public static void TryHardToDelete(this string location) {
+            if (Directory.Exists(location)) {
                 try {
-                    File.Delete(filename);
+                    Directory.Delete(location, true);
                 } catch {
                     // didn't take, eh?
                 }
             }
 
-            if (File.Exists(filename)) {
+            if (File.Exists(location)) {
                 try {
-                    // move the file to the tmp folder (which can be done even if locked)
-                    // and tell the OS to remove it next reboot.
-                    var tmpFilename = filename.GenerateTemporaryFilename();
-                    File.Delete(tmpFilename);
-                    File.Move(filename, tmpFilename);
-                    Kernel32.MoveFileEx(File.Exists(tmpFilename) ? tmpFilename : filename, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                    File.Delete(location);
                 } catch {
-                    // really. Hmmm. 
+                    // didn't take, eh?
                 }
             }
-        }
 
+            // if it is still there, move and mark it.
+            if (File.Exists(location) || Directory.Exists(location)) {
+                try {
+                    // move the file to the tmp file
+                    // and tell the OS to remove it next reboot.
+                    var tmpFilename = location.GenerateTemporaryFilename(); // generates a unique filename but not a file!
+                    Kernel32.MoveFileEx(location, tmpFilename, MoveFileFlags.MOVEFILE_REPLACE_EXISTING);
+
+                    if (File.Exists(location) || Directory.Exists(location)) {
+                        // of course, if the tmpFile isn't on the same volume as the location, this doesn't work.
+                        // then, last ditch effort, let's rename it in the current directory
+                        // and then we can hide it and mark it for cleanup .
+                        tmpFilename = Path.Combine(Path.GetDirectoryName(location), "tmp." + DateTime.Now.Ticks + "." + Path.GetFileName(location));
+                        Kernel32.MoveFileEx(location, tmpFilename, MoveFileFlags.MOVEFILE_REPLACE_EXISTING);
+                        if (File.Exists(tmpFilename) || Directory.Exists(location)) {
+                            // hide the file for convenience.
+                            File.SetAttributes(tmpFilename, File.GetAttributes(tmpFilename) | FileAttributes.Hidden);
+                        }
+                    }
+
+                    // Now we mark the locked file to be deleted upon next reboot (or until another coapp app gets there)
+                    Kernel32.MoveFileEx(File.Exists(tmpFilename) ? tmpFilename : location, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+                } catch (Exception e) {
+                    // really. Hmmm. 
+                    Logger.Error(e);
+                }
+
+                if (File.Exists(location)) {
+                    Logger.Error("Unable to forcably remove file '{0}'. This can't be good.", location);
+                }
+            }
+            return;
+        }
+    
         /// <summary>
         /// This makes sure a file is writable by moving the original, copying this one back
         /// then deleting the original (or at least tryinghardtodelete the original).
@@ -560,10 +685,9 @@ namespace CoApp.Toolkit.Extensions {
 
             if (File.Exists(filename)) {
                 var tmpFilename = filename.GenerateTemporaryFilename();
-                File.Delete(tmpFilename);
                 File.Move(filename, tmpFilename);
                 File.Copy(tmpFilename, filename);
-                TryHardToDeleteFile(tmpFilename);
+                TryHardToDelete(tmpFilename);
             }
         }
 
@@ -571,45 +695,16 @@ namespace CoApp.Toolkit.Extensions {
         /// This makes a temporary copy of a file that we can work with.
         /// </summary>
         /// <param name="filename"></param>
-        public static string CreateBackupWorkingCopy(this string filename) {
+        public static string CreateWritableWorkingCopy(this string filename) {
             filename = filename.GetFullPath();
             if (File.Exists(filename)) {
-                var tmpFilename = filename.GenerateTemporaryFilename();
+                // generates a temporary filename in the temp directory based off the given filename
+                var tmpFilename = Path.GetFileName(filename).GenerateTemporaryFilename();
                 File.Delete(tmpFilename);
                 File.Copy(filename, tmpFilename);
                 return tmpFilename;
             }
             return null;
-        }
-
-        /// <summary>
-        /// Tries the hard to delete directory.
-        /// 
-        /// If it can't, it will move the folder and mark it for deletion on reboot.
-        /// </summary>
-        /// <param name="directoryName">Name of the directory.</param>
-        /// <remarks></remarks>
-        public static void TryHardToDeleteDirectory(this string directoryName) {
-            if (Directory.Exists(directoryName)) {
-                try {
-                    Directory.Delete(directoryName);
-                } catch {
-                    // didn't take, eh?
-                }
-            }
-
-            if (Directory.Exists(directoryName)) {
-                try {
-                    // move the folder to the tmp folder (which can be done even if locked)
-                    // and tell the OS to remove it next reboot.
-                    var tmpFilename = directoryName.GenerateTemporaryFilename();
-                    File.Delete(tmpFilename);
-                    Directory.Move(directoryName, tmpFilename);
-                    Kernel32.MoveFileEx(Directory.Exists(tmpFilename) ? tmpFilename : directoryName, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
-                } catch {
-                    // really. Hmmm. 
-                }
-            }
         }
 
         /// <summary>
@@ -770,7 +865,7 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string EnsureFileIsLocal(this string filename, string localFolder = null) {
-            localFolder = localFolder ?? Path.GetTempPath();
+            localFolder = localFolder ?? TempPath;
             var fullpath = filename.CanonicalizePath();
 
             if (File.Exists(fullpath)) {

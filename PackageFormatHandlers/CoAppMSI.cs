@@ -239,12 +239,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 try {
                     Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation, @"REMOVE=ALL COAPP_INSTALLED=1 ALLUSERS=1 REBOOT=REALLYSUPPRESS");
 
-                    // if (WindowsVersionInfo.IsVistaOrPrior) {
-                        var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppCacheDirectory, package.CanonicalName + ".msi");
-                        if (File.Exists(cachedInstaller)) {
-                            cachedInstaller.TryHardToDeleteFile();
-                        }
-                    // }
+                    var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppCacheDirectory, package.CanonicalName + ".msi");
+                    if (File.Exists(cachedInstaller)) {
+                        cachedInstaller.TryHardToDelete();
+                    }
 
                 }
                 finally {

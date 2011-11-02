@@ -98,12 +98,7 @@ namespace CoApp.Toolkit.Win32 {
         #endregion
 
         private void deleteSymlink(string linkPath) {
-            if (File.Exists(linkPath)) {
-                linkPath.TryHardToDeleteFile();
-            }
-            else if (Directory.Exists(linkPath)) {
-                linkPath.TryHardToDeleteDirectory();
-            }
+            linkPath.TryHardToDelete();
         }
     }
 }
