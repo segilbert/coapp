@@ -96,6 +96,11 @@
       </ManifestFile>
     </Link>
     <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>REM Sign the rehash binaries if possible, and copy them to the solution folder.
+if exist "$(SolutionDir)..\solution\scripts\$(ConfigurationName)-sign-prerequisites.js" cscript //e:jscript "$(SolutionDir)..\solution\scripts\$(ConfigurationName)-sign-prerequisites.js" 
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc" />
