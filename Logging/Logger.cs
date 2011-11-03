@@ -45,35 +45,39 @@ namespace CoApp.Toolkit.Logging {
         internal static extern void OutputDebugString(string message);
 
         static Logger() {
-            pid = (short)Process.GetCurrentProcess().Id;
-            Errors = true;
+            try {
+                pid = (short)Process.GetCurrentProcess().Id;
+                Errors = true;
 #if DEBUG
-            // by default, we'll turn warnings on only in a debug version.
+    // by default, we'll turn warnings on only in a debug version.
             Warnings = true;
 #else
-            // Warnings = false;
-            Warnings = true; // let's just put this on until we get into RC.
+                // Warnings = false;
+                Warnings = true; // let's just put this on until we get into RC.
 #endif
-            Messages = true;
+                Messages = true;
 
-            Source = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Title();
-            Source = Source.Trim('\0');
+                Source = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Title();
+                Source = Source.Trim('\0');
 
-            if( String.IsNullOrEmpty(Source)) {
-                Source = "CoApp (misc)";
-            }
-            
-            if( !EventLog.SourceExists(Source)) {
-                EventLog.CreateEventSource(Source, "CoApp");
-            }
-             _eventLog = new EventLog("CoApp", ".", Source);
-
-            Task.Factory.StartNew(() => {
-                while (!EventLog.SourceExists(Source)) {
-                    Thread.Sleep(20);
+                if (String.IsNullOrEmpty(Source)) {
+                    Source = "CoApp (misc)";
                 }
-                _ready = true;
-            });
+
+                if (!EventLog.SourceExists(Source)) {
+                    EventLog.CreateEventSource(Source, "CoApp");
+                }
+                _eventLog = new EventLog("CoApp", ".", Source);
+
+                Task.Factory.StartNew(() => {
+                    while (!EventLog.SourceExists(Source)) {
+                        Thread.Sleep(20);
+                    }
+                    _ready = true;
+                });
+            } catch {
+                _ready = true; 
+            }
         }
 
         /// <devdoc>
@@ -91,8 +95,8 @@ namespace CoApp.Toolkit.Logging {
                 }
                 if (!_ready) {
                     Task.Factory.StartNew(() => {
-                        for (var i = 0; i < 100 && !_ready; i++) {
-                            Thread.Sleep(50);
+                        for (var i = 0; i < 20 && !_ready; i++) {
+                            Thread.Sleep(10);
                         }
                         // go ahead and try, but don't whine if this gets dropped.
                         try {

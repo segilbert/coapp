@@ -20,6 +20,7 @@
 namespace CoApp.Toolkit.Extensions {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -42,7 +43,10 @@ namespace CoApp.Toolkit.Extensions {
         /// <summary>
         /// a running counter of for funtions wanting to number files with increasing numbers.
         /// </summary>
-        private static int _counter;
+        private static int _counter = new Random(Process.GetCurrentProcess().Id +(int)(DateTime.Now.Ticks)).Next(0x7fffffff);
+
+        public static int Counter { get { return ++_counter; }}
+        public static string CounterHex { get { return Counter.ToString("x8"); } }
 
         /// <summary>
         /// A hashset of strings that has already been fullpath'd 
@@ -146,7 +150,7 @@ namespace CoApp.Toolkit.Extensions {
                 folder = TempPath;
             }
 
-            name = Path.Combine(folder, "tmpFile." + DateTime.Now.Ticks + (string.IsNullOrEmpty(name) ? ext : "." + name + ext));
+            name = Path.Combine(folder, "tmpFile." + CounterHex + (string.IsNullOrEmpty(name) ? ext : "." + name + ext));
 
             if (File.Exists(name)) {
                 name.TryHardToDelete();
@@ -289,7 +293,7 @@ namespace CoApp.Toolkit.Extensions {
                 result = result.Replace(@"{subfolder}", Path.GetDirectoryName(localPath).Remove(0, pr.Length));
             }
 
-            result = result.Replace(@"{count}", "" + _counter++);
+            result = result.Replace(@"{count}", "" + CounterHex);
             result = result.Replace(@"{date}", DateTime.Now.ToString("yyyy-MM-dd"));
             result = result.Replace(@"{date-long}", DateTime.Now.ToString("MMMM dd YYYY"));
             result = result.Replace(@"{time}", DateTime.Now.ToString("hh-mm-ss"));
@@ -315,7 +319,7 @@ namespace CoApp.Toolkit.Extensions {
         /// </remarks>
         public static string FormatFilename(this string filename, params string[] parameters) {
             var result = filename;
-            result = result.Replace(@"{counter}", "" + _counter++);
+            result = result.Replace(@"{counter}", "" + CounterHex);
             result = result.Replace(@"{date}", DateTime.Now.ToString("yyyy-MM-dd"));
             result = result.Replace(@"{date-long}", DateTime.Now.ToString("MMMM dd YYYY"));
             result = result.Replace(@"{time}", DateTime.Now.ToString("hhmmss"));
@@ -651,7 +655,7 @@ namespace CoApp.Toolkit.Extensions {
                         // of course, if the tmpFile isn't on the same volume as the location, this doesn't work.
                         // then, last ditch effort, let's rename it in the current directory
                         // and then we can hide it and mark it for cleanup .
-                        tmpFilename = Path.Combine(Path.GetDirectoryName(location), "tmp." + DateTime.Now.Ticks + "." + Path.GetFileName(location));
+                        tmpFilename = Path.Combine(Path.GetDirectoryName(location), "tmp." + CounterHex + "." + Path.GetFileName(location));
                         Kernel32.MoveFileEx(location, tmpFilename, MoveFileFlags.MOVEFILE_REPLACE_EXISTING);
                         if (File.Exists(tmpFilename) || Directory.Exists(location)) {
                             // hide the file for convenience.

@@ -18,13 +18,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     Error = (s1, s2, s3) => { _currentPercent = -3; },
                     OperationCancelled = (s1) => { _currentPercent = -4; },
                     EngineStatus = (percentComplete) => { _currentPercent = percentComplete; }
-                });
-                _currentPercent = 100;
+                }).ContinueWith((antecedent) => { _currentPercent = 100; }, TaskContinuationOptions.AttachedToParent);
             } catch(Exception e) {
                 Logger.Error(e);
                 _currentPercent = -1;
             }
-            
         }
 
         private int _currentPercent;

@@ -58,10 +58,13 @@ namespace CoApp.Toolkit.Console {
                 task.Wait(CancellationTokenSource.Token);
             }
             catch( AggregateException ae ) {
-                ae = ae.Flatten();
-                ae.Handle(HandleException);
+                ae.Flatten().Handle(HandleException);
                 return 1;
+            } catch( Exception e ) {
+                 HandleException(e);
+                 return 1;
             }
+            FilesystemExtensions.RemoveTemporaryFiles();
             return 0;
         }
 
@@ -70,6 +73,7 @@ namespace CoApp.Toolkit.Console {
                 Fail(ex.Message);
                 return true;
             }
+
             if( ex is OperationCompletedBeforeResultException) {
                 // assumably, this has been actually handled elsewhere.. right?
                 return true;
@@ -85,61 +89,11 @@ namespace CoApp.Toolkit.Console {
                 return true;
             }
 
-            Console.WriteLine("Unhandled Exception : {0} {1}", ex.GetType() ,ex.Message);
+            Fail("Unexpected Exception: {0} {1}\r\n{2}", ex.GetType() ,ex.Message, ex.StackTrace);
             return false;
         }
 
-        protected Object AskUser(string question, Func<string, bool> decision)
-        {
-            Console.Write(question + "  ");
-            string response = null;
-            while (true)
-            {
-                response = Console.ReadLine();
-                if (decision.Invoke(response))
-                    break;
-
-                Console.Write("Invalid response.");
-
-            }
-
-            return response;
-
-        }
-
-        protected Object AskUser(string question, params object[] choices)
-        {
-            var dict = choices.
-                Aggregate(new List<KeyValuePair<object, string>>(),
-                          (temp, i) =>
-                              {
-                                  temp.Add(new KeyValuePair<object, string>(i, i.ToString()));
-                                  return temp;
-                              });
-
-            return AskUser(question, dict);
-        }
-
-        protected Object AskUser(string question, IEnumerable<KeyValuePair<object, string>> choices)
-        {
-            int response = -1;
-            Console.WriteLine(question);
-            while (true)
-            {
-                for (int i = 0; i < choices.Count(); i++) {
-                    Console.WriteLine("{0}. {1}", i+1, choices.ElementAt(i).Value);
-                }
-
-                var temp = Console.ReadLine();
-                if (int.TryParse(temp, out response) && response >= 1 || response <= choices.Count())
-                {
-                    break;
-                }
-                Console.WriteLine("Invalid Entry.");
-            }
-
-            return choices.ElementAt(response).Key;
-        }
+        
 
         #region fail/help/logo
 
@@ -160,12 +114,7 @@ namespace CoApp.Toolkit.Console {
             using (new ConsoleColors(ConsoleColor.Red, ConsoleColor.Black)) {
                 Console.WriteLine("Error: {0}", text.format(par));
             }
-            
-            int x = 6;
-            while( x-- > 0 || !CancellationTokenSource.Token.WaitHandle.WaitOne( 500 ) ) {
-                // Console.Write("");
-            }
-
+            CancellationTokenSource.Cancel();
             return 1;
         }
 

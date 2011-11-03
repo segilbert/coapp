@@ -75,9 +75,9 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-        public Action Disconnected;
-        public Action Connected;
-        public Action Completed;
+        public event Action Disconnected;
+        public event Action Connected;
+        public event Action Completed;
 
         private void OnCompleted() {
             if( Completed != null ) {
