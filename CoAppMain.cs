@@ -67,17 +67,14 @@ namespace CoApp.CLI {
         /// <returns>int value representing the ERRORLEVEL.</returns>
         /// <remarks></remarks>coapp.service
         private static int Main(string[] args) {
+#if DEBUG
             if( System.Diagnostics.Debugger.IsAttached) {
                 // wait for service to start if we're attached to the debugger
                 // (it could be starting still)
                 Thread.Sleep(500);
             }
-            try {
-                return new CoAppMain().Startup(args);
-            } catch {
-                
-            }
-            return 1;
+#endif
+            return new CoAppMain().Startup(args);
         }
 
         private readonly PackageManager _pm = PackageManager.Instance;
@@ -472,9 +469,9 @@ namespace CoApp.CLI {
 
             }
             catch (ConsoleException failure) {
+                Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
                 CancellationTokenSource.Cancel();
                 _pm.Disconnect();
-                Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
             }
             
             return 0;
@@ -632,30 +629,19 @@ namespace CoApp.CLI {
             }
             return null;
         }
-
-        public class ActionWaitHandle : EventWaitHandle {
-            private Action _eventHandler;
-            public ActionWaitHandle(Action eventHandler ,  bool initialState = false) : base(initialState, EventResetMode.ManualReset) {
-                _eventHandler = eventHandler;
-                _eventHandler += OnAction;
-            }
-
-            protected void OnAction() {
-                Set();
-            }
-
-            protected override void Dispose(bool explicitDisposing) {
-                _eventHandler -= OnAction;
-                base.Dispose(explicitDisposing);
-            }
-        }
+        
 
         private void WaitForPackageManagerToComplete() {
-            using(var disconnected = new ActionWaitHandle(_pm.Disconnected, !_pm.IsConnected)) {
-                using (var lastCall = new ActionWaitHandle(_pm.Completed, _pm.ActiveCalls == 0)) {
-                    WaitHandle.WaitAny(new[] { CancellationTokenSource.Token.WaitHandle, disconnected, lastCall });
-                }
-            }
+            var trigger = new ManualResetEvent(!_pm.IsConnected || _pm.ActiveCalls == 0);
+            Action whenTriggered = () => trigger.Set();
+
+            _pm.Disconnected += whenTriggered;
+            _pm.Completed += whenTriggered;
+
+            WaitHandle.WaitAny(new[] { CancellationTokenSource.Token.WaitHandle, trigger });
+
+            _pm.Disconnected -= whenTriggered;
+            _pm.Completed -= whenTriggered;
         }
 
         /// <summary>
