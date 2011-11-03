@@ -102,7 +102,7 @@ namespace CoApp.Bootstrapper {
         
         internal static readonly Lazy<NativeResourceModule> NativeResources = new Lazy<NativeResourceModule>(() => {
             try {
-                return new NativeResourceModule(SingleStep.AcquireFile("CoApp.Resources.dll"));
+                return new NativeResourceModule(SingleStep.AcquireFile("coapp.resources.dll"));
             }
             catch {
                 return null;
@@ -121,8 +121,10 @@ namespace CoApp.Bootstrapper {
                         containerPanel.Background.SetValue(ImageBrush.ImageSourceProperty, NativeResources.Value.GetBitmapImage(1201));
                         logoImage.SetValue(Image.SourceProperty, NativeResources.Value.GetBitmapImage(1202));
                     });
+                    Logger.Warning("Loaded Resources.");
+                } else {
+                    Logger.Warning("Unable to load resources Continuing anyway.");
                 }
-                Logger.Warning("Loaded Resources.");
             });
 
             

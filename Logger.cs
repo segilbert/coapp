@@ -26,18 +26,22 @@
             if( String.IsNullOrEmpty(Source)) {
                 Source = "CoApp (misc)";
             }
-            
-            if( !EventLog.SourceExists(Source)) {
-                EventLog.CreateEventSource(Source, "CoApp");
-            }
-             _eventLog = new EventLog("CoApp", ".", Source);
-
-            Task.Factory.StartNew(() => {
-                while (!EventLog.SourceExists(Source)) {
-                    Thread.Sleep(20);
+            // 
+            try {
+                if (!EventLog.SourceExists(Source)) {
+                    EventLog.CreateEventSource(Source, "CoApp");
                 }
-                _ready = true;
-            });
+                _eventLog = new EventLog("CoApp", ".", Source);
+
+                Task.Factory.StartNew(() => {
+                    while (!EventLog.SourceExists(Source)) {
+                        Thread.Sleep(20);
+                    }
+                    _ready = true;
+                });
+            } catch {
+                // if the process isn't elevated, we're not going to be able to create the event log to use the event logging.
+            }
         }
 
         /// <devdoc>

@@ -37,17 +37,20 @@ namespace CoApp.Bootstrapper {
         [STAThreadAttribute]
         [LoaderOptimization(LoaderOptimization.MultiDomainHost)]
         public static void Main(string[] args) {
+            var commandline = args.Aggregate(string.Empty, (current, each) => current + " " + each).Trim();
+            ElevateSelf(commandline);
+
             if (Keyboard.Modifiers == ModifierKeys.Shift || Keyboard.Modifiers == ModifierKeys.Control) {
                 Logger.Errors = true;
                 Logger.Messages = true;
                 Logger.Warnings = true;
             }
 
-            var commandline = args.Aggregate(string.Empty, (current, each) => current + " " + each).Trim();
+            
 
             Logger.Warning("Startup :" + commandline);
             // Ensure that we are elevated. If the app returns from here, we are.
-            ElevateSelf(commandline);
+            
 
             // get the folder of the bootstrap EXE
             BootstrapFolder = Path.GetDirectoryName(Path.GetFullPath(Assembly.GetExecutingAssembly().Location));
@@ -110,29 +113,34 @@ namespace CoApp.Bootstrapper {
         internal static void ElevateSelf(string args) {
             try {
                 var ntAuth = new SidIdentifierAuthority();
+                ntAuth.Value = new byte[] { 0, 0, 0, 0, 0, 5 };
+
                 var psid = IntPtr.Zero;
                 bool isAdmin;
                 if (AllocateAndInitializeSid(ref ntAuth, 2, 0x00000020, 0x00000220, 0, 0, 0, 0, 0, 0, out psid) && CheckTokenMembership(IntPtr.Zero, psid, out isAdmin) && isAdmin) {
                     return; // yes, we're an elevated admin
                 }
             } catch {
-                try {
-                    new Process {
-                        StartInfo = {
-                            UseShellExecute = true,
-                            WorkingDirectory = Environment.CurrentDirectory,
-                            FileName = ExeName,
-                            Verb = "runas",
-                            Arguments = args,
-                            ErrorDialog = true,
-                            ErrorDialogParentHandle = GetForegroundWindow(),
-                            WindowStyle = ProcessWindowStyle.Maximized,
-                        }
-                    }.Start();
-                    Environment.Exit(0); // since this didn't throw, we know the kids got off to school ok. :)
-                } catch {
-                    MainWindow.Fail(LocalizedMessage.IDS_REQUIRES_ADMIN_RIGHTS, "The installer requires administrator permissions.");
-                }
+                // :)
+            }
+
+            // we're not an admin I guess.
+            try {
+                new Process {
+                    StartInfo = {
+                        UseShellExecute = true,
+                        WorkingDirectory = Environment.CurrentDirectory,
+                        FileName = ExeName,
+                        Verb = "runas",
+                        Arguments = args,
+                        ErrorDialog = true,
+                        ErrorDialogParentHandle = GetForegroundWindow(),
+                        WindowStyle = ProcessWindowStyle.Maximized,
+                    }
+                }.Start();
+                Environment.Exit(0); // since this didn't throw, we know the kids got off to school ok. :)
+            } catch {
+                MainWindow.Fail(LocalizedMessage.IDS_REQUIRES_ADMIN_RIGHTS, "The installer requires administrator permissions.");
             }
         }
 

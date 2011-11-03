@@ -10,7 +10,6 @@ namespace CoApp.Bootstrapper {
 
     internal class AsyncDownloader {
         internal Uri uri;
-        internal string ServerUrl;
         internal FileStream filestream;
         internal HttpWebResponse httpWebResponse;
         internal TaskCompletionSource<HttpWebResponse> tcs;
@@ -28,7 +27,6 @@ namespace CoApp.Bootstrapper {
             return new AsyncDownloader {
                 Filename = tempFilenme,
                 PercentComplete = percentComplete,
-                ServerUrl = serverUrl,
                 uri = new Uri(new Uri(serverUrl), filename)
             }.Get();
         }
