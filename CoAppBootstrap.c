@@ -351,7 +351,7 @@ int ShowGUI( HINSTANCE hInstance ) {
 	HANDLE bigTextFont;
 	RECT rect;
 
-	resourceDll = AcquireFile(L"CoApp.Resources.dll", TRUE, NULL);
+	resourceDll = AcquireFile(L"coapp.resources.dll", TRUE, NULL);
 	if( resourceDll == NULL ) {
 		TerminateApplicationWithError(IDS_UNABLE_TO_ACQUIRE_RESOURCES, L"Unable to find or download CoApp.Resources.dll");
 		return 0;
@@ -823,7 +823,7 @@ void TerminateApplicationWithError(int errorLevel, wchar_t* defaultText) {
 
 	if( resourceModule == NULL ) { 
 		// if the resourceModule isn't loaded, and can't be, it's not *super* critical... 
-		resourceDll = AcquireFile(L"CoApp.Resources.dll", TRUE, NULL);
+		resourceDll = AcquireFile(L"coapp.resources.dll", TRUE, NULL);
 		if( resourceDll != NULL ) { 
 			LoadResources(resourceDll);
 		}
