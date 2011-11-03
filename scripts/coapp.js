@@ -72,7 +72,9 @@ var CoApp = {
             list = list + '"' + filename + '" ';
         }
         
-        $$('"{0}" --sign-only {1}', this.$SIMPLESIGNER(), list);
+        
+        print('"{0}" --sign-only {1}', this.$SIMPLESIGNER(), list);
+        print($$('"{0}" --sign-only {1}', this.$SIMPLESIGNER(), list));
 
         if ($ERRORLEVEL) {
             for (var each in $StdOut) {
