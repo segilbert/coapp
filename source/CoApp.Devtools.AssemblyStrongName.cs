@@ -9,15 +9,15 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyCompany("CoApp Project")]
+[assembly: AssemblyCompany("Outercurve Foundation")]
 [assembly: AssemblyCopyright("Copyright (c) Garrett Serack, CoApp Contributors 2010-2011")]
 
 // We no longer need to delay sign in order to strong name and sign the code before 
 // we publish it, so now we will have just one set of  Version  lines, and no strong 
 // naming until publishing.
 
-[assembly: AssemblyVersion("1.1.2.1225")]
-[assembly: AssemblyFileVersion("1.1.2.1225")]
+[assembly: AssemblyVersion("1.1.2.1234")]
+[assembly: AssemblyFileVersion("1.1.2.1234")]
 
 [AttributeUsage(AttributeTargets.Assembly, Inherited = false)]
 internal class AssemblyBugtrackerAttribute : Attribute {

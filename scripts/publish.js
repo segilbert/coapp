@@ -22,6 +22,7 @@ CoApp.StrongNameBinary([
     CoApp.$RELEASEDIR("QuickTool.exe"),
     CoApp.$RELEASEDIR("Scan.exe"),
     CoApp.$RELEASEDIR("Toolscanner.exe"),
+    CoApp.$RELEASEDIR("mkRepo.exe"),
     CoApp.$RELEASEDIR("trace.exe"),
     CoApp.$RELEASEDIR("trace-x86.exe"),
     CoApp.$RELEASEDIR("trace-x64.exe")    
