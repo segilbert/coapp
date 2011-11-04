@@ -136,6 +136,7 @@ namespace CoApp.Bootstrapper {
 
             // after the window is shown...
             Loaded += (o, e) => {
+                Topmost = false;
                 // if we're really close to the end, let's not even bother with the progress window.
                 if (CurrentProgress < 95) {
                     Opacity = 1;
