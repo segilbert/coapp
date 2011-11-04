@@ -71,7 +71,7 @@ namespace CoApp.CLI {
             if( System.Diagnostics.Debugger.IsAttached) {
                 // wait for service to start if we're attached to the debugger
                 // (it could be starting still)
-                Thread.Sleep(500);
+                Thread.Sleep(1500);
             }
 #endif
             return new CoAppMain().Startup(args);
@@ -93,7 +93,9 @@ namespace CoApp.CLI {
                 RequireRemoteFile = (canonicalName, remoteLocations, localFolder, force ) => Downloader.GetRemoteFile(canonicalName, remoteLocations, localFolder, force, new RemoteFileMessages {
                     Progress = (itemUri, percent) => {
                         "Downloading {0}".format(itemUri.AbsoluteUri).PrintProgressBar(percent);
-                    }, 
+                    }, Completed = (itemUri) => {
+                        Console.WriteLine();
+                    }
                 } ,_messages),
                 OperationCancelled = CancellationRequested,
                 PackageSatisfiedBy = (original, satisfiedBy) => {
@@ -290,7 +292,9 @@ namespace CoApp.CLI {
                             Console.WriteLine("Name: {0}", Verifier.GetPublisherInformation(parameters.First())["PublisherName"]);
                             break;
 #endif
-
+                    case "-?":
+                        return Help();
+                     
                     case "-l":
                     case "list":
                     case "list-package":
@@ -486,6 +490,8 @@ namespace CoApp.CLI {
         }
 
         private Task AddFeed(IEnumerable<string> feeds) {
+
+
             var tasks = feeds.Select(each => _pm.AddFeed(each, false, new PackageManagerMessages {
                 FeedAdded = (f) => { Console.WriteLine("Adding Feed: {0}", f); }
             }.Extend(_messages))).ToArray();
@@ -729,7 +735,7 @@ namespace CoApp.CLI {
                         // failed install of package 
                         failedList.Add(canonicalName);
                     },
-                }).Wait();
+                }.Extend(_messages)).Wait();
             }
         }
 
