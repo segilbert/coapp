@@ -25,7 +25,8 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// contains the list of packages in the direcory. (may be recursive)
         /// </summary>
         private readonly List<Package> _packageList = new List<Package>();
-        
+
+        private string _path;
         /// <summary>
         /// the wildcard patter for matching files in this feed.
         /// </summary>
@@ -40,6 +41,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// <param name="recursive">if set to <c>true</c> if we should recursively scan folders..</param>
         /// <remarks></remarks>
         internal DirectoryPackageFeed(string location, string patternMatch ) : base(location) {
+            _path = location;
             _filter = patternMatch ?? "*";
         }
 
@@ -59,7 +61,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 LastScanned = DateTime.Now;
 
                 // GS01: BUG: recursive now should use ** in pattern match.
-                var files = Location.DirectoryEnumerateFilesSmarter(_filter, false ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly /*, NewPackageManager.Instance.BlockedScanLocations*/);
+                var files = _path.DirectoryEnumerateFilesSmarter(_filter, false ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly /*, NewPackageManager.Instance.BlockedScanLocations*/);
                 files = from file in files
                     where Recognizer.Recognize(file).Result.IsPackageFile // Since we know this to be local, it'm ok with blocking on the result.
                     select file;

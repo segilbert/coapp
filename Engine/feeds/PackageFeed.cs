@@ -48,7 +48,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// </summary>
         /// <value>The location of the feed.</value>
         /// <remarks></remarks>
-        internal readonly string Location;
+        internal string Location { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="PackageFeed"/> is scanned.
@@ -161,6 +161,16 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         }
                         
                     }
+                } else if(info.IsPackageFile) {
+                    // SessionPackageFeed.Instance.Add(Package.GetPackageFromFilename(info.FullPath));
+
+                    result = new DirectoryPackageFeed(Path.GetDirectoryName(info.FullPath),Path.GetFileName(info.FullPath));
+                    
+                    // Hack of the day:
+                    // Since, I have to look up this file as a feed again later, based on the original path (likely, an http:// location)
+                    // we have to forcably set the location in the feed itself to reflect this.
+                    result.Location = location;
+                    locationKey = location;
                 }
 
                 if (result != null) {

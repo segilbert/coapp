@@ -313,8 +313,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     // if it was a feed, then continue with the big query
                     if (feedAdded != null) {
                         // this overrides any passed in locations with just the feed added.
-                        return
-                            InternalGetPackages(null, minVersion, maxVersion, dependencies, installed, active, required, blocked, latest, feedAdded, forceScan,
+                        return InternalGetPackages(null, minVersion, maxVersion, dependencies, installed, active, required, blocked, latest, feedAdded, forceScan,
                                 messages).Result;
                     }
 
@@ -560,7 +559,6 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         public Task DownloadProgress(string canonicalName, int progress, PackageManagerMessages messages = null) {
-            
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
                     messages.Register();
@@ -569,7 +567,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     WriteAsync(new UrlEncodedMessage("download-progress") {
                         {"canonical-name", canonicalName},
                         {"progress", progress.ToString()},
-
+                        {"rqid", Task.CurrentId},
                     });
 
                     // will return when the final message comes thru.

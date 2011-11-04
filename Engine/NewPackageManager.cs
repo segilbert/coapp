@@ -68,6 +68,7 @@ namespace CoApp.Toolkit.Engine {
 
         private void AddSessionFeed( string feedLocation ) {
             lock (this) {
+                feedLocation = feedLocation.CanonicalizePathWithWildcards();
                 var sessionFeeds = SessionFeedLocations.Union(feedLocation.SingleItemAsEnumerable()).Distinct();
                 SessionCache<IEnumerable<string>>.Value["session-feeds"] = sessionFeeds.ToArray();
             }
@@ -75,6 +76,8 @@ namespace CoApp.Toolkit.Engine {
 
         private void AddSystemFeed(string feedLocation) {
             lock (this) {
+                feedLocation = feedLocation.CanonicalizePathWithWildcards();
+
                 var systemFeeds = SystemFeedLocations.Union(feedLocation.SingleItemAsEnumerable()).Distinct();
                 PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds.ToArray();
             }
@@ -82,6 +85,8 @@ namespace CoApp.Toolkit.Engine {
 
         private void RemoveSessionFeed(string feedLocation) {
             lock (this) {
+                feedLocation = feedLocation.CanonicalizePathWithWildcards();
+
                 var sessionFeeds = from emove in SessionFeedLocations where !emove.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase) select emove;
                 SessionCache<IEnumerable<string>>.Value["session-feeds"] = sessionFeeds.ToArray();
                 
@@ -92,6 +97,8 @@ namespace CoApp.Toolkit.Engine {
 
         private void RemoveSystemFeed(string feedLocation) {
             lock (this) {
+                feedLocation = feedLocation.CanonicalizePathWithWildcards();
+
                 var systemFeeds = from feed in SystemFeedLocations where !feed.Equals(feedLocation, StringComparison.CurrentCultureIgnoreCase) select feed;
                 PackageManagerSettings.CoAppSettings["#feedLocations"].StringsValue = systemFeeds.ToArray();
 
@@ -496,11 +503,36 @@ namespace CoApp.Toolkit.Engine {
                     messages.Register();
                 }
                 try {
-                    var package = GetSinglePackage(canonicalName, "download-progress");
-                    package.PackageSessionData.DownloadProgress = Math.Max(package.PackageSessionData.DownloadProgress, downloadProgress.GetValueOrDefault());
+                    // it takes a non-trivial amount of time to lookup a package by its name.
+                    // so, we're going to cache the package in the session.
+                    // of course if there isn't one, (because we're downloading soemthing we don't know what it's actualy canonical name is)
+                    // we don't want to try looking up each time again, since that's the worst-case-scenario, we have to
+                    // cache the fact that we have cached nothing.
+                    // /facepalm.
+
+                    Package package;
+
+                    var cachedPackageName = SessionCache<string>.Value["cached-the-lookup" + canonicalName];
+
+                    if( cachedPackageName == null ) {
+                        SessionCache<string>.Value["cached-the-lookup" + canonicalName] = "yes";
+
+                        package = GetSinglePackage(canonicalName, "download-progress", true);
+
+                        if (package != null) {
+                            SessionCache<Package>.Value[canonicalName] = package;
+                        }
+                    } else {
+                        package = SessionCache<Package>.Value[ canonicalName];
+                    }
+                    
+                    if (package != null) {
+                        package.PackageSessionData.DownloadProgress = Math.Max(package.PackageSessionData.DownloadProgress, downloadProgress.GetValueOrDefault());
+                    }
                 } catch {
                     // suppress any exceptions... we just don't care!
                 }
+                SessionCache<string>.Value["busy" + canonicalName] = null;
             }, TaskCreationOptions.AttachedToParent);
             return t;
         }
@@ -645,8 +677,11 @@ namespace CoApp.Toolkit.Engine {
 
                     // add feed to the session feeds.
                     PackageFeed.GetPackageFeedFromLocation(location).ContinueWith(antecedent => {
-                        if (antecedent.Result != null) {
-                            SessionCache<PackageFeed>.Value[location] = antecedent.Result;
+                        var foundFeed = antecedent.Result;
+                        if (foundFeed != null) {
+                            if (foundFeed != SessionPackageFeed.Instance || foundFeed != InstalledPackageFeed.Instance ) {
+                                SessionCache<PackageFeed>.Value[location] = foundFeed;    
+                            }
                         }
                         else {
                             PackageManagerMessages.Invoke.Error("add-feed", "location",
@@ -673,8 +708,11 @@ namespace CoApp.Toolkit.Engine {
 
                     // add feed to the system feeds.
                     PackageFeed.GetPackageFeedFromLocation(location).ContinueWith(antecedent => {
-                        if (antecedent.Result != null) {
-                            Cache<PackageFeed>.Value[location] = antecedent.Result;
+                        var foundFeed = antecedent.Result;
+                        if (foundFeed != null) {
+                            if (foundFeed != SessionPackageFeed.Instance || foundFeed != InstalledPackageFeed.Instance) {
+                                Cache<PackageFeed>.Value[location] = foundFeed;
+                            }
                         }
                         else {
                             PackageManagerMessages.Invoke.Error("add-feed", "location",
@@ -1036,10 +1074,10 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        private Package GetSinglePackage(string canonicalName, string messageName) {
+        private Package GetSinglePackage(string canonicalName, string messageName, bool suppressErrors = false) {
             // name != null?
             if( string.IsNullOrEmpty(canonicalName)) {
-                if (messageName != null) {
+                if (messageName != null && !suppressErrors) {
                     PackageManagerMessages.Invoke.Error(messageName, "canonical-name",
                         "Canonical name '{0}' does not appear to be a valid canonical name".format(canonicalName));
                 }
@@ -1049,7 +1087,8 @@ namespace CoApp.Toolkit.Engine {
             // if canonical name is passed, override name,version,pkt,arch with the parsed canonicalname.
             var match = _canonicalNameParser.Match(canonicalName.ToLower());
             if( !match.Success ) {
-                if (messageName != null) {
+
+                if (messageName != null && !suppressErrors) {
                     PackageManagerMessages.Invoke.Error(messageName, "canonical-name",
                         "Canonical name '{0}' does not appear to be a valid canonical name".format(canonicalName));
                 }
@@ -1060,14 +1099,14 @@ namespace CoApp.Toolkit.Engine {
                 match.Groups[4].Captures[0].Value);
 
             if( !pkg.Any()) {
-                if (messageName != null) {
+                if (messageName != null && !suppressErrors) {
                     PackageManagerMessages.Invoke.UnknownPackage(canonicalName);
                 }
                 return null;
             }
 
             if( pkg.Count() > 1 ) {
-                if (messageName != null) {
+                if (messageName != null && !suppressErrors) {
                     PackageManagerMessages.Invoke.Error(messageName, "canonical-name",
                         "Canonical name '{0}' matches more than one package.".format(canonicalName));
                 }

@@ -210,6 +210,7 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
             Enum.TryParse(package.Architecture, true, out arch);
             Model.Architecture = arch;
             Model.PublisherDirectory = package.PublisherDirectory;
+            Model.DisplayName = package.DisplayName;
 
             Model.Version = package.Version;
             Model.PublicKeyToken = package.PublicKeyToken;

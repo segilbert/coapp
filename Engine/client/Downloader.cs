@@ -16,6 +16,11 @@ namespace CoApp.Toolkit.Engine.Client {
             if ( messages == null ) {
                 messages = new PackageManagerMessages();
             }
+            messages.Register();
+            if( remoteFileMessages !=null ) {
+                remoteFileMessages.Register();
+            }
+
             var targetFilename = Path.Combine(targetFolder, canonicalName);
             lock (_currentDownloads) {
                 if (_currentDownloads.ContainsKey(targetFilename)) {
@@ -48,7 +53,7 @@ namespace CoApp.Toolkit.Engine.Client {
                                     new PackageManagerMessages().Extend(messages));
                                 return;
                             }
-
+                            Task progressTask = null;
                             var rf = RemoteFile.GetRemoteFile(uri, targetFilename);
                             rf.Get(new RemoteFileMessages {
                                 Completed = (itemUri) => {
@@ -66,7 +71,11 @@ namespace CoApp.Toolkit.Engine.Client {
                                     }
                                 },
                                 Progress = (itemUri, percent) => {
-                                    PackageManager.Instance.DownloadProgress(canonicalName, percent);
+                                    if (progressTask == null) {
+                                        progressTask = PackageManager.Instance.DownloadProgress(canonicalName, percent);
+                                        progressTask.ContinueWith((antecedent) => { progressTask = null; });
+                                    }
+
                                     if( remoteFileMessages != null ) {
                                         remoteFileMessages.Progress(itemUri, percent);
                                     }

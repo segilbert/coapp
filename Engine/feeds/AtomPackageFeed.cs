@@ -114,7 +114,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     }
 
                     // we're good to load the file from the _localLocation
-                    var feed = AtomFeed.Load(_localLocation);
+                    var feed = AtomFeed.LoadFile(_localLocation);
 
                     // since AtomFeeds are so nicely integrated with Package now, we can just get the packages from there :)
                     _packageList.AddRange(feed.Packages);

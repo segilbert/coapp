@@ -370,7 +370,22 @@ namespace CoApp.Toolkit.Extensions {
                 DirectoryEnumerateFilesSmarter(path.ToLower(), searchOption).Where(
                     file => file.ToLower().NewIsWildcardMatch(searchPattern.ToLower(), true, path.ToLower()));
         }
-
+        
+        /// <summary>
+        /// cleans up a path if it is a filesystem path, uri or wildcard.
+        /// 
+        /// returns the original unmodified path if it is not.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string CanonicalizePathWithWildcards(this string path) {
+            try {
+                return CanonicalizePath(path.Replace("*", "$$STAR$$").Replace("?", "$$QUERY$$")).Replace("$$STAR$$", "*").Replace("$$QUERY$$", "?").ToLower().TrimEnd('\\');
+            } catch {
+            }
+            // if
+            return path;
+        }
 
         /// <summary>
         /// A front end to DirectoryEnumerateFilesSmarter that allows for wildcards in the path or serarch mask (and expands it out to a full path first.)
@@ -913,6 +928,23 @@ namespace CoApp.Toolkit.Extensions {
             return paths.Select(Path.GetFileName);
         }
 
-    }
+        public static bool IsWebUrl( this string path ) {
+            try {
+                if( new Uri(path).IsHttpScheme()) {
+                    return true;
+                }
+            } catch {
+                
+            }
+            return false;
+        }
 
+#if COAPP_ENGINE_CORE
+                public static bool IsHttpScheme(this Uri uri, bool acceptHttps=true)
+        {
+            return (uri.Scheme == Uri.UriSchemeHttp || (acceptHttps && uri.Scheme == Uri.UriSchemeHttps));
+        }
+
+#endif
+    }
 }

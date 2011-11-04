@@ -458,24 +458,30 @@ namespace CoApp.Toolkit.Engine {
                                 var dispatchTask = Dispatch(requestMessage);
 
                                 if (!string.IsNullOrEmpty(rqid)) {
-                                    dispatchTask.ContinueWith(dispatchAntecedent => {
-                                        try {
-                                            // had to force this to ensure that async writes are at least in the pipe 
-                                            // before waiting on the pipe drain.
-                                            // without this, it is possible that the async writes are still 'getting to the pipe' 
-                                            // and not actually in the pipe, **even though the async write is complete**
-                                            Thread.Sleep(50);
-                                            if (_responsePipe != null) {
-                                                _responsePipe.WaitForPipeDrain();
-                                                WriteAsync(new UrlEncodedMessage("task-complete") {
-                                                    {"rqid", rqid}
-                                                });
+                                    if (dispatchTask == null) { // completed synchronously.
+                                        WriteAsync(new UrlEncodedMessage("task-complete") {{ "rqid", rqid } });
+                                    } else {
+                                        dispatchTask.ContinueWith(dispatchAntecedent => {
+                                            try {
+                                                // had to force this to ensure that async writes are at least in the pipe 
+                                                // before waiting on the pipe drain.
+                                                // without this, it is possible that the async writes are still 'getting to the pipe' 
+                                                // and not actually in the pipe, **even though the async write is complete**
+                                                Thread.Sleep(50);
+                                                if (_responsePipe != null) {
+                                                    _responsePipe.WaitForPipeDrain();
+                                                    WriteAsync(new UrlEncodedMessage("task-complete") {
+                                                        {
+                                                            "rqid", rqid
+                                                            }
+                                                    });
+                                                }
+                                            } catch (Exception e) {
+                                                Logger.Error(e);
+                                                // supress any exceptions.
                                             }
-                                        } catch(Exception e) {
-                                            Logger.Error(e);
-                                            // supress any exceptions.
-                                        }
-                                    });
+                                        });
+                                    }
                                 }
 
                                 WriteErrorsOnException(dispatchTask);
@@ -526,18 +532,20 @@ namespace CoApp.Toolkit.Engine {
         }
 
         private void WriteErrorsOnException(Task task) {
-            task.ContinueWith(antecedent => {
-                if (antecedent.Exception != null) {
-                    foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof (AggregateException))) {
-                        Logger.Error(failure);
-                        WriteAsync(new UrlEncodedMessage("unexpected-failure") {
+            if (task != null) {
+                task.ContinueWith(antecedent => {
+                    if (antecedent.Exception != null) {
+                        foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof(AggregateException))) {
+                            Logger.Error(failure);
+                            WriteAsync(new UrlEncodedMessage("unexpected-failure") {
                             {"type", failure.GetType().ToString()},
                             {"message", failure.Message},
                             {"stacktrace", failure.StackTrace},
                         });
+                        }
                     }
-                }
-            }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current);
+                }, _cancellationTokenSource.Token, TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Current);
+            }
         }
 
         /// <summary>
@@ -570,11 +578,10 @@ namespace CoApp.Toolkit.Engine {
                             RequestId = requestMessage["rqid"],
                         }.Extend(_messages));
 
-                case "file-download-progress":
-                    return NewPackageManager.Instance.DownloadProgress(requestMessage["canonical-name"], requestMessage["progress"],
-                        new PackageManagerMessages {
-                            RequestId = requestMessage["rqid"],
-                        }.Extend(_messages));
+                case "download-progress":
+                    return NewPackageManager.Instance.DownloadProgress(requestMessage["canonical-name"], requestMessage["progress"], new PackageManagerMessages {
+                        RequestId = requestMessage["rqid"],
+                    }.Extend(_messages));
 
                 case "recognize-file":
                     return NewPackageManager.Instance.RecognizeFile(requestMessage["canonical-name"], requestMessage["local-location"],
@@ -630,7 +637,7 @@ namespace CoApp.Toolkit.Engine {
                         EngineService.Stop();
                         return "Shutting down".AsResultTask();
                     }
-                    return "Unable to Stop Service".AsResultTask();
+                    return null; // "Unable to Stop Service".AsResultTask();
 
 
                 case "get-engine-status" :
@@ -673,7 +680,7 @@ namespace CoApp.Toolkit.Engine {
                     });
                     } catch {
                     }
-                    return "set-logging".AsResultTask();
+                    return null; //"set-logging".AsResultTask();
 
                 default:
                     // not recognized command, return error code.
@@ -681,7 +688,7 @@ namespace CoApp.Toolkit.Engine {
                         {"command", requestMessage.Command},
                         {"rqid", requestMessage["rqid"].ToString() },
                     });
-                    return "unknown-command".AsResultTask();
+                    return null; // "unknown-command".AsResultTask();
             }
         }
 

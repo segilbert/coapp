@@ -282,12 +282,18 @@ namespace CoApp.Toolkit.Engine {
 
         public void Remove(Action<int> progress = null) {
             try {
+                Logger.Message("Attempting to undo package composition");
                 UndoPackageComposition();
+
+                Logger.Message("Attempting to remove MSI");
                 PackageHandler.Remove(this, progress);
                 IsInstalled = false;
+
+                Logger.Message("Deleting Package data Subkey from registry");
                 PackageManagerSettings.PerPackageSettings.DeleteSubkey(CanonicalName);
             }
-            catch (Exception) {
+            catch (Exception e) {
+                Logger.Error(e);
                 PackageManagerMessages.Invoke.FailedPackageRemoval(CanonicalName, "GS01: I'm not sure of the reason... ");
                 throw new OperationCompletedBeforeResultException();
             }
@@ -297,8 +303,9 @@ namespace CoApp.Toolkit.Engine {
                     GetCurrentPackageVersion(Name, PublicKeyToken);
                     // GS01: fix this to rerun package composition on prior version.
                 }
-                catch /* (Exception e) */ {
+                catch (Exception e)  {
                     // boooo!
+                    Logger.Error(e);
                     Logger.Error("failed setting active package for {0}-{1}", Name, PublicKeyToken);
                     PackageManagerSettings.PerPackageSettings.DeleteSubkey(GeneralName);
                 }

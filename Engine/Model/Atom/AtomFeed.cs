@@ -65,6 +65,11 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
         }
 
         public static AtomFeed Load(string xmlDocument) {
+            if( xmlDocument.Length < 512 && xmlDocument.FileIsLocalAndExists() ) {
+                // if I sent a filename here instead, this will let it still work.
+                xmlDocument = File.ReadAllText(xmlDocument);
+            }
+
             using (var sr = new StringReader(xmlDocument)) {
                 return Load<AtomFeed>(XmlReader.Create(sr));
             }
@@ -128,6 +133,10 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
         public AtomItem Add(AtomItem item) {
             Items = Items.Union(item.SingleItemAsEnumerable()).ToArray();
             return item;
+        }
+
+        public void Add(IEnumerable<AtomItem> items) {
+            Items = Items.Union(items).ToArray();
         }
 
 #if COAPP_ENGINE_CORE 
