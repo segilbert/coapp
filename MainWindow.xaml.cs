@@ -47,7 +47,6 @@ namespace CoApp.Bootstrapper {
         IDS_MSI_FILE_NOT_VALID,
     }
 
-
     /// <summary>
     ///   Interaction logic for MainWindow.xaml
     /// </summary>
@@ -126,7 +125,6 @@ namespace CoApp.Bootstrapper {
                     Logger.Warning("Unable to load resources Continuing anyway.");
                 }
             });
-
             
             // try to short circuit early
             if( CurrentProgress >= 98 && !SingleStep.Cancelling ) {
