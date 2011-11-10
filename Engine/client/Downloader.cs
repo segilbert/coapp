@@ -27,15 +27,9 @@ namespace CoApp.Toolkit.Engine.Client {
                     return _currentDownloads[targetFilename];
                 }
 
-                if (File.Exists(targetFilename)) {
-                    if (forceDownload) {
-                        targetFilename.TryHardToDelete();
-                    }
-                    else {
-                        PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, "<file exists>",
-                            new PackageManagerMessages().Extend(messages));
-                        return null;
-                    }
+                if (File.Exists(targetFilename) && !forceDownload) {
+                    PackageManager.Instance.RecognizeFile(canonicalName, targetFilename, "<file exists>", new PackageManagerMessages().Extend(messages));
+                    return null;
                 }
 
                 // gotta download the file...

@@ -23,6 +23,7 @@ namespace CoApp.Toolkit.Engine {
     using Feeds;
     using Logging;
     using Pipes;
+    using Shell;
     using Tasks;
     using Toolkit.Exceptions;
     using Win32;
@@ -33,11 +34,11 @@ namespace CoApp.Toolkit.Engine {
     /// </remarks>
     public class Session {
 #if DEBUG
-        // keep the reconnect window at 20 seconds for debugging
+    // keep the reconnect window at 20 seconds for debugging
         private static readonly TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 0, 10);
-#else 
-    // fifteen minutes is good for the real world.
-        private static TimeSpan _maxDisconenctedWait = new TimeSpan(0,0,15,00);
+#else
+        // fifteen minutes is good for the real world.
+        private static TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 15, 00);
 
 #endif
         private static TimeSpan _synchronousClientHeartbeat = new TimeSpan(0, 0, 0, 0, 650);
@@ -90,8 +91,7 @@ namespace CoApp.Toolkit.Engine {
             set {
                 if (value) {
                     _resetEvent.Set();
-                }
-                else {
+                } else {
                     _resetEvent.Reset();
                 }
             }
@@ -113,13 +113,15 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public static void NotifyClientsOfRestart() {
-            foreach( var s in _activeSessions.ToArray()) {
+            foreach (var s in _activeSessions.ToArray()) {
                 // cancel everyone.
                 s._cancellationTokenSource.Cancel();
             }
         }
 
-        public static bool HasActiveSessions { get { return _activeSessions.Any(); } }
+        public static bool HasActiveSessions {
+            get { return _activeSessions.Any(); }
+        }
 
         /// <summary>
         ///   Starts the session.
@@ -149,8 +151,7 @@ namespace CoApp.Toolkit.Engine {
                     foreach (var each in existingSessions) {
                         each.End();
                     }
-                }
-                else {
+                } else {
                     var session = existingSessions.FirstOrDefault();
                     // found just one session.
                     session._serverPipe = serverPipe;
@@ -161,8 +162,7 @@ namespace CoApp.Toolkit.Engine {
                     session.Connected = true;
                     return;
                 }
-            }
-            else {
+            } else {
                 // if the exact session isn't there, find any that are partial matches, and shut em down.
                 foreach (
                     var each in (from session in _activeSessions where session._clientId == clientId && session._sessionId == sessionId select session).ToList()
@@ -202,27 +202,34 @@ namespace CoApp.Toolkit.Engine {
         }
 
         private void Disconnect() {
-            if (Connected) {
+            lock (this) {
+                if (!Connected) {
+                    return;
+                }
                 Connected = false;
-                Logger.Message("disposing of pipes: [{0}]-[{1}]".format(_clientId, _sessionId));
-                try {
-                    if (_serverPipe != null) {
-                        _serverPipe.Close();
-                    }
-                    _serverPipe = null;
-
-                    if (!_isAsychronous && _responsePipe != null) {
-                        _responsePipe.Close();
-                    }
-                    _responsePipe = null;
-
-                }
-                catch (Exception e) {
-                    Logger.Error(e);
-                    
-                }
             }
+
+            Logger.Message("disposing of pipes: [{0}]-[{1}]".format(_clientId, _sessionId));
+            try {
+                if (_serverPipe != null) {
+                    _serverPipe.Close();
+                }
+                _serverPipe = null;
+
+                if (!_isAsychronous && _responsePipe != null) {
+                    _responsePipe.Close();
+                }
+                _responsePipe = null;
+
+            } catch (Exception e) {
+                Logger.Error(e);
+            }
+
+            // clean up anything that can be cleaned up.
+            FilesystemExtensions.RemoveTemporaryFiles();
+
         }
+
 
         /// <summary>
         ///   Initializes a new instance of the <see cref = "Session" /> class.
@@ -630,6 +637,147 @@ namespace CoApp.Toolkit.Engine {
                             RequestId = requestMessage["rqid"],
                         }.Extend(_messages));
 
+                case "get-policy":
+                    return Task.Factory.StartNew(() => {
+                        new PackageManagerMessages {
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages).Register();
+
+                        var policyName = requestMessage["name"].ToString();
+                        var policy = PermissionPolicy.AllPolicies.Where(each => each.Name.Equals(policyName, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                        if( policy == null ) {
+                            SendMessageArgumentError("get-policy", "name", "policy '{0}' not found".format(policyName));
+                            return;
+                        }
+
+                        var msg = new UrlEncodedMessage("policy") {
+                            { "name" , policy.Name },
+                            { "description" , policy.Description},
+                        };
+                        // msg.AddCollection("sids",policy.Sids);
+                        msg.AddCollection("accounts", policy.Accounts);
+
+                        WriteAsync(msg);
+                    });
+
+                case "add-to-policy":
+                    return Task.Factory.StartNew(() => {
+                        new PackageManagerMessages {
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages).Register();
+
+                        if (!_packageManagerSession.CheckForPermission(PermissionPolicy.ModifyPolicy)) {
+                            PackageManagerMessages.Invoke.PermissionRequired("ModifyPolicy");
+                            return;
+                        }
+
+
+                        var policyName = requestMessage["name"].ToString();
+                        var policy = PermissionPolicy.AllPolicies.Where(each => each.Name.Equals(policyName, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                        if (policy == null) {
+                            SendMessageArgumentError("add-to-policy", "name", "policy '{0}' not found".format(policyName));
+                            return;
+                        }
+
+                        try {
+                            policy.Add(requestMessage["account"]);
+                        } catch {
+                            SendMessageArgumentError("add-to-policy", "account", "policy '{0}' could not add account '{1}'".format(policyName, requestMessage["account"]));
+                        }
+
+                    });
+
+                case "remove-from-policy":
+                    return Task.Factory.StartNew(() => {
+                        new PackageManagerMessages {
+                            RequestId = requestMessage["rqid"],
+                        }.Extend(_messages).Register();
+
+                        if (!_packageManagerSession.CheckForPermission(PermissionPolicy.ModifyPolicy)) {
+                            PackageManagerMessages.Invoke.PermissionRequired("ModifyPolicy");
+                            return;
+                        }
+
+                        var policyName = requestMessage["name"].ToString();
+                        var policy = PermissionPolicy.AllPolicies.Where(each => each.Name.Equals(policyName, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                        if (policy == null) {
+                            SendMessageArgumentError("remove-from-policy", "name", "policy '{0}' not found".format(policyName));
+                            return;
+                        }
+
+                        try {
+                            policy.Remove(requestMessage["account"]);
+                        } catch {
+                            SendMessageArgumentError("remove-from-policy", "account", "policy '{0}' could not remove account '{1}'".format(policyName, requestMessage["account"]));
+                        }
+                    });
+
+                case "symlink" :
+                    if (!_packageManagerSession.CheckForPermission(PermissionPolicy.Symlink)) {
+                        PackageManagerMessages.Invoke.PermissionRequired("Symlink");
+                        return null;
+                    }
+
+                    var existingLocation = requestMessage["existing-location"].ToString();
+
+                    if (string.IsNullOrEmpty(existingLocation)) {
+                        PackageManagerMessages.Invoke.Error("symlink", "existing-location", "location is null/empty. ");
+                        return null; 
+                    }
+
+                    var newLink = requestMessage["new-link"].ToString();
+
+                    if (string.IsNullOrEmpty(newLink)) {
+                        PackageManagerMessages.Invoke.Error("symlink", "new-link", "new-link is null/empty.");
+                        return null;
+                    }
+
+                    
+                    LinkType linkType;
+                    if(! Enum.TryParse(requestMessage["link-type"].ToString(), true, out linkType) ) {
+                        PackageManagerMessages.Invoke.Error("symlink", "link-type", "link-type is invalid.");
+                        return null;
+                    }
+                    try {
+                        if (existingLocation.FileIsLocalAndExists()) {
+                            // source is a file
+                            switch (linkType) {
+                                case LinkType.Symlink:
+                                    Symlink.MakeFileLink(newLink, existingLocation);
+                                    break;
+
+                                case LinkType.Hardlink:
+                                    Kernel32.CreateHardLink(newLink, existingLocation, IntPtr.Zero);
+                                    break;
+
+                                case LinkType.Shortcut:
+                                    ShellLink.CreateShortcut(newLink, existingLocation);
+                                    break;
+                            }
+                        }
+
+                        if (existingLocation.DirectoryExistsAndIsAccessible()) {
+                            // source is a folder
+                            switch (linkType) {
+                                case LinkType.Symlink:
+                                    Symlink.MakeDirectoryLink(newLink, existingLocation);
+                                    break;
+
+                                case LinkType.Hardlink:
+                                    Kernel32.CreateHardLink(newLink, existingLocation, IntPtr.Zero);
+                                    break;
+
+                                case LinkType.Shortcut:
+                                    ShellLink.CreateShortcut(newLink, existingLocation);
+                                    break;
+                            }
+                        }
+
+                        PackageManagerMessages.Invoke.Error("symlink", "existing-location", "can not make symlink for location '{0}'".format(existingLocation));
+                    } catch (Exception exception) {
+                            PackageManagerMessages.Invoke.Error("symlink", "", "Failed to create symlink -- error: {0}".format(exception.Message));    
+                    }
+                    return null;
 
                 case "stop-service":
                     if (PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.StopService)) {
@@ -638,7 +786,6 @@ namespace CoApp.Toolkit.Engine {
                         return "Shutting down".AsResultTask();
                     }
                     return null; // "Unable to Stop Service".AsResultTask();
-
 
                 case "get-engine-status" :
                     return Task.Factory.StartNew(() => {
@@ -839,17 +986,17 @@ namespace CoApp.Toolkit.Engine {
 
         private void SendMessageArgumentError(string messageName, string argumentName, string problem) {
             WriteAsync(new UrlEncodedMessage("message-argument-error") {
-                {"message-name", messageName},
-                {"argument-name", argumentName},
-                {"error", problem},
+                {"message", messageName},
+                {"parameter", argumentName},
+                {"reason", problem},
             });
         }
 
         private void SendMessageWarning(string messageName, string argumentName, string problem) {
             WriteAsync(new UrlEncodedMessage("message-warning") {
-                {"message-name", messageName},
-                {"argument-name", argumentName},
-                {"warning", problem},
+                {"message", messageName},
+                {"parameter", argumentName},
+                {"reason", problem},
             });
         }
 

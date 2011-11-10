@@ -125,18 +125,24 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
         /// <param name="model"></param>
         /// <returns></returns>
         public AtomItem Add(PackageModel model) {
-            var item = new AtomItem(model);
-            Items = Items.Union(item.SingleItemAsEnumerable()).ToArray();
-            return item;
+            lock (this) {
+                var item = new AtomItem(model);
+                Items = Items.Where(each => each.Id != item.Id).Union(item.SingleItemAsEnumerable()).ToArray();
+                return item;
+            }
         }
 
         public AtomItem Add(AtomItem item) {
-            Items = Items.Union(item.SingleItemAsEnumerable()).ToArray();
-            return item;
+            lock (this) {
+                Items = Items.Where(each => each.Id != item.Id).Union(item.SingleItemAsEnumerable()).ToArray();
+                return item;
+            }
         }
 
         public void Add(IEnumerable<AtomItem> items) {
-            Items = Items.Union(items).ToArray();
+            foreach( var item in items) {
+                Add(item);
+            }
         }
 
 #if COAPP_ENGINE_CORE 

@@ -33,10 +33,14 @@ namespace CoApp.Toolkit.Engine {
             return recognitionInfo;
         }
 
-        internal static Task<RecognitionInfo> Recognize(string item) {
+        internal static Task<RecognitionInfo> Recognize(string item, bool forceRescan = false) {
             var cachedResult = SessionCache<RecognitionInfo>.Value[item];
             if (cachedResult != null) {
-                return cachedResult.AsResultTask();
+                if (forceRescan) {
+                    SessionCache<RecognitionInfo>.Value[item] = null;
+                } else {
+                    return cachedResult.AsResultTask();
+                }
             }
 
             try {
@@ -68,6 +72,11 @@ namespace CoApp.Toolkit.Engine {
                                 FullUrl = location,
                             };
 
+                            // if( continuedResult.IsPackageFeed && forceRescan ) {
+                                // this ensures that feed files aren't kept around needlessly.
+                                //state.LocalLocation.MarkFileTemporary(); 
+                            //}
+
                             result.CopyDetailsFrom(continuedResult);
                             result.IsURL = true;
 
@@ -94,7 +103,7 @@ namespace CoApp.Toolkit.Engine {
                     // GS01: Should we make a deeper path in the cache directory?
                     // perhaps that would let us use a cached version of the file we're looking for.
                     PackageManagerMessages.Invoke.RequireRemoteFile(safeCanonicalName, location.AbsoluteUri.SingleItemAsEnumerable(),
-                        PackageManagerSettings.CoAppCacheDirectory, false);
+                        PackageManagerSettings.CoAppCacheDirectory, forceRescan);
 
                     // return the completion task, as whatever is waiting for this 
                     // needs to continue on that.

@@ -426,7 +426,6 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         public Task ListFeeds(int? index = null, int? maxResults = null, PackageManagerMessages messages = null) {
-            
             return Task.Factory.StartNew(() => {
                 if (messages != null) {
                     messages.Register();
@@ -647,6 +646,81 @@ namespace CoApp.Toolkit.Engine.Client {
             }).AutoManage();
         }
 
+        public Task GetPolicy(string policyName, PackageManagerMessages messages = null) {
+            return Task.Factory.StartNew(() => {
+                if (messages != null) {
+                    messages.Register();
+                }
+
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("get-policy") {
+                        {"name", policyName},
+                        {"rqid", Task.CurrentId},
+                    });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task AddToPolicy(string policyName, string account ,PackageManagerMessages messages = null) {
+            return Task.Factory.StartNew(() => {
+                if (messages != null) {
+                    messages.Register();
+                }
+
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("add-to-policy") {
+                        {"name", policyName},
+                        {"account", account},
+                        {"rqid", Task.CurrentId},
+                    });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task RemoveFromPolicy(string policyName, string account, PackageManagerMessages messages = null) {
+            return Task.Factory.StartNew(() => {
+                if (messages != null) {
+                    messages.Register();
+                }
+
+                using (var eventQueue = new ManualEventQueue()) {
+                    WriteAsync(new UrlEncodedMessage("remove-from-policy") {
+                        {"name", policyName},
+                        {"account", account},
+                        {"rqid", Task.CurrentId},
+                    });
+
+                    // will return when the final message comes thru.
+                    eventQueue.DispatchResponses();
+                }
+            }).AutoManage();
+        }
+
+        public Task CreateSymlink(string existingLocation, string newLink, LinkType linkType,  PackageManagerMessages messages = null) {
+              return Task.Factory.StartNew(() => {
+                  if (messages != null) {
+                      messages.Register();
+                  }
+                  using (var eventQueue = new ManualEventQueue()) {
+                      WriteAsync(new UrlEncodedMessage("symlink") {
+                        {"existing-location", existingLocation},
+                        {"new-link", newLink},
+                        {"link-type", linkType.ToString()},
+                        {"rqid", Task.CurrentId},
+                    });
+
+                      // will return when the final message comes thru.
+                      eventQueue.DispatchResponses();
+                  }
+              }).AutoManage();
+          }
+
         internal static bool Dispatch(UrlEncodedMessage responseMessage = null) {
             switch (responseMessage.Command) {
                 case "failed-package-install":
@@ -810,6 +884,10 @@ namespace CoApp.Toolkit.Engine.Client {
 
                 case "engine-status":
                     PackageManagerMessages.Invoke.EngineStatus((int?)responseMessage["percent-complete"] ?? 0 );
+                    break;
+
+                case "policy":
+                    PackageManagerMessages.Invoke.PolicyInformation(responseMessage["name"], responseMessage["description"], responseMessage.GetCollection("accounts"));
                     break;
 
                 case "task-complete":

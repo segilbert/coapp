@@ -78,23 +78,25 @@ namespace CoApp.Toolkit.Engine.Feeds {
         }
 
         private Task<bool> EnsureFileIsLocal() {
-            if (_localLocation.FileIsLocalAndExists())
+            if (_localLocation.FileIsLocalAndExists() && !Stale) {
                 return true.AsResultTask();
-
-            if( _remoteLocation != null ) {
-                // do the remote thing (force the recognizer to acquire and load the file)
-                return Recognizer.Recognize(_remoteLocation.AbsoluteUri).ContinueWith(antecedent => {
-                    if( antecedent.IsFaulted || antecedent.IsCanceled ) {
-                        return false;
-                    }
-                    if( antecedent.Result != null && antecedent.Result.IsAtom ) {
-                        _localLocation = antecedent.Result.FullPath;
-                        return true;
-                    }
-                    return false;
-                }, TaskContinuationOptions.AttachedToParent);
             }
 
+            if (_remoteLocation != null) {
+                // do the remote thing (force the recognizer to acquire and load the file)
+                lock (this) {
+                    return Recognizer.Recognize(_remoteLocation.AbsoluteUri, Stale).ContinueWith(antecedent => {
+                        if (antecedent.IsFaulted || antecedent.IsCanceled) {
+                            return false;
+                        }
+                        if (antecedent.Result != null && antecedent.Result.IsAtom) {
+                            _localLocation = antecedent.Result.FullPath;
+                            return true;
+                        }
+                        return false;
+                    }, TaskContinuationOptions.AttachedToParent);
+                }
+            }
             return false.AsResultTask();
         }
 
@@ -103,8 +105,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// </summary>
         /// <remarks></remarks>
         protected void Scan() {
-            if (!Scanned) {
-                
+            if (!Scanned || Stale) {
                 // bring the file local first
                 EnsureFileIsLocal().ContinueWith(antecedent => {
                     if (antecedent.IsFaulted || antecedent.IsCanceled || !antecedent.Result) {              
@@ -112,6 +113,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         LastScanned = DateTime.MinValue;
                         return false;
                     }
+                    Stale = false;
 
                     // we're good to load the file from the _localLocation
                     var feed = AtomFeed.LoadFile(_localLocation);
@@ -119,6 +121,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     // since AtomFeeds are so nicely integrated with Package now, we can just get the packages from there :)
                     _packageList.AddRange(feed.Packages);
 
+                    
                     Scanned = true;
                     LastScanned = DateTime.Now;
                     return true;

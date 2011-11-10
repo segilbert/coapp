@@ -652,10 +652,10 @@ namespace CoApp.Toolkit.Engine {
 
             DoPackageComposition(true);
 
-            if (0 != (ulong) PackageSessionData.GeneralPackageSettings["#CurrentVersion"].LongValue) {
+            //if (0 != (ulong) PackageSessionData.GeneralPackageSettings["#CurrentVersion"].LongValue) {
                 // if there isn't a forced current version, let's not force it
                 PackageSessionData.GeneralPackageSettings["#CurrentVersion"].LongValue = (long) Version;
-            }
+            //}
         }
          #endregion
     }

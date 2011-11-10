@@ -57,7 +57,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// NOTE: Some of this may get refactored to change behavior before the end of the beta2.
         /// </remarks>
         protected void Scan() {
-            if (!Scanned) {
+            if (!Scanned || Stale) {
                 LastScanned = DateTime.Now;
 
                 // GS01: BUG: recursive now should use ** in pattern match.
@@ -84,6 +84,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         // Console.WriteLine("PNF:{0}", p);
                     }
                 }
+                Stale = false;
                 Scanned = true;
             }
         }
@@ -93,10 +94,14 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// 
         /// Supports wildcard in pattern match.
         /// </summary>
+        /// <param name="name"></param>
+        /// <param name="version"></param>
+        /// <param name="arch"></param>
+        /// <param name="publicKeyToken"></param>
         /// <param name="packageFilter">The package filter.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        internal override IEnumerable<Package> FindPackages(string name, string version, string arch, string publicKeyToken) { 
+        internal override IEnumerable<Package> FindPackages(string name, string version, string arch, string publicKeyToken) {
             Scan();
             return from p in _packageList where
                 (string.IsNullOrEmpty(name) || p.Name.IsWildcardMatch(name)) &&

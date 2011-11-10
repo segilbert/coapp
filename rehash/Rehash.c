@@ -16,6 +16,7 @@ BOOL Stopped = TRUE;
 HANDLE WorkerThread = NULL;
 unsigned WorkerThreadId = 0;
 BOOL IsExplorer = FALSE;
+CRITICAL_SECTION SEC;
 
 void ForceEnvironmentReload() {
 	int i = 0;
@@ -69,8 +70,15 @@ void ForceEnvironmentReload() {
 
 unsigned __stdcall ListenForEvent(void* parameter) {
 	HANDLE handle;
+	DWORD processId;
+
 	handle = CreateEvent( NULL, TRUE,FALSE, L"Global\\CoApp.Reload.Environment" ); 
 	
+	// are we inside the explorer shell?
+	GetWindowThreadProcessId(GetShellWindow(),&processId);
+	IsExplorer = (processId == GetCurrentProcessId());
+		
+
 	while( !Stopped  ) {
 		OutputDebugString(L"» Rehash.DLL is waiting on global event");
 		switch( WaitForSingleObject( handle , INFINITE ) ) {
@@ -94,15 +102,21 @@ unsigned __stdcall ListenForEvent(void* parameter) {
 }
 
 BOOL APIENTRY DllMain( HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved ) {
-	DWORD processId;
-	if((ul_reason_for_call == DLL_PROCESS_ATTACH || ul_reason_for_call == DLL_THREAD_ATTACH ) && Stopped ) {
+	if( Stopped == FALSE || (ul_reason_for_call != DLL_PROCESS_ATTACH && ul_reason_for_call != DLL_THREAD_ATTACH ) ) { 
+		return TRUE;
+	}
+
+	if (ul_reason_for_call == DLL_PROCESS_ATTACH ) {
+		InitializeCriticalSection(&SEC);
+	}
+
+	EnterCriticalSection(&SEC);
+	if(Stopped) {
 		Stopped = FALSE;
-		// are we inside the explorer shell?
-		GetWindowThreadProcessId(GetShellWindow(),&processId);
-		IsExplorer = (processId == GetCurrentProcessId());
 		
 		// check Stopped again...
 		WorkerThread = (HANDLE)_beginthreadex(NULL, 0, &ListenForEvent, NULL, 0, &WorkerThreadId);
     }
+	LeaveCriticalSection(&SEC);
     return TRUE;
 }

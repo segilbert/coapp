@@ -195,6 +195,7 @@
     </Compile>
     <Compile Include="Engine\Exceptions\UnableToStartServiceException.cs" />
     <Compile Include="Engine\Feeds\AtomPackageFeed.cs" />
+    <Compile Include="Engine\LinkType.cs" />
     <Compile Include="Engine\Model\Architecture.cs" />
     <Compile Include="Engine\Model\Atom\AtomFeed.cs" />
     <Compile Include="Engine\Model\Atom\AtomItem.cs" />
@@ -210,6 +211,7 @@
     <Compile Include="Engine\PackageName.cs" />
     <Compile Include="Exceptions\CoAppException.cs" />
     <Compile Include="Exceptions\OperationCompletedBeforeResultException.cs" />
+    <Compile Include="Exceptions\UnknownAccountException.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />
     <Compile Include="Engine\EngineService.cs" />

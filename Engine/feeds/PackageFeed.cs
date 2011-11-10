@@ -35,6 +35,8 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// </summary>
         private bool _scanned;
 
+        private bool _stale;
+
         /// <summary>
         /// What is known about the feed's location (url, file, type of file, etc)
         /// </summary>
@@ -58,13 +60,16 @@ namespace CoApp.Toolkit.Engine.Feeds {
         internal bool Scanned { 
             get { return _scanned; }
             set {
-                if (_scanned != value) {
-                    _scanned = value;
-                    NewPackageManager.Instance.Updated();
-                }
+                _scanned = value;
+                NewPackageManager.Instance.Updated();
             }
         }
 
+
+        internal virtual bool Stale {
+            get { return _stale; }
+            set { _stale = value; }
+        }
         /// <summary>
         /// Initializes a new instance of the <see cref="PackageFeed"/> class.
         /// </summary>
@@ -201,6 +206,10 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// <summary>
         /// Finds the packages.
         /// </summary>
+        /// <param name="name"></param>
+        /// <param name="version"></param>
+        /// <param name="arch"></param>
+        /// <param name="publicKeyToken"></param>
         /// <param name="packageFilter">The package filter.</param>
         /// <returns></returns>
         /// <remarks></remarks>

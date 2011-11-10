@@ -172,6 +172,12 @@ namespace CoApp.Toolkit.Engine {
                     publicKeyToken = match.Groups[4].Captures[0].Value;
                 }
 
+                if( forceScan == true ) {
+                    foreach( var feed in Feeds ) {
+                        feed.Stale = true;
+                    }
+                }
+
                 var results = SearchForPackages(name, version, arch, publicKeyToken, location);
                 // filter results of list based on secondary filters
 
@@ -872,6 +878,11 @@ namespace CoApp.Toolkit.Engine {
                 var package = GetSinglePackage(canonicalName, "remove-package");
                 if (package == null) {
                     PackageManagerMessages.Invoke.UnknownPackage(canonicalName);
+                    return;
+                }
+
+                if (package.Name.Equals( "coapp.toolkit", StringComparison.CurrentCultureIgnoreCase ) && package.PublicKeyToken.Equals("820d50196d4e8857") && package.IsActive ) {
+                    PackageManagerMessages.Invoke.Error("remove-package", "canonical-name", "Active CoApp Engine may not be removed");
                     return;
                 }
 

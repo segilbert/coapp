@@ -43,7 +43,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
         public int Progress { get; set; }
 
         protected void Scan() {
-            if (!Scanned) {
+            if (!Scanned || Stale) {
                 LastScanned = DateTime.Now;
 
                 // add the cached package directory, 'cause on backlevel platform, they taint the MSI in the installed files folder.
@@ -78,6 +78,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 SaveCache();
                 Progress = 100;
                 Scanned = true;
+                Stale = false;
             }
         }
 
@@ -120,6 +121,10 @@ namespace CoApp.Toolkit.Engine.Feeds {
         /// 
         /// Supports wildcard in pattern match.
         /// </summary>
+        /// <param name="name"></param>
+        /// <param name="version"></param>
+        /// <param name="arch"></param>
+        /// <param name="publicKeyToken"></param>
         /// <param name="packageFilter">The package filter.</param>
         /// <returns></returns>
         /// <remarks></remarks>

@@ -18,6 +18,8 @@ namespace CoApp.Toolkit.Network {
     using System.Net;
     using System.Net.Configuration;
     using System.Reflection;
+    using System.Security.Cryptography;
+    using System.Text;
     using System.Threading.Tasks;
     using Exceptions;
     using Extensions;
@@ -73,9 +75,13 @@ namespace CoApp.Toolkit.Network {
     }   
 
     public class RemoteFileMessages:MessageHandlers<RemoteFileMessages> {
-        public Action<Uri> Failed;
-        public Action<Uri> Completed;
-        public Action<Uri,int> Progress;
+        public delegate void RemoteFileFailed(Uri remoteLocation);
+        public delegate void RemoteFileCompleted(Uri remoteLocation);
+        public delegate void RemoteFileProgress(Uri remoteLocation, int percentComplete);
+
+        public RemoteFileFailed Failed;
+        public RemoteFileCompleted Completed;
+        public RemoteFileProgress Progress;
     }
 
     public class RemoteFile:UniqueInstance<RemoteFile> {
@@ -173,7 +179,9 @@ namespace CoApp.Toolkit.Network {
                 if (_getTask != null && !_getTask.IsCompleted) {
                     return _getTask;
                 }
+
                 
+
                 var webRequest = (HttpWebRequest) WebRequest.Create(RemoteLocation);
                 webRequest.AllowAutoRedirect = true;
                 webRequest.Method = WebRequestMethods.Http.Get;
@@ -211,9 +219,46 @@ namespace CoApp.Toolkit.Network {
                                 }
 
                                 try {
+                                    if( Filename.FileIsLocalAndExists() ) {
+                                        var md5 = string.Empty;
+                                        try {
+                                            if (httpWebResponse.Headers.AllKeys.ContainsIgnoreCase("x-ms-meta-MD5")) {
+                                                // it's coming from azure, check the value of the md5 and compare against the file on disk ... better than date/size matching.
+                                                md5 = httpWebResponse.Headers["x-ms-meta-MD5"].Trim();
+                                            } else if (httpWebResponse.Headers.AllKeys.ContainsIgnoreCase("Content-MD5")) {
+                                                md5 = httpWebResponse.Headers["Content-MD5"].Trim();
+                                                if (md5.EndsWith("=")) {
+                                                    md5 = Convert.FromBase64CharArray(md5.ToCharArray(), 0, md5.Length).ToUtf8String();
+                                                }
+                                            }
+                                        } catch {
+                                            // something gone screwy?
+                                        }
+
+                                        if( !string.IsNullOrEmpty(md5) ) {
+                                            var localMD5 = string.Empty;
+                                            using( var stream = new FileStream(Filename, FileMode.Open, FileAccess.Read, FileShare.Read) ) {
+                                                localMD5  = MD5.Create().ComputeHash(stream).ToHexString();
+                                            }
+
+                                            if( string.Equals(md5, localMD5, StringComparison.CurrentCultureIgnoreCase)) {
+                                                // it's the same file. We're not doin nothing.
+                                                RemoteFileMessages.Invoke.Completed(RemoteLocation);
+                                                return;
+                                            }
+                                            
+                                            // only do the size/date comparison if the server doesn't provide an MD5
+                                        } else if (_contentLength > 0 && _lastModified.CompareTo(File.GetCreationTime(Filename)) <= 0 && _contentLength == new FileInfo(Filename).Length) {
+                                            // file is identical to the one on disk.
+                                            // we're not going to reget it. :p
+                                            RemoteFileMessages.Invoke.Completed(RemoteLocation);
+                                            return;
+                                        }
+                                    }
+
                                     // we should open the file here, so that it's ready when we start the async read cycle.
                                     if (_filestream != null) {
-                                        throw new CoAppException("THIS VERY BAD AND UNEXPECTED.");
+                                        throw new CoAppException("THIS VERY BAD AND UNEXPECTED. (Failed to close?)");
                                     }
 
                                     _filestream = File.Open(Filename, FileMode.Create);
@@ -308,6 +353,7 @@ namespace CoApp.Toolkit.Network {
                 }
                 // end of the file!
                 _filestream.Close();
+                _filestream = null;
 
                 try {
                     if (IsCancelled) {
@@ -335,24 +381,3 @@ namespace CoApp.Toolkit.Network {
 
   
 }
-        /*
-        public static HttpWebResponse HttpWebResponse(this Task<WebResponse> asyncResult ) {
-            if( asyncResult.IsFaulted && asyncResult.Exception != null ) {
-                return asyncResult.Exception.Flatten().InnerExceptions.OfType<WebException>().Select(wex => wex.Response).OfType<HttpWebResponse>().FirstOrDefault();
-            }
-            return asyncResult.Result as HttpWebResponse;
-        }
-
-        public static WebResponse WebResponse(this Task<WebResponse> asyncResult ) {
-            if( asyncResult.IsFaulted && asyncResult.Exception != null ) {
-                return asyncResult.Exception.Flatten().InnerExceptions.OfType<WebException>().Select(wex => wex.Response).OfType<WebResponse>().FirstOrDefault();
-            }
-            return asyncResult.Result as HttpWebResponse;
-        }
-        
-
-        public static HttpStatusCode HttpStatusCode( this Task<WebResponse> asyncResult ) {
-            var response = asyncResult.HttpWebResponse();
-            return response != null ? response.StatusCode : default(HttpStatusCode);
-        }
-        */

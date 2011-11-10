@@ -34,12 +34,15 @@ namespace CoApp.Toolkit.Engine.Feeds {
             }
         }
 
-
         /// <summary>
         /// Finds packages based on the canonical details of the package.
         /// 
         /// Supports wildcard in pattern match.
         /// </summary>
+        /// <param name="name"></param>
+        /// <param name="version"></param>
+        /// <param name="arch"></param>
+        /// <param name="publicKeyToken"></param>
         /// <param name="packageFilter">The package filter.</param>
         /// <returns></returns>
         /// <remarks></remarks>

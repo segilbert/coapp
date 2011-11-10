@@ -32,6 +32,7 @@ namespace CoApp.Toolkit.Extensions {
     using Exceptions;
     using Logging;
     using Microsoft.Win32;
+    using Tasks;
     using Win32;
     using RegistryView = Configuration.RegistryView;
 
@@ -43,7 +44,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <summary>
         /// a running counter of for funtions wanting to number files with increasing numbers.
         /// </summary>
-        private static int _counter = new Random(Process.GetCurrentProcess().Id +(int)(DateTime.Now.Ticks)).Next(0x7fffffff);
+        private static int _counter = Process.GetCurrentProcess().Id << 16;
 
         public static int Counter { get { return ++_counter; }}
         public static string CounterHex { get { return Counter.ToString("x8"); } }
@@ -92,9 +93,16 @@ namespace CoApp.Toolkit.Extensions {
         static FilesystemExtensions() {
             TryToHandlePendingRenames(true);
         }
+#if COAPP_ENGINE_CORE 
 
+        // in the engine, we'd like disposable filenames to be session-local
+        private static List<string> _disposableFilenames {
+            get { return SessionCache<List<string>>.Value["DisposableFilenames"] ?? (SessionCache<List<string>>.Value["DisposableFilenames"] = new List<string>()); }
+        }
+#else
         private static List<string> _disposableFilenames = new List<string>();
 
+#endif
         private static bool _triedCleanup;
 
         public static void RemoveTemporaryFiles() {
