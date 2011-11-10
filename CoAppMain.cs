@@ -397,7 +397,7 @@ namespace CoApp.CLI {
                         if (parameters.Count() != 0) {
                             throw new ConsoleException(Resources.TrimErrorMessage);
                         }
-                        task = _pm.GetPackages("*", _minVersion, _maxVersion, _dependencies, true, _active, false, _blocked, _latest, _location,
+                        task = _pm.GetPackages("*", _minVersion, _maxVersion, _dependencies, true, false, false, _blocked, _latest, _location,
                             _forceScan, messages: _messages).ContinueWith(antecedent => Remove(antecedent.Result));
                         break;
 
@@ -449,6 +449,87 @@ namespace CoApp.CLI {
                         task =
                             _pm.GetPackages(parameters, _minVersion, _maxVersion, _dependencies, true, _active, _required, _blocked, _latest, _location,_forceScan,  messages: _messages).
                                 ContinueWith(antecedent => UnMark(antecedent.Result));
+                        break;
+
+                    case "create-symlink":
+                        if (parameters.Count() != 2) {
+                            throw new ConsoleException("Create-symlink requires two parameters: existing-location and new-link");
+                        }
+                        task = _pm.CreateSymlink(parameters.First().GetFullPath(), parameters.Last().GetFullPath(), LinkType.Symlink);
+                        break;
+                    case "create-hardlink":
+                        if (parameters.Count() != 2) {
+                            throw new ConsoleException("Create-hardlink requires two parameters: existing-location and new-link");
+                        }
+                        task = _pm.CreateSymlink(parameters.First().GetFullPath(), parameters.Last().GetFullPath(), LinkType.Hardlink);
+                        break;
+                    case "create-shortcut":
+                        if (parameters.Count() != 2) {
+                            throw new ConsoleException("Create-shortcut requires two parameters: existing-location and new-link");
+                        }
+                        task = _pm.CreateSymlink(parameters.First().GetFullPath(), parameters.Last().GetFullPath(), LinkType.Shortcut);
+                        break;
+
+                    case "-p" :
+                    case "list-policies":
+                    case "list-policy":
+                    case "policies":
+                        ListPolicies();
+                        break;
+
+                    case "add-to-policy": {
+                        if (parameters.Count() != 2) {
+                            throw new ConsoleException("Add-to-policy requires at two parameters (policy name and account)");
+                        }
+
+                        var policyName = parameters.First();
+                        var account = parameters.Last();
+
+                        task = _pm.AddToPolicy(policyName, account, _messages).ContinueWith(antecedent => {
+
+                            if( antecedent.IsFaulted ) {
+                                throw antecedent.Exception;
+                            }
+
+                            _pm.GetPolicy(policyName, new PackageManagerMessages {
+                                PolicyInformation = (polName, description, accounts) => {
+                                    Console.WriteLine("Policy: {0} -- {1} ", polName, description);
+                                    foreach (var acct in accounts) {
+                                        Console.WriteLine("   {0}", acct);
+                                    }
+                                }
+                            }.Extend(_messages)).Wait();
+
+                        });
+                    }
+                        break;
+
+                    case "remove-from-policy": {
+                        if (parameters.Count() != 2) {
+                            throw new ConsoleException("Remove-to-policy requires at two parameters (policy name and account)");
+                        }
+
+                        var policyName = parameters.First();
+                        var account = parameters.Last();
+
+                        task = _pm.RemoveFromPolicy(policyName, account, _messages).ContinueWith(antecedent => {
+
+                            if (antecedent.IsFaulted) {
+                                throw antecedent.Exception;
+                            }
+
+
+                            _pm.GetPolicy(policyName, new PackageManagerMessages {
+                                PolicyInformation = (polName, description, accounts) => {
+                                    Console.WriteLine("Policy: {0} -- {1}", polName, description);
+                                    foreach (var acct in accounts) {
+                                        Console.WriteLine("   {0}", acct);
+                                    }
+                                }
+                            }.Extend(_messages)).Wait();
+
+                        });
+                    }
                         break;
 
                     default:
@@ -682,7 +763,7 @@ namespace CoApp.CLI {
         }
 
         private void MessageArgumentError(string arg1, string arg2, string arg3) {
-            Console.WriteLine("Message Argument Error {0}, {1}, {2}.", arg1, arg2, arg3);
+            throw new ConsoleException("Error from service: {0}", arg3);
         }
 
         private void OperationRequiresPermission(string policyName) {
@@ -835,6 +916,24 @@ namespace CoApp.CLI {
                     }.Extend(_messages)).Wait();
                     
                 }
+            }
+        }
+
+        static IEnumerable<string> policyNames = new[]{
+                "Connect", "EnumeratePackages", "UpdatePackage", "InstallPackage", "RemovePackage", "ChangeActivePackage", "ChangeRequiredState",
+                "ChangeBlockedState", "EditSystemFeeds", "EditSessionFeeds", "PauseService", "StopService", "ModifyPolicy", "Symlink",
+            };
+        
+        private void ListPolicies() {
+            foreach( var name in policyNames ) {
+                _pm.GetPolicy(name, new PackageManagerMessages {
+                    PolicyInformation = (polName, description, accounts) => {
+                        Console.WriteLine("\r\nPolicy: {0} -- {1} ", polName, description);
+                        foreach (var account in accounts) {
+                            Console.WriteLine("   {0}", account);
+                        }
+                    } 
+                }.Extend(_messages)).Wait();
             }
         }
 
