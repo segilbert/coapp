@@ -371,7 +371,7 @@ namespace CoApp.Bootstrapper {
             // try localized file off the bootstrap server
             if (!String.IsNullOrEmpty(BootstrapServerUrl.Value)) {
                 f = AsyncDownloader.Download(BootstrapServerUrl.Value, localizedName, progressCompleted);
-                Logger.Warning("   (on boostrap server?):" + f);
+                Logger.Warning("   (on bootstrap server?):" + f);
                 if (ValidFileExists(f)) {
                     Logger.Warning("   Yes.");
                     return f;

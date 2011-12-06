@@ -49,7 +49,7 @@ const wchar_t* DotNetFullInstallerUrl = L"http://download.microsoft.com/download
 const wchar_t* DotNetFullInstallerFilename = L"dotNetFx40_Full_x86_x64.exe";
 
 const wchar_t* dot_net_regkey = L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full#Install";
-const wchar_t* BootstrapperUIFilename = L"bootstrapperui.exe";
+const wchar_t* ManagedBootstrapFilename = L"managed-bootstrap.exe";
 const wchar_t* eventName = L"/Global/coappbootstrapper";
 const wchar_t* sectionName = L"coappbootstrapper";
 const wchar_t* CoAppServerUrl = L"http://coapp.org/resources/";
@@ -566,12 +566,13 @@ fin:
 
 	return result;
 }
+wchar_t* AcquireFile( const wchar_t* filename, BOOL searchOnline, const wchar_t* additionalDownloadServer );
 
 int LaunchSecondStage() {
 	wchar_t* commandLine = NULL;
 	STARTUPINFO StartupInfo;
     PROCESS_INFORMATION ProcInfo;
-	wchar_t* secondStage = AcquireFile(BootstrapperUIFilename,TRUE,NULL);
+	wchar_t* secondStage = AcquireFile(ManagedBootstrapFilename,TRUE,NULL);
 
 	if( secondStage == NULL) {
 		TerminateApplicationWithError(IDS_UNABLE_TO_FIND_SECOND_STAGE, L"Can't find second stage bootstrap.");

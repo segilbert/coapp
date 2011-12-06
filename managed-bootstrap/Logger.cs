@@ -22,7 +22,7 @@
             Warnings = true;
             Messages = true;
 
-            Source = "BootstrapperUI";
+            Source = "managed-bootstrap";
             if( String.IsNullOrEmpty(Source)) {
                 Source = "CoApp (misc)";
             }

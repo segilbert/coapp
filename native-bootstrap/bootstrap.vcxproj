@@ -33,20 +33,20 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(SolutionDir)\..\solution\local.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\x86.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\exe.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\debug.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\link-with-ddk.props" />
+    <Import Project="$(SolutionDir)local.props" />
+    <Import Project="$(SolutionDir)properties\x86.props" />
+    <Import Project="$(SolutionDir)properties\exe.props" />
+    <Import Project="$(SolutionDir)properties\debug.props" />
+    <Import Project="$(SolutionDir)properties\link-with-ddk.props" />
     <Import Project="bootstrap.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(SolutionDir)\..\solution\local.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\x86.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\exe.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\release.props" />
-    <Import Project="$(SolutionDir)\..\solution\properties\link-with-ddk.props" />
+    <Import Project="$(SolutionDir)local.props" />
+    <Import Project="$(SolutionDir)properties\x86.props" />
+    <Import Project="$(SolutionDir)properties\exe.props" />
+    <Import Project="$(SolutionDir)properties\release.props" />
+    <Import Project="$(SolutionDir)properties\link-with-ddk.props" />
     <Import Project="bootstrap.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />

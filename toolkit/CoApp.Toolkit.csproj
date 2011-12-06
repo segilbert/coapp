@@ -102,9 +102,6 @@
     <Compile Include="Network\Ftp.cs" />
     <Compile Include="Network\HttpServer.cs" />
     <Compile Include="Network\RemoteFile.cs" />
-    <Compile Include="Package\Huid.cs" />
-    <Compile Include="Package\PackageType.cs" />
-    <Compile Include="Package\Validator.cs" />
     <Compile Include="Pipes\AsyncPipeExtensions.cs" />
     <Compile Include="Pipes\UrlEncodedMessage.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -211,22 +208,7 @@
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="$(SolutionDir)\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
-    <None Include="Spec\Event.cs" />
-    <None Include="Spec\EventCondition.cs" />
-    <None Include="Spec\FileGroup.cs" />
     <Compile Include="Scripting\Languages\PropertySheet\Indexer.cs" />
-    <None Include="Spec\Library.cs" />
-    <None Include="Spec\Link.cs" />
-    <None Include="Spec\LinkSubsystem.cs" />
-    <None Include="Spec\LinkType.cs" />
-    <None Include="Spec\Process.cs" />
-    <None Include="Spec\ProcessCompileAs.cs" />
-    <None Include="Spec\ProductInfo.cs" />
-    <Compile Include="Spec\Properties\CompileProcessProperties.cs" />
-    <Compile Include="Spec\Properties\ProcessProperties.cs" />
-    <Compile Include="Spec\Properties\PropertySheetAttribute.cs" />
-    <Compile Include="Spec\Properties\ResourceCompileProcessProperties.cs" />
-    <None Include="Spec\SpecFile.cs" />
     <Compile Include="Scripting\Languages\PropertySheet\PropertySheetItem.cs" />
     <Compile Include="Tasks\CoTask.cs" />
     <Compile Include="Tasks\MessageHandlers.cs" />
@@ -238,17 +220,6 @@
     <Compile Include="Text\Sgml\SgmlReader.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Trace\CommandLine.cs" />
-    <Compile Include="Trace\File.cs" />
-    <Compile Include="Trace\Indexers.cs" />
-    <Compile Include="Trace\Process.cs" />
-    <Compile Include="Trace\Trace.cs" />
-    <Compile Include="Trace\Tracing.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Tracing.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="Trace\Variable.cs" />
     <Compile Include="Utility\DependencyInformation.cs" />
     <Compile Include="Utility\DirectedGraph.cs" />
     <Compile Include="Utility\ExecutableInfo.cs" />
@@ -345,12 +316,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(SolutionDir)resources\icons\CoApp.ico" />
-    <None Include="Trace\Tracing.xsd">
-      <SubType>Designer</SubType>
-      <CustomToolNamespace>CoApp.Toolkit.Trace</CustomToolNamespace>
-      <Generator>XsdTool</Generator>
-      <LastGenOutput>Tracing.cs</LastGenOutput>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

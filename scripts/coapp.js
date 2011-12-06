@@ -3,15 +3,11 @@
 
 var CoApp = {
     $SIMPLESIGNER: function () {
-        return this.$SOLUTIONTOOLS("\\simplesigner\\simplesigner.exe");
+        return this.$SOLUTIONTOOLS("\\simplesigner.exe");
     },
 
     $SOLUTIONDIR: function (path) {
         return this.GetRelativePath("\\..\\" + (path || ""));
-    },
-
-    $SOLUTIONEXT: function (path) {
-        return this.$SOLUTIONDIR("\\ext\\" + (path || ""));
     },
 
     $SOLUTIONTOOLS: function (path) {
@@ -23,15 +19,15 @@ var CoApp = {
     },
 
     $SOLUTIONBINARIES: function (path) {
-        return this.$SOLUTIONDIR("\\ext\\binaries\\" + (path || ""));
+        return this.$SOLUTIONDIR("\\binaries\\" + (path || ""));
     },
 
     $RELEASEDIR: function (path) {
-        return this.$COAPPDIR("\\output\\any\\release\\bin\\" + (path || ""));
+        return this.$SOLUTIONDIR("\\output\\any\\release\\bin\\" + (path || ""));
     },
 
     $DEBUGDIR: function (path) {
-        return this.$COAPPDIR("\\output\\any\\debug\\bin\\" + (path || ""));
+        return this.$SOLUTIONDIR("\\output\\any\\debug\\bin\\" + (path || ""));
     },
 
     $COAPPDIR: function (path) {
