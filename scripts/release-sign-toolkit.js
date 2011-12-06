@@ -2,14 +2,16 @@
 with(new ActiveXObject("Scripting.FileSystemObject"))for(var x in p=(".;js;scripts;"+WScript.scriptfullname.replace(/(.*\\)(.*)/g,"$1")+";"+new ActiveXObject("WScript.Shell").Environment("PROCESS")("PATH")).split(";"))if(FileExists(j=BuildPath(p[x],"js.js"))){eval(OpenTextFile(j).ReadAll());break}
 Use("CoApp");
 
-CoApp.StrongNameBinary([
-    CoApp.$RELEASEDIR("CoApp.Toolkit.dll"),
-    CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.dll"),
-    CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.Client.dll"),
-    CoApp.$RELEASEDIR("CoApp.Service.exe"),
-    CoApp.$RELEASEDIR("CoApp.exe")
- ]);
+if (folderExists(CoApp.$SOLUTIONDIR("..\\signing"))) {
 
+    CoApp.StrongNameBinary([
+        CoApp.$RELEASEDIR("CoApp.Toolkit.dll"),
+        CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.dll"),
+        CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.Client.dll"),
+        CoApp.$RELEASEDIR("CoApp.Service.exe"),
+        CoApp.$RELEASEDIR("CoApp.exe")
+     ]);
+}
 /// Every time we do a release-sign, we increment the build number.
 var rx, major, minor, build, revision, filename;
 
