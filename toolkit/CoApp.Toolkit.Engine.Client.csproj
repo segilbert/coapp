@@ -99,7 +99,7 @@
     <Resource Include="Images\coapp-background1.png" />
     <ProjectReference Include="CoApp.Toolkit.csproj">
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
-      <Name>CoApp.Toolkit %28coapp.toolkit\CoApp.Toolkit%29</Name>
+      <Name>CoApp.Toolkit</Name>
     </ProjectReference>
     <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
   </ItemGroup>

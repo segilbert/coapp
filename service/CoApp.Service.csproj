@@ -70,7 +70,7 @@
     <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="CoApp.Toolkit.Engine.Core.csproj">
+    <ProjectReference Include="..\toolkit\CoApp.Toolkit.Engine.Core.csproj">
       <Project>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</Project>
       <Name>CoApp.Toolkit.Engine.Core</Name>
     </ProjectReference>

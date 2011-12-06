@@ -7,11 +7,7 @@
     <DDKInstallPath>C:\WinDDK\7600.16385.1\</DDKInstallPath>
   </PropertyGroup>
   <PropertyGroup Label="UserMacros">
-    <CommonOutputDir>$(SolutionDir)..\</CommonOutputDir>
-    <!--
-    if you want it all to end up in a subdir of the solution folder:
-    <CommonOutputDir>$(SolutionDir)..\solution\</CommonOutputDir>
-    -->
+    <CommonOutputDir>$(SolutionDir)</CommonOutputDir>
   </PropertyGroup>
   <ItemGroup>
     <BuildMacro Include="DDKInstallPath">
