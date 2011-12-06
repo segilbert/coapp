@@ -634,7 +634,7 @@ namespace CoApp.Toolkit.Extensions {
                                         skipped.Add(dest);
                                     }
                                     continue;
-                                } catch (Exception e) {
+                                } catch (Exception) {
                                     skipped.Add(src);
                                     skipped.Add(dest);
                                 }

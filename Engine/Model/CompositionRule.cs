@@ -17,21 +17,27 @@ namespace CoApp.Toolkit.Engine {
 
     [XmlRoot(ElementName = "CompositionRule", Namespace = "http://coapp.org/atom-package-feed-1.0")]
     public class CompositionRule {
-        [XmlElement(IsNullable = false)]
+        [XmlAttribute]
         public CompositionAction Action { get; set; }
 
         // AKA "Key"
-        [XmlElement(IsNullable = false)]
-        public string Link { get; set; }
+        [XmlAttribute]
+        public string Destination { get; set; }
 
         // AKA "Value"
-        [XmlElement(IsNullable = false)]
-        public string Target { get; set; }
+        [XmlAttribute]
+        public string Source { get; set; }
 
-        [XmlElement(IsNullable = false)]
+        [XmlIgnore]
+        public string Value { get { return Source; } }
+
+        [XmlIgnore]
+        public string Key { get { return Destination; } }
+
+        [XmlAttribute]
         public string Parameters { get; set; }
 
-        [XmlElement(IsNullable = false)]
+        [XmlAttribute]
         public string Category { get; set; }
     }
 }

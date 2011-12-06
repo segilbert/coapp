@@ -341,7 +341,7 @@ namespace CoApp.Toolkit.Engine {
         #region Package Composition 
 
 
-        private static Lazy<Dictionary<string, string>> DefaultMacros    = new Lazy<Dictionary<string, string>>(() => {
+        private static Lazy<Dictionary<string, string>> DefaultMacros = new Lazy<Dictionary<string, string>>(() => {
             var root = PackageManagerSettings.CoAppRootDirectory;
             return new Dictionary<string, string>() {
                 { "apps" , root },
@@ -376,7 +376,7 @@ namespace CoApp.Toolkit.Engine {
                     return DefaultMacros.Value[macro];
                 }
 
-                switch( macro ) {
+                switch( macro.ToLower() ) {
                     case "packagedir":
                     case "packagedirectory":
                     case "packagefolder":
@@ -432,8 +432,8 @@ namespace CoApp.Toolkit.Engine {
                         case PackageRole.Application:
                             yield return new CompositionRule() {
                                 Action = CompositionAction.SymlinkFolder,
-                                Link = "${CANONICALPACKAGEDIR}",
-                                Target = "${PACKAGEDIR}",
+                                Destination = "${publishedpackagedir}",
+                                Source = "${packagedir}",
                                 Category = null,
                             };
                             break;
@@ -454,17 +454,101 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        private string ResolveVariablesAndEnsurePathParentage(string parentPath, string variable) {
+            var path = ResolveVariables(variable);
+            try {
+                if( path.IsSimpleSubPath() ){
+                    path= Path.Combine(parentPath , path);
+                }
+
+                path = path.GetFullPath();
+
+                if( parentPath.IsSubPath(path)) {
+                    return path;
+                }
+
+            } catch(Exception e) {
+                Logger.Error(e);
+            }
+
+            Logger.Error("ERROR: path '{0}' must resolve to be a child of '{1}' (resolves to '{2}')", variable, parentPath, path);
+            return null;
+        }
+
         public void DoPackageComposition(bool makeCurrent) {
             // GS01: if package composition fails, and we're in the middle of installing a package
             // we should roll back the package install.
-
             var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this)).ToArray();
 
-            foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)) {
-                var link = ResolveVariables(rule.Link).GetFullPath();
-                var dir = ResolveVariables(rule.Target).GetFullPath();
+            var packagedir = ResolveVariables("${packagedir}\\");
+            var appsdir = ResolveVariables("${apps}\\");
+            
+            foreach (var rule in rules.Where(r => r.Action == CompositionAction.FileCopy)) {
+                var destination = ResolveVariablesAndEnsurePathParentage(packagedir,  rule.Destination);
+                var source = ResolveVariablesAndEnsurePathParentage(packagedir, rule.Source);
+                
+                // file copy operations may only manipulate files in the package directory.
+                if( string.IsNullOrEmpty(source) ) {
+                    Logger.Error("ERROR: Illegal file copy rule. Source must be in package directory [{0}] => [{1}]", rule.Destination, destination);
+                    continue;
+                }
 
-                if (Directory.Exists(dir) && (makeCurrent || !Directory.Exists(link))) {
+                if (string.IsNullOrEmpty(destination)) {
+                    Logger.Error("ERROR: Illegal file copy rule. Destination must be in package directory [{0}] => [{1}]", source, rule.Source);
+                    continue;
+                }
+
+                if( !File.Exists(source) ) {
+                    Logger.Error("ERROR: Illegal file copy rule. Source file does not exist [{0}] => [{1}]", source, destination);
+                    continue;
+                }
+
+                File.Copy(source, destination);
+            }
+
+            foreach (var rule in rules.Where(r => r.Action == CompositionAction.FileRewrite)) {
+                var destination = ResolveVariablesAndEnsurePathParentage(packagedir, rule.Destination);
+                var source = ResolveVariablesAndEnsurePathParentage(packagedir, rule.Source);
+
+                // file copy operations may only manipulate files in the package directory.
+                if (string.IsNullOrEmpty(source)) {
+                    Logger.Error("ERROR: Illegal file rewrite rule. Source must be in package directory [{0}] => [{1}]", rule.Destination, destination);
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(destination)) {
+                    Logger.Error("ERROR: Illegal file rewrite rule. Destination must be in package directory [{0}] => [{1}]", source, rule.Source);
+                    continue;
+                }
+
+                if (!File.Exists(source)) {
+                    Logger.Error("ERROR: Illegal file rewrite rule. Source file does not exist [{0}] => [{1}]", source, destination);
+                    continue;
+                }
+
+                File.WriteAllText(destination, ResolveVariables(File.ReadAllText(source)));
+            }
+
+            foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)) {
+                var link = ResolveVariablesAndEnsurePathParentage(appsdir, rule.Destination);
+                var dir = ResolveVariablesAndEnsurePathParentage(packagedir, rule.Source);
+
+                if( string.IsNullOrEmpty(link) ) {
+                    Logger.Error("ERROR: Illegal folder symlink rule. Destination location '{0}' must be a subpath of {1}", rule.Destination, appsdir);
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(dir)) {
+                    Logger.Error("ERROR: Illegal folder symlink rule. Source folder '{0}' must be a subpath of {1}", rule.Source, packagedir);
+                    continue;
+                }
+
+                if (!Directory.Exists(dir)) {
+                    Logger.Error("ERROR: Illegal folder symlink rule. Source folder '{0}' does not exist.", dir);
+                    continue;
+                }
+
+                if (makeCurrent || !Directory.Exists(link)) {
                     try {
                         Logger.Message("Creatign Directory Symlink [{0}] => [{1}]", link, dir);
                         Symlink.MakeDirectoryLink(link, dir);
@@ -476,9 +560,25 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)) {
-                var file = ResolveVariables(rule.Target).GetFullPath();
-                var link = ResolveVariables(rule.Link).GetFullPath();
-                if (File.Exists(file) && (makeCurrent || !File.Exists(link))) {
+                var link = ResolveVariablesAndEnsurePathParentage(appsdir, rule.Destination);
+                var file = ResolveVariablesAndEnsurePathParentage(packagedir, rule.Source);
+
+                if (string.IsNullOrEmpty(link)) {
+                    Logger.Error("ERROR: Illegal file symlink rule. Destination location '{0}' must be a subpath of {1}", rule.Destination, appsdir);
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(file)) {
+                    Logger.Error("ERROR: Illegal file symlink rule. Source file '{0}' must be a subpath of {1}", rule.Source, packagedir);
+                    continue;
+                }
+
+                if (!File.Exists(file)) {
+                    Logger.Error("ERROR: Illegal folder symlink rule. Source file '{0}' does not exist.", file);
+                    continue;
+                }
+
+                if (makeCurrent || !File.Exists(link)) {
                     if (!Directory.Exists(Path.GetDirectoryName(link))) {
                         Directory.CreateDirectory(Path.GetDirectoryName(link));
                     }
@@ -494,22 +594,32 @@ namespace CoApp.Toolkit.Engine {
             }
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.Shortcut)) {
-                var target = ResolveVariables(rule.Target).GetFullPath();
-                var link = ResolveVariables(rule.Link).GetFullPath();
+                var shortcutPath = ResolveVariables(rule.Destination).GetFullPath();
+                var target = ResolveVariablesAndEnsurePathParentage(packagedir, rule.Source);
 
-                if (File.Exists(target) && (makeCurrent || !File.Exists(link))) {
-                    if (!Directory.Exists(Path.GetDirectoryName(link))) {
-                        Logger.Message("Creating Shortcut [{0}] => [{1}]", link, target);
-                        Directory.CreateDirectory(Path.GetDirectoryName(link));
+                if (string.IsNullOrEmpty(target)) {
+                    Logger.Error("ERROR: Illegal shortcut rule. Source file '{0}' must be a subpath of {1}", rule.Source, packagedir);
+                    continue;
+                }
+
+                if (!File.Exists(target)) {
+                    Logger.Error("ERROR: Illegal shortcut rule. Source file '{0}' does not exist.", target);
+                    continue;
+                }
+
+                if (makeCurrent || !File.Exists(shortcutPath)) {
+                    if (!Directory.Exists(Path.GetDirectoryName(shortcutPath))) {
+                        Logger.Message("Creating Shortcut [{0}] => [{1}]", shortcutPath, target);
+                        Directory.CreateDirectory(Path.GetDirectoryName(shortcutPath));
                     }
 
-                    ShellLink.CreateShortcut(link, target);
+                    ShellLink.CreateShortcut(shortcutPath, target);
                 }
             }
 
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.EnvironmentVariable)) {
-                var environmentVariable = ResolveVariables(rule.Link);
-                var environmentValue = ResolveVariables(rule.Target);
+                var environmentVariable = ResolveVariables(rule.Key);
+                var environmentValue = ResolveVariables(rule.Value);
 
                 switch( environmentVariable.ToLower() ) {
                     case "path":
@@ -547,6 +657,7 @@ namespace CoApp.Toolkit.Engine {
                     case "systemroot":
                     case "userdomain":
                     case "userprofile":
+                        Logger.Message("Package may not set environment variable '{0}'", environmentValue );
                         break;
 
                     default:
@@ -557,8 +668,8 @@ namespace CoApp.Toolkit.Engine {
 
             var view = RegistryView.System["SOFTWARE"];
             foreach (var rule in rules.Where(r => r.Action == CompositionAction.Registry)) {
-                var regKey = ResolveVariables(rule.Link);
-                var regValue= ResolveVariables(rule.Target);
+                var regKey = ResolveVariables(rule.Key);
+                var regValue = ResolveVariables(rule.Value);
 
                 view[regKey].StringValue = regValue;
             }
@@ -569,24 +680,24 @@ namespace CoApp.Toolkit.Engine {
             var rules = ImplicitRules.Union(PackageHandler.GetCompositionRules(this));
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.Shortcut)
-                let target = this.ResolveVariables(rule.Target).GetFullPath()
-                let link = this.ResolveVariables(rule.Link).GetFullPath()
+                let target = this.ResolveVariables(rule.Source).GetFullPath()
+                let link = this.ResolveVariables(rule.Destination).GetFullPath()
                 where ShellLink.PointsTo(link, target)
                 select link) {
                 link.TryHardToDelete();
             }
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFile)
-                let target = this.ResolveVariables(rule.Target).GetFullPath()
-                let link = this.ResolveVariables(rule.Link).GetFullPath()
+                let target = this.ResolveVariables(rule.Source).GetFullPath()
+                let link = this.ResolveVariables(rule.Destination).GetFullPath()
                 where File.Exists(target) && File.Exists(link) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
                 select link) {
                 Symlink.DeleteSymlink(link);
             }
 
             foreach (var link in from rule in rules.Where(r => r.Action == CompositionAction.SymlinkFolder)
-                let target = this.ResolveVariables(rule.Target).GetFullPath()
-                let link = this.ResolveVariables(rule.Link).GetFullPath()
+                let target = this.ResolveVariables(rule.Source).GetFullPath()
+                let link = this.ResolveVariables(rule.Destination).GetFullPath()
                 where File.Exists(target) && Symlink.IsSymlink(link) && Symlink.GetActualPath(link).Equals(target)
                 select link) {
                 Symlink.DeleteSymlink(link);

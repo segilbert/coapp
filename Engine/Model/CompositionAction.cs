@@ -36,5 +36,15 @@ namespace CoApp.Toolkit.Engine {
         /// Creates a registry key
         /// </summary>
         Registry,
+
+        /// <summary>
+        /// Copies a file from one place to another
+        /// </summary>
+        FileCopy,
+
+        /// <summary>
+        /// Copies a file from one place to another, processes ${macros} in file
+        /// </summary>
+        FileRewrite,
     }
 }

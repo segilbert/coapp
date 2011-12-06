@@ -338,6 +338,24 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 state = ParseState.HasLambdaAndLabelAndEquals;
                                 continue;
 
+                            case TokenType.Semicolon:
+                            case TokenType.Comma :
+                            case TokenType.CloseBrace: {
+                                // assumes "${DEFAULTLAMBDAVALUE}" for the lamda value
+                                    var pv = property.GetPropertyValue(propertyLabelText, collectionName);
+                                    pv.Add("${DEFAULTLAMBDAVALUE}");
+                                    pv.SourceLocation = sourceLocation;
+                                    collectionName = propertyLabelText = null;
+                                    state = ParseState.InPropertyCollectionWithoutLabelWaitingForComma;
+                                }   
+
+                                if (token.Type == TokenType.CloseBrace) {
+                                    // and, we're closing out this property.
+                                    state = ParseState.HavePropertyCompleted;
+                                }
+                                continue;
+
+
                             default:
                                 throw new EndUserParseException(token, _filename, "PSP 116", "After the '{0} => {1}' in collection, expected '=' ", collectionName, propertyLabelText);
 
