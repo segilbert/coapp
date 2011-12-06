@@ -3,6 +3,7 @@
 *.sdf
 *.opensdf
 output
+intermediate
 obj
 bin
 _Resharper*

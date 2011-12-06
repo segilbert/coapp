@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\output\any\debug\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)\output\any\debug\bin\</OutputPath>
     <DefineConstants>TRACE;DEBUG;COAPP_ENGINE_CORE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,13 +25,13 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\output\any\release\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)output\any\release\bin\</OutputPath>
     <DefineConstants>TRACE;COAPP_ENGINE_CORE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
+    <ApplicationIcon>$(SolutionDir)resources\icons\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -253,7 +253,7 @@
     <Compile Include="PackageFormatHandlers\MSIBase.cs" />
     <Compile Include="PackageFormatHandlers\PackageFormatHandler.cs" />
     <Compile Include="Properties\Engine.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)Source\CoApp.Toolkit.AssemblyStrongName.cs" />
     <Compile Include="Engine\Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -337,8 +337,8 @@
     <Compile Include="Win32\WinTrust.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="$(SolutionDir)\..\solution\ext\rehash\CoApp.Rehash.x86.dll" />
-    <EmbeddedResource Include="$(SolutionDir)\..\solution\ext\rehash\CoApp.Rehash.x64.dll" />
+    <EmbeddedResource Include="$(SolutionDir)binaries\CoApp.Rehash.x86.dll" />
+    <EmbeddedResource Include="$(SolutionDir)binaries\CoApp.Rehash.x64.dll" />
     <Content Include="dtf\Compression.Cab\Errors.txt" />
     <Content Include="dtf\WindowsInstaller\Errors.txt" />
     <EmbeddedResource Include="dtf\Compression.Cab\Errors.resources.resources" />
@@ -348,7 +348,7 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
+    <Content Include="$(SolutionDir)resources\icons\CoApp.ico" />
     <EmbeddedResource Include="Properties\Resources.resx" />
   </ItemGroup>
   <ItemGroup>

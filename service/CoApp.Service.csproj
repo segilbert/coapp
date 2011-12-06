@@ -20,7 +20,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\output\any\debug\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)output\any\debug\bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <UseVSHostingProcess>false</UseVSHostingProcess>
@@ -29,7 +29,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\output\any\release\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)output\any\release\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -38,7 +38,7 @@
     <StartupObject />
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
+    <ApplicationIcon>$(SolutionDir)\resources\icons\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -55,22 +55,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Service\CoAppService.cs">
+    <Compile Include="CoAppService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service\CoAppServiceInstaller.cs">
+    <Compile Include="CoAppServiceInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service\CoAppServiceMain.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
+    <Compile Include="CoAppServiceMain.cs" />
+    <Compile Include="$(SolutionDir)Source\CoApp.Toolkit.AssemblyStrongName.cs" />
     <Compile Include="Properties\Service.AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
+    <Content Include="$(SolutionDir)resources\icons\CoApp.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\toolkit\CoApp.Toolkit.Engine.Core.csproj">
+    <ProjectReference Include="$(SolutionDir)toolkit\CoApp.Toolkit.Engine.Core.csproj">
       <Project>{CC917E10-0068-4E91-8D3D-76CB446F7E43}</Project>
       <Name>CoApp.Toolkit.Engine.Core</Name>
     </ProjectReference>

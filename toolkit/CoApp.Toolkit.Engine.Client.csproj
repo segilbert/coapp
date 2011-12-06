@@ -20,7 +20,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\output\any\debug\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)output\any\debug\bin\</OutputPath>
     <DefineConstants>TRACE;DEBUG;COAPP_ENGINE_CLIENT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -28,13 +28,13 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\output\any\release\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)output\any\release\bin\</OutputPath>
     <DefineConstants>TRACE;COAPP_ENGINE_CLIENT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
+    <ApplicationIcon>$(SolutionDir)resources\icons\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
@@ -88,7 +88,7 @@
       <DependentUpon>InstallerResources.resx</DependentUpon>
     </Compile>
     <Compile Include="Properties\Engine.Core.AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)Source\CoApp.Toolkit.AssemblyStrongName.cs" />
     <Compile Include="UI\InstallerMainWindow.xaml.cs">
       <DependentUpon>InstallerMainWindow.xaml</DependentUpon>
     </Compile>
@@ -101,7 +101,7 @@
       <Project>{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}</Project>
       <Name>CoApp.Toolkit</Name>
     </ProjectReference>
-    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
+    <Content Include="$(SolutionDir)resources\icons\CoApp.ico" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="UI\InstallerMainWindow.xaml">

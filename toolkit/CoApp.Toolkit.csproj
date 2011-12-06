@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\output\any\debug\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)output\any\debug\bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -26,13 +26,13 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\output\any\release\bin\</OutputPath>
+    <OutputPath>$(SolutionDir)output\any\release\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>..\solution\ext\resources\CoApp.ico</ApplicationIcon>
+    <ApplicationIcon>$(SolutionDir)resources\icons\CoApp.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -210,7 +210,7 @@
     <Compile Include="Scripting\Languages\PropertySheet\RuleProperty.cs" />
     <Compile Include="Scripting\Utility\Tokenizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="$(SolutionDir)\..\solution\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
+    <Compile Include="$(SolutionDir)\Source\CoApp.Toolkit.AssemblyStrongName.cs" />
     <None Include="Spec\Event.cs" />
     <None Include="Spec\EventCondition.cs" />
     <None Include="Spec\FileGroup.cs" />
@@ -341,11 +341,10 @@
     <Compile Include="Win32\Winver.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Installer\" />
     <Folder Include="Scripting\Languages\CSV\Exceptions\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="$(SolutionDir)\..\solution\ext\resources\CoApp.ico" />
+    <Content Include="$(SolutionDir)resources\icons\CoApp.ico" />
     <None Include="Trace\Tracing.xsd">
       <SubType>Designer</SubType>
       <CustomToolNamespace>CoApp.Toolkit.Trace</CustomToolNamespace>
@@ -368,7 +367,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>REM // this will stop the service if it is currently running...
-if exist "$(SolutionDir)..\solution\scripts\stopservice.js" start /min cscript //E:jscript "$(SolutionDir)..\solution\scripts\stopservice.js"
+if exist "$(SolutionDir)scripts\stopservice.js" start /min cscript //E:jscript "$(SolutionDir)scripts\stopservice.js"
 </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
