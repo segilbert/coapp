@@ -2,6 +2,7 @@
 *.user
 *.sdf
 *.opensdf
+output
 obj
 bin
 _Resharper*
