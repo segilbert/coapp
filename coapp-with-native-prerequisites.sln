@@ -2,6 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit", "toolkit\CoApp.Toolkit.csproj", "{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563} = {ACF26B97-45CF-4D0C-9C6A-7CAFB740C563}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cli", "cli\Cli.csproj", "{0EB44E9E-2674-4C0E-AE3F-E9071F45A765}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -12,6 +15,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Engine.Core", "toolkit\CoApp.Toolkit.Engine.Core.csproj", "{CC917E10-0068-4E91-8D3D-76CB446F7E43}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC} = {8B7E0D2F-6CA0-4E5E-BF52-1E4BDB132BBC}
+		{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563} = {ACF26B97-45CF-4D0C-9C6A-7CAFB740C563}
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Debug", "toolkit\CoApp.Toolkit.Debug.csproj", "{A126ABBC-9199-4096-9714-4A1BEF84EE89}"
@@ -22,6 +26,27 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Toolkit.Engine.Client
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Service", "service\CoApp.Service.csproj", "{93838A7A-1024-2048-BB75-E9B25471E4AF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "native-bootstrap", "native-bootstrap\bootstrap.vcxproj", "{7CA121E2-DA8A-4318-92FA-14101826F04C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "managed-bootstrap", "managed-bootstrap\managed-bootstrap.csproj", "{ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoApp.Rehash.x86", "rehash\CoApp.Rehash.x86.vcxproj", "{4EA8493D-D7B5-41E1-86C8-F253637820E8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoApp.Rehash.x64", "rehash\CoApp.Rehash.x64.vcxproj", "{4EA8493D-D7B5-41E1-0064-F253637820E8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoApp.Resources", "resources\Resources.vcxproj", "{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4EA8493D-D7B5-41E1-0064-F253637820E8} = {4EA8493D-D7B5-41E1-0064-F253637820E8}
+		{4EA8493D-D7B5-41E1-86C8-F253637820E8} = {4EA8493D-D7B5-41E1-86C8-F253637820E8}
+		{ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D} = {ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D}
+		{7CA121E2-DA8A-4318-92FA-14101826F04C} = {7CA121E2-DA8A-4318-92FA-14101826F04C}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prerequisites", "prerequisites", "{27AAF502-F065-4AAD-B893-4B77E3E10AE9}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\release-sign-prerequisites.js = scripts\release-sign-prerequisites.js
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Cleaner", "cleaner\CoApp.Cleaner.csproj", "{680E9074-7D37-4A93-9560-122686340435}"
 EndProject
@@ -55,6 +80,25 @@ Global
 		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93838A7A-1024-2048-BB75-E9B25471E4AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Release|Any CPU.ActiveCfg = Release|Win32
+		{7CA121E2-DA8A-4318-92FA-14101826F04C}.Release|Any CPU.Build.0 = Release|Win32
+		{ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EA8493D-D7B5-41E1-86C8-F253637820E8}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{4EA8493D-D7B5-41E1-86C8-F253637820E8}.Debug|Any CPU.Build.0 = Debug|Win32
+		{4EA8493D-D7B5-41E1-86C8-F253637820E8}.Release|Any CPU.ActiveCfg = Release|Win32
+		{4EA8493D-D7B5-41E1-86C8-F253637820E8}.Release|Any CPU.Build.0 = Release|Win32
+		{4EA8493D-D7B5-41E1-0064-F253637820E8}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{4EA8493D-D7B5-41E1-0064-F253637820E8}.Debug|Any CPU.Build.0 = Debug|x64
+		{4EA8493D-D7B5-41E1-0064-F253637820E8}.Release|Any CPU.ActiveCfg = Release|x64
+		{4EA8493D-D7B5-41E1-0064-F253637820E8}.Release|Any CPU.Build.0 = Release|x64
+		{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563}.Debug|Any CPU.Build.0 = Debug|Win32
+		{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563}.Release|Any CPU.ActiveCfg = Release|Win32
+		{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563}.Release|Any CPU.Build.0 = Release|Win32
 		{680E9074-7D37-4A93-9560-122686340435}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{680E9074-7D37-4A93-9560-122686340435}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{680E9074-7D37-4A93-9560-122686340435}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -62,5 +106,12 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{ED903BAB-1812-4ED8-A85B-A2A2EB83CB2D} = {27AAF502-F065-4AAD-B893-4B77E3E10AE9}
+		{4EA8493D-D7B5-41E1-86C8-F253637820E8} = {27AAF502-F065-4AAD-B893-4B77E3E10AE9}
+		{4EA8493D-D7B5-41E1-0064-F253637820E8} = {27AAF502-F065-4AAD-B893-4B77E3E10AE9}
+		{ACF26B97-45CF-4D0C-9C6A-7CAFB740C563} = {27AAF502-F065-4AAD-B893-4B77E3E10AE9}
+		{7CA121E2-DA8A-4318-92FA-14101826F04C} = {27AAF502-F065-4AAD-B893-4B77E3E10AE9}
 	EndGlobalSection
 EndGlobal
