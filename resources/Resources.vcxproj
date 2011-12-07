@@ -98,7 +98,7 @@
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>REM Sign the rehash binaries if possible, and copy them to the solution folder.
-if exist "$(SolutionDir)scripts\$(ConfigurationName)-sign-prerequisites.js" cscript //e:jscript "$(SolutionDir)scripts\$(ConfigurationName)-sign-prerequisites.js" 
+if exist "$(SolutionDir)scripts\$(ConfigurationName)-post-build-prerequisites.js" cscript //e:jscript "$(SolutionDir)scripts\$(ConfigurationName)-post-build-prerequisites.js" 
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

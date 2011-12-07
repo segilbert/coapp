@@ -3,15 +3,27 @@ with(new ActiveXObject("Scripting.FileSystemObject"))for(var x in p=(".;js;scrip
 Use("CoApp");
 
 if (folderExists(CoApp.$SOLUTIONDIR("..\\signing"))) {
-
     CoApp.StrongNameBinary([
         CoApp.$RELEASEDIR("CoApp.Toolkit.dll"),
         CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.dll"),
         CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.Client.dll"),
         CoApp.$RELEASEDIR("CoApp.Service.exe"),
+        CoApp.$RELEASEDIR("CoApp.Cleaner.exe"),
         CoApp.$RELEASEDIR("CoApp.exe")
      ]);
+    
+// update the binaries in the binaries subfolder 
+CoApp.CopyFiles([
+    CoApp.$RELEASEDIR("CoApp.Toolkit.dll"),
+    CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.dll"),
+    CoApp.$RELEASEDIR("CoApp.Toolkit.Engine.Client.dll"),
+    CoApp.$RELEASEDIR("CoApp.Service.exe"),
+    CoApp.$RELEASEDIR("CoApp.Cleaner.exe"),
+    CoApp.$RELEASEDIR("CoApp.exe")],
+        CoApp.$SOLUTIONBINARIES());
+    
 }
+
 /// Every time we do a release-sign, we increment the build number.
 var rx, major, minor, build, revision, filename;
 

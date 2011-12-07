@@ -44,9 +44,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoApp.Resources", "resource
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prerequisites", "prerequisites", "{27AAF502-F065-4AAD-B893-4B77E3E10AE9}"
-	ProjectSection(SolutionItems) = preProject
-		scripts\release-sign-prerequisites.js = scripts\release-sign-prerequisites.js
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoApp.Cleaner", "cleaner\CoApp.Cleaner.csproj", "{680E9074-7D37-4A93-9560-122686340435}"
 EndProject

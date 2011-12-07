@@ -14,7 +14,7 @@ if (folderExists(CoApp.$SOLUTIONDIR("..\\signing"))) {
         CoApp.$RELEASEDIR("CoApp.Resources.dll")
     ]);
 
-    // we embed those two dlls into coapp.toolkit
+    // copy them to the binaries directory
     CoApp.CopyFiles([
         CoApp.$RELEASEDIR("native-bootstrap.exe"), 
         CoApp.$RELEASEDIR("managed-bootstrap.exe"), 
