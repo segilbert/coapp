@@ -53,6 +53,9 @@ namespace CoApp.Toolkit.Win32 {
         public ImageCoffHeader CoffHeader;
         public ImageCor20Header CorHeader;
         public ImageOptionalHeaderNt NtHeader;
+        public string MD5;
+        public string Filename { get {return _filename;} }
+
         public ImageSectionHeader[] SectionHeaders;
         private ImageDataDirectory _baseRelocationTable;
         private ImageDataDirectory _boundImport;
@@ -372,12 +375,27 @@ namespace CoApp.Toolkit.Win32 {
             }
 
             lock (_cache) {
-                if (!_cache.ContainsKey(filename)) {
-                    _cache.Add(filename, new PEInfo(filename));
-                }
-            }
+                var MD5 = filename.GetFileMD5();
 
-            return _cache[filename];
+                if (!_cache.ContainsKey(filename)) {
+                    var result = new PEInfo(filename) {MD5 = MD5};
+                    _cache.Add(filename, result);
+                    return result;
+                }
+
+                var cachedResult = _cache[filename];
+                if( cachedResult.MD5 != MD5 ) {
+                    // MD5 doesn't match. 
+                    // replace the old one with the current one
+                    _cache.Remove(filename);
+                    
+                    var result = new PEInfo(filename) {MD5 = MD5};
+                    _cache.Add(filename, result);
+                    return result;
+
+                }
+                return cachedResult;
+            }
         }
 
         private static ImageDataDirectory ReadDataDirectory(BinaryReader reader) {

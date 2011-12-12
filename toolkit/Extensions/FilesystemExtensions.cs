@@ -23,6 +23,7 @@ namespace CoApp.Toolkit.Extensions {
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
 #if ! COAPP_ENGINE_CORE
@@ -840,6 +841,17 @@ namespace CoApp.Toolkit.Extensions {
                 throw new ArgumentException("specified path can not be resolved as a file name or path (unc, url, localpath)", path);
             }
 
+        }
+
+        /// <summary>
+        /// Returns the MD5 Hash of a file as an uppercase hex string
+        /// </summary>
+        /// <param name="filename">the filename to retrive the hash for</param>
+        /// <returns>a string containing the md5 hash (32 characters)</returns>
+        public static string GetFileMD5(this string filename) {
+            using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                return MD5.Create().ComputeHash(stream).ToHexString().ToUpper();
+            }
         }
 
         /// <summary>
