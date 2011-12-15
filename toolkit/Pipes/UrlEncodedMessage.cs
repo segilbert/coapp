@@ -118,10 +118,12 @@ namespace CoApp.Toolkit.Pipes {
         /// <remarks></remarks>
         public UrlEncodedMessage(string rawMessage) {
             var parts = rawMessage.Split(_query, StringSplitOptions.RemoveEmptyEntries);
-            Command = parts.FirstOrDefault().UrlDecode().ToLower();
+            Command = (parts.FirstOrDefault() ?? "" ).UrlDecode().ToLower();
             Data = (parts.Skip(1).FirstOrDefault() ?? "").Split(_separator, StringSplitOptions.RemoveEmptyEntries).Select(
-                p => p.Split(_equals, StringSplitOptions.RemoveEmptyEntries)).ToDictionary(s => s[0].UrlDecode(),
+                p => p.Split(_equals, StringSplitOptions.RemoveEmptyEntries)).ToDictionary(
+                    s => s[0].UrlDecode(),
                     s => s.Length > 1 ? s[1].UrlDecode() : String.Empty);
+            
         }
 
         /// <summary>

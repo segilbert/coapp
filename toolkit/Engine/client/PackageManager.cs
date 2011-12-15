@@ -131,12 +131,7 @@ namespace CoApp.Toolkit.Engine.Client {
             }
 
             Task.Factory.StartNew(() => {
-
-#if DEBUG
-            EngineServiceManager.EnsureServiceIsResponding(true);
-#else
-                EngineServiceManager.EnsureServiceIsResponding();
-#endif
+            EngineServiceManager.EnsureServiceIsResponding();
 
                 sessionId = sessionId ?? Process.GetCurrentProcess().Id.ToString();
 

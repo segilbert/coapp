@@ -1,0 +1,86 @@
+// autopackage file for coapp.toolkit
+
+package {
+    name: "CoApp.Toolkit";
+    display-name: "CoApp Package Manager";
+    location: "http://coapp.org/repository/${OutputFilename}";
+}
+
+provides {
+    feature: "coapp.core" = "1.0";
+}
+
+metadata {
+    summary: "The CoApp Core toolkit and engine.";
+    description: @"This is the core component for CoApp.
+
+CoApp, is the Common Opensource Application Publishing Platform, an open-source package management system for Windows. 
+
+The goal of the CoApp project is to create a community of developers dedicated to creating a set of tools and processes that enable other open source developers to create and maintain their open source products with Windows as a primary build target.."; // or path to a file...
+    icon: @"images\logo3.png";
+    
+    author-version : "1.0 Beta3";
+    bug-tracker: "https://github.com/organizations/coapp/dashboard/issues";
+    stability : "-100";
+    tags : {
+        green, red
+    };
+
+}
+
+compatability-policy {
+    minimum: "1.0.0.0";
+    maximum: "${OneLessThanCurrent}"; // this is the default
+    versions : {
+        "1.0",
+        "1.1",
+    }; // if not specified, find the versions by looking at the feeds and finding all the major/minor versions in range.
+}
+
+files[exes] {
+    root: "..\output\any\release\bin";
+    
+    include: {
+        "coapp.exe",
+        "coapp.service.exe",
+        "coapp.cleaner.exe",
+    };
+    
+    trim-path: minimal;
+};
+
+files[dlls] {
+    root: "..\output\any\release\bin";
+    
+    include: {
+        "coapp.toolkit.dll",
+        "coapp.toolkit.engine.dll",
+        "coapp.toolkit.engine.client.dll"
+    };
+    
+    trim-path: minimal;
+};
+
+application {
+    include : {
+    exes
+    };
+}
+
+assemblies {
+    include : {
+    dlls
+    };
+}
+
+developer-library[coapp-toolkit] {
+    include : {
+        dlls
+    };
+}
+
+package-composition {
+    symlinks : { 
+        exes => @"${bin}\${each.Name}" = @"${packagedir}\${each.Name}";
+    };
+}
