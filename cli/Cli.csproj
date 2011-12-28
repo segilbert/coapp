@@ -121,11 +121,6 @@
     <Content Include="$(SolutionDir)resources\icons\CoApp.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>REM Sign the toolkit binaries if possible
-if exist "$(SolutionDir)scripts\$(ConfigurationName)-post-build.js" cscript //e:jscript "$(SolutionDir)scripts\$(ConfigurationName)-post-build.js"
-</PostBuildEvent>
-  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
