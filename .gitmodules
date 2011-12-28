@@ -1,1 +1,7 @@
 
+[submodule "ext/tools"]
+	path = ext/tools
+	url = git://github.com/coapp/tools.git
+[submodule "ext/binaries"]
+	path = ext/binaries
+	url = git://github.com/coapp/binaries.git
