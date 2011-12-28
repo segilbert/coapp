@@ -5,3 +5,6 @@
 [submodule "ext/binaries"]
 	path = ext/binaries
 	url = git://github.com/coapp/binaries.git
+[submodule "ext/libraries"]
+	path = ext/libraries
+	url = git://github.com/coapp/libraries.git
