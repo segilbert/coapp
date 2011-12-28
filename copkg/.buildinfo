@@ -48,7 +48,7 @@ sign {
 
 sign-prerequisites {
     set : release_dir = @"output\any\Release\bin\";
-    set : binaries_dir = @"binaries\";
+    set : binaries_dir = @"ext\binaries\";
     default: false;
     
     uses: {
@@ -83,7 +83,7 @@ sign-prerequisites {
 
 sign-binaries {
     set : release_dir = @"output\any\Release\bin\";
-    set : binaries_dir = @"binaries\";
+    set : binaries_dir = @"ext\binaries\";
     
     default: false;
     
@@ -119,7 +119,7 @@ sign-binaries {
 publish {
     set : release_dir = @"output\any\Release\bin\";
     set : binaries_dir = @"..\binaries\";
-    set : submodule_binaries = @"binaries\";
+    set : submodule_binaries = @"ext\binaries\";
     
     default: false;
     uses: {

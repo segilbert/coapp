@@ -45,7 +45,7 @@
     <Reference Include="LINQPad, Version=1.0.0.0, Culture=neutral, PublicKeyToken=21353812cd2a2db5, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <ExecutableExtension>.exe</ExecutableExtension>
-      <HintPath>$(SolutionDir)binaries\LINQPad.exe</HintPath>
+      <HintPath>$(SolutionDir)ext\libraries\LINQPad.exe</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

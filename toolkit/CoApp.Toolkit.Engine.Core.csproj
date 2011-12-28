@@ -337,8 +337,8 @@
     <Compile Include="Win32\WinTrust.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="$(SolutionDir)binaries\CoApp.Rehash.x86.dll" />
-    <EmbeddedResource Include="$(SolutionDir)binaries\CoApp.Rehash.x64.dll" />
+    <EmbeddedResource Include="$(SolutionDir)ext\binaries\CoApp.Rehash.x86.dll" />
+    <EmbeddedResource Include="$(SolutionDir)ext\binaries\CoApp.Rehash.x64.dll" />
     <Content Include="dtf\Compression.Cab\Errors.txt" />
     <Content Include="dtf\WindowsInstaller\Errors.txt" />
     <EmbeddedResource Include="dtf\Compression.Cab\Errors.resources.resources" />
