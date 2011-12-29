@@ -65,11 +65,11 @@ sign-prerequisites {
         ext\tools\simplesigner --nologo ""${release_dir}native-bootstrap.exe"" ""${release_dir}CoApp.Rehash.x86.dll"" ""${release_dir}CoApp.Rehash.x64.dll"" ""${release_dir}CoApp.Resources.dll""  || goto failed
         
         REM copy signed files into binaries submodule
-        copy ""${release_dir}managed-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        copy ""${release_dir}native-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        copy ""${release_dir}CoApp.Rehash.x86.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${release_dir}CoApp.Rehash.x64.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${release_dir}CoApp.Resources.dll""  ""${binaries_dir}""  || goto failed
+        xcopy /Q /D /Y  ""${release_dir}managed-bootstrap.exe"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}native-bootstrap.exe"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Rehash.x86.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Rehash.x64.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Resources.dll""  ""${binaries_dir}""  || goto failed
 
         REM Everything went ok!
         exit /b 0
@@ -99,12 +99,12 @@ sign-binaries {
         ext\tools\simplesigner --nologo ""${release_dir}CoApp.Toolkit.dll"" ""${release_dir}CoApp.Toolkit.Engine.dll"" ""${release_dir}CoApp.Toolkit.Engine.Client.dll"" ""${release_dir}CoApp.Service.exe"" ""${release_dir}CoApp.Cleaner.exe"" ""${release_dir}CoApp.exe""
         
         REM copy signed files into binaries submodule
-        copy ""${release_dir}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
-        copy ""${release_dir}CoApp.Toolkit.Engine.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${release_dir}CoApp.Toolkit.Engine.Client.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${release_dir}CoApp.Service.exe""  ""${binaries_dir}"" || goto failed 
-        copy ""${release_dir}CoApp.Cleaner.exe"" ""${binaries_dir}"" || goto failed 
-        copy ""${release_dir}CoApp.exe"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.Engine.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.Engine.Client.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Service.exe""  ""${binaries_dir}"" || goto failed 
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Cleaner.exe"" ""${binaries_dir}"" || goto failed 
+        xcopy /Q /D /Y  ""${release_dir}CoApp.exe"" ""${binaries_dir}"" || goto failed
 
         REM Everything went ok!
         exit /b 0
@@ -119,6 +119,7 @@ sign-binaries {
 publish {
     set : release_dir = @"output\any\Release\bin\";
     set : binaries_dir = @"..\binaries\";
+    set : tools_dir = @"..\tools\";
     set : submodule_binaries = @"ext\binaries\";
     
     default: false;
@@ -128,28 +129,18 @@ publish {
     
     build-command: @"
         REM copy binaries into ..\binaries folder (this should be the one that is committed back when published)
-        copy ""${submodule_binaries}managed-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        copy ""${submodule_binaries}native-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        copy ""${submodule_binaries}CoApp.Rehash.x86.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${submodule_binaries}CoApp.Rehash.x64.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${submodule_binaries}CoApp.Resources.dll""  ""${binaries_dir}""  || goto failed
-        copy ""${submodule_binaries}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
-        copy ""${submodule_binaries}CoApp.Toolkit.Engine.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${submodule_binaries}CoApp.Toolkit.Engine.Client.dll""  ""${binaries_dir}"" || goto failed
-        copy ""${submodule_binaries}CoApp.Service.exe""  ""${binaries_dir}"" || goto failed 
-        copy ""${submodule_binaries}CoApp.Cleaner.exe"" ""${binaries_dir}"" || goto failed 
-        copy ""${submodule_binaries}CoApp.exe"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}managed-bootstrap.exe"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}native-bootstrap.exe"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Rehash.x86.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Rehash.x64.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Resources.dll""  ""${binaries_dir}""  || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Toolkit.Engine.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Toolkit.Engine.Client.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Service.exe""  ""${binaries_dir}"" || goto failed 
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Cleaner.exe"" ""${binaries_dir}"" || goto failed 
+        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.exe"" ""${binaries_dir}"" || goto failed
 
-        REM probably should commit these...
-        REM pushd ${binaries_dir}
-        REM git commit -a -m ""updated binaries""
-        REM git push 
-        REM 
-        REM popd
-        REM cd ${submodule_binaries}
-        rem git reset --hard HEAD
-        rem git pull 
-     
         rem TODO: package stuff too?
         rem 
         
