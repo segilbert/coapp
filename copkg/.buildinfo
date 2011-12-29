@@ -61,8 +61,8 @@ sign-prerequisites {
     
     build-command: @" 
         REM sign files in release directory
-        simplesigner --nologo ""${release_dir}managed-bootstrap.exe"" || goto failed
-        simplesigner --nologo ""${release_dir}native-bootstrap.exe"" ""${release_dir}CoApp.Rehash.x86.dll"" ""${release_dir}CoApp.Rehash.x64.dll"" ""${release_dir}CoApp.Resources.dll""  || goto failed
+        ext\tools\simplesigner --nologo ""${release_dir}managed-bootstrap.exe"" || goto failed
+        ext\tools\simplesigner --nologo ""${release_dir}native-bootstrap.exe"" ""${release_dir}CoApp.Rehash.x86.dll"" ""${release_dir}CoApp.Rehash.x64.dll"" ""${release_dir}CoApp.Resources.dll""  || goto failed
         
         REM copy signed files into binaries submodule
         copy ""${release_dir}managed-bootstrap.exe"" ""${binaries_dir}"" || goto failed
@@ -96,7 +96,7 @@ sign-binaries {
     
     build-command: @"
         REM sign files in release directory
-        simplesigner --nologo ""${release_dir}CoApp.Toolkit.dll"" ""${release_dir}CoApp.Toolkit.Engine.dll"" ""${release_dir}CoApp.Toolkit.Engine.Client.dll"" ""${release_dir}CoApp.Service.exe"" ""${release_dir}CoApp.Cleaner.exe"" ""${release_dir}CoApp.exe""
+        ext\tools\simplesigner --nologo ""${release_dir}CoApp.Toolkit.dll"" ""${release_dir}CoApp.Toolkit.Engine.dll"" ""${release_dir}CoApp.Toolkit.Engine.Client.dll"" ""${release_dir}CoApp.Service.exe"" ""${release_dir}CoApp.Cleaner.exe"" ""${release_dir}CoApp.exe""
         
         REM copy signed files into binaries submodule
         copy ""${release_dir}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
