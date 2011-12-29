@@ -152,7 +152,10 @@ publish {
      
         rem TODO: package stuff too?
         rem 
-     
+        
+        REM update version
+        cscript //e:jscript scripts\increment-build-version.js
+        
         REM Everything went ok!
         exit /b 0
         
