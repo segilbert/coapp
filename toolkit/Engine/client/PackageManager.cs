@@ -233,7 +233,7 @@ namespace CoApp.Toolkit.Engine.Client {
                     .ToArray();
 
             // return a task that is the sum of all the tasks.
-            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll(tasks, antecedents => {
+            return Task<IEnumerable<Package>>.Factory.ContinueWhenAll((Task[])tasks, antecedents => {
 
                 var faulted = tasks.Where(each => each.IsFaulted);
                 if( faulted.Any()) {
