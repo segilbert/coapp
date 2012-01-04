@@ -23,13 +23,13 @@ namespace CoApp.Toolkit.Extensions {
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
-    using System.IO.Compression;
     using System.Linq;
     using System.Net;
     using System.Runtime.Remoting.Metadata.W3cXsd2001;
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
+    using Ionic.Zlib;
     using Text;
 
     /// <summary>
@@ -671,7 +671,7 @@ namespace CoApp.Toolkit.Extensions {
         /// <remarks></remarks>
         public static byte[] Gzip(this string input) {
             var memStream = new MemoryStream();
-            using (var gzStr = new GZipStream(memStream, CompressionMode.Compress)) {
+            using (var gzStr = new GZipStream(memStream, CompressionMode.Compress, CompressionLevel.BestCompression)) {
                 gzStr.Write(input.ToByteArray(), 0, input.ToByteArray().Length);
             }
 

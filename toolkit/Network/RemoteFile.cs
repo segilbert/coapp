@@ -180,12 +180,11 @@ namespace CoApp.Toolkit.Network {
                     return _getTask;
                 }
 
-                
-
                 var webRequest = (HttpWebRequest) WebRequest.Create(RemoteLocation);
                 webRequest.AllowAutoRedirect = true;
                 webRequest.Method = WebRequestMethods.Http.Get;
-                
+                webRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+
                 return Task.Factory.FromAsync<WebResponse>(webRequest.BeginGetResponse, (Func<IAsyncResult, WebResponse>)webRequest.BetterEndGetResponse , this).ContinueWith(asyncResult => {
                     if (messages != null) {
                         messages.Register();

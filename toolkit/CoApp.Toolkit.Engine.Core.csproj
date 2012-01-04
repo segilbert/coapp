@@ -50,6 +50,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compression\CRC32.cs" />
+    <Compile Include="Compression\Deflate.cs" />
+    <Compile Include="Compression\DeflateStream.cs" />
+    <Compile Include="Compression\GZipStream.cs" />
+    <Compile Include="Compression\Inflate.cs" />
+    <Compile Include="Compression\InfTree.cs" />
+    <Compile Include="Compression\Iso8859Dash1Encoding.cs" />
+    <Compile Include="Compression\ParallelDeflateOutputStream.cs" />
+    <Compile Include="Compression\Tree.cs" />
+    <Compile Include="Compression\Zlib.cs" />
+    <Compile Include="Compression\ZlibBaseStream.cs" />
+    <Compile Include="Compression\ZlibCodec.cs" />
+    <Compile Include="Compression\ZlibConstants.cs" />
+    <Compile Include="Compression\ZlibStream.cs" />
     <Compile Include="Configuration\RegistryView.cs" />
     <Compile Include="Crypto\Verifier.cs" />
     <Compile Include="dtf\Compression.Cab\CabEngine.cs" />
