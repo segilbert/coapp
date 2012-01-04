@@ -1,4 +1,6 @@
 *.suo
+*.wixpdb
+*.msi
 *.user
 *.sdf
 *.opensdf
