@@ -35,10 +35,7 @@ namespace CoApp.Toolkit.Engine {
         /// location, lastScanned, isSession, isSuppressed, isValidated
         /// </summary>
         public Action<string, DateTime, bool, bool, bool> FeedDetails;
-        /// <summary>
-        /// 
-        /// </summary>
-        public Action<string, int> ScanningPackagesProgress;
+
         /// <summary>
         /// canonicalName, current package progress, overallProgress of all packages
         /// </summary>
@@ -116,7 +113,6 @@ namespace CoApp.Toolkit.Engine {
         /// filename, reason
         /// </summary>
         public Action<string,string> FileNotRecognized;
-        public Action<string> Recognized;
 
         /// <summary>
         /// not used
@@ -130,11 +126,6 @@ namespace CoApp.Toolkit.Engine {
         /// 
         /// </summary>
         public Action<Exception> UnexpectedFailure;
-     
-        public Action<Package, IEnumerable<Package>> PackageHasPotentialUpgrades;
-        public Action<Package> UnableToDownloadPackage;
-        public Action<Package> UnableToInstallPackage;
-        public Action<Package, IEnumerable<Package>> UnableToResolveDependencies;
 
         /// <summary>
         /// original, satisfied by
