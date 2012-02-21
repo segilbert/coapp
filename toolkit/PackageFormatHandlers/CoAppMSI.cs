@@ -40,13 +40,36 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <remarks></remarks>
         internal static bool IsCoAppPackageFile(string path) {
             try {
-                if (Verifier.HasValidSignature(path)) {
-                    var packageProperties = GetMsiProperties(path);
-                    return (packageProperties.ContainsKey("CoAppCompositionRules") && packageProperties.ContainsKey("CoAppPackageFeed"));
+                if (IsPossiblyCoAppPackage(path)) {
+                    if (Verifier.HasValidSignature(path)) {
+                        var packageProperties = GetMsiProperties(path);
+                        return (packageProperties.ContainsKey("CoAppCompositionData") &&
+                                packageProperties.ContainsKey("CoAppPackageFeed"));
+                    }
                 }
             } catch {
             }
             return false;
+        }
+
+        /// <summary>
+        /// Performs a quick peek inside an MSI to see if it has our two properties.
+        /// Hopefully, this will speed up our scanning of files.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        internal static bool IsPossiblyCoAppPackage(string localPackagePath) {
+            lock (typeof (MSIBase)) {
+                try {
+                    using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
+                        var view = database.OpenView( "SELECT Value FROM Property WHERE Property='CoAppPackageFeed' OR Property='CoAppCompositionData'");
+                        view.Execute();
+                        return view.Count() == 2;
+                    }
+                } catch {
+                    return false;
+                }
+            }
         }
 
         /// <summary>
@@ -58,14 +81,12 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <remarks></remarks>
         internal static Package GetCoAppPackageFileInformation(string localPackagePath) {
             if (!IsCoAppPackageFile(localPackagePath)) {
-                throw new InvalidPackageException(InvalidReason.NotCoAppMSI, localPackagePath);
+                return null;
             }
 
             var packageProperties = GetMsiProperties(localPackagePath);
 
             // pull out the rules & feed, send the info to the pm. 
-            // var name = packageProperties["ProductName"];
-            // var compositionRules = packageProperties["CoAppCompositionRules"];
             var atomFeedText = packageProperties["CoAppPackageFeed"];
             var productCode = new Guid( packageProperties["ProductCode"] );
 
@@ -82,29 +103,18 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
             return result;
         }
-
-        /// <summary>
-        /// Gets the package composition rules for the given package.
-        /// </summary>
-        /// <param name="package">The package.</param>
-        /// <returns></returns>
-        /// <remarks>
-        /// </remarks>
-        public override IEnumerable<CompositionRule> GetCompositionRules(Package package) {
+        
+        public override Composition GetCompositionData(Package package ) {
             if (!IsCoAppPackageFile(package.PackageSessionData.LocalValidatedLocation)) {
                 throw new InvalidPackageException(InvalidReason.NotCoAppMSI, package.PackageSessionData.LocalValidatedLocation);
             }
-
             var packageProperties = GetMsiProperties(package.PackageSessionData.LocalValidatedLocation);
-
-            var compositionRulesText = packageProperties["CoAppCompositionRules"];
-            if (string.IsNullOrEmpty(compositionRulesText)) {
+            var compositionDataText = packageProperties["CoAppCompositionData"];
+            if (string.IsNullOrEmpty(compositionDataText)) {
                 throw new InvalidPackageException(InvalidReason.MalformedCoAppMSI, package.PackageSessionData.LocalValidatedLocation);
             }
-
-            return compositionRulesText.FromXml<List<CompositionRule>>("CompositionRules");
+            return compositionDataText.FromXml<Composition>("CompositionData");
         }
-
 
         /// <summary>
         /// Installs the specified package.
@@ -166,13 +176,13 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                 try {
                     // if( WindowsVersionInfo.IsVistaOrPrior) {
-                        var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppCacheDirectory, package.CanonicalName + ".msi");
+                    var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppPackageCache, package.CanonicalName + ".msi");
                         if( !File.Exists(cachedInstaller)) {
                             File.Copy(package.PackageSessionData.LocalValidatedLocation, cachedInstaller);   
                         }
                     // }
                     Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation,
-                        @"TARGETDIR=""{0}"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(PackageManagerSettings.CoAppInstalledDirectory,
+                        @"TARGETDIR=""{0}"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS {1}".format(package.TargetDirectory ,
                             package.PackageSessionData.IsClientSpecified ? "ADD_TO_ARP=1" : ""));
                 }
                 finally {
@@ -239,11 +249,10 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 try {
                     Installer.InstallProduct(package.PackageSessionData.LocalValidatedLocation, @"REMOVE=ALL COAPP_INSTALLED=1 ALLUSERS=1 REBOOT=REALLYSUPPRESS");
 
-                    var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppCacheDirectory, package.CanonicalName + ".msi");
+                    var cachedInstaller = Path.Combine(PackageManagerSettings.CoAppPackageCache, package.CanonicalName + ".msi");
                     if (File.Exists(cachedInstaller)) {
                         cachedInstaller.TryHardToDelete();
                     }
-
                 }
                 finally {
                     SetUIHandlersToSilent();

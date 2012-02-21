@@ -125,6 +125,10 @@ namespace CoApp.Toolkit.DynamicXml {
             return true;
         }
 
+        public bool Has( string name ) {
+            return (_element.Element(name) != null);
+        }
+
         /// <summary>
         ///   Provides the implementation for operations that get member values. Classes derived from the DynamicObject class can override this method to specify dynamic behavior for operations such as getting a value for a property.
         ///   Provides a special case for XML Attributes. If the Member name requested is "Attributes", this will return an DynamicXmlAttributes object

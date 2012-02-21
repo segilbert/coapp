@@ -29,6 +29,10 @@ namespace CoApp.Toolkit.DynamicXml {
             this.node = node;
         }
 
+        public bool Has(string attributeName ) {
+            return node.Attribute(attributeName) != null;
+        }
+
         /// <summary>
         ///   Returns the Attribute value
         /// </summary>

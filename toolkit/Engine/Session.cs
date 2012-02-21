@@ -856,8 +856,8 @@ namespace CoApp.Toolkit.Engine {
                 {"canonical-name", package.CanonicalName},
                 {"local-location", package.InternalPackageData.LocalLocation},
                 {"name", package.Name},
-                {"version", package.Version.UInt64VersiontoString()},
-                {"arch", package.Architecture},
+                {"version", package.Version.ToString()},
+                {"arch", package.Architecture.ToString()},
                 {"public-key-token", package.PublicKeyToken},
                 {"product-code", package.ProductCode.ToString()},
                 {"installed", package.IsInstalled.ToString()},
@@ -883,7 +883,7 @@ namespace CoApp.Toolkit.Engine {
                 {"display-name", package.DisplayName},
                 {"copyright", package.PackageDetails.CopyrightStatement},
                 {"author-version", package.PackageDetails.AuthorVersion},
-                {"icon", package.PackageDetails.Icon},
+                {"icon", package.PackageDetails.IconLocations.FirstOrDefault()},
                 // {"license", package.PackageDetails.License},
                 // {"license-url", package.PackageDetails.LicenseUrl},
                 {"license", "Comming soon: License Data Is changing to support multiple licenses."},
@@ -895,6 +895,9 @@ namespace CoApp.Toolkit.Engine {
                 {"publisher-email", package.PackageDetails.Publisher.Email},
                 {"package-item-text", package.PackageDetails.GetAtomItemText(package) },
             };
+
+            package.InternalPackageData.Roles.ForEach(each => msg.AddKeyValuePair("role", each.Name, each.PackageRole.ToString()));
+            //msg.AddKeyValueCollection("roles", package.InternalPackageData.Roles.Select( each => new KeyValuePair<string, string>(each.Name, each.PackageRole.ToString())));
 
             msg.AddCollection("tags", package.PackageDetails.Tags);
 

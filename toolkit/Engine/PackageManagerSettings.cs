@@ -8,6 +8,11 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using CoApp.Toolkit.Win32;
+
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.IO;
@@ -25,12 +30,12 @@ namespace CoApp.Toolkit.Engine {
         /// Registry view for the package manager settings
         /// </summary>
         public static RegistryView CoAppSettings = RegistryView.CoAppSystem[@"PackageManager"];
-        
+
         /// <summary>
         /// registry view for the cached items (contents subject to being dropped at a whim)
         /// </summary>
         public static RegistryView CacheSettings = CoAppSettings[@".cache"];
-        
+
         /// <summary>
         /// registry view for package-specific information.
         /// 
@@ -43,9 +48,7 @@ namespace CoApp.Toolkit.Engine {
         /// Gets the default for the CoApp root folder.
         /// </summary>
         /// <remarks></remarks>
-        private static string DEFAULT_COAPP_ROOT {
-            get { return Path.GetFullPath(Environment.ExpandEnvironmentVariables(@"%SystemDrive%\apps")); }
-        }
+        private static string DefaultCoappRoot { get {return KnownFolders.GetFolderPath(KnownFolder.CommonApplicationData);} }
 
         /// <summary>
         /// Gets or sets the coapp root directory.
@@ -62,7 +65,7 @@ namespace CoApp.Toolkit.Engine {
                 var result = CoAppSettings["#Root"].StringValue;
 
                 if (string.IsNullOrEmpty(result)) {
-                    CoAppRootDirectory = result = DEFAULT_COAPP_ROOT;
+                    CoAppRootDirectory = result = DefaultCoappRoot;
                 }
 
                 if (!Directory.Exists(result)) {
@@ -78,7 +81,7 @@ namespace CoApp.Toolkit.Engine {
                 var rootDirectory = CoAppSettings["#Root"].StringValue;
 
                 if (string.IsNullOrEmpty(rootDirectory)) {
-                    rootDirectory = DEFAULT_COAPP_ROOT;
+                    rootDirectory = DefaultCoappRoot;
                 }
 
                 if (rootDirectory.Equals(newRootDirectory, StringComparison.CurrentCultureIgnoreCase)) {
@@ -108,19 +111,36 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
+        public static Dictionary<Architecture, string> _coAppInstalledDirectory;
+
         /// <summary>
         /// Gets the CoApp .installed directory (where the packages install to)
         /// </summary>
         /// <remarks></remarks>
-        public static string CoAppInstalledDirectory {
+        public static Dictionary<Architecture, string> CoAppInstalledDirectory {
             get {
-                var result = Path.Combine(CoAppRootDirectory, ".installed");
-                if (!Directory.Exists(result)) {
-                    Directory.CreateDirectory(result);
-                    var di = new DirectoryInfo(result);
-                    di.Attributes = FileAttributes.Hidden;
+                if (_coAppInstalledDirectory == null) {
+                    var programFilesAny = KnownFolders.GetFolderPath(KnownFolder.ProgramFiles);
+                    var programFilesX86 = KnownFolders.GetFolderPath(KnownFolder.ProgramFilesX86) ?? programFilesAny;
+
+                    var any = Path.Combine(CoAppRootDirectory, "program files");
+                    var x86  = Path.Combine(CoAppRootDirectory, "program files (x86)");
+                    var x64  = Path.Combine(CoAppRootDirectory, "program files (x64)");
+
+                    Symlink.MakeDirectoryLink(x86, programFilesX86);
+                    Symlink.MakeDirectoryLink(any, programFilesAny);
+                    if (Environment.Is64BitOperatingSystem) {
+                        Symlink.MakeDirectoryLink(x64, programFilesAny);
+                    }
+
+                    _coAppInstalledDirectory = new Dictionary<Architecture, string> {
+                        {Architecture.Any, any},
+                        {Architecture.x86, x86},
+                        {Architecture.x64, x64},
+                    };
                 }
-                return result;
+
+                return _coAppInstalledDirectory;
             }
         }
 
@@ -135,6 +155,9 @@ namespace CoApp.Toolkit.Engine {
                     Directory.CreateDirectory(result);
                     var di = new DirectoryInfo(result);
                     di.Attributes = FileAttributes.Hidden;
+                    var acl = di.GetAccessControl();
+                    acl.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), FileSystemRights.Modify | FileSystemRights.CreateDirectories | FileSystemRights.CreateFiles, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly, AccessControlType.Allow));
+                    di.SetAccessControl(acl);
                 }
                 return result;
             }
@@ -154,6 +177,9 @@ namespace CoApp.Toolkit.Engine {
                     Directory.CreateDirectory(result);
                     var di = new DirectoryInfo(result);
                     di.Attributes = FileAttributes.Hidden;
+                    var acl = di.GetAccessControl();
+                    acl.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), FileSystemRights.Modify | FileSystemRights.CreateDirectories | FileSystemRights.CreateFiles, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly, AccessControlType.Allow));
+                    di.SetAccessControl(acl);
                 }
                 return result;
             }

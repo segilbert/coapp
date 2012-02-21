@@ -133,8 +133,8 @@ namespace CoApp.Toolkit.Engine.Feeds {
             Scan();
             return from p in _packageList where
                 (string.IsNullOrEmpty(name) || p.Name.IsWildcardMatch(name)) &&
-                (string.IsNullOrEmpty(version) || p.Version.UInt64VersiontoString().IsWildcardMatch(version)) &&
-                (string.IsNullOrEmpty(arch) || p.Architecture.IsWildcardMatch(arch)) &&
+                (string.IsNullOrEmpty(version) || p.Version.ToString().IsWildcardMatch(version)) &&
+                (string.IsNullOrEmpty(arch) || p.Architecture.ToString().IsWildcardMatch(arch)) &&
                 (string.IsNullOrEmpty(publicKeyToken) || p.PublicKeyToken.IsWildcardMatch(publicKeyToken)) select p;
         }
     }

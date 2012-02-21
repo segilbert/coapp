@@ -364,11 +364,11 @@ namespace CoApp.Toolkit.Scripting.Utility {
         }
 
         protected bool IsCurrentCharacterNumeric {
-            get { return CurrentCharacter >= 0 && CurrentCharacter <= 9; }
+            get { return CurrentCharacter >= '0' && CurrentCharacter <= '9'; }
         }
 
         protected bool IsCurrentCharacterHexadecimal {
-            get { return (CurrentCharacter >= 0 && CurrentCharacter <= 9) || (CurrentCharacter >= 'a' && CurrentCharacter <= 'f') || (CurrentCharacter >= 'A' && CurrentCharacter <= 'F'); }
+            get { return (CurrentCharacter >= '0' && CurrentCharacter <= '9') || (CurrentCharacter >= 'a' && CurrentCharacter <= 'f') || (CurrentCharacter >= 'A' && CurrentCharacter <= 'F'); }
         }
 
         protected virtual void ParseNumericLiteral() {
@@ -420,7 +420,12 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
+            // rewind if we've gone past the end of the numeric literal
+            if (!IsCurrentCharacterNumeric) {
+                Index--;
+            }
             AddToken(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
+            
         }
 
         protected virtual void ParseHexadecimalLiteral() {
@@ -447,7 +452,13 @@ namespace CoApp.Toolkit.Scripting.Utility {
                 }
             }
 
+
+            if (!IsCurrentCharacterHexadecimal) {
+                Index--;
+            }
+
             AddToken(new Token {Type = TokenType.NumericLiteral, Data = new string(Text, start, (Index - start) + 1)});
+            Index--;
         }
 
         protected virtual void ParseCharLiteral() {

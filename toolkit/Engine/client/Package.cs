@@ -8,6 +8,10 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Engine.Model;
+using CoApp.Toolkit.Extensions;
+using CoApp.Toolkit.Win32;
+
 namespace CoApp.Toolkit.Engine.Client {
     using System;
     using System.Collections.Generic;
@@ -47,8 +51,8 @@ namespace CoApp.Toolkit.Engine.Client {
         public string CanonicalName { get; set; }
         public string LocalPackagePath{ get; set; }
         public string Name{ get; set; }
-        public string Version{ get; set; }
-        public string Architecture{ get; set; }
+        public FourPartVersion Version{ get; set; }
+        public Architecture Architecture { get; set; }
         public string PublicKeyToken{ get; set; }
         public bool IsInstalled{ get; set; }
         public bool IsBlocked{ get; set; }
@@ -78,5 +82,6 @@ namespace CoApp.Toolkit.Engine.Client {
         public IEnumerable<string> RemoteLocations{ get; set; }
         public IEnumerable<string> Dependencies{ get; set; }
         public IEnumerable<string> SupercedentPackages{ get; set; }
+        public IEnumerable<Role> Roles { get; set; }
     };
 }

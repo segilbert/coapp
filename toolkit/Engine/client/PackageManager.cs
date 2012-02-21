@@ -8,6 +8,8 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Engine.Model;
+
 namespace CoApp.Toolkit.Engine.Client {
     using System;
     using System.Collections.Generic;
@@ -15,6 +17,7 @@ namespace CoApp.Toolkit.Engine.Client {
     using System.IO;
     using System.IO.Pipes;
     using System.Linq;
+    using System.Net;
     using System.Security.Principal;
     using System.Text;
     using System.Threading;
@@ -134,7 +137,6 @@ namespace CoApp.Toolkit.Engine.Client {
             EngineServiceManager.EnsureServiceIsResponding();
 
                 sessionId = sessionId ?? Process.GetCurrentProcess().Id.ToString();
-
 
                 for (int count = 0; count < 60; count++) {
                     _pipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation);
@@ -322,7 +324,7 @@ namespace CoApp.Toolkit.Engine.Client {
                 location, forceScan, messages);
         }
 
-        private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, ulong? minVersion = null, ulong? maxVersion = null,
+        private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, FourPartVersion? minVersion = null, FourPartVersion? maxVersion = null,
             bool? dependencies = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
             string location = null, bool? forceScan = null, PackageManagerMessages messages = null) {
             var packages = new List<Package>();
@@ -332,8 +334,8 @@ namespace CoApp.Toolkit.Engine.Client {
                 packageName == null ? null : packageName.PublicKeyToken, dependencies, installed, active, required, blocked, latest, null, null, location,
                 forceScan, new PackageManagerMessages {
                     PackageInformation = package => {
-                        if ((!minVersion.HasValue || package.Version.VersionStringToUInt64() >= minVersion) &&
-                            (!maxVersion.HasValue || package.Version.VersionStringToUInt64() <= maxVersion)) {
+                        if ((!minVersion.HasValue || package.Version >= minVersion) &&
+                            (!maxVersion.HasValue || package.Version <= maxVersion)) {
                             packages.Add(package);
                         }
                     },
@@ -401,9 +403,34 @@ namespace CoApp.Toolkit.Engine.Client {
             PackageManagerMessages messages = null) {
             
             return Task.Factory.StartNew(() => {
-                if (messages != null) {
-                    messages.Register();
-                }
+                var msgs = new PackageManagerMessages {
+                    InstalledPackage = (pkgCanonicalName) => {
+                        if( !PackageManagerSettings.CoAppSettings["#Telemetry"].StringValue.IsFalse() ) {
+                            // ping the coapp server to tell it that a package installed
+                            try {
+                                var uniqId = PackageManagerSettings.CoAppSettings["#AnonymousId"].StringValue; 
+                                if( string.IsNullOrEmpty(uniqId) || uniqId.Length != 32 ) {
+                                    uniqId = Guid.NewGuid().ToString("N");
+                                    PackageManagerSettings.CoAppSettings["#AnonymousId"].StringValue = uniqId;
+                                }
+                                
+                                Logger.Message("Pinging `http://coapp.org/telemetry/?anonid={0}&pkg={1}` ".format(uniqId, pkgCanonicalName));
+                                var req =
+                                    HttpWebRequest.Create("http://coapp.org/telemetry/?anonid={0}&pkg={1}".format(uniqId, pkgCanonicalName));
+                                req.BetterGetResponse().Close();
+                            } catch {
+                                // who cares...
+                            }
+                        }
+
+                        if (messages != null && messages.InstalledPackage != null) {
+                            messages.InstalledPackage(pkgCanonicalName);
+                        }
+                    }
+
+                }.Extend(messages);
+
+                msgs.Register();
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("install-package") {
                         {"canonical-name", canonicalName},
@@ -753,8 +780,8 @@ namespace CoApp.Toolkit.Engine.Client {
 
                     result.LocalPackagePath = responseMessage["local-location"];
                     result.Name = responseMessage["name"];
-                    result.Version = responseMessage["version"];
-                    result.Architecture = responseMessage["arch"];
+                    result.Version = (FourPartVersion)(string)responseMessage["version"];
+                    result.Architecture = ((string)responseMessage["arch"]);
                     result.PublicKeyToken = responseMessage["public-key-token"];
                     result.ProductCode = responseMessage["product-code"];
                     result.IsInstalled = (bool?) responseMessage["installed"] ?? false;
@@ -824,6 +851,10 @@ namespace CoApp.Toolkit.Engine.Client {
                     details.PublisherEmail = responseMessage["publisher-email"];
                     details.Tags = responseMessage.GetCollection("tags");
                     details.PackageItemText = responseMessage["package-item-text"];
+                    details.Roles =
+                        responseMessage.GetKeyValuePairs("role").Select(
+                            each => new Role { Name = each.Key, PackageRole = (PackageRole)Enum.Parse(typeof(PackageRole), each.Value, true) });
+                    
 
                     /*
                     if (!package.PackageDetails.Contributors.IsNullOrEmpty()) {

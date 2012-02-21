@@ -8,13 +8,15 @@
 // </license>
 //-----------------------------------------------------------------------
 
-namespace CoApp.Toolkit.Engine.Model {
-    using System.Xml.Serialization;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
+namespace CoApp.Toolkit.Engine.Model {
     [XmlRoot(ElementName = "Role", Namespace = "http://coapp.org/atom-package-feed-1.0")]
     public class Role {
         [XmlElement(IsNullable = false)]
         public string Name { get; set; }
+
         [XmlElement(IsNullable = false)]
         public PackageRole PackageRole { get; set; }
     }
@@ -26,8 +28,58 @@ namespace CoApp.Toolkit.Engine.Model {
 
         [XmlElement(IsNullable = false)]
         public string VersionInfo { get; set; }
+    }
+}
 
+namespace CoApp.Toolkit.Engine.Model.Roles {
+
+    [XmlRoot(ElementName = "DeveloperLibrary", Namespace = "http://coapp.org/atom-package-feed-1.0")]
+    public class DeveloperLibrary {
+        [XmlElement(IsNullable = false)]
+        public string Name { get; set; }
+
+        [XmlArray(IsNullable = false)]
+        public List<string> HeaderFolders { get; set; }
+
+        [XmlArray(IsNullable = false)]
+        public List<string> DocumentFolders { get; set; }
+
+        [XmlArray(IsNullable = false)]
+        public List<string> LibraryFiles { get; set; }
+
+        [XmlArray(IsNullable = false)]
+        public List<string> ReferenceAssemblyFiles { get; set; }
     }
 
+    [XmlRoot(ElementName = "WebApplication", Namespace = "http://coapp.org/atom-package-feed-1.0")]
+    public class WebApplication {
+        [XmlElement(IsNullable = false)]
+        public string Name { get; set; }
+        /*
+        [XmlArray(IsNullable = false)]
+        public List<string> VirutalDirs { get; set; }
+        */
+    }
 
+    [XmlRoot(ElementName = "Service", Namespace = "http://coapp.org/atom-package-feed-1.0")]
+    public class Service {
+        [XmlElement(IsNullable = false)]
+        public string Name { get; set; }
+    }
+
+    [XmlRoot(ElementName = "SourceCode", Namespace = "http://coapp.org/atom-package-feed-1.0")]
+    public class SourceCode {
+        [XmlElement(IsNullable = false)]
+        public string Name { get; set; }
+        /*
+        [XmlArray(IsNullable = false)]
+        public List<string> SourceDirs? { get; set; }
+        */
+    }
+
+    [XmlRoot(ElementName = "Driver", Namespace = "http://coapp.org/atom-package-feed-1.0")]
+    public class Driver {
+        [XmlElement(IsNullable = false)]
+        public string Name { get; set; }
+    }
 }

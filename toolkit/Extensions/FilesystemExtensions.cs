@@ -37,6 +37,18 @@ namespace CoApp.Toolkit.Extensions {
     using Win32;
     using RegistryView = Configuration.RegistryView;
 
+
+    public class PushDirectory : IDisposable {
+        private readonly string _originalDirectory;
+        public PushDirectory(string path) {
+            _originalDirectory = Environment.CurrentDirectory;
+            Environment.CurrentDirectory = path;
+        }
+        public void Dispose() {
+            Environment.CurrentDirectory = _originalDirectory;
+        }
+    }
+
     /// <summary>
     /// Functions related to handling things regarding files and filesystems.
     /// </summary>
@@ -91,7 +103,24 @@ namespace CoApp.Toolkit.Extensions {
             '*', '?'
         };
 
+        public static string SystemTempFolder { get { return Environment.GetEnvironmentVariable("temp", EnvironmentVariableTarget.Machine); }}
+
         static FilesystemExtensions() {
+            // set the temporary folder to be a child of the User temporary folder
+            // based on the application name
+            var appTempPath = Path.Combine(Path.GetTempPath(), (System.Reflection.Assembly.GetEntryAssembly() ?? System.Reflection.Assembly.GetExecutingAssembly() ).GetName().Name);
+            if (!Directory.Exists(appTempPath)) {
+                Directory.CreateDirectory(appTempPath);
+            }
+
+            TempPath = Path.Combine(appTempPath, (Directory.EnumerateDirectories(appTempPath).Count() + 1).ToString());
+            if (!Directory.Exists(TempPath)) {
+                Directory.CreateDirectory(TempPath);
+            }
+
+            Environment.SetEnvironmentVariable("TMP", TempPath);
+            Environment.SetEnvironmentVariable("TEMP", TempPath);
+
             TryToHandlePendingRenames(true);
         }
 #if COAPP_ENGINE_CORE 
@@ -116,7 +145,11 @@ namespace CoApp.Toolkit.Extensions {
         }
 
         public static string MarkFileTemporary(this string filename) {
-            _disposableFilenames.Add(filename);
+#if !DEBUG
+            lock(typeof(FilesystemExtensions)) {
+                _disposableFilenames.Add(filename);
+            }
+#endif
             return filename;
         }
 
@@ -129,19 +162,10 @@ namespace CoApp.Toolkit.Extensions {
             return MarkFileTemporary(p);
         }
 
-        private static string _tempPath;
-        private static string TempPath { get {
-            if( string.IsNullOrEmpty(_tempPath) ) {
-                _tempPath = Path.GetTempPath();
-                if(! Directory.Exists(_tempPath)) {
-                    Directory.CreateDirectory(_tempPath);
-                }
-            }
-            return _tempPath;
-        }}
+        public static string TempPath { get; private set; }
+
 
         public static string GenerateTemporaryFilename(this string filename) {
-            
             string ext = null;
             string name = null;
             string folder = null;
@@ -205,7 +229,8 @@ namespace CoApp.Toolkit.Extensions {
         /// <returns></returns>
         /// <remarks></remarks>
         public static string ChangeFileExtensionTo(this string currentFilename, string newExtension) {
-            return Path.Combine(Path.GetDirectoryName(currentFilename) ?? "", Path.GetFileNameWithoutExtension(currentFilename) + "." + newExtension);
+            
+            return Path.Combine(Path.GetDirectoryName(currentFilename) ?? "", Path.GetFileNameWithoutExtension(currentFilename) + (newExtension.StartsWith(".") ? newExtension : "." + newExtension));
         }
 
         /// <summary>
@@ -851,6 +876,12 @@ namespace CoApp.Toolkit.Extensions {
         public static string GetFileMD5(this string filename) {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                 return MD5.Create().ComputeHash(stream).ToHexString().ToUpper();
+            }
+        }
+
+        public static string GetFileSHA1(this string filename ) {
+            using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                return SHA1.Create().ComputeHash(stream).ToHexString().ToLower();
             }
         }
 

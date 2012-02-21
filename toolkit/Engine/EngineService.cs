@@ -8,6 +8,8 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Win32;
+
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Diagnostics;
@@ -75,6 +77,7 @@ namespace CoApp.Toolkit.Engine {
         public static void Stop() {
             // this should stop the task
             _instance.Value._cancellationTokenSource.Cancel();
+            EngineServiceManager.TryToStopService();
         }
 
         /// <summary>
@@ -121,7 +124,7 @@ namespace CoApp.Toolkit.Engine {
                     Package.EnsureCanonicalFoldersArePresent();
 
                     Logger.Warning("Getting Version of CoApp.");
-                    var v = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
+                    var v = Package.GetCurrentPackageVersion("coapp.toolkit", "1e373a58e25250cb");
                     Logger.Warning("CoApp Version : " + v);
                 } catch (Exception e ) {
                     Logger.Error(e);
@@ -228,7 +231,6 @@ namespace CoApp.Toolkit.Engine {
 
         public static bool DoesTheServiceNeedARestart {
             get {
-                
                 // is this the coapp win32 service process, or is this interactive
                 if( IsInteractive ) {
                     Logger.Warning("Service doens't need a restart, since it's interactive");
@@ -237,12 +239,10 @@ namespace CoApp.Toolkit.Engine {
 
                 Logger.Warning("Checking to see if service needs a restart");
                 // what is the version of the process running?
-                var currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString().VersionStringToUInt64();
-
-                
+                FourPartVersion currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
 
                 // what is the version of the installed toolkit
-                var installedVersion = Package.GetCurrentPackageVersion("coapp.toolkit", "820d50196d4e8857");
+                var installedVersion = Package.GetCurrentPackageVersion("coapp.toolkit", "1e373a58e25250cb");
                 Logger.Warning("Running Version [{0}] == InstalledVersion [{1}]",currentVersion , installedVersion );
 
                 return installedVersion > currentVersion;
@@ -289,6 +289,39 @@ namespace CoApp.Toolkit.Engine {
                 }
             });
         }
+/*
+        public static void ShutdownService() {
+            Task.Factory.StartNew(() => {
+                try {
+                    Logger.Message("Service Shutdown Order Issued.");
+                    // make sure nobody else can connect.
+                    _instance.Value._cancellationTokenSource.Cancel();
+
+                    // tell the clients to go away.
+                    Logger.Message("Telling clients to go away.");
+                    Session.NotifyClientsOfRestart();
+
+                    Logger.Message("Waiting up to 5 seconds for clients to disconnect.");
+                    // I'll give you 5 seconds to get lost.
+                    for (var i = 0; i < 50 && Session.HasActiveSessions; i++) {
+                        Thread.Sleep(100);
+                    }
+                    if (Session.HasActiveSessions) {
+                        Logger.Message("Forcing Disconnection of clients.");
+                        Session.CancelAll();
+                    }
+                } catch (Exception e) {
+                    Logger.Error(e);
+                }
+                Logger.Message("Clients should be disconnected; forcing restart");
+
+                Process.Start(new ProcessStartInfo {
+                    FileName = Assembly.GetEntryAssembly().Location,
+                    Arguments = "--stop"
+                });
+            });
+        }
+        */
 
         /// <summary>
         /// Starts the response pipe and process mesages.

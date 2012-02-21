@@ -68,6 +68,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             return MessageResult.OK;
         }
 
+        /*
         /// <summary>
         /// Gets the package composition rules for the given package.
         /// </summary>
@@ -75,6 +76,17 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <returns></returns>
         /// <remarks></remarks>
         public virtual IEnumerable<CompositionRule> GetCompositionRules(Package package) {
+            throw new NotImplementedException();
+        }
+        */
+
+        /// <summary>
+        /// Gets the package composition data for the given package.
+        /// </summary>
+        /// <param name="package">The package.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>        
+        public virtual Composition GetCompositionData(Package package) {
             throw new NotImplementedException();
         }
 
@@ -113,13 +125,8 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
             foreach (var product in products) {
                 var p = product;
-                try {
-                    int percent = ((n++)*100)/total;
-                    PackageManagerMessages.Invoke.ScanningPackagesProgress(p.LocalPackage,percent);
-                    Package.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
-                }
-                catch {
-                }
+                PackageManagerMessages.Invoke.ScanningPackagesProgress(p.LocalPackage,((n++)*100)/total);
+                Package.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
             }
         }
 
@@ -152,28 +159,29 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <returns></returns>
         /// <remarks></remarks>
         public static MsiProperties GetMsiProperties(string localPackagePath) {
-            lock (typeof(MSIBase)) {
-                localPackagePath = localPackagePath.ToLower();
-                try {
-                    var result = SessionCache<MsiProperties>.Value[localPackagePath];
-                    if (result != null) {
-                        return result;
-                    }
-                }
-                catch {
-                    // no worry.
-                }
 
-                try {
+            localPackagePath = localPackagePath.ToLower();
+
+            try {
+                var result = SessionCache<MsiProperties>.Value[localPackagePath];
+                if (result != null) {
+                    return result;
+                }
+            }
+            catch {
+                // no worry.
+            }
+
+            try {
+                lock (typeof (MSIBase)) {
                     using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
                         var info = database.Tables["Property"];
-                        var view = database.OpenView(info.SqlSelectString);
+                        var view = database.OpenView("SELECT Property, Value FROM Property "); //WHERE Property='CoAppPackageFeed' OR Property='CoAppCompositionData'
                         view.Execute();
-
 
                         var result = new MsiProperties(localPackagePath);
 
-                        foreach( var each in view ) {
+                        foreach (var each in view) {
                             result.Add(each["Property"].ToString(), each["Value"].ToString());
                         }
 
@@ -184,15 +192,18 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                             }
 
                             SessionCache<MsiProperties>.Value[localPackagePath] = result;
-                        } catch {
-                            
+                        }
+                        catch {
+
                         }
                         return result;
                     }
-                } catch (InstallerException) {
-                    throw new InvalidPackageException(InvalidReason.NotValidMSI, localPackagePath);
                 }
             }
+            catch (InstallerException) {
+                throw new InvalidPackageException(InvalidReason.NotValidMSI, localPackagePath);
+            }
+
         }
 
 

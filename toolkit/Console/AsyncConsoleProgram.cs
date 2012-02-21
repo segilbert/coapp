@@ -10,6 +10,7 @@
 
 
 using System.ComponentModel;
+using System.IO;
 
 namespace CoApp.Toolkit.Console {
     using System;

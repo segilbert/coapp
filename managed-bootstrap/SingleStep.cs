@@ -17,6 +17,8 @@ namespace CoApp.Bootstrapper {
     using System.Windows.Input;
     using Microsoft.Win32;
 
+
+
     internal class SingleStep {
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
@@ -225,7 +227,7 @@ namespace CoApp.Bootstrapper {
             // if we didn't create one with the local assembly (debug)
             if (prep == null) {
                 prep =
-                    appDomain.CreateInstanceAndUnwrap("CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857",
+                    appDomain.CreateInstanceAndUnwrap("CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1e373a58e25250cb",
                         "CoApp.Toolkit.Engine.Client.InstallerPrep", false, BindingFlags.Default, null, null, null, null) as IComparable;
             }
 
@@ -283,7 +285,7 @@ namespace CoApp.Bootstrapper {
             }
 #endif 
             // meh. use strong named assembly
-            appDomain.CreateInstanceAndUnwrap( "CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=820d50196d4e8857",
+            appDomain.CreateInstanceAndUnwrap( "CoApp.Toolkit.Engine.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1e373a58e25250cb",
                 "CoApp.Toolkit.Engine.Client.Installer", false, BindingFlags.Default, null, new[] { MsiFilename }, null, null);
 
             // since we've done everything we need to do, we're out of here. Right Now.
@@ -480,11 +482,50 @@ namespace CoApp.Bootstrapper {
             return false;
         }
 
+        public static string GetSpecialFolderPath(KnownFolder folderId) {
+            var ret = new StringBuilder(260);
+            try {
+                var output = NativeMethods.SHGetSpecialFolderPath(IntPtr.Zero, ret, folderId);
+
+                if (!output) {
+                    throw new ArgumentException();
+                }
+            }
+            catch /* (Exception e) */ {
+                throw new ArgumentException();
+            }
+            return ret.ToString();
+        }
+        
+
+        public static string ProgramFilesAnyFolder {
+            get {
+                var root = CoAppRootFolder.Value;
+
+                // try getting the directory using the environment variable first, let it fall thru to special folders.
+                // var programFilesAny = Environment.GetEnvironmentVariable("ProgramW6432");
+
+                var programFilesAny = GetSpecialFolderPath(KnownFolder.ProgramFiles);
+                
+                var any = Path.Combine(root, "program files");
+
+                if (Environment.Is64BitOperatingSystem) {
+                    Symlink.MkDirectoryLink(Path.Combine(root, "program files (x64)"), programFilesAny);
+                }
+
+                Symlink.MkDirectoryLink(Path.Combine(root, "program files (x86)"), GetSpecialFolderPath(KnownFolder.ProgramFilesX86));
+                Symlink.MkDirectoryLink(any, programFilesAny);
+               
+                Logger.Message("Returing '{0}' as program files directory", any);
+                return any;
+            }
+        }
+    
         internal static readonly Lazy<string> CoAppRootFolder = new Lazy<string>(() => {
             var result = GetRegistryValue(@"Software\CoApp", "Root");
 
             if (String.IsNullOrEmpty(result)) {
-                result = String.Format("{0}\\apps", Environment.GetEnvironmentVariable("SystemDrive"));
+                result = GetSpecialFolderPath(KnownFolder.CommonApplicationData);
                 try {
                     var registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).CreateSubKey(@"Software\CoApp");
                     if (registryKey != null) {
@@ -540,7 +581,6 @@ namespace CoApp.Bootstrapper {
                         uihandler = UiHandler;
                         NativeMethods.MsiSetExternalUI(uihandler, 0x400, IntPtr.Zero);
 
-                        
                         try {
                             var CoAppCacheFolder = Path.Combine(CoAppRootFolder.Value, ".cache");
                             Directory.CreateDirectory(CoAppCacheFolder);
@@ -556,13 +596,13 @@ namespace CoApp.Bootstrapper {
 
                         Logger.Warning("Running MSI");
                         // install CoApp.Toolkit msi. Don't blink, this can happen FAST!
-                        var result = NativeMethods.MsiInstallProduct(file, String.Format(@"TARGETDIR=""{0}\.installed\"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", CoAppRootFolder.Value));
+                        var result = NativeMethods.MsiInstallProduct(file, String.Format(@"TARGETDIR=""{0}"" ALLUSERS=1 COAPP_INSTALLED=1 REBOOT=REALLYSUPPRESS", ProgramFilesAnyFolder));
 
                         // set the ui hander back to nothing.
                         NativeMethods.MsiSetExternalUI(null, 0x400, IntPtr.Zero);
                         InstallTask = null; // after this point, all you can do is exit the installer.
 
-                        Logger.Warning("Done Installing MSI (rc={0}.",result);
+                        Logger.Warning("Done Installing MSI rc={0}.",result);
 
                         // did we succeed?
                         if (result == 0) {
@@ -588,6 +628,20 @@ namespace CoApp.Bootstrapper {
                 }
                 // if we got to this point, kinda feels like we should be failing
             });
+
+            InstallTask.ContinueWith((it) => {
+                Exception e = it.Exception;
+                if (e != null) {
+                    while (e.GetType() == typeof (AggregateException)) {
+                        e = ((e as AggregateException).Flatten().InnerExceptions[0]);
+                    }
+
+                    Logger.Error(e);
+                    Logger.Error(e.StackTrace);
+                    MainWindow.Fail(LocalizedMessage.IDS_SOMETHING_ODD, "This can't be good.");
+                }
+
+            }, TaskContinuationOptions.OnlyOnFaulted);
         }
 
         internal static int UiHandler(IntPtr context, int messageType, string message) {

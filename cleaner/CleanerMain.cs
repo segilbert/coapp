@@ -324,17 +324,27 @@ CoApp.Cleaner [options]
                         }
                     }
 
-
                     installedMSIs = GetInstalledCoAppMSIs().ToArray();
                     if (!installedMSIs.Any()) {
                         StatusText = "Status: Removing CoApp Folder.";
                         OverallProgress = 75;
                         OnPropertyChanged();
-                        // no more packages installed-- remove the c:\apps directory
-                        var apps = CoAppRootFolder.Value;
-                        TryHardToDelete(apps);
-                    }
 
+                        // try to get rid of c:\apps 
+                        TryHardToDelete(String.Format("{0}\\apps", Environment.GetEnvironmentVariable("SystemDrive")));
+
+                        // no more packages installed-- remove the c:\apps directory
+                        var rootFolder = CoAppRootFolder.Value;
+                        TryHardToDelete(Path.Combine(rootFolder, ".cache"));
+                        TryHardToDelete(Path.Combine(rootFolder, "ReferenceAssemblies"));
+                        TryHardToDelete(Path.Combine(rootFolder, "x86"));
+                        TryHardToDelete(Path.Combine(rootFolder, "x64"));
+                        TryHardToDelete(Path.Combine(rootFolder, "bin"));
+                        TryHardToDelete(Path.Combine(rootFolder, "powershell"));
+                        TryHardToDelete(Path.Combine(rootFolder, "lib"));
+                        TryHardToDelete(Path.Combine(rootFolder, "include"));
+                        TryHardToDelete(Path.Combine(rootFolder, "etc"));
+                    }
                 }
                 // clean out the CoApp registry keys
                 try {
@@ -415,7 +425,7 @@ CoApp.Cleaner [options]
             var result = GetRegistryValue(@"Software\CoApp", "Root");
 
             if (String.IsNullOrEmpty(result)) {
-                result = String.Format("{0}\\apps", Environment.GetEnvironmentVariable("SystemDrive"));
+                result = String.Format(Environment.GetEnvironmentVariable("ALLUSERSPROFILE"));
             }
             return result;
         });

@@ -64,7 +64,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Engine\LinkType.cs" />
-    <Compile Include="Engine\Model\Architecture.cs" />
     <Compile Include="Engine\Model\CompositionAction.cs" />
     <Compile Include="Engine\Model\CompositionRule.cs" />
     <Compile Include="Engine\EngineServiceManager.cs" />

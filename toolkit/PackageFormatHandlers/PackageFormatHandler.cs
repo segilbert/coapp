@@ -15,7 +15,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     internal interface IPackageFormatHandler {
         void Install(Package package, Action<int> progress = null);
         void Remove(Package package, Action<int> progress = null);
-        IEnumerable<CompositionRule> GetCompositionRules(Package package);
+        Composition GetCompositionData(Package package);
 
         bool IsInstalled(Guid productCode);
     }

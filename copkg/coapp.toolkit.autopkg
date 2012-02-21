@@ -1,9 +1,10 @@
+@import "outercurve.inc";
+
 // autopackage file for coapp.toolkit
 
 package {
     name: "CoApp.Toolkit";
     display-name: "CoApp Package Manager";
-    location: "http://coapp.org/repository/${OutputFilename}";
 }
 
 provides {
@@ -61,6 +62,23 @@ files[dlls] {
     trim-path: minimal;
 };
 
+files[refasms] {
+    root: "..\output\any\release\bin";
+    
+    include: {
+        "coapp.toolkit.dll",
+        "coapp.toolkit.engine.client.dll"
+    };
+    
+    trim-path: minimal;
+};
+
+developer-library[refasms] { 
+    reference-assemblies : {
+        refasms
+    };
+}
+
 application {
     include : {
     exes
@@ -70,12 +88,6 @@ application {
 assemblies {
     include : {
     dlls
-    };
-}
-
-developer-library[coapp-toolkit] {
-    include : {
-        dlls
     };
 }
 

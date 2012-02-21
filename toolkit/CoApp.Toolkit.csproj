@@ -99,6 +99,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Extensions\DebugExtensions.cs" />
+    <Compile Include="Extensions\EnumExtensions.cs" />
     <Compile Include="Extensions\FilesystemExtensions.cs" />
     <Compile Include="Extensions\LinqExtensions.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
@@ -125,6 +126,7 @@
     </Compile>
     <Compile Include="Win32\Accel.cs" />
     <Compile Include="Win32\AcceleratorVirtualKey.cs" />
+    <Compile Include="Win32\Architecture.cs" />
     <Compile Include="Win32\BitmapCompression.cs" />
     <Compile Include="Win32\BitmapFileHeader.cs" />
     <Compile Include="Win32\BitmapInfo.cs" />
@@ -319,7 +321,6 @@
     <Compile Include="Win32\TokenInformationClass.cs" />
     <Compile Include="Win32\TokenMandatoryLabel.cs" />
     <Compile Include="Win32\User32.cs" />
-    <Compile Include="Win32\WellKnownSidType.cs" />
     <Compile Include="Win32\Win32Msgs.cs" />
     <Compile Include="Win32\Winmm.cs" />
     <Compile Include="Win32\WinTrust.cs" />

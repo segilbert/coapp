@@ -17,8 +17,6 @@ namespace CoApp.Toolkit.Win32 {
     using Extensions;
 
     public static class EnvironmentUtility {
-        private static readonly RegistryView SystemEnvironment = RegistryView.System[@"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"];
-        private static readonly RegistryView UserEnvironment = RegistryView.User[@"Environment"];
 
 #if !COAPP_ENGINE_CORE
         private const Int32 HWND_BROADCAST = 0xffff;
@@ -31,53 +29,63 @@ namespace CoApp.Toolkit.Win32 {
             Rehash.ForceProcessToReloadEnvironment("explorer");
             Rehash.ForceProcessToReloadEnvironment("services");
 #else
-            Task.Factory.StartNew(() => { User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero); });
+            Task.Factory.StartNew(() => {
+                User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero);
+            });
 #endif
         }
 
         public static string GetSystemEnvironmentVariable(string name) {
-            return SystemEnvironment["#" + name].StringValue;
+            return Environment.GetEnvironmentVariable(name,EnvironmentVariableTarget.Machine);
         }
 
         public static void SetSystemEnvironmentVariable(string name, string value) {
-            SystemEnvironment["#" + name].StringValue = value;
+            Environment.SetEnvironmentVariable(name, value, EnvironmentVariableTarget.Machine);
+        }
+
+        public static string GetUserEnvironmentVariable(string name) {
+            return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.User);
+        }
+
+        public static void SetUserEnvironmentVariable(string name, string value) {
+            Environment.SetEnvironmentVariable(name, value, EnvironmentVariableTarget.User);
         }
 
         public static IEnumerable<string> PowershellModulePath {
             get {
-                var path = SystemEnvironment["#PSModulePath"].StringValue;
+                var path = GetSystemEnvironmentVariable("PSModulePath");
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
-                if (newValue != SystemEnvironment["#PSModulePath"].StringValue) {
-                    SystemEnvironment["#PSModulePath"].StringValue = newValue;
+                if (newValue != GetSystemEnvironmentVariable("PSModulePath")) {
+                    SetSystemEnvironmentVariable("PSModulePath", newValue);
                 }
             }
         }
 
         public static IEnumerable<string> SystemPath {
             get {
-                var path = SystemEnvironment["#Path"].StringValue;
+                var path = GetSystemEnvironmentVariable("PATH");
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
-                if (newValue != SystemEnvironment["#Path"].StringValue) {
-                    SystemEnvironment["#Path"].StringValue = newValue;
+                if (newValue != GetSystemEnvironmentVariable("PATH")) {
+                    SetSystemEnvironmentVariable("PATH", newValue);
                 }
             }
         }
-
+        
         public static IEnumerable<string> UserPath {
             get {
-                var path = UserEnvironment["#Path"].StringValue;
+                var path = GetUserEnvironmentVariable("PSModulePath");
                 return string.IsNullOrEmpty(path) ? Enumerable.Empty<string>() : path.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             }
             set {
                 var newValue = value.Any() ? value.Aggregate((current, each) => current + ";" + each) : null;
-                if (newValue != UserEnvironment["#Path"].StringValue) {
-                    UserEnvironment["#Path"].StringValue = newValue;
+                if (newValue != GetUserEnvironmentVariable("PSModulePath")) {
+                    SetUserEnvironmentVariable("PSModulePath", newValue);
                 }
             }
         }

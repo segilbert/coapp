@@ -85,7 +85,7 @@ namespace CoApp.Service {
         public static string CoAppRootDirectory { get { return PackageManagerSettings.CoAppRootDirectory; }}
         public static string CoAppBinDirectory { get { return coappBinDirectory ?? (coappBinDirectory = Path.Combine(CoAppRootDirectory, "bin")); } }
         public static string CanonicalServiceExePath { get { return canonicalServiceExePath ?? (canonicalServiceExePath = Path.Combine(CoAppBinDirectory, "coapp.service.exe")); } }
-        public static string CoAppInstalledDirectory { get { return coappInstalledDirectory ?? (coappInstalledDirectory = Path.Combine(CoAppRootDirectory, ".installed")); } }
+        public static string CoAppInstalledDirectory { get { return coappInstalledDirectory ?? (coappInstalledDirectory = PackageManagerSettings.CoAppInstalledDirectory[Architecture.Any]); } }
 
         public static int AutoInstall() {
             if (IsInstalled) {
@@ -107,7 +107,7 @@ namespace CoApp.Service {
             }
 
             // Let's find the right one
-            if (!Directory.Exists(CoAppInstalledDirectory)) {
+            if (Directory.Exists(CoAppInstalledDirectory)) {
                 var searchDirectory = Path.Combine(CoAppInstalledDirectory, "outercurve foundation");
                 if (!Directory.Exists(searchDirectory)) {
                     // hmm. No outercurve directory.

@@ -8,6 +8,8 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using System.IO;
+
 namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     using System.Collections.Generic;
     using Exceptions;
@@ -56,6 +58,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             var tokenStream = PropertySheetTokenizer.Tokenize(_propertySheetText);
             var state = ParseState.Global;
             var enumerator = tokenStream.GetEnumerator();
+            var importFilename = string.Empty;
+
             Token token;
 
             Rule rule = null;
@@ -102,6 +106,11 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
                         switch (token.Type) {
                             case TokenType.Identifier: // look for identifier as the start of a selector
+                                if( token.Data == "@import" ) {
+                                    // special case to handle @import rules
+                                    state = ParseState.Import;
+                                    continue;
+                                }
                                 state = ParseState.Selector;
                                 ruleName = token.Data;
                                 continue;
@@ -125,6 +134,54 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 throw new EndUserParseException(token, _filename, "PSP 100", "Expected one of '.' , '#' or identifier");
                         }
 
+                    case ParseState.Import :
+                        switch (token.Type) {
+                            case TokenType.StringLiteral:
+                            case TokenType.Identifier:
+                                state = ParseState.ImportFilename;
+                                importFilename = token.Data;
+                                continue;
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 121", "Expected a string literal for filename (Missing semicolon?)");
+                        }
+
+                    case ParseState.ImportFilename:
+                        switch (token.Type) {
+                            case TokenType.Semicolon:
+                                // import the specified file and insert it's rules into this sheet.
+                                string document = null;
+                                string filename = null;
+
+                                if (!string.IsNullOrEmpty(_filename)) {
+                                    // it's either a full path to a file, or a relative path to the current document.
+                                    try {
+                                        var folder = Path.GetDirectoryName(_filename.GetFullPath());
+                                        filename = Path.Combine(folder, importFilename);
+                                        if (File.Exists(filename)) {
+                                            document = File.ReadAllText(filename);
+                                        }
+                                    } catch {
+                                    } // hmm that didn't work. I guess just try the filename...
+                                }
+
+                                if( document == null ) {
+                                    // without a filename for the current document, all we can do is hope that there is a file at the specified string
+
+                                    filename = importFilename.GetFullPath();
+                                    if (!File.Exists(filename)) {
+                                        throw new EndUserParseException(token, _filename, "PSP 122", "Imported file '{0}' not found", filename);
+                                    }
+                                    document = File.ReadAllText(filename);
+                                }
+
+                                // parse the contents of that file into the current property sheet.
+                                new PropertySheetParser(document, filename, _propertySheet).Parse();
+                                state = ParseState.Global;
+                                continue;
+                            default:
+                                throw new EndUserParseException(token, _filename, "PSP 121", "Expected a string literal for filename");
+                        }
+
                     case ParseState.Selector:
                         switch (token.Type) {
                             case TokenType.Dot:
@@ -141,9 +198,11 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
                             case TokenType.OpenBrace:
                                 state = ParseState.InRule;
-                                if( _propertySheet.HasRule(ruleName, ruleParameter, ruleClass, ruleId) ) {
-                                    throw new EndUserParseException(token, _filename, "PSP 113", "Duplicate rule with identical selector not allowed: {0} ", Rule.CreateSelectorString(ruleName, ruleParameter,ruleClass, ruleId )); 
-                                }
+
+                                // property sheets now merge rules when redefined.
+                                // if( _propertySheet.HasRule(ruleName, ruleParameter, ruleClass, ruleId) ) {
+                                   // throw new EndUserParseException(token, _filename, "PSP 113", "Duplicate rule with identical selector not allowed: {0} ", Rule.CreateSelectorString(ruleName, ruleParameter,ruleClass, ruleId )); 
+                                // }
 
                                 rule = _propertySheet.GetRule(ruleName, ruleParameter, ruleClass, ruleId);
                                 
@@ -447,7 +506,6 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                     throw new EndUserParseException(token, _filename, "PSP 109", "Unexpected end of Token stream [HavePropertyLabel]");
                                 }
                                 token = t.Value;
-
                                 if (token.Type == TokenType.Identifier || token.Type == TokenType.NumericLiteral) {
                                     propertyLabelText += "." + token.Data;
                                 }
@@ -539,6 +597,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
             HasLambdaAndLabelAndEquals,
             InPropertyCollectionWithoutLabelWaitingForComma,
 
+            Import,
+            ImportFilename,
         }
 
         #endregion

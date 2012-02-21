@@ -286,60 +286,14 @@ namespace CoApp.Toolkit.Configuration {
         }
 
         /// <summary>
-        /// Helper function to turn an a string into an enum value, defaulting to the default value of the enum itself
-        /// </summary>
-        /// <typeparam name="T">The Enum Type</typeparam>
-        /// <param name="value">The value.</param>
-        /// <param name="defaultValue">The default value.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private static T ParseEnum<T>(string value, T defaultValue = default(T)) {
-            if (Enum.IsDefined(typeof(T), value)) {
-                return (T)Enum.Parse(typeof(T), value, true);
-            }
-            return defaultValue;
-        }
-
-        /// <summary>
-        /// Helper function to turn an a string into an enum value, defaulting to the default value of the enum itself
-        /// This will also handle enums marked with [Flags] and parse out values combined with '+'
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="value">The value.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private static T CastToEnum<T>(string value) {
-            if (value.Contains("+")) {
-                var values = value.Split('+');
-                Type numberType = Enum.GetUnderlyingType(typeof(T));
-                if (numberType.Equals(typeof(int))) {
-                    var newResult = values.Aggregate(0, (current, val) => current | (int) (Object) ParseEnum<T>(val));
-                    return (T)(Object)newResult;
-                }
-            }
-            return ParseEnum<T>(value);
-        }
-
-        /// <summary>
-        /// Helper function, casts an enum value out to a string, supports [Flags] by combining with '+' characters.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="value">The value.</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private static string CastToString<T>(T value) {
-            return Enum.Format(typeof(T), value, "G").Replace(", ", "+");
-        }
-
-        /// <summary>
         /// Gets the value for this current node as an enum.
         /// 
         /// Defaults to the enum's Default Value if parsing fails.
         /// </summary>
         /// <returns>the enum value of the node</returns>
         /// <remarks></remarks>
-        public T GetEnumValue<T>() {
-            return CastToEnum<T>(StringValue);
+        public T GetEnumValue<T>() where T : struct, IConvertible {
+            return StringValue.CastToEnum<T>();
         }
 
         /// <summary>
@@ -348,8 +302,8 @@ namespace CoApp.Toolkit.Configuration {
         /// <typeparam name="T"></typeparam>
         /// <param name="value">The value to set the node to.</param>
         /// <remarks></remarks>
-        public void SetEnumValue<T>(T value ) {
-            StringValue = CastToString(value);
+        public void SetEnumValue<T>(T value) where T : struct, IConvertible {
+            StringValue = value.CastToString();
         }
 
         /// <summary>

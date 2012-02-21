@@ -17,11 +17,11 @@ namespace CoApp.Toolkit.Win32 {
                 var output = SHGetSpecialFolderPath(IntPtr.Zero, ret, folder);
 
                 if (!output) {
-                    throw new ArgumentException();
+                    return null;
                 }
             }
             catch /* (Exception e) */ {
-                throw new ArgumentException();
+                return null;
             }
             return ret.ToString();
         }
@@ -68,7 +68,7 @@ namespace CoApp.Toolkit.Win32 {
         InternetCache = 0x0020,
         Cookies = 0x0021,
         History = 0x0022,
-        CommonApplicationData = 0x0023, // All Users\Application Data
+        CommonApplicationData = 0x0023, // All Users\Application Data AKA \ProgramData
         Windows = 0x0024, // GetWindowsDirectory()
         System = 0x0025, // GetSystemDirectory()
         ProgramFiles = 0x0026, // C:\Program Files

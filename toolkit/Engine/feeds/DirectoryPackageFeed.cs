@@ -66,22 +66,11 @@ namespace CoApp.Toolkit.Engine.Feeds {
                     where Recognizer.Recognize(file).Result.IsPackageFile // Since we know this to be local, it'm ok with blocking on the result.
                     select file;
 
-                foreach (var p in files) {
-                    try {
-                        var pkg = Package.GetPackageFromFilename(p);
-                        pkg.InternalPackageData.FeedLocation = Location;
-                        
-                        if( !_packageList.Contains(pkg))
-                            _packageList.Add(pkg);
-                    }
-                    catch (InvalidPackageException) {
-                        // that's ok, it's been skipped.
-                        // Console.WriteLine("IPE:{0}",p);
-                    }
-                    catch (PackageNotFoundException) {
-                        // this might not happen anymore.
-                        // that's a bit odd, but it's been skipped.
-                        // Console.WriteLine("PNF:{0}", p);
+                foreach (var pkg in files.Select(Package.GetPackageFromFilename).Where(pkg => pkg != null)) {
+                    pkg.InternalPackageData.FeedLocation = Location;
+
+                    if (!_packageList.Contains(pkg)) {
+                        _packageList.Add(pkg);
                     }
                 }
                 Stale = false;
@@ -105,8 +94,8 @@ namespace CoApp.Toolkit.Engine.Feeds {
             Scan();
             return from p in _packageList where
                 (string.IsNullOrEmpty(name) || p.Name.IsWildcardMatch(name)) &&
-                (string.IsNullOrEmpty(version) || p.Version.UInt64VersiontoString().IsWildcardMatch(version)) &&
-                (string.IsNullOrEmpty(arch) || p.Architecture.IsWildcardMatch(arch)) &&
+                (string.IsNullOrEmpty(version) || p.Version.ToString().IsWildcardMatch(version)) &&
+                (string.IsNullOrEmpty(arch) || p.Architecture.ToString().IsWildcardMatch(arch)) &&
                 (string.IsNullOrEmpty(publicKeyToken) || p.PublicKeyToken.IsWildcardMatch(publicKeyToken)) select p;
         }
     }

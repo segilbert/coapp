@@ -66,6 +66,8 @@
 
 #endregion
 
+using CoApp.Toolkit.Win32;
+
 namespace CoApp.Toolkit.Engine.Model.Atom {
     using System;
     using System.Collections.Generic;
@@ -206,11 +208,11 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
         public AtomItem(Package package) {
             Model = new PackageModel();
             Model.Name = package.Name;
-            var arch = Architecture.Unknown;
-            Enum.TryParse(package.Architecture, true, out arch);
-            Model.Architecture = arch;
-            Model.PublisherDirectory = package.PublisherDirectory;
+            // var arch = Architecture.Unknown;
+            // Enum.TryParse(package.Architecture, true, out arch);
+            Model.Architecture = package.Architecture;
             Model.DisplayName = package.DisplayName;
+            Model.Vendor = package.Vendor;
 
             Model.Version = package.Version;
             Model.PublicKeyToken = package.PublicKeyToken;
@@ -245,8 +247,8 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
                 var package = Package.GetPackage(Model.Name, Model.Version, Model.Architecture, Model.PublicKeyToken, Model.ProductCode);
 
                 // lets copy what details we have into that package.
-                package.PublisherDirectory = Model.PublisherDirectory;
                 package.DisplayName = Model.DisplayName;
+                package.Vendor = Model.Vendor;
 
                 package.InternalPackageData.PolicyMinimumVersion = Model.BindingPolicyMinVersion;
                 package.InternalPackageData.PolicyMaximumVersion = Model.BindingPolicyMaxVersion;

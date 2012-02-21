@@ -351,13 +351,13 @@ namespace CoApp.Toolkit.Engine.Client {
 
         public string Product {
             get {
-                return HasPackage ? "{0} - {1}".format(Package.DisplayName, string.IsNullOrEmpty(Package.AuthorVersion) ? Package.Version : Package.AuthorVersion) : string.Empty;
+                return HasPackage ? "{0} - {1}".format(Package.DisplayName, string.IsNullOrEmpty(Package.AuthorVersion) ? (string)Package.Version : Package.AuthorVersion) : string.Empty;
             }
         }
 
         public string ProductVersion {
             get {
-                return HasPackage ? Package.Version : string.Empty;
+                return HasPackage ? (string)Package.Version : string.Empty;
             }
         }
 

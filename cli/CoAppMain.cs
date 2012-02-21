@@ -8,6 +8,8 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Win32;
+
 namespace CoApp.CLI {
     using System;
     using System.Collections.Generic;
@@ -33,8 +35,8 @@ namespace CoApp.CLI {
         private bool _terse = false;
         private bool _verbose = false;
 
-        private ulong? _minVersion = null;
-        private ulong? _maxVersion = null;
+        private FourPartVersion? _minVersion = null;
+        private FourPartVersion? _maxVersion = null;
 
         private bool? _installed = null;
         private bool? _active = null;
@@ -119,11 +121,11 @@ namespace CoApp.CLI {
                     switch (arg) {
                             /* options  */
                         case "min-version":
-                            _minVersion = last.VersionStringToUInt64();
+                            _minVersion = (FourPartVersion)last;
                             break;
 
                         case "max-version":
-                            _maxVersion = last.VersionStringToUInt64();
+                            _maxVersion = (FourPartVersion)last;
                             break;
 
                         case "installed":
@@ -571,8 +573,6 @@ namespace CoApp.CLI {
         }
 
         private Task AddFeed(IEnumerable<string> feeds) {
-
-
             var tasks = feeds.Select(each => _pm.AddFeed(each, false, new PackageManagerMessages {
                 FeedAdded = (f) => { Console.WriteLine("Adding Feed: {0}", f); }
             }.Extend(_messages))).ToArray();
@@ -637,8 +637,8 @@ namespace CoApp.CLI {
                 var remoteTasks = packages.Select(package => _pm.GetPackageDetails(package.CanonicalName, _messages )).ToArray();
                 return Task.Factory.ContinueWhenAll(remoteTasks, antecedents => {
 
-                var length0 = packages.Max(each => Math.Max( Math.Max(each.Name.Length, each.Architecture.Length), each.PublisherName.Length)) + 1;
-                var length1 = packages.Max(each =>  Math.Max( Math.Max( each.Version.Length,each.AuthorVersion.Length),each.PublisherUrl.Length) )+1;
+                    var length0 = packages.Max(each => Math.Max(Math.Max(each.Name.Length, each.Architecture.ToString().Length), each.PublisherName.Length)) + 1;
+                var length1 = packages.Max(each =>  Math.Max( Math.Max( ((string)each.Version).Length,each.AuthorVersion.Length),each.PublisherUrl.Length) )+1;
 
                 foreach (var package in packages) {
                     var date = DateTime.FromFileTime(long.Parse(package.PublishDate));
@@ -690,19 +690,19 @@ namespace CoApp.CLI {
             if (packages.Any()) {
                 var upgrades = new List<Package>();
                 
-                var anyUpgrades = packages.Where(each => each.IsClientRequired).Select(package => _pm.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
+                var anyUpgrades = packages.Where(each => each.IsClientRequired).Select(package => _pm.FindPackages(null, package.Name, null, package.Architecture.ToString(), package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
                     PackageInformation = (pkg) => {
-                        if (pkg.Version.VersionStringToUInt64() > package.Version.VersionStringToUInt64()) {
+                        if (pkg.Version > package.Version ) {
                             upgrades.Add(pkg);
                         }
                     }
                 }.Extend(_messages)));
 
-                var policyUpgrades = packages.Where(each => each.IsDependency).Select(package => _pm.FindPackages(null, package.Name, null, package.Architecture, package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
+                var policyUpgrades = packages.Where(each => each.IsDependency).Select(package => _pm.FindPackages(null, package.Name, null, package.Architecture.ToString(), package.PublicKeyToken, installed: false, blocked: false, latest: true, messages: new PackageManagerMessages {
                     PackageInformation = (pkg) => {
                         if (!pkg.SupercedentPackages.IsNullOrEmpty()) {
-                            var pkgToAdd = pkg.SupercedentPackages.Select(Package.GetPackage).MaxElement(each => each.Version.VersionStringToUInt64());
-                            if (pkgToAdd.Version.VersionStringToUInt64() > package.Version.VersionStringToUInt64()) {
+                            var pkgToAdd = pkg.SupercedentPackages.Select(Package.GetPackage).MaxElement(each => each.Version);
+                            if (pkgToAdd.Version > package.Version) {
                                 upgrades.Add(pkgToAdd);
                             }
                         }

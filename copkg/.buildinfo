@@ -14,7 +14,10 @@ release {
         x86, x64, anycpu 
     };
     
-    build-command: @"echo build done.";
+    build-command: @"
+        cscript //e:jscript scripts\increment-build-version.js
+        echo RELEASE build done.
+    ";
 }
 
 debug {
@@ -25,30 +28,48 @@ debug {
         x86, x64, anycpu 
     };
     
-    build-command: @"echo build done.";
+    build-command: @"echo DEBUG build done.";
 }
 
+
+package { 
+    default: false;
+    set : cfg = "Release";
+    uses : sign;
+    build-command: @"
+        cscript //e:jscript scripts\increment-build-version.js
+        
+        REM Add the coapp tools folder to the end of the path, in case we don't have the tools in the path
+        PATH=%PATH%;%CD%\ext\tools
+
+        pskill coapp.service
+        start output\any\Release\bin\coapp.service --interactive
+        cd copkg
+        autopackage coapp.toolkit.autopkg  || goto failed
+        pskill coapp.service
+        
+
+        echo Done Packaging!
+    ";
+}
 
 sign { 
     // builds all the binaries in "Release" mode and digitally signs and 
     // strong-names the binaries.
-    // 
     default: false;
     set : cfg = "Release";
     uses : { 
         sign-prerequisites,
-        sign-binaries
+        sign-anycpu
     };
-        
     
-    build-command: @"echo built singed binaries. done.";
+    build-command: @"
+        echo Built singed RELEASE binaries.
+    ";
 }
-
-
 
 sign-prerequisites {
     set : release_dir = @"output\any\Release\bin\";
-    set : binaries_dir = @"ext\binaries\";
     default: false;
     
     uses: {
@@ -59,31 +80,19 @@ sign-prerequisites {
     targets: {
     };
     
+    
+    //REM for %%F in (ptk.exe) do set SIMPLESIGNER=%%~f$PATH:F
     build-command: @" 
+        REM Add the coapp tools folder to the end of the path, in case we don't have the tools in the path
+        PATH=%PATH%;%CD%\ext\tools
+    
         REM sign files in release directory
-        ext\tools\simplesigner --nologo ""${release_dir}managed-bootstrap.exe"" || goto failed
-        ext\tools\simplesigner --nologo ""${release_dir}native-bootstrap.exe"" ""${release_dir}CoApp.Rehash.x86.dll"" ""${release_dir}CoApp.Rehash.x64.dll"" ""${release_dir}CoApp.Resources.dll""  || goto failed
-        
-        REM copy signed files into binaries submodule
-        xcopy /Q /D /Y  ""${release_dir}managed-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${release_dir}native-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Rehash.x86.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Rehash.x64.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Resources.dll""  ""${binaries_dir}""  || goto failed
-
-        REM Everything went ok!
-        exit /b 0
-        
-        REM Something not ok :(
-        :failed
-        echo ERROR: Failure in script. aborting.
-        exit /b 1
+        simplesigner --nologo --sign --strong-name ""${release_dir}CoApp.Rehash.x86.dll"" ""${release_dir}CoApp.Rehash.x64.dll"" ""${release_dir}CoApp.Resources.dll""  || goto failed
     ";
 }
 
-sign-binaries {
+sign-anycpu {
     set : release_dir = @"output\any\Release\bin\";
-    set : binaries_dir = @"ext\binaries\";
     
     default: false;
     
@@ -95,32 +104,19 @@ sign-binaries {
     };
     
     build-command: @"
+        REM Add the coapp tools folder to the end of the path, in case we don't have the tools in the path
+        PATH=%PATH%;%CD%\ext\tools
+        
         REM sign files in release directory
-        ext\tools\simplesigner --nologo ""${release_dir}CoApp.Toolkit.dll"" ""${release_dir}CoApp.Toolkit.Engine.dll"" ""${release_dir}CoApp.Toolkit.Engine.Client.dll"" ""${release_dir}CoApp.Service.exe"" ""${release_dir}CoApp.Cleaner.exe"" ""${release_dir}CoApp.exe""
-        
-        REM copy signed files into binaries submodule
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.Engine.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.Engine.Client.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Service.exe""  ""${binaries_dir}"" || goto failed 
-        xcopy /Q /D /Y  ""${release_dir}CoApp.Cleaner.exe"" ""${binaries_dir}"" || goto failed 
-        xcopy /Q /D /Y  ""${release_dir}CoApp.exe"" ""${binaries_dir}"" || goto failed
-
-        REM Everything went ok!
-        exit /b 0
-        
-        REM Something not ok :(
-        :failed
-        echo ERROR: Failure in script. aborting.
-        exit /b 1
+        simplesigner --nologo --sign --strong-name  ""${release_dir}CoApp.Toolkit.dll"" ""${release_dir}CoApp.Toolkit.Engine.dll"" ""${release_dir}CoApp.Toolkit.Engine.Client.dll"" ""${release_dir}CoApp.Service.exe"" ""${release_dir}CoApp.Cleaner.exe"" ""${release_dir}CoApp.exe"" || goto failed
     ";
 }
 
-publish {
+/*
+export {
     set : release_dir = @"output\any\Release\bin\";
     set : binaries_dir = @"..\binaries\";
     set : tools_dir = @"..\tools\";
-    set : submodule_binaries = @"ext\binaries\";
     
     default: false;
     uses: {
@@ -128,34 +124,27 @@ publish {
     };
     
     build-command: @"
-        REM copy binaries into ..\binaries folder (this should be the one that is committed back when published)
-        xcopy /Q /D /Y  ""${submodule_binaries}managed-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}native-bootstrap.exe"" ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Rehash.x86.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Rehash.x64.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Resources.dll""  ""${binaries_dir}""  || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Toolkit.Engine.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Toolkit.Engine.Client.dll""  ""${binaries_dir}"" || goto failed
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Service.exe""  ""${binaries_dir}"" || goto failed 
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.Cleaner.exe"" ""${binaries_dir}"" || goto failed 
-        xcopy /Q /D /Y  ""${submodule_binaries}CoApp.exe"" ""${binaries_dir}"" || goto failed
+        mkdir ""${binaries_dir}"" 
+        
+        REM copy binaries into ..\binaries folder (this should be the one that is committed back when exported)
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Rehash.x86.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Rehash.x64.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Resources.dll""  ""${binaries_dir}""  || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.dll"" ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.Engine.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Toolkit.Engine.Client.dll""  ""${binaries_dir}"" || goto failed
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Service.exe""  ""${binaries_dir}"" || goto failed 
+        xcopy /Q /D /Y  ""${release_dir}CoApp.Cleaner.exe"" ""${binaries_dir}"" || goto failed 
+        xcopy /Q /D /Y  ""${release_dir}CoApp.exe"" ""${binaries_dir}"" || goto failed
 
         rem TODO: package stuff too?
         rem 
         
         REM update version
         cscript //e:jscript scripts\increment-build-version.js
-        
-        REM Everything went ok!
-        exit /b 0
-        
-        REM Something not ok :(
-        :failed
-        echo ERROR: Failure in script. aborting.
-        exit /b 1
     ";
 }
+*/
 
 x86 {
     default: false;
@@ -164,27 +153,15 @@ x86 {
     uses: clean;
     
     targets: { 
-        @"output\any\${cfg}\bin\managed-bootstrap.exe",
-        @"output\any\${cfg}\bin\native-bootstrap.exe",
         @"output\any\${cfg}\bin\CoApp.Rehash.x86.dll",
         @"output\any\${cfg}\bin\CoApp.Resources.dll",
     };
 
     build-command: @"
         msbuild  /p:Configuration=${cfg} ""/p:Platform=win32"" /p:SolutionDir=..\ rehash\CoApp.Rehash.x86.vcxproj  || goto failed
-        msbuild  /p:Configuration=${cfg} ""/p:Platform=win32"" /p:SolutionDir=..\ native-bootstrap\bootstrap.vcxproj  || goto failed
-        msbuild  /p:Configuration=${cfg} ""/p:Platform=AnyCPU"" /p:SolutionDir=..\ managed-bootstrap\managed-bootstrap.csproj  || goto failed
     
         REM Must build this one last, when done in release, it does the signing.
         msbuild  /p:Configuration=${cfg} ""/p:Platform=win32"" /p:SolutionDir=..\ resources\Resources.vcxproj  || goto failed
-        
-        REM Everything went ok!
-        exit /b 0
-        
-        REM Something not ok :(
-        :failed
-        echo ERROR: Failure in script. aborting.
-        exit /b 1
     ";
 }
 
@@ -200,14 +177,6 @@ x64 {
 
     build-command: @"
         msbuild  /p:Configuration=${cfg} ""/p:Platform=x64"" /p:SolutionDir=..\ rehash\CoApp.Rehash.x64.vcxproj || goto failed
-        
-        REM Everything went ok!
-        exit /b 0
-        
-        REM Something not ok :(
-        :failed
-        echo ERROR: Failure in script. aborting.
-        exit /b 1
     ";
 }
 
@@ -225,19 +194,10 @@ anycpu {
         @"output\any\${cfg}\bin\CoApp.Toolkit.dll",
         @"output\any\${cfg}\bin\CoApp.Toolkit.Engine.Client.dll",
         @"output\any\${cfg}\bin\CoApp.Toolkit.Engine.dll",
-
     };
 
     build-command: @"
         msbuild  /p:Configuration=${cfg} ""/p:Platform=Any CPU"" coapp.sln || goto failed
-    
-        REM Everything went ok!
-        exit /b 0
-        
-        REM Something not ok :(
-        :failed
-        echo ERROR: Failure in script. aborting.
-        exit /b 1
     ";
   
 }

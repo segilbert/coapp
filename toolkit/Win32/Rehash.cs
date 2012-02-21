@@ -42,8 +42,8 @@ namespace CoApp.Toolkit.Win32 {
                     if (stream == null) {
                         continue;
                     }
-                    
-                    var dllFilename = Path.Combine(Path.GetTempPath(), rehashFilename);
+
+                    var dllFilename = Path.Combine(FilesystemExtensions.SystemTempFolder, rehashFilename);
 
                     if (File.Exists(dllFilename)) {
                         using (var existingFileStream = new FileStream(dllFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {

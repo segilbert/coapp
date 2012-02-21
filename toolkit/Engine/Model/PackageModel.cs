@@ -8,6 +8,8 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Win32;
+
 namespace CoApp.Toolkit.Engine.Model {
     using System;
     using System.Collections.Generic;
@@ -31,11 +33,25 @@ namespace CoApp.Toolkit.Engine.Model {
         [XmlAttribute]
         public string Name { get; set; }
 
-        [XmlAttribute]
+        [XmlIgnore]
         public Architecture Architecture { get; set; }
 
-        [XmlAttribute]
-        public UInt64 Version { get; set; }
+        // Workaround to get around stupid .NET limitation of not being able to let a class/struct serialize as an attribute. #FAIL
+        [XmlAttribute("Architecture")]
+        public string ArchitectureSurrogate {
+            get { return Architecture.ToString(); }
+            set { Architecture = Architecture.Parse(value); }
+        }
+
+        [XmlIgnore]
+        public FourPartVersion Version { get; set; }
+        
+        // Workaround to get around stupid .NET limitation of not being able to let a class/struct serialize as an attribute. #FAIL
+        [XmlAttribute("Version")]
+        public string VersionSurrogate {
+            get{return Version.ToString();}
+            set{ Version = FourPartVersion.Parse(value);}
+        }
 
         [XmlAttribute]
         public string PublicKeyToken { get; set; }
@@ -44,13 +60,27 @@ namespace CoApp.Toolkit.Engine.Model {
         public string DisplayName { get; set; }
 
         [XmlAttribute]
-        public string PublisherDirectory { get; set; }
+        public string Vendor;
 
-        [XmlElement(IsNullable = false)]
-        public UInt64 BindingPolicyMinVersion { get; set; }
+        [XmlIgnore]
+        public FourPartVersion BindingPolicyMinVersion { get; set; }
 
-        [XmlElement(IsNullable = false)]
-        public UInt64 BindingPolicyMaxVersion { get; set; }
+        [XmlIgnore]
+        public FourPartVersion BindingPolicyMaxVersion { get; set; }
+
+        // Workaround to get around stupid .NET serialization of structs being a PITA.
+        [XmlElement("BindingPolicyMinVersion", IsNullable = false)]
+        public string BindingPolicyMinVersionSurrogate {
+            get { return BindingPolicyMinVersion.ToString(); }
+            set { BindingPolicyMinVersion = FourPartVersion.Parse(value); }
+        }
+
+        // Workaround to get around stupid .NET serialization of structs being a PITA.
+        [XmlElement("BindingPolicyMaxVersion", IsNullable = false)]
+        public string BindingPolicyMaxVersionSurrogate {
+            get { return BindingPolicyMaxVersion.ToString(); }
+            set { BindingPolicyMaxVersion = FourPartVersion.Parse(value); }
+        }
 
         [XmlAttribute]
         public string RelativeLocation { get; set; }
@@ -88,13 +118,13 @@ namespace CoApp.Toolkit.Engine.Model {
         [XmlIgnore]
         public string CanonicalName {
             get {
-                return "{0}-{1}-{2}-{3}".format(Name, Version.UInt64VersiontoString(), Architecture, PublicKeyToken);
+                return "{0}-{1}-{2}-{3}".format(Name, Version.ToString(), Architecture, PublicKeyToken);
             }
         }
 
         [XmlIgnore]
         public string CosmeticName {
-            get { return "{0}-{1}-{2}".format(Name, Version.UInt64VersiontoString(), Architecture); }
+            get { return "{0}-{1}-{2}".format(Name, Version.ToString(), Architecture); }
         }
 
         [XmlIgnore]
@@ -104,13 +134,17 @@ namespace CoApp.Toolkit.Engine.Model {
         public List<Uri> Feeds { get; set; }
 
         [XmlIgnore]
-        public List<CompositionRule> CompositionRules { get; set; }
+        public Composition CompositionData { get; set; }
 
         [XmlIgnore]
         public XmlSerializer XmlSerializer;
 
+        // soak up anything we don't recognize
+        [XmlAnyAttribute]
+        public XmlAttribute[] UnknownAttributes;
+
         [XmlAnyElement]
-        public object[] UnknownElements;
+        public XmlElement[] UnknownElements;
     }
 
     [XmlRoot(ElementName = "Details", Namespace = "http://coapp.org/atom-package-feed-1.0")]
@@ -129,8 +163,14 @@ namespace CoApp.Toolkit.Engine.Model {
         [XmlElement(IsNullable = false)]
         public string BugTracker { get; set; }
 
-        [XmlElement(IsNullable = false)]
-        public string Icon { get; set; }
+        [XmlArray(IsNullable = false)]
+        public List<string> IconLocations {
+            get { return Icons.IsNullOrEmpty() ? new List<string>() : Icons.Select(each => each.AbsoluteUri).ToList(); }
+            set { Icons = new List<Uri>(value.Select(each => each.ToUri())); }
+        }
+
+        [XmlIgnore]
+        public List<Uri> Icons { get; set; }
 
         [XmlArray(IsNullable = false)]
         public List<License> Licenses { get; set; }
@@ -179,5 +219,12 @@ namespace CoApp.Toolkit.Engine.Model {
             }
         }
 #endif
+
+        // soak up anything we don't recognize
+        [XmlAnyAttribute]
+        public XmlAttribute[] UnknownAttributes;
+
+        [XmlAnyElement]
+        public XmlElement[] UnknownElements;
     }
 }

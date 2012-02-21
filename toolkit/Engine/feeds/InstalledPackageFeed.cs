@@ -47,7 +47,7 @@ namespace CoApp.Toolkit.Engine.Feeds {
                 LastScanned = DateTime.Now;
 
                 // add the cached package directory, 'cause on backlevel platform, they taint the MSI in the installed files folder.
-                var installedFiles = MSIBase.InstalledMSIFilenames.Union(PackageManagerSettings.CoAppCacheDirectory.FindFilesSmarter("*.msi")).ToArray();
+                var installedFiles = MSIBase.InstalledMSIFilenames.Union(PackageManagerSettings.CoAppPackageCache.FindFilesSmarter("*.msi")).ToArray();
                 
                 for (var i = 0; i < installedFiles.Length;i++ ) {
                     var packageFilename = installedFiles[i];
@@ -62,15 +62,13 @@ namespace CoApp.Toolkit.Engine.Feeds {
                         continue;
                     }
 
-                    try {
-                        var pkg = Package.GetPackageFromFilename(packageFilename);
+                    var pkg = Package.GetPackageFromFilename(packageFilename);
+
+                    if (pkg != null) { 
                         if (pkg.IsInstalled) {
                             _packageList.Add(pkg);
                         }
-                    }  catch /* (Exception e) */ {
-                        // Console.WriteLine(e.Message);
-                        // files that fail aren't coapp packages. 
-                        // remember that one for next time.
+                    } else {
                         _nonCoAppMSIFiles.Add(lookup);
                     }
                 }
@@ -132,8 +130,8 @@ namespace CoApp.Toolkit.Engine.Feeds {
             Scan();
             return from p in _packageList where
                 (string.IsNullOrEmpty(name) || p.Name.IsWildcardMatch(name)) &&
-                (string.IsNullOrEmpty(version) || p.Version.UInt64VersiontoString().IsWildcardMatch(version)) &&
-                (string.IsNullOrEmpty(arch) || p.Architecture.IsWildcardMatch(arch)) &&
+                (string.IsNullOrEmpty(version) || p.Version.ToString().IsWildcardMatch(version)) &&
+                (string.IsNullOrEmpty(arch) || p.Architecture.ToString().IsWildcardMatch(arch)) &&
                 (string.IsNullOrEmpty(publicKeyToken) || p.PublicKeyToken.IsWildcardMatch(publicKeyToken)) select p;
         }
     }

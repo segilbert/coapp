@@ -224,7 +224,7 @@ namespace CoApp.Toolkit.Engine {
                         }
 
                         // otherwise, we're installing a dependency, and we need something compatable.
-                        var supercedents = (from p in SearchForPackages(package.Name, null, package.Architecture, package.PublicKeyToken)
+                        var supercedents = (from p in SearchForPackages(package.Name, null, package.Architecture.ToString(), package.PublicKeyToken)
                             where p.InternalPackageData.PolicyMinimumVersion <= package.Version && p.InternalPackageData.PolicyMaximumVersion >= package.Version
                             select p).OrderByDescending(p => p.Version).ToArray();
 
@@ -293,7 +293,7 @@ namespace CoApp.Toolkit.Engine {
 
                         // is the user authorized to install this?
                         var highestInstalledPackage =
-                            SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken).HighestPackages();
+                            SearchForInstalledPackages(package.Name, null, package.Architecture.ToString(), package.PublicKeyToken).HighestPackages();
                         if (highestInstalledPackage.Any() && highestInstalledPackage.FirstOrDefault().Version < package.Version) {
                             if (package.IsBlocked) {
                                 PackageManagerMessages.Invoke.PackageBlocked(canonicalName);
@@ -380,7 +380,7 @@ namespace CoApp.Toolkit.Engine {
                                 // we've got some packages to install that don't have files.
                                 foreach (var p in missingFiles.Where(p => !p.PackageSessionData.HasRequestedDownload)) {
                                     PackageManagerMessages.Invoke.RequireRemoteFile(p.CanonicalName,
-                                        p.InternalPackageData.RemoteLocations , PackageManagerSettings.CoAppCacheDirectory, false);
+                                        p.InternalPackageData.RemoteLocations, PackageManagerSettings.CoAppPackageCache, false);
 
                                     p.PackageSessionData.HasRequestedDownload = true;
                                 }
@@ -811,7 +811,7 @@ namespace CoApp.Toolkit.Engine {
                         PackageManagerMessages.Invoke.PermissionRequired("ChangeActivePackage");
                     }
                     else {
-                        SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken).HighestPackages().FirstOrDefault().
+                        SearchForInstalledPackages(package.Name, null, package.Architecture.ToString(), package.PublicKeyToken).HighestPackages().FirstOrDefault().
                             SetPackageCurrent();
                     }
                 }
@@ -881,7 +881,7 @@ namespace CoApp.Toolkit.Engine {
                     return;
                 }
 
-                if (package.Name.Equals( "coapp.toolkit", StringComparison.CurrentCultureIgnoreCase ) && package.PublicKeyToken.Equals("820d50196d4e8857") && package.IsActive ) {
+                if (package.Name.Equals( "coapp.toolkit", StringComparison.CurrentCultureIgnoreCase ) && package.PublicKeyToken.Equals("1e373a58e25250cb") && package.IsActive ) {
                     PackageManagerMessages.Invoke.Error("remove-package", "canonical-name", "Active CoApp Engine may not be removed");
                     return;
                 }
@@ -1026,14 +1026,15 @@ namespace CoApp.Toolkit.Engine {
 
                     if (antecedent.Result.IsPackageFile) {
                         var package = Package.GetPackageFromFilename(location);
-                        
-                        // mark it download 100%
-                        package.PackageSessionData.DownloadProgress = 100;
-                        
-                        SessionPackageFeed.Instance.Add(package);
+                        if (package != null) {
+                            // mark it download 100%
+                            package.PackageSessionData.DownloadProgress = 100;
 
-                        PackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
-                        PackageManagerMessages.Invoke.Recognized(localLocation);
+                            SessionPackageFeed.Instance.Add(package);
+
+                            PackageManagerMessages.Invoke.PackageInformation(package, Enumerable.Empty<Package>());
+                            PackageManagerMessages.Invoke.Recognized(localLocation);
+                        }
                         return;
                     }
 
@@ -1211,7 +1212,7 @@ namespace CoApp.Toolkit.Engine {
             }
 
             if (!packageData.DoNotSupercede) {
-                var installedSupercedents = SearchForInstalledPackages(package.Name, null, package.Architecture, package.PublicKeyToken);
+                var installedSupercedents = SearchForInstalledPackages(package.Name, null, package.Architecture.ToString(), package.PublicKeyToken);
 
                 if( package.PackageSessionData.IsClientSpecified || hypothetical )  {
                     // this means that we're talking about a requested package
@@ -1237,7 +1238,7 @@ namespace CoApp.Toolkit.Engine {
                 // if told not to supercede, we won't even perform this check 
                 packageData.Supercedent = null;
                 
-                var supercedents = SearchForPackages(package.Name, null, package.Architecture, package.PublicKeyToken).ToArray();
+                var supercedents = SearchForPackages(package.Name, null, package.Architecture.ToString(), package.PublicKeyToken).ToArray();
 
                 if( package.PackageSessionData.IsClientSpecified || hypothetical )  {
                     // this means that we're talking about a requested package

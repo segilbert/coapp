@@ -77,7 +77,6 @@ namespace CoApp.Toolkit.Pipes {
                         return null;
                 }
             }
-
         }
 
         /// <summary>
@@ -218,6 +217,16 @@ namespace CoApp.Toolkit.Pipes {
             }
         }
 
+        public void AddKeyValuePair( string key, string elementName, string elementValue) {
+            Add("{0}[{1}]".format(key, elementName.UrlEncode()), elementValue);
+        }
+
+        public void AddKeyValueCollection( string key, IEnumerable<KeyValuePair<string, string>> collection ) {
+            foreach (var each in collection) {
+                AddKeyValuePair(key, each.Key, each.Value);
+            }
+        }
+
         public void AddCollection( string key, IEnumerable<string>  values ) {
             if (!values.IsNullOrEmpty()) {
                 var index = 0;
@@ -239,12 +248,23 @@ namespace CoApp.Toolkit.Pipes {
         /// <summary>
         /// Gets the collection.
         /// </summary>
-        /// <param name="p">The p.</param>
+        /// <param name="collectionName">The key for the collection.</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public IEnumerable<string> GetCollection(string p) {
-            var rx = new Regex(@"^{0}\[\d*\]$".format(Regex.Escape(p)));
+        public IEnumerable<string> GetCollection(string collectionName) {
+            var rx = new Regex(@"^{0}\[\d*\]$".format(Regex.Escape(collectionName)));
             return from k in Data.Keys where rx.IsMatch(k) select Data[k];
+        }
+
+        /// <summary>
+        /// Gets the collection.
+        /// </summary>
+        /// <param name="collectionName">The key for the collection.</param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public IEnumerable<KeyValuePair<string,string>> GetKeyValuePairs(string collectionName) {
+            var rx = new Regex(@"^{0}\[(.*)\]$".format(Regex.Escape(collectionName)));
+            return from k in Data.Keys let match = rx.Match(k) where match.Success select new KeyValuePair<string,string> (match.Groups[1].Captures[0].Value, Data[k]);
         }
 
         public static implicit operator string(UrlEncodedMessage value) {
