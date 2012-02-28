@@ -25,6 +25,9 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         public delegate IEnumerable<object> GetCollectionDelegate(string collectionName);
 
         public StringExtensions.GetMacroValueDelegate GetMacroValue;
+        public StringExtensions.GetMacroValueDelegate PreprocessProperty;
+        public StringExtensions.GetMacroValueDelegate PostprocessProperty;
+
         public GetCollectionDelegate GetCollection;
 
         public string Filename { get; internal set; }
@@ -73,10 +76,26 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
         }
 
         internal string ResolveMacros(string value, object eachItem = null) {
-            if (GetMacroValue == null) {
-                return value; // no macro handler?, just return 
+            if( PreprocessProperty != null) {
+                foreach (StringExtensions.GetMacroValueDelegate preprocess in PreprocessProperty.GetInvocationList()) {
+                    value = preprocess(value);
+                }
+            }
+            
+            if (GetMacroValue != null) {
+                value = ProcessMacroInternal(value, eachItem);    
             }
 
+            if (PostprocessProperty != null) {
+                foreach (StringExtensions.GetMacroValueDelegate postprocess in PostprocessProperty.GetInvocationList()) {
+                    value = postprocess(value);
+                }
+            }
+
+            return value;
+        }
+
+        private string ProcessMacroInternal(string value, object eachItem) {
             bool keepGoing;
             do {
                 keepGoing = false;
@@ -85,18 +104,19 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                 foreach (var m in matches) {
                     var match = m as Match;
                     var innerMacro = match.Groups[2].Value;
-                    var outerMacro =  match.Groups[1].Value;
+                    var outerMacro = match.Groups[1].Value;
                     // var replacement = GetMacroValue(innerMacro);
                     string replacement = null;
 
                     // get the first responder.
-                    foreach ( StringExtensions.GetMacroValueDelegate del in GetMacroValue.GetInvocationList()) {
+                    foreach (StringExtensions.GetMacroValueDelegate del in GetMacroValue.GetInvocationList()) {
                         replacement = del(innerMacro);
-                        if (replacement != null)
+                        if (replacement != null) {
                             break;
+                        }
                     }
 
-                    if( eachItem != null ) {
+                    if (eachItem != null) {
                         // try resolving it as an ${each.property} style.
                         // the element at the front is the 'this' value
                         // just trim off whatever is at the front up to and including the first dot.
@@ -107,12 +127,13 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                                 value = value.Replace(outerMacro, r);
                                 keepGoing = true;
                             }
-                        } catch {
+                        }
+                        catch {
                             // meh. screw em'
                         }
                     }
 
-                    if( replacement != null ) {
+                    if (replacement != null) {
                         value = value.Replace(outerMacro, replacement);
                         keepGoing = true;
                         break;

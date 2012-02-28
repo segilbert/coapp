@@ -52,7 +52,7 @@ namespace CoApp.Toolkit.Engine {
 
         internal string DisplayName { get; set; }
 
-        internal string PackageDirectory { get { return Path.Combine(TargetDirectory, Vendor, CanonicalName); } }
+        internal string PackageDirectory { get { return Path.Combine(TargetDirectory, Vendor.MakeSafeFileName(), CanonicalName); } }
         internal string TargetDirectory { get { return PackageManagerSettings.CoAppInstalledDirectory[Architecture];  } }
         /// <summary>
         /// Gets the package details object.
@@ -1141,6 +1141,9 @@ namespace CoApp.Toolkit.Engine {
                 var result = _package.InternalPackageData.LocalLocations.Any(Verifier.HasValidSignature) ? location : null;
 
                 PackageManagerMessages.Invoke.SignatureValidation(result, !string.IsNullOrEmpty(result), string.IsNullOrEmpty(result) ? null : Verifier.GetPublisherName(result));
+
+                // GS01: if all the locations end up invalid, and we're trying to remove a package 
+
                 return _localValidatedLocation = result;
             }
         }

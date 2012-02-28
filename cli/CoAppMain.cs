@@ -222,7 +222,7 @@ namespace CoApp.CLI {
                 Task task = null;
                 var command = parameters.FirstOrDefault();
                 parameters = parameters.Skip(1);
-
+#if false
                 if (ConsoleExtensions.InputRedirected) {
                     // grab the contents of the input stream and use that as parameters
                     var lines = Console.In.ReadToEnd().Split(new[] {
@@ -239,7 +239,7 @@ namespace CoApp.CLI {
                     _terse = true;
                     _verbose = false;
                 }
-
+#endif 
                 if (command.IsNullOrEmpty()) {
                     return Help();
                 }

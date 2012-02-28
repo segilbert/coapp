@@ -51,6 +51,25 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
+        public string ProcessorArchitecture {
+            get {
+                switch (_architecture) {
+                    case ArchType.Auto:
+                        return "*";
+                    case ArchType.Any:
+                        return "msil";
+                    case ArchType.x86:
+                        return "x86";
+                    case ArchType.x64:
+                        return "amd64";
+                    case ArchType.arm:
+                        return "arm";
+                    default:
+                        return "*";
+                }
+            }
+        }
+
         public static implicit operator string(Architecture architecture) {
             return architecture.ToString();
         }
@@ -65,10 +84,10 @@ namespace CoApp.Toolkit.Win32 {
             }
 
             switch (architecture.ToLower()) {
+                case "*":
                 case "auto":
                     return ArchType.Auto;
 
-                case "*":
                 case "any":
                 case "anycpu":
                     return ArchType.Any;

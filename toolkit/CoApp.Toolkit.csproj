@@ -124,6 +124,26 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="TaskService\Action.cs" />
+    <Compile Include="TaskService\ActionCollection.cs" />
+    <Compile Include="TaskService\CultureSwitcher.cs" />
+    <Compile Include="TaskService\EnumGlobalizer.cs" />
+    <Compile Include="TaskService\Impersonation.cs" />
+    <Compile Include="TaskService\NamedValueCollection.cs" />
+    <Compile Include="TaskService\NotV1SupportedException.cs" />
+    <Compile Include="TaskService\Task.cs" />
+    <Compile Include="TaskService\TaskCollection.cs" />
+    <Compile Include="TaskService\TaskFolder.cs" />
+    <Compile Include="TaskService\TaskFolderCollection.cs" />
+    <Compile Include="TaskService\TaskHandlerInterfaces.cs" />
+    <Compile Include="TaskService\TaskService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="TaskService\Trigger.cs" />
+    <Compile Include="TaskService\TriggerCollection.cs" />
+    <Compile Include="TaskService\V1\TaskSchedulerV1Interop.cs" />
+    <Compile Include="TaskService\V2\TaskSchedulerV2Interop.cs" />
+    <Compile Include="TaskService\Wildcard.cs" />
     <Compile Include="Win32\Accel.cs" />
     <Compile Include="Win32\AcceleratorVirtualKey.cs" />
     <Compile Include="Win32\Architecture.cs" />

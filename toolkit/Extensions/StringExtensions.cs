@@ -888,11 +888,7 @@ namespace CoApp.Toolkit.Extensions {
         };
         
 
-        public static string FormatWithMacros(this string value, GetMacroValueDelegate getMacroValue , object eachItem = null) {
-            if (getMacroValue == null) {
-                return value; // no macro handler?, just return 
-            }
-
+        private static string ProcessMacroInternal( this string value, GetMacroValueDelegate getMacroValue , object eachItem = null) {
             bool keepGoing;
             do {
                 keepGoing = false;
@@ -923,7 +919,8 @@ namespace CoApp.Toolkit.Extensions {
                                     value = value.Replace(outerMacro, r);
                                     keepGoing = true;
                                 }
-                            } catch {
+                            }
+                            catch {
                                 // meh. screw em'
                             }
                         }
@@ -936,6 +933,26 @@ namespace CoApp.Toolkit.Extensions {
                     }
                 }
             } while (keepGoing);
+            return value;
+        }
+
+        public static string FormatWithMacros(this string value, GetMacroValueDelegate getMacroValue, object eachItem = null, GetMacroValueDelegate preprocessValue = null, GetMacroValueDelegate postprocessValue = null) {
+            if (preprocessValue != null) {
+                foreach (StringExtensions.GetMacroValueDelegate preprocess in preprocessValue.GetInvocationList()) {
+                    value = preprocess(value);
+                }
+            }
+            
+            if (getMacroValue != null) {
+                value = value.ProcessMacroInternal(getMacroValue, eachItem); // no macro handler?, just return 
+            }
+
+            if (postprocessValue != null) {
+                foreach (StringExtensions.GetMacroValueDelegate postprocess in postprocessValue.GetInvocationList()) {
+                    value = postprocess(value);
+                }
+            }
+           
             return value;
         }
 

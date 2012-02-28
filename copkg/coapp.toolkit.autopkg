@@ -87,7 +87,7 @@ application {
 
 assemblies {
     include : {
-    dlls
+        dlls
     };
 }
 
