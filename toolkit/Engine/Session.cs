@@ -34,11 +34,11 @@ namespace CoApp.Toolkit.Engine {
     /// </remarks>
     public class Session {
 #if DEBUG
-    // keep the reconnect window at 20 seconds for debugging
-        private static readonly TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 0, 10);
+    // keep the reconnect window at 5 seconds for debugging
+        private static readonly TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 0, 5);
 #else
-        // fifteen minutes is good for the real world.
-        private static TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 15, 00);
+        // twenty seconds in the real world
+        private static TimeSpan _maxDisconenctedWait = new TimeSpan(0, 0, 00, 20);
 
 #endif
         private static TimeSpan _synchronousClientHeartbeat = new TimeSpan(0, 0, 0, 0, 650);
@@ -425,8 +425,6 @@ namespace CoApp.Toolkit.Engine {
                     }
                     continue;
                 }
-
-                Logger.Message("In Loop");
 
                 try {
                     if (IsCancelled) {

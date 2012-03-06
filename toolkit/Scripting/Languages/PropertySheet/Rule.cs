@@ -26,9 +26,12 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
     }
 
      public class ActualPropertyValue : IPropertyValue {
-         internal IEnumerable<string> Values { get; set; }
+         private IEnumerable<string> _values;
+         internal IEnumerable<string> Values { get { return _values.Select(each => ParentPropertySheet.ResolveMacros(each)); } set { _values = value; } }
          public SourceLocation SourceLocation { get; internal set; }
-         public string Value { get; internal set; }
+
+         private string _value;
+         public string Value { get { return ParentPropertySheet.ResolveMacros(_value); } internal set { _value = value; } }
          public bool IsSingleValue { get; internal set; }
          public bool HasMultipleValues { get; internal set; }
          public string SourceString { get; internal set; }
@@ -39,6 +42,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
          IEnumerator IEnumerable.GetEnumerator() {
              return GetEnumerator();
          }
+
+         internal PropertySheet ParentPropertySheet { get; set; }
      }
 
     public class PropertyValue : IPropertyValue {
@@ -70,7 +75,8 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
                     HasMultipleValues = values.Length > 1,
                     SourceString = "",
                     Value = values[0],
-                    Values = values
+                    Values = values,
+                    ParentPropertySheet = ParentPropertySheet
                 };
 
             return null;
@@ -101,7 +107,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
         public string Value {
             get {
-                return this.FirstOrDefault();
+                return ParentPropertySheet.ResolveMacros(this.FirstOrDefault());
             } set {
                 _values.Clear();
                 _values.Add(value);
@@ -110,7 +116,7 @@ namespace CoApp.Toolkit.Scripting.Languages.PropertySheet {
 
         public IEnumerable<string> Values {
             get {
-                return this;
+                return this.Select(each => ParentPropertySheet.ResolveMacros(each));
             }
         }
 

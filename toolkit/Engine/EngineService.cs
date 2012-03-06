@@ -23,8 +23,93 @@ namespace CoApp.Toolkit.Engine {
     using System.Threading.Tasks;
     using Extensions;
     using Logging;
+    using Microsoft.Win32.SafeHandles;
     using Pipes;
     using Tasks;
+
+
+    public static class Signals {
+        private static readonly SafeWaitHandle _availableEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.Available");
+        private static readonly SafeWaitHandle _startingupEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.StartingUp");
+        private static readonly SafeWaitHandle _shuttingdownEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.ShuttingDown");
+        private static readonly SafeWaitHandle _installedEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.InstalledPackage");
+        private static readonly SafeWaitHandle _removedEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.RemovedPackage");
+
+        private static bool _available;
+        public static bool Available {
+
+            get { return _available; }
+            set {
+                _available = value;
+                Kernel32.ResetEvent(_availableEvent);
+
+                if (value) {
+                    StartingUp = false;
+                    ShuttingDown = false;
+                    Kernel32.SetEvent(_availableEvent);
+                }
+                
+            }
+        }
+
+        private static bool _startingUp;
+        public static bool StartingUp {
+            get { return _startingUp; }
+            set {
+                _startingUp = value;
+                Kernel32.ResetEvent(_startingupEvent);
+
+                if (value) {
+                    Available = false;
+                    ShuttingDown = false;
+                    Kernel32.SetEvent(_startingupEvent);
+                }
+            }
+        }
+
+        private static bool _shuttingDown;
+        public static bool ShuttingDown {
+            get { return _shuttingDown; }
+            set {
+                _shuttingDown = value;
+                Kernel32.ResetEvent(_shuttingdownEvent);
+                if (value) {
+                    StartingUp = false;
+                    ShuttingDown = false;
+                    Kernel32.SetEvent(_shuttingdownEvent);
+                }
+            }
+        }
+
+        public static void InstalledPackage(string canonicalPackageName) {
+            Task.Factory.StartNew(() => {
+                PackageManagerSettings.CoAppInformation["InstalledPackages"].StringsValue =
+                    PackageManagerSettings.CoAppInformation["InstalledPackages"].StringsValue.UnionSingleItem(canonicalPackageName);
+                Kernel32.ResetEvent(_installedEvent);
+                Kernel32.SetEvent(_installedEvent);
+                Thread.Sleep(100); // give everyone a chance to wake up and do their job
+                Kernel32.ResetEvent(_installedEvent);
+            });
+        }
+
+        public static void RemovedPackage(string canonicalPackageName) {
+            Task.Factory.StartNew(() => {
+                PackageManagerSettings.CoAppInformation["RemovedPackages"].StringsValue =
+                    PackageManagerSettings.CoAppInformation["RemovedPackages"].StringsValue.UnionSingleItem(canonicalPackageName);
+                Kernel32.ResetEvent(_removedEvent);
+                Kernel32.SetEvent(_removedEvent);
+                Thread.Sleep(100); // give everyone a chance to wake up and do their job
+                Kernel32.ResetEvent(_removedEvent);
+            });
+        }
+
+        public static void EngineStartupStatus(int percentComplete) {
+            PackageManagerSettings.CoAppInformation["StartupPercentComplete"].IntValue = percentComplete;
+            if( percentComplete > 0 && percentComplete < 100) {
+                StartingUp = true;
+            }
+        }
+    }
 
     /// <summary>
     /// 
@@ -77,7 +162,6 @@ namespace CoApp.Toolkit.Engine {
         public static void Stop() {
             // this should stop the task
             _instance.Value._cancellationTokenSource.Cancel();
-            EngineServiceManager.TryToStopService();
         }
 
         /// <summary>
@@ -115,7 +199,8 @@ namespace CoApp.Toolkit.Engine {
 
             _cancellationTokenSource = new CancellationTokenSource();
             _isRunning = true;
-
+            
+            Signals.StartingUp = true;
             // make sure coapp is properly set up.
             Task.Factory.StartNew(() => {
                 try {
@@ -145,8 +230,9 @@ namespace CoApp.Toolkit.Engine {
                 StartListener();
                    
             }, _cancellationTokenSource.Token).AutoManage();
-
+            
             _engineService = _engineService.ContinueWith(antecedent => {
+                Signals.ShuttingDown = true;
                 _isRunning = false;
                 // ensure the sessions are all getting closed.
                 Session.CancelAll();

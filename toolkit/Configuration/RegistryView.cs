@@ -175,6 +175,8 @@ namespace CoApp.Toolkit.Configuration {
             _valueName = valuename.Trim('#');
         }
 
+        public bool IsVolatile { get; set; }
+
         /// <summary>
         /// Gets the RegistryKey used for reading values.
         /// </summary>
@@ -197,7 +199,7 @@ namespace CoApp.Toolkit.Configuration {
         private RegistryKey WriteableKey {
             get {
                 try {
-                    return string.IsNullOrEmpty(_subKey) ? _rootKey : _rootKey.CreateSubKey(_subKey);
+                    return string.IsNullOrEmpty(_subKey) ? _rootKey :  ( IsVolatile ? _rootKey.CreateSubKey(_subKey, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryOptions.Volatile): _rootKey.CreateSubKey(_subKey)) ;
                 }
                 catch {
                     return null;
@@ -426,6 +428,21 @@ namespace CoApp.Toolkit.Configuration {
             }
         }
 
+        public IEnumerable<string> ValueNames { get {
+                using (var key = ReadableKey) {
+                    return key.GetValueNames();
+                }
+            }
+        }
+
+        public void DeleteValues() {
+            using (var key = ReadableKey) {
+                foreach( var v in key.GetValueNames() ) {
+                    key.DeleteValue(v);
+                }
+            }
+        }
+
         public bool HasValue { get {
           using (var key = ReadableKey) {
                     return key != null && key.GetValue(_valueName, null) != null;
@@ -456,7 +473,7 @@ namespace CoApp.Toolkit.Configuration {
         /// </summary>
         /// <remarks></remarks>
         public RegistryView this[string keyName, string valueName] {
-            get { return new RegistryView(_rootKey, _subKey +@"\"+ keyName, valueName); }
+            get { return new RegistryView(_rootKey, _subKey +@"\"+ keyName, valueName) { IsVolatile = IsVolatile}; }
         }
 
         /// <summary>
@@ -464,7 +481,7 @@ namespace CoApp.Toolkit.Configuration {
         /// </summary>
         /// <remarks></remarks>
         public RegistryView this[string keyName] {
-            get { return new RegistryView(_rootKey, _subKey +@"\"+ keyName ); }
+            get { return new RegistryView(_rootKey, _subKey + @"\" + keyName) { IsVolatile = IsVolatile }; ; }
         }
     }
 }

@@ -95,4 +95,8 @@ package-composition {
     symlinks : { 
         exes => @"${bin}\${each.Name}" = @"${packagedir}\${each.Name}";
     };
+    
+    shortcuts : {
+        
+    }
 }

@@ -32,6 +32,11 @@ namespace CoApp.Toolkit.Engine {
         public static RegistryView CoAppSettings = RegistryView.CoAppSystem[@"PackageManager"];
 
         /// <summary>
+        /// Registry view for the volatile information key
+        /// </summary>
+        public static RegistryView CoAppInformation = RegistryView.CoAppSystem[@"Information"];
+
+        /// <summary>
         /// registry view for the cached items (contents subject to being dropped at a whim)
         /// </summary>
         public static RegistryView CacheSettings = CoAppSettings[@".cache"];
@@ -49,6 +54,24 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <remarks></remarks>
         private static string DefaultCoappRoot { get {return KnownFolders.GetFolderPath(KnownFolder.CommonApplicationData);} }
+
+        static PackageManagerSettings() {
+            CoAppInformation.IsVolatile = true;
+#if COAPP_ENGINE_CORE
+            // on startup of the engine, we wipe the contents of this key.
+            WipeCoAppInformation();
+#endif
+        }
+
+#if COAPP_ENGINE_CORE
+        internal static void WipeCoAppInformation() {
+            var keys = CoAppInformation.Subkeys;
+            foreach(var key in keys) {
+                CoAppInformation.DeleteSubkey(key);
+            }
+            CoAppInformation.DeleteValues();
+        }
+#endif 
 
         /// <summary>
         /// Gets or sets the coapp root directory.

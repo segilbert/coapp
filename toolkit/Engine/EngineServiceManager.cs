@@ -40,6 +40,11 @@ namespace CoApp.Toolkit.Engine {
             return _controller.Value.Status; 
         }}
 
+        public static bool CanStop { get {
+            _controller.Value.Refresh();
+            return _controller.Value.CanStop;
+        }}
+
         public static bool IsServiceRunning {
             get {
                 return IsServiceInstalled && Status == ServiceControllerStatus.Running;
@@ -51,7 +56,7 @@ namespace CoApp.Toolkit.Engine {
                 throw new UnableToStopServiceException("{0} is not installed".format(CoAppServiceName));
             }
 
-            if (Status != ServiceControllerStatus.Stopped && _controller.Value.CanStop) {
+            if (Status != ServiceControllerStatus.Stopped && CanStop) {
                 _controller.Value.Stop();
             }
         }
