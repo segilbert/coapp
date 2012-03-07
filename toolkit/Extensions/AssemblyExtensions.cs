@@ -91,7 +91,7 @@ namespace CoApp.Toolkit.Extensions {
 
         // warning: case sensitive. 
         public static string ExtractFileResourceToTemp(this Assembly assembly, string name) {
-            var tempPath = Path.Combine(Path.GetTempPath(), name);
+            var tempPath = name.GenerateTemporaryFilename();
             var s = assembly.GetManifestResourceStream(name);
             if(s == null) {
                 // not specified exactly

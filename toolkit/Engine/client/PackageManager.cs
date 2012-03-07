@@ -8,6 +8,7 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using System.Reflection;
 using CoApp.Toolkit.Engine.Model;
 
 namespace CoApp.Toolkit.Engine.Client {
@@ -78,8 +79,6 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-        public event Action Disconnected;
-        public event Action Connected;
         public event Action Completed;
 
         private void OnCompleted() {
@@ -96,123 +95,137 @@ namespace CoApp.Toolkit.Engine.Client {
             get { return ManualEventQueue.EventQueues.Keys.Count; }
         }
 
+        public bool IsServiceAvailable {
+            get { return EngineServiceManager.Available; }
+        }
+
         public bool IsConnected {
-            get { lock(this) {return _pipe != null && _pipe.IsConnected;} }
+            get { lock(this) {return IsServiceAvailable && _pipe != null && _pipe.IsConnected;} }
         }
 
         private PackageManager() {
         }
 
+        /// <summary>
+        /// DEPRECATED Making this deprecated. Client library should be smart enough to connect without being told to.
+        /// 
+        /// </summary>
+        /// <param name="clientName"></param>
+        /// <param name="sessionId"></param>
+        /// <param name="millisecondsTimeout"></param>
         public void ConnectAndWait(string clientName, string sessionId = null,int millisecondsTimeout = 5000 ) {
-            if( IsConnected) {
-                return;
-            }
-
-            var connectedResetEvent = new ManualResetEvent(Instance.IsConnected);
-            var onConnected = new Action(() => connectedResetEvent.Set());
-
-            try {
-                Instance.Connected += onConnected ;
-                Instance.Connect(clientName, sessionId);
-                if (!connectedResetEvent.WaitOne(millisecondsTimeout)) {
-                    Logger.Error("Client failed to connect to service.");
-                    throw new ConsoleException("# Unable to connect to CoApp Service.");
-                }
-            } finally {
-                Instance.Connected -= onConnected;
-            }
+            Connect(clientName, sessionId).Wait(millisecondsTimeout);
         }
 
-        public void Connect(string clientName, string sessionId = null) {
-            if (IsConnected) {
-                return;
-            }
+        public Task Connect() {
+            return Connect(Process.GetCurrentProcess().Id.ToString());
+        }
 
-            if (ManualEventQueue.EventQueues.Any()) {
-                Logger.Error("Manually clearing out event queues in client library. This is a symptom of something unsavory.");
-                ManualEventQueue.EventQueues.Clear();
-            }
+        private Task ConnectingTask;
+        private int autoConnectionCount;
 
-            Task.Factory.StartNew(() => {
-            EngineServiceManager.EnsureServiceIsResponding();
-
-                sessionId = sessionId ?? Process.GetCurrentProcess().Id.ToString();
-
-                for (int count = 0; count < 60; count++) {
-                    _pipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation);
-                    try {
-                        _pipe.Connect(500);
-                        _pipe.ReadMode = PipeTransmissionMode.Message;
-                        break;
-                    } catch {
-                        _pipe = null;
-                    }
+        public Task Connect(string clientName, string sessionId = null) {
+            lock (this) {
+                if (IsConnected) {
+                    return "Completed".AsResultTask();
                 }
 
-                if( _pipe == null ) {
-                    throw new CoAppException("Unable to connect to CoApp Service");
-                }
+                if (ConnectingTask == null) {
+                    ConnectingTask = Task.Factory.StartNew(() => {
+                        // ensure any old connection is removed.
+                        //Disconnect();
 
-                StartSession(clientName, sessionId);
+                        EngineServiceManager.EnsureServiceIsResponding();
 
-                try {
-                    while (IsConnected) {
-                        var incomingMessage = new byte[BufferSize];
+                        sessionId = sessionId ?? Process.GetCurrentProcess().Id.ToString() + "/" + autoConnectionCount++;
 
-                        var readTask = _pipe.ReadAsync(incomingMessage, 0, BufferSize);
-
-                        readTask.ContinueWith(antecedent => {
-                            if (antecedent.IsCanceled || antecedent.IsFaulted || !IsConnected) {
-                                Disconnect();
-                                return;
-                            }
-
-                            var rawMessage = Encoding.UTF8.GetString(incomingMessage, 0, antecedent.Result);
-
-                            if (string.IsNullOrEmpty(rawMessage)) {
-                                return;
-                            }
-
-                            var responseMessage = new UrlEncodedMessage(rawMessage);
-                            int? rqid = responseMessage["rqid"];
-
-                            Logger.Message("Response:{0}".format(responseMessage.ToSmallerString()));
-
+                        for (int count = 0; count < 60; count++) {
+                            _pipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut,
+                                                              PipeOptions.Asynchronous,
+                                                              TokenImpersonationLevel.Impersonation);
                             try {
-                                ManualEventQueue.GetQueue(rqid.GetValueOrDefault()).Enqueue(responseMessage);
-                            } catch {
-                                if (responseMessage.Command.Equals("session-started")) {
-                                    if( Connected != null ) {
-                                        Connected();
-                                    }
-                                    return;
-                                }
-                                //  Console.WriteLine("Unable to queue the response to the right request event queue!");
-                                // Console.WriteLine("    Response:{0}", responseMessage.Command);
-                                // not able to queue up the response to the right task?
+                                _pipe.Connect(500);
+                                _pipe.ReadMode = PipeTransmissionMode.Message;
+                                break;
                             }
-                        }).AutoManage();
-                        readTask.Wait();
-                    }
-                } catch (Exception e) {
-                    Logger.Message("Connection Terminating with Exception {0}/{1}", e.GetType(), e.Message);
-                } finally {
-                    Disconnect();
+                            catch {
+                                _pipe = null;
+                            }
+                        }
+
+                        if (_pipe == null) {
+                            throw new CoAppException("Unable to connect to CoApp Service");
+                        }
+
+                        StartSession(clientName, sessionId);
+
+                        Task.Factory.StartNew(ProcessMessages,TaskCreationOptions.None).AutoManage();
+                    });
+
                 }
-            });
+            }
+            return ConnectingTask;
+        }
+
+        private void ProcessMessages() {
+            try {
+                while (IsConnected) {
+                    ConnectingTask = null;
+
+                    var incomingMessage = new byte[BufferSize];
+
+                    var readTask = _pipe.ReadAsync(incomingMessage, 0, BufferSize);
+
+                    readTask.ContinueWith(antecedent => {
+                        if (antecedent.IsCanceled || antecedent.IsFaulted || !IsConnected) {
+                            Disconnect();
+                            return;
+                        }
+
+                        var rawMessage = Encoding.UTF8.GetString(incomingMessage, 0, antecedent.Result);
+
+                        if (string.IsNullOrEmpty(rawMessage)) {
+                            return;
+                        }
+
+                        var responseMessage = new UrlEncodedMessage(rawMessage);
+                        int? rqid = responseMessage["rqid"];
+
+                        Logger.Message("Response:{0}".format(responseMessage.ToSmallerString()));
+
+                        try {
+                            ManualEventQueue.GetQueue(rqid.GetValueOrDefault()).Enqueue(responseMessage);
+                        }
+                        catch {
+                            //  Console.WriteLine("Unable to queue the response to the right request event queue!");
+                            // Console.WriteLine("    Response:{0}", responseMessage.Command);
+                            // not able to queue up the response to the right task?
+                        }
+                    }).AutoManage();
+                    readTask.Wait();
+                }
+            }
+            catch (Exception e) {
+                Logger.Message("Connection Terminating with Exception {0}/{1}", e.GetType(), e.Message);
+            }
+            finally {
+                Disconnect();
+            }
         }
 
         public void Disconnect() {
             lock (this) {
                 try {
+                    if (ManualEventQueue.EventQueues.Any()) {
+                        Logger.Error("Manually clearing out event queues in client library. This is a symptom of something unsavory.");
+                        ManualEventQueue.EventQueues.Clear();
+                    }
+
                     if (_pipe != null) {
                         var pipe = _pipe;
                         _pipe = null;
                         pipe.Close();
                         pipe.Dispose();
-                        if( Disconnected != null ) {
-                            Task.Factory.StartNew(Disconnected);
-                        }
                     }
                 } catch {
                     // just close it!
@@ -223,6 +236,8 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task<IEnumerable<Package>> GetPackages(IEnumerable<string> parameters, ulong? minVersion = null, ulong? maxVersion = null,
             bool? dependencies = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
             string location = null, bool? forceScan = null, PackageManagerMessages messages = null) {
+            Connect().Wait();
+
             if (parameters.IsNullOrEmpty()) {
                 return GetPackages(string.Empty, minVersion, maxVersion, dependencies, installed, active, required, blocked, latest, location, forceScan,
                     messages);
@@ -249,6 +264,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task<IEnumerable<Package>> GetPackages(string parameter, ulong? minVersion = null, ulong? maxVersion = null, bool? dependencies = null,
             bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null, string location = null,
             bool? forceScan = null, PackageManagerMessages messages = null) {
+            Connect().Wait();
             var packages = new List<Package>();
 
             if (parameter.IsNullOrEmpty()) {
@@ -327,6 +343,8 @@ namespace CoApp.Toolkit.Engine.Client {
         private Task<IEnumerable<Package>> InternalGetPackages(PackageName packageName, FourPartVersion? minVersion = null, FourPartVersion? maxVersion = null,
             bool? dependencies = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
             string location = null, bool? forceScan = null, PackageManagerMessages messages = null) {
+            Connect().Wait();
+
             var packages = new List<Package>();
 
             return FindPackages(packageName != null && packageName.IsFullMatch ? packageName.CanonicalName : null, packageName == null ? null : packageName.Name,
@@ -350,8 +368,8 @@ namespace CoApp.Toolkit.Engine.Client {
         public Task FindPackages(string canonicalName = null, string name = null, string version = null, string arch = null, string publicKeyToken = null,
             bool? dependencies = null, bool? installed = null, bool? active = null, bool? required = null, bool? blocked = null, bool? latest = null,
             int? index = null, int? maxResults = null, string location = null, bool? forceScan = null, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -378,12 +396,12 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task GetPackageDetails(string canonicalName, PackageManagerMessages messages = null) {
             
-            return Task.Factory.StartNew(() => {
+            return  Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -396,13 +414,13 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task InstallPackage(string canonicalName, bool? autoUpgrade = null, bool? force = null, bool? download = null, bool? pretend = null,
             PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+
+            return Connect().ContinueWith((antecedent) => {
                 var msgs = new PackageManagerMessages {
                     InstalledPackage = (pkgCanonicalName) => {
                         if( !PackageManagerSettings.CoAppSettings["#Telemetry"].StringValue.IsFalse() ) {
@@ -427,7 +445,6 @@ namespace CoApp.Toolkit.Engine.Client {
                             messages.InstalledPackage(pkgCanonicalName);
                         }
                     }
-
                 }.Extend(messages);
 
                 msgs.Register();
@@ -444,11 +461,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task ListFeeds(int? index = null, int? maxResults = null, PackageManagerMessages messages = null) {
-            return Task.Factory.StartNew(() => {
+            return  Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -462,12 +479,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task RemoveFeed(string location, bool? session = null, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -481,12 +497,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task AddFeed(string location, bool? session = null, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -500,12 +515,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task VerifyFileSignature(string filename, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -518,12 +532,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task SetPackage(string canonicalName, bool? active = null, bool? required = null, bool? blocked = null, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -539,12 +552,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task RemovePackage(string canonicalName, bool? force = null, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -558,12 +570,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task UnableToAcquire(string canonicalName, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -576,11 +587,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task DownloadProgress(string canonicalName, int progress, PackageManagerMessages messages = null) {
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -594,12 +605,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task RecognizeFile(string canonicalName, string localLocation, string remoteLocation, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -614,12 +624,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task SuppressFeed(string location, PackageManagerMessages messages = null) {
-            
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -632,11 +641,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task SetLogging( bool? Messages, bool? Warnings, bool? Errors ) {
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 using (var eventQueue = new ManualEventQueue()) {
                     WriteAsync(new UrlEncodedMessage("set-logging") {
                         {"messages", Messages},
@@ -648,28 +657,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
-        }
-
-        public Task GetEngineStatus(PackageManagerMessages messages = null) {
-            return Task.Factory.StartNew( () => {
-                if (messages != null) {
-                    messages.Register();
-                }
-
-                using (var eventQueue = new ManualEventQueue()) {
-                    WriteAsync(new UrlEncodedMessage("get-engine-status") {
-                        {"rqid", Task.CurrentId},
-                    });
-
-                    // will return when the final message comes thru.
-                    eventQueue.DispatchResponses();
-                }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task GetPolicy(string policyName, PackageManagerMessages messages = null) {
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -683,11 +675,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task AddToPolicy(string policyName, string account ,PackageManagerMessages messages = null) {
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -702,11 +694,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task RemoveFromPolicy(string policyName, string account, PackageManagerMessages messages = null) {
-            return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                 if (messages != null) {
                     messages.Register();
                 }
@@ -721,11 +713,11 @@ namespace CoApp.Toolkit.Engine.Client {
                     // will return when the final message comes thru.
                     eventQueue.DispatchResponses();
                 }
-            }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
         }
 
         public Task CreateSymlink(string existingLocation, string newLink, LinkType linkType,  PackageManagerMessages messages = null) {
-              return Task.Factory.StartNew(() => {
+            return Connect().ContinueWith((antecedent) => {
                   if (messages != null) {
                       messages.Register();
                   }
@@ -740,7 +732,7 @@ namespace CoApp.Toolkit.Engine.Client {
                       // will return when the final message comes thru.
                       eventQueue.DispatchResponses();
                   }
-              }).AutoManage();
+            }, TaskContinuationOptions.OnlyOnRanToCompletion).AutoManage();
           }
 
         internal static bool Dispatch(UrlEncodedMessage responseMessage = null) {
@@ -908,12 +900,14 @@ namespace CoApp.Toolkit.Engine.Client {
                     Console.WriteLine("Unknown command!");
                     break;
 
-                case "engine-status":
-                    PackageManagerMessages.Invoke.EngineStatus((int?)responseMessage["percent-complete"] ?? 0 );
-                    break;
-
                 case "policy":
                     PackageManagerMessages.Invoke.PolicyInformation(responseMessage["name"], responseMessage["description"], responseMessage.GetCollection("accounts"));
+                    break;
+
+                case "restarting":
+                    PackageManagerMessages.Invoke.Restarting();
+                    // disconnect from the engine, and let the client reconnect on the next call.
+                    Instance.Disconnect();
                     break;
 
                 case "task-complete":

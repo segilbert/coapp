@@ -437,8 +437,10 @@ namespace CoApp.Toolkit.Configuration {
 
         public void DeleteValues() {
             using (var key = ReadableKey) {
-                foreach( var v in key.GetValueNames() ) {
-                    key.DeleteValue(v);
+                if (key != null) {
+                    foreach (var v in key.GetValueNames()) {
+                        key.DeleteValue(v);
+                    }
                 }
             }
         }

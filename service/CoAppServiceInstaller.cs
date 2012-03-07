@@ -4,6 +4,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.IO;
+
 namespace CoApp.Service {
     using System.ComponentModel;
     using System.Configuration.Install;
@@ -13,21 +15,24 @@ namespace CoApp.Service {
     [RunInstaller(true)]
     public class CoAppServiceInstaller : Installer {
         
-        public ServiceProcessInstaller ServiceProcessInstaller = new ServiceProcessInstaller();
-        public ServiceInstaller ServiceInstaller = new ServiceInstaller();
+        private readonly ServiceProcessInstaller _serviceProcessInstaller = new ServiceProcessInstaller();
+        private readonly ServiceInstaller _serviceInstaller = new ServiceInstaller();
 
         public CoAppServiceInstaller() : this(false) {
+            System.Environment.CurrentDirectory = System.Environment.GetEnvironmentVariable("tmp") ?? Path.Combine(System.Environment.GetEnvironmentVariable("systemroot"),"temp");
         }
 
         public CoAppServiceInstaller(bool useUserAccount) {
-            ServiceProcessInstaller.Account = useUserAccount ? ServiceAccount.User : ServiceAccount.LocalSystem;
-            ServiceProcessInstaller.Password = null;
-            ServiceProcessInstaller.Username = null;
+            _serviceProcessInstaller.Account = useUserAccount ? ServiceAccount.User : ServiceAccount.LocalSystem;
+            _serviceProcessInstaller.Password = null;
+            _serviceProcessInstaller.Username = null;
 
-            ServiceInstaller.ServiceName = EngineServiceManager.CoAppServiceName;
-            ServiceInstaller.StartType = ServiceStartMode.Automatic;
+            _serviceInstaller.ServiceName = EngineServiceManager.CoAppServiceName;
+            _serviceInstaller.DisplayName = EngineServiceManager.CoAppDisplayName;
 
-            Installers.AddRange(new Installer[] {ServiceProcessInstaller,ServiceInstaller});
+            _serviceInstaller.StartType = ServiceStartMode.Automatic;
+
+            Installers.AddRange(new Installer[] {_serviceProcessInstaller,_serviceInstaller});
         }
     }
 }

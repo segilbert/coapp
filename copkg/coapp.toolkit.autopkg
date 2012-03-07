@@ -96,7 +96,7 @@ package-composition {
         exes => @"${bin}\${each.Name}" = @"${packagedir}\${each.Name}";
     };
     
-    shortcuts : {
+    // shortcuts : {
         
-    }
+    // };
 }

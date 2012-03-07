@@ -8,6 +8,10 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Exceptions;
+using CoApp.Toolkit.Win32;
+using Microsoft.Win32.SafeHandles;
+
 namespace CoApp.Toolkit.Engine {
     using System;
     using System.Diagnostics;
@@ -26,6 +30,7 @@ namespace CoApp.Toolkit.Engine {
 
     public static class EngineServiceManager {
         public const string CoAppServiceName = "CoApp Package Installer Service";
+        public const string CoAppDisplayName = "CoApp Package Installer Service";
 
         public static bool IsServiceInstalled {
             get { return ServiceController.GetServices().Any(service => service.ServiceName == CoAppServiceName); }
@@ -52,19 +57,22 @@ namespace CoApp.Toolkit.Engine {
         }
 
         public static void TryToStopService() {
-            if (!IsServiceInstalled) {
-                throw new UnableToStopServiceException("{0} is not installed".format(CoAppServiceName));
+            if (IsServiceInstalled) {
+                if (Status != ServiceControllerStatus.Stopped && CanStop) {
+                    _controller.Value.Stop();
+                }
+                return;
             }
 
-            if (Status != ServiceControllerStatus.Stopped && CanStop) {
-                _controller.Value.Stop();
-            }
+            // kill any service processes that are currently running.
+            KillServiceProcesses();
         }
 
        
         public static void TryToStartService(bool secondAttempt = false) {
             if (!IsServiceInstalled) {
-                throw new UnableToStartServiceException("{0} is not installed".format(CoAppServiceName));
+                InstallAndStartService();
+                return;
             }
 
             Logger.Warning("==[Trying to start Win32 Service]==");
@@ -180,154 +188,223 @@ namespace CoApp.Toolkit.Engine {
             }
         }
 
-        public static bool IsEngineResponding {
+        public static bool Available { get {
+            using (var kernelEvent = Kernel32.OpenEvent(0x00100000, false, "Global\\CoAppAvailable")) {
+                if (!kernelEvent.IsInvalid && Kernel32.WaitForSingleObject(kernelEvent, 0) == 0) {
+                    return true;
+                }
+            }
+            return false;
+        }}
+
+        public static bool StartingUp {
             get {
-                lock (typeof (EngineServiceManager)) {
-                    Logger.Warning("==[Checking For Process]==");
-                    if (IsProcessOrServiceRunning) {
-                        Logger.Warning("==[Looks like the process is running]==");
-                        for (var i = 60; i > 0; i--) {
-                            if (!IsServerPipeConnectionAvailable) {
-                                Thread.Sleep(50); // pause to let the service do what it needs to.
-                                if (!IsProcessOrServiceRunning) {
-                                    // hmm, it's gone away. 
-                                    // let's get out of here
-                                    return false;
-                                }
-                            }
-                            var testPipe = new NamedPipeClientStream(".", "CoAppInstaller", PipeDirection.InOut, PipeOptions.Asynchronous,
-                                TokenImpersonationLevel.Impersonation);
-                            try {
-                                Logger.Warning("==[Checking For Pipe Response]==");
-                                testPipe.Connect(100);
-                                testPipe.Close();
-                                testPipe.Dispose();
-                                Logger.Warning("==[Service Seems to be responding]==");
-                                return true;
-                            } catch (System.TimeoutException) {
-                            }
-                        }
+                using (var kernelEvent = Kernel32.OpenEvent(0x00100000, false, "Global\\CoAppStartingUp")) {
+                    if (!kernelEvent.IsInvalid && Kernel32.WaitForSingleObject(kernelEvent, 0) == 0) {
+                        return true;
                     }
                 }
                 return false;
             }
         }
 
-        private static bool IsProcessRunning { get { return Process.GetProcessesByName("coapp.service").Any(); }}
-        private static bool IsServerPipeConnectionAvailable { get { return System.IO.Directory.GetFiles(@"\\.\pipe\").Where(each => each.StartsWith(@"\\.\pipe\CoAppInstaller")).Any(); } }
-        private static bool IsProcessOrServiceRunning { get { return IsServiceRunning || IsProcessRunning; } }
-
-        public static void EnsureServiceIsResponding(bool forceInteractive = false) {
-            lock (typeof(EngineServiceManager)) {
-
-                if (forceInteractive) {
-                    if (IsServiceInstalled && IsServiceRunning) {
-                        TryToStopService();
-                        while (IsProcessOrServiceRunning) {
-                            Thread.Sleep(20);
-                        }
+        public static bool ShuttingDown {
+            get {
+                using (var kernelEvent = Kernel32.OpenEvent(0x00100000, false, "Global\\CoAppShuttingDown")) {
+                    if (!kernelEvent.IsInvalid && Kernel32.WaitForSingleObject(kernelEvent, 0) == 0) {
+                        return true;
                     }
-                    if (!IsEngineResponding) {
-                        // it's probably one started interactively before...
-                        TryToRunServiceInteractively();
+                }
+                return false;
+            }
+        }
+
+        public static bool ShutdownRequested {
+            get {
+                using (var kernelEvent = Kernel32.OpenEvent(0x00100000, false, "Global\\CoAppShutdownRequested")) {
+                    if (!kernelEvent.IsInvalid && Kernel32.WaitForSingleObject(kernelEvent, 0) == 0) {
+                        return true;
                     }
+                }
+                return false;
+            }
+        }
+
+        public static int EngineStartupStatus { 
+            get {
+                return PackageManagerSettings.CoAppInformation["StartupPercentComplete"].IntValue;
+            } 
+        }
+
+        public static bool IsEngineResponding {
+            get {
+                return Available;
+            }
+        }
+
+        public static void EnsureServiceIsResponding() {
+            if( Available ) {
+                // looks good to me!
+                return;
+            }
+
+            var count = 1200; // 10 minutes.
+            if (StartingUp) {
+                while (StartingUp && 0 < count--) {
+                    // it's just getting started. It should be fine in a few moments
+                    Thread.Sleep(500);
+                }
+
+                if (!StartingUp) {
+                    // try again now that it's out of this state.
+                    EnsureServiceIsResponding();
                     return;
                 }
 
-                if (IsServiceInstalled) {
-                    if (IsProcessRunning) {
-                        if (!IsEngineResponding) {
-                            // service is installed & running, but not responding. 
-                            // let the client deal with it.
-                            try {
-                                // it's not running. try to make it go!
-                                TryToStartService();
-                            } catch {
-                                throw new UnableToStartServiceException("Service is installed & running, but not responding to it's pipe.");
-                            }
-                        }
-                        return; // it's running!
-                    }
+                // um. it's still starting up? What's gone wrong?
+                throw new CoAppException("CoApp Engine appears stuck in starting up state.");
+            }
 
-                    try {
-                        // it's not running. try to make it go!
-                        TryToStartService();
-                    } catch {
 
+            count = 10;
+            while(ShuttingDown && count > 0 ) {
+                if (IsServiceRunning) {
+                    // looks like we caught the win32 service shutting down.
+                    // let's try to start it back up (it'll safely stop first, so no worries)
+                    TryToStartService();
+                    EnsureServiceIsResponding();
+                    return;
+                }
+                // looks like an interactive version is shutting down. Let's wait a few seconds and check again.
+                Thread.Sleep(2000);
+                count--;
+            }
+
+            if( ShuttingDown ) {
+                // hmm. looks like it's stuck shutting down an interactive version of the serivce
+                // he's had long enough, let's kill him.
+                KillServiceProcesses();
+                TryToStartService();
+                EnsureServiceIsResponding();
+                return;
+            }
+
+            if( IsServiceRunning ) {
+                // hmm, we're not available, startingup or shutting down. 
+                // try to stop it and restart it then.
+                TryToStopService();
+                TryToStartService();
+                EnsureServiceIsResponding();
+                return;
+            }
+
+            // we're not running at all!
+            if( !IsServiceInstalled) {
+                InstallAndStartService();
+                EnsureServiceIsResponding();
+                return;
+            }
+           
+            // hmm. just try to start it I guess.
+            TryToStartService();
+            EnsureServiceIsResponding();
+        }
+
+        private static void KillServiceProcesses() {
+            foreach (var proc in Process.GetProcessesByName("coapp.service").Where(each => each != Process.GetCurrentProcess()).ToArray()) {
+                try {
+                    proc.Kill();
+                } catch {
+
+                }
+            }
+        }
+
+
+        public static string CoAppServiceExecutablePath {
+            get {
+                string result = null;
+
+                var root = PackageManagerSettings.CoAppRootDirectory;
+                var binDirectory = Path.Combine(root, "bin");
+
+                // look for $COAPP\bin\coapp.service.exe 
+                // this will happen when the service has been installed and configureed at least once.
+                if (Directory.Exists(binDirectory)) {
+                    var serviceExes = binDirectory.FindFilesSmarter(@"**\coapp.service.exe").OrderByDescending(Version);
+                    result = serviceExes.FirstOrDefault( each => !Symlink.IsSymlink(each) || File.Exists(Symlink.GetActualPath(each)));
+                    if( result != null ) {
+                        return result;
                     }
                 }
 
-                // wouldn't/couldn't start. 
-                if (!IsEngineResponding) {
-                    // Hmm. We've got to a point where the service isn't running, can seem to start it.
-                    // its possible that we've gotten here because this is the first time 
-                    // that CoApp is run, and we're just not installed yet.
-                    // If it's not installed, and we have enough rights to do that, 
-                    // lets find the service exe and ask it to install and start itself.
-                    if (!IsServiceInstalled) {
-                        InstallAndStartService();
-                        if (IsEngineResponding) {
-                            return;
-                        }
+                // Look in %program files%/outercurve...
+                // this will happen when the service is installed via msi, but not initialized.
+                var searchDirectory = Path.Combine(Environment.GetEnvironmentVariable("ProgramFiles"), "outercurve foundation");
 
-                        if (!IsEngineResponding) {
-                            // NOTE TODO REMOVE FOR RELEASE it's probably one started interactively before...
-                            TryToRunServiceInteractively();
-
-                        }
-
-                        if (!IsEngineResponding) {
-                            // Tried to install it, and it still didn't work?
-                            throw new UnableToStartServiceException("Couldn't start the service in any manner.");
-                        }
-                    }
+                if (Directory.Exists(searchDirectory)) {
+                    // get all of the coapp.service.exes and pick the one with the highest version
+                    var serviceExes = searchDirectory.FindFilesSmarter(@"**\coapp.service.exe").OrderByDescending(Version);
+                    
+                    // ah, so we found some did we? Should never be a symlink in this case.
+                    result = serviceExes.FirstOrDefault(each => !Symlink.IsSymlink(each));
                 }
+                return result;
+            }
+        }
+
+        private static ulong Version(string path) {
+            try {
+                var info = FileVersionInfo.GetVersionInfo(path);
+                var fv = info.FileVersion;
+                if (!String.IsNullOrEmpty(fv)) {
+                    fv = fv.Substring(0, fv.PositionOfFirstCharacterNotIn("0123456789.".ToCharArray()));
+                }
+
+                if (String.IsNullOrEmpty(fv)) {
+                    return 0;
+                }
+
+                var vers = fv.Split('.');
+                var major = vers.Length > 0 ? vers[0].ToInt32() : 0;
+                var minor = vers.Length > 1 ? vers[1].ToInt32() : 0;
+                var build = vers.Length > 2 ? vers[2].ToInt32() : 0;
+                var revision = vers.Length > 3 ? vers[3].ToInt32() : 0;
+
+                return (((UInt64)major) << 48) + (((UInt64)minor) << 32) + (((UInt64)build) << 16) + (UInt64)revision;
+            } catch {
+                return 0;
             }
         }
 
         private static void InstallAndStartService() {
+            // we're going to try and install the service
+            // make sure no other service processes are trying to run right now.
+            KillServiceProcesses();
+
             // basically, we just need to find *any* coapp.service.exe and tell it to --auto-install
             // and it will do a better search than we could do anyway.
-            var coAppRootDirectory = PackageManagerSettings.CoAppRootDirectory;
-            var serviceExes = coAppRootDirectory.FindFilesSmarter(@"**\coapp.service.exe");
-            if (!serviceExes.IsNullOrEmpty()) {
-                foreach (var path in serviceExes) {
-                    var processStartInfo = new ProcessStartInfo(path) {
-                        Arguments = "--auto-install",
-                        CreateNoWindow = true,
-                        WindowStyle = ProcessWindowStyle.Hidden
-                    };
-
-                    var process = Process.Start(processStartInfo);
-                    process.WaitForExit();
-
-                    if( IsServiceInstalled) {
-                        // AWESOME
-                        TryToStartService(); // make sure it is started too.
-                        return;
-                    }
-                    
-                }
+            var exe = CoAppServiceExecutablePath;
+            if (exe == null) {
+                throw new CoAppException("Unable to locate Installed CoApp Service.");
             }
+
+            var processStartInfo = new ProcessStartInfo(exe) {
+                Arguments = "--auto-install",
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                UseShellExecute = false,
+            };
+
+            Process.Start(processStartInfo).WaitForExit();
+
+            if (IsServiceInstalled) {
+                TryToStartService(); // make sure it is started too.
+                return;
+            }
+            
             // uh, if we got here, we're not going to be able start Coapp...
+            throw new CoAppException("Unable to start CoApp Service; the service executable is: '{0}'".format(exe));
         }
-
-
-        private static void TryToRunServiceInteractively() {
-            var path = Path.GetDirectoryName((Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).Location);
-            var file = Path.Combine(path, "coapp.service.exe");
-
-            if (!File.Exists(file)) {
-                file = Path.Combine(Environment.CurrentDirectory, "coapp.service.exe");
-                if (!File.Exists(file)) {
-                    throw new FileNotFoundException("Can't find CoApp Service EXE");
-                }
-            }
-            Logger.Warning("==[Starting Service '" + file + "' Interactively]==");
-            var process = Process.Start(file, "--interactive");
-            Thread.Sleep(500);
-            var isRunning = IsEngineResponding;
-        }
-
     }
 }

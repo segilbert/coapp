@@ -4,6 +4,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.ServiceProcess;
+
 namespace CoApp.Service {
     using System;
     using System.Collections.Generic;
@@ -88,7 +90,7 @@ CoApp.Service [options]
 
                 Console.CancelKeyPress += (x, y) => {
                     Console.WriteLine("Stopping CoAppService.");
-                    EngineService.Stop();
+                    EngineService.RequestStop();
                 };
 
                 #region Parse Options
@@ -161,7 +163,7 @@ CoApp.Service [options]
                 if (_interactive) {
                     RequiresAdmin("--interactive");
 
-                    if (CoAppService.IsRunning) {
+                    if (EngineServiceManager.IsServiceRunning) {
                         throw new ConsoleException(
                             "The CoApp Service can not be running.\r\nYou must stop it with --stop before using the service interactively.");
                     }
@@ -176,7 +178,7 @@ CoApp.Service [options]
                         Console.Write(".");
                         while (Console.KeyAvailable) {
                             if (Console.ReadKey(true).Key == ConsoleKey.Escape) {
-                                EngineService.Stop();
+                                EngineService.RequestStop();
                             }
                         }
                     }
@@ -186,7 +188,9 @@ CoApp.Service [options]
                 if (_stop) {
                     RequiresAdmin("--stop");
                     Console.Write("Stopping service:");
-                    CoAppService.StopService();
+                    if (EngineServiceManager.IsServiceInstalled) {
+                        EngineServiceManager.TryToStopService();
+                    }
 
                     while (EngineServiceManager.IsServiceRunning) {
                         Console.Write(".");
@@ -209,9 +213,9 @@ CoApp.Service [options]
                 if (_start) {
                     RequiresAdmin("--start");
 
-                    if (CoAppService.IsInstalled) {
+                    if (EngineServiceManager.IsServiceInstalled) {
                         Console.Write("Starting service:");
-                        CoAppService.StartService();
+                        EngineServiceManager.TryToStartService();
 
                         while (!EngineServiceManager.IsServiceRunning) {
                             Console.Write(".");
@@ -223,15 +227,15 @@ CoApp.Service [options]
                     }
                 }
 
-                if (!options.Any() && CoAppService.IsInstalled && parameters.FirstOrDefault() == null) {
+                if (!options.Any() && EngineServiceManager.IsServiceInstalled && parameters.FirstOrDefault() == null) {
                     // this lets us run the service 
-                    CoAppService.RunThisProcessAsService();
+                    ServiceBase.Run(new CoAppService());
                     return 0;
                 }
 
                 if (_status) {
-                    Console.WriteLine("Service installed: {0}", CoAppService.IsInstalled);
-                    Console.WriteLine("Service running: {0}", CoAppService.IsRunning);
+                    Console.WriteLine("Service installed: {0}", EngineServiceManager.IsServiceInstalled);
+                    Console.WriteLine("Service running: {0}", EngineServiceManager.IsServiceRunning);
                     return 0;
                 }
 

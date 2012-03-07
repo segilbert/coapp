@@ -438,6 +438,7 @@ namespace CoApp.Toolkit.Engine {
                                                 overallProgress += ((100 - lastProgress)*eachTaskIsWorth)/100;
                                                 PackageManagerMessages.Invoke.InstallingPackageProgress(pkg.CanonicalName, 100,(int)(overallProgress*100));
                                                 PackageManagerMessages.Invoke.InstalledPackage(pkg.CanonicalName);
+                                                Signals.InstalledPackage(pkg.CanonicalName);
                                             }
                                         }
                                     }
@@ -915,6 +916,7 @@ namespace CoApp.Toolkit.Engine {
 
                     PackageManagerMessages.Invoke.RemovingPackageProgress(canonicalName, 100);
                     PackageManagerMessages.Invoke.RemovedPackage(canonicalName);
+                    Signals.RemovedPackage(canonicalName);
                 }
                 catch (OperationCompletedBeforeResultException e) {
                     PackageManagerMessages.Invoke.FailedPackageRemoval(canonicalName, e.Message);

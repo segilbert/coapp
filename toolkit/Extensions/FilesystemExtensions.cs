@@ -104,11 +104,17 @@ namespace CoApp.Toolkit.Extensions {
         };
 
         public static string SystemTempFolder { get { return Environment.GetEnvironmentVariable("temp", EnvironmentVariableTarget.Machine); }}
+        public static string OriginalTempFolder;
 
         static FilesystemExtensions() {
+            OriginalTempFolder = Path.GetTempPath();
+            ResetTempFolder();
+        }
+
+        public static void ResetTempFolder() {
             // set the temporary folder to be a child of the User temporary folder
             // based on the application name
-            var appTempPath = Path.Combine(Path.GetTempPath(), (System.Reflection.Assembly.GetEntryAssembly() ?? System.Reflection.Assembly.GetExecutingAssembly() ).GetName().Name);
+            var appTempPath = Path.Combine(OriginalTempFolder, (System.Reflection.Assembly.GetEntryAssembly() ?? System.Reflection.Assembly.GetExecutingAssembly()).GetName().Name);
             if (!Directory.Exists(appTempPath)) {
                 Directory.CreateDirectory(appTempPath);
             }

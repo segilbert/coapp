@@ -35,10 +35,7 @@ namespace CoApp.Toolkit.Engine {
         /// location, lastScanned, isSession, isSuppressed, isValidated
         /// </summary>
         public Action<string, DateTime, bool, bool, bool> FeedDetails;
-        /// <summary>
-        /// 
-        /// </summary>
-        public Action<string, int> ScanningPackagesProgress;
+       
         /// <summary>
         /// canonicalName, current package progress, overallProgress of all packages
         /// </summary>
@@ -122,10 +119,7 @@ namespace CoApp.Toolkit.Engine {
         /// not used
         /// </summary>
         public Action<string> OperationCancelled;
-        /// <summary>
-        /// percent complete
-        /// </summary>
-        public Action<int> EngineStatus;
+        
         /// <summary>
         /// 
         /// </summary>
@@ -140,6 +134,8 @@ namespace CoApp.Toolkit.Engine {
         /// original, satisfied by
         /// </summary>
         public Action<Package,Package> PackageSatisfiedBy;
+
+        public Action Restarting;
 
         public string RequestId;
     }

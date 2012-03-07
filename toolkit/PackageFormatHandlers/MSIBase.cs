@@ -125,7 +125,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
             foreach (var product in products) {
                 var p = product;
-                PackageManagerMessages.Invoke.ScanningPackagesProgress(p.LocalPackage,((n++)*100)/total);
                 Package.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
             }
         }

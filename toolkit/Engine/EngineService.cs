@@ -8,6 +8,8 @@
 // </license>
 //-----------------------------------------------------------------------
 
+using CoApp.Toolkit.Engine.Feeds;
+using CoApp.Toolkit.Utility;
 using CoApp.Toolkit.Win32;
 
 namespace CoApp.Toolkit.Engine {
@@ -27,13 +29,13 @@ namespace CoApp.Toolkit.Engine {
     using Pipes;
     using Tasks;
 
-
-    public static class Signals {
-        private static readonly SafeWaitHandle _availableEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.Available");
-        private static readonly SafeWaitHandle _startingupEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.StartingUp");
-        private static readonly SafeWaitHandle _shuttingdownEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.ShuttingDown");
-        private static readonly SafeWaitHandle _installedEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.InstalledPackage");
-        private static readonly SafeWaitHandle _removedEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoApp.RemovedPackage");
+    internal static class Signals {
+        private static readonly SafeWaitHandle _availableEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoAppAvailable");
+        private static readonly SafeWaitHandle _startingupEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoAppStartingUp");
+        private static readonly SafeWaitHandle _shuttingdownEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoAppShuttingDown");
+        private static readonly SafeWaitHandle _shuttingdownRequestedEvent  = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoAppShutdownRequested");
+        private static readonly SafeWaitHandle _installedEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoAppInstalledPackage");
+        private static readonly SafeWaitHandle _removedEvent = Kernel32.CreateEvent(IntPtr.Zero, true, false, "Global\\CoAppRemovedPackage");
 
         private static bool _available;
         public static bool Available {
@@ -75,8 +77,20 @@ namespace CoApp.Toolkit.Engine {
                 Kernel32.ResetEvent(_shuttingdownEvent);
                 if (value) {
                     StartingUp = false;
-                    ShuttingDown = false;
+                    Available = false;
                     Kernel32.SetEvent(_shuttingdownEvent);
+                }
+            }
+        }
+
+        private static bool _shutdownRequested;
+        public static bool ShutdownRequested {
+            get { return _shutdownRequested; }
+            set {
+                _shutdownRequested = value;
+                Kernel32.ResetEvent(_shuttingdownRequestedEvent);
+                if (value) {
+                    Kernel32.SetEvent(_shuttingdownRequestedEvent);
                 }
             }
         }
@@ -103,10 +117,15 @@ namespace CoApp.Toolkit.Engine {
             });
         }
 
-        public static void EngineStartupStatus(int percentComplete) {
-            PackageManagerSettings.CoAppInformation["StartupPercentComplete"].IntValue = percentComplete;
-            if( percentComplete > 0 && percentComplete < 100) {
-                StartingUp = true;
+        public static int EngineStartupStatus { 
+            get {
+                return PackageManagerSettings.CoAppInformation["StartupPercentComplete"].IntValue;
+            } 
+            set {
+                PackageManagerSettings.CoAppInformation["StartupPercentComplete"].IntValue = value;
+                if (value > 0 && value < 100) {
+                    StartingUp = true;
+                }
             }
         }
     }
@@ -159,19 +178,17 @@ namespace CoApp.Toolkit.Engine {
         /// Stops this instance.
         /// </summary>
         /// <remarks></remarks>
-        public static void Stop() {
-            // this should stop the task
+        public static void RequestStop() {
+            // this should stop the coapp engine.
             _instance.Value._cancellationTokenSource.Cancel();
+            _instance.Value._isRunning = false;
+            Signals.ShutdownRequested = true;
         }
 
         /// <summary>
         /// Starts this instance.
         /// </summary>
         /// <remarks></remarks>
-        public static Task Start() {
-            return Start(false);
-        }
-        
         public static Task Start(bool interactive) {
             // this should spin up a task and start listening for commands
             IsInteractive = interactive;
@@ -192,9 +209,10 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <remarks></remarks>
         private Task Main() {
-            if (_isRunning) {
+            if (IsRunning) {
                 return _engineService;
             }
+            Signals.EngineStartupStatus = 0;
             var npmi = NewPackageManager.Instance;
 
             _cancellationTokenSource = new CancellationTokenSource();
@@ -204,15 +222,30 @@ namespace CoApp.Toolkit.Engine {
             // make sure coapp is properly set up.
             Task.Factory.StartNew(() => {
                 try {
-                    Logger.Warning("Gonna make sure stuff is setup right.");
-                    // this ensures that composition rules are run for toolkit.
-                    Package.EnsureCanonicalFoldersArePresent();
+                    var stage = new ProgressFactor(ProgressWeight.Tiny);
+                    var packageScan = new ProgressFactor(ProgressWeight.Medium);
+                    var progress = new MultifactorProgressTracker {stage, packageScan};
+                    progress.ProgressChanged += (p) => { Signals.EngineStartupStatus = p; };
 
-                    Logger.Warning("Getting Version of CoApp.");
+                    // this ensures that composition rules are run for toolkit.
+                    stage.Progress = 5;
+                    Package.EnsureCanonicalFoldersArePresent();
+                    stage.Progress = 25;
                     var v = Package.GetCurrentPackageVersion("coapp.toolkit", "1e373a58e25250cb");
+                    stage.Progress = 50;
                     Logger.Warning("CoApp Version : " + v);
+                    stage.Progress = 100;
+                    do {
+                        Thread.Sleep(1);
+                        packageScan.Progress = InstalledPackageFeed.Instance.Progress;
+                    } while (InstalledPackageFeed.Instance.Progress < 100);
+
+                    // Completes startup. 
+                    packageScan.Progress = 100;
+                    Signals.Available = true;
                 } catch (Exception e ) {
                     Logger.Error(e);
+                    RequestStop();
                 }
             });
 
@@ -224,16 +257,10 @@ namespace CoApp.Toolkit.Engine {
                 // start a few listeners by default--each listener will also spawn a new empty one.
                 StartListener();
                 StartListener();
-                StartListener();
-                StartListener();
-                StartListener();
-                StartListener();
-                   
             }, _cancellationTokenSource.Token).AutoManage();
             
             _engineService = _engineService.ContinueWith(antecedent => {
-                Signals.ShuttingDown = true;
-                _isRunning = false;
+                RequestStop();
                 // ensure the sessions are all getting closed.
                 Session.CancelAll();
                 _engineService = null;
@@ -248,10 +275,13 @@ namespace CoApp.Toolkit.Engine {
         /// </summary>
         /// <remarks></remarks>
         private void StartListener() {
-            try {
-                Logger.Message("Starting New Listener {0}", listenerCount++);
+            if (_cancellationTokenSource.Token.IsCancellationRequested) {
+                return;
+            }
 
-                if (_isRunning) {
+            try {
+                if (IsRunning) {
+                    Logger.Message("Starting New Listener {0}", listenerCount++);
                     var serverPipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, Instances, PipeTransmissionMode.Message, PipeOptions.Asynchronous,
                         BufferSize, BufferSize, _pipeSecurity);
                     var listenTask = Task.Factory.FromAsync(serverPipe.BeginWaitForConnection, serverPipe.EndWaitForConnection, serverPipe);
@@ -260,7 +290,8 @@ namespace CoApp.Toolkit.Engine {
                         if (t.IsCanceled || _cancellationTokenSource.Token.IsCancellationRequested) {
                             return;
                         }
-                        StartListener(); // start next one!
+
+                        StartListener(); // spawn next one!
 
                         if (serverPipe.IsConnected) {
                             var serverInput = new byte[BufferSize];
@@ -311,7 +342,7 @@ namespace CoApp.Toolkit.Engine {
                 }
             }
             catch /* (Exception e) */ {
-                Stop();
+                RequestStop();
             }
         }
 
@@ -340,17 +371,18 @@ namespace CoApp.Toolkit.Engine {
                 try {
                     Logger.Message("Service Restart Order Issued.");
                     // make sure nobody else can connect.
-                    _instance.Value._cancellationTokenSource.Cancel();
+                    RequestStop();
 
                     // tell the clients to go away.
                     Logger.Message("Telling clients to go away.");
                     Session.NotifyClientsOfRestart();
 
-                    Logger.Message("Waiting up to 30 seconds for clients to disconnect.");
-                    // I'll give you 30 seconds to get lost.
-                    for (var i = 0; i < 300 && Session.HasActiveSessions; i++) {
+                    Logger.Message("Waiting up to 10 seconds for clients to disconnect.");
+                    // I'll give you 10 seconds to get lost.
+                    for (var i = 0; i < 100 && Session.HasActiveSessions; i++) {
                         Thread.Sleep(100);
                     }
+
                     if (Session.HasActiveSessions) {
                         Logger.Message("Forcing Disconnection of clients.");
                         Session.CancelAll();
@@ -359,55 +391,16 @@ namespace CoApp.Toolkit.Engine {
                     Logger.Error(e);
                 }
                 Logger.Message("Clients should be disconnected; forcing restart");
-
-                if (IsInteractive) {
-                    Process.Start(new ProcessStartInfo {
-                        FileName = Assembly.GetEntryAssembly().Location,
-                        Arguments = "--interactive"
-                    });
-                    Environment.Exit(0);
-                }
-                else {
-                    Process.Start(new ProcessStartInfo {
-                        FileName = Assembly.GetEntryAssembly().Location,
-                        Arguments = "--restart"
-                    });
-                }
-            });
-        }
-/*
-        public static void ShutdownService() {
-            Task.Factory.StartNew(() => {
-                try {
-                    Logger.Message("Service Shutdown Order Issued.");
-                    // make sure nobody else can connect.
-                    _instance.Value._cancellationTokenSource.Cancel();
-
-                    // tell the clients to go away.
-                    Logger.Message("Telling clients to go away.");
-                    Session.NotifyClientsOfRestart();
-
-                    Logger.Message("Waiting up to 5 seconds for clients to disconnect.");
-                    // I'll give you 5 seconds to get lost.
-                    for (var i = 0; i < 50 && Session.HasActiveSessions; i++) {
-                        Thread.Sleep(100);
-                    }
-                    if (Session.HasActiveSessions) {
-                        Logger.Message("Forcing Disconnection of clients.");
-                        Session.CancelAll();
-                    }
-                } catch (Exception e) {
-                    Logger.Error(e);
-                }
-                Logger.Message("Clients should be disconnected; forcing restart");
-
                 Process.Start(new ProcessStartInfo {
-                    FileName = Assembly.GetEntryAssembly().Location,
-                    Arguments = "--stop"
+                    FileName =EngineServiceManager.CoAppServiceExecutablePath,
+                    Arguments = "--restart",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
                 });
             });
         }
-        */
+
 
         /// <summary>
         /// Starts the response pipe and process mesages.

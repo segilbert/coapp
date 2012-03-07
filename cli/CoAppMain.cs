@@ -73,7 +73,7 @@ namespace CoApp.CLI {
             if( System.Diagnostics.Debugger.IsAttached) {
                 // wait for service to start if we're attached to the debugger
                 // (it could be starting still)
-                Thread.Sleep(1500);
+                Thread.Sleep(250);
             }
 #endif
             return new CoAppMain().Startup(args);
@@ -100,6 +100,7 @@ namespace CoApp.CLI {
                     }
                 } ,_messages),
                 OperationCancelled = CancellationRequested,
+                Restarting = RestartingEngine,
                 PackageSatisfiedBy = (original, satisfiedBy) => {
                     original.SatisfiedBy = satisfiedBy;
                 },
@@ -243,10 +244,6 @@ namespace CoApp.CLI {
                 if (command.IsNullOrEmpty()) {
                     return Help();
                 }
-
-                Verbose("# Connecting to Service...");
-                _pm.ConnectAndWait("coapp-cli-client", null, 5000);
-                Verbose("# Connected to Service...");
 
                 if( _verbose) {
                     _pm.SetLogging(true, true, true);
@@ -549,7 +546,7 @@ namespace CoApp.CLI {
                 if( _pause == true ) {
                     Console.ReadLine();
                 }
-                _pm.Disconnect();
+
                 if (_pause == true) {
                     Console.ReadLine();
                 }
@@ -558,7 +555,6 @@ namespace CoApp.CLI {
             catch (ConsoleException failure) {
                 Fail("{0}\r\n\r\n    {1}", failure.Message, Resources.ForCommandLineHelp);
                 CancellationTokenSource.Cancel();
-                _pm.Disconnect();
             }
             
             return 0;
@@ -722,12 +718,10 @@ namespace CoApp.CLI {
             var trigger = new ManualResetEvent(!_pm.IsConnected || _pm.ActiveCalls == 0);
             Action whenTriggered = () => trigger.Set();
 
-            _pm.Disconnected += whenTriggered;
             _pm.Completed += whenTriggered;
 
             WaitHandle.WaitAny(new[] { CancellationTokenSource.Token.WaitHandle, trigger });
 
-            _pm.Disconnected -= whenTriggered;
             _pm.Completed -= whenTriggered;
         }
 
@@ -760,6 +754,10 @@ namespace CoApp.CLI {
 
         private void CancellationRequested(string obj) {
             Console.WriteLine("Cancellation Requested.");
+        }
+
+        private void RestartingEngine() {
+            Console.WriteLine("CoApp Engine is Restarting. Attempting reconnect.");
         }
 
         private void MessageArgumentError(string arg1, string arg2, string arg3) {
@@ -795,29 +793,36 @@ namespace CoApp.CLI {
         private void Remove(IEnumerable<Package> parameters) {
             var removedList = new List<string>();
             var failedList = new List<string>();
-
-            foreach( var package in parameters ) {
-                _pm.RemovePackage(package.CanonicalName, _force, new PackageManagerMessages {
-                    RemovingPackageProgress= (canonicalName, progress) => {
-                        // installation progress
-                        ConsoleExtensions.PrintProgressBar("Removing {0}".format(canonicalName), progress);
-                    },
-                    RemovedPackage = (canonicalName) => {
-                        // completed install of package 
-                        removedList.Add(canonicalName);
-                         Console.WriteLine();
-                    },
-                    FailedPackageInstall = (canonicalName, filename, reason) => {
-                        // failed install of package 
-                        failedList.Add(canonicalName);
-                         Console.WriteLine();
-                    },
-                    PackageBlocked= (canonicalName) => {
-                        // failed install of package 
-                        failedList.Add(canonicalName);
-                    },
-                }.Extend(_messages)).Wait();
-            }
+            var restartDuringOperation = false;
+            
+            do {
+                restartDuringOperation = false;
+                foreach( var package in parameters ) {
+                    _pm.RemovePackage(package.CanonicalName, _force, new PackageManagerMessages {
+                        RemovingPackageProgress= (canonicalName, progress) => {
+                            // installation progress
+                            ConsoleExtensions.PrintProgressBar("Removing {0}".format(canonicalName), progress);
+                        },
+                        RemovedPackage = (canonicalName) => {
+                            // completed install of package 
+                            removedList.Add(canonicalName);
+                             Console.WriteLine();
+                        },
+                        FailedPackageInstall = (canonicalName, filename, reason) => {
+                            // failed install of package 
+                            failedList.Add(canonicalName);
+                             Console.WriteLine();
+                        },
+                        PackageBlocked= (canonicalName) => {
+                            // failed install of package 
+                            failedList.Add(canonicalName);
+                        },
+                        Restarting = () => {
+                             restartDuringOperation = true;
+                        }
+                    }.Extend(_messages)).Wait();
+                }
+            } while (restartDuringOperation);
         }
 
         /// <summary>
@@ -885,37 +890,42 @@ namespace CoApp.CLI {
                 // now, each package in the list can be installed
                 var installedList= new List<string>();
                 var failedList = new List<string>();
-                
-                foreach( var p in packages ) {
-                    var package = p;
+                var restartedDuringOperation = false;
+                do {
+                    restartedDuringOperation = false;
+                    foreach (var p in packages) {
+                        var package = p;
 
-                    _pm.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, _pretend, new PackageManagerMessages {
-                        InstallingPackageProgress = (canonicalName, progress, overallProgress ) => {
-                            // installation progress
-                            ConsoleExtensions.PrintProgressBar("Installing: {0}".format(canonicalName), progress);
-                        },
+                        _pm.InstallPackage(package.CanonicalName, _autoUpgrade, _force, _download, _pretend, new PackageManagerMessages {
+                            InstallingPackageProgress = (canonicalName, progress, overallProgress) => {
+                                // installation progress
+                                ConsoleExtensions.PrintProgressBar("Installing: {0}".format(canonicalName), progress);
+                            },
 
-                        InstalledPackage = (canonicalName) => {
-                            // completed install of package 
-                            installedList.Add(canonicalName);
-                            Console.WriteLine();
-                        }, 
+                            InstalledPackage = (canonicalName) => {
+                                // completed install of package 
+                                installedList.Add(canonicalName);
+                                Console.WriteLine();
+                            },
 
-                        FailedPackageInstall = (canonicalName, filename , reason ) => {
-                            // failed install of package 
-                            failedList.Add(canonicalName);
+                            FailedPackageInstall = (canonicalName, filename, reason) => {
+                                // failed install of package 
+                                failedList.Add(canonicalName);
 
-                            if (packages.Contains(Package.GetPackage(canonicalName))) {
-                                Console.WriteLine("\r\nNOTE: Requested package {0} failed to install [{1}]", canonicalName, reason);
+                                if (packages.Contains(Package.GetPackage(canonicalName))) {
+                                    Console.WriteLine("\r\nNOTE: Requested package {0} failed to install [{1}]", canonicalName, reason);
+                                } else {
+                                    Console.WriteLine("\r\nNOTE: Dependent package {0} failed to install [{1}]", canonicalName, reason);
+                                    Console.WriteLine("    (attempting to find alternative)");
+                                }
+                            },
+                            Restarting = () => {
+                                restartedDuringOperation = true;
                             }
-                            else {
-                                Console.WriteLine("\r\nNOTE: Dependent package {0} failed to install [{1}]", canonicalName, reason);
-                                Console.WriteLine("    (attempting to find alternative)");
-                            }
-                        },
-                    }.Extend(_messages)).Wait();
-                    
-                }
+                        }.Extend(_messages)).Wait();
+
+                    }
+                } while (restartedDuringOperation);
             }
         }
 

@@ -144,6 +144,7 @@
     <Compile Include="TaskService\V1\TaskSchedulerV1Interop.cs" />
     <Compile Include="TaskService\V2\TaskSchedulerV2Interop.cs" />
     <Compile Include="TaskService\Wildcard.cs" />
+    <Compile Include="Utility\MultifactorProgressTracker.cs" />
     <Compile Include="Win32\Accel.cs" />
     <Compile Include="Win32\AcceleratorVirtualKey.cs" />
     <Compile Include="Win32\Architecture.cs" />

@@ -114,6 +114,7 @@ namespace CoApp.Toolkit.Engine {
 
         public static void NotifyClientsOfRestart() {
             foreach (var s in _activeSessions.ToArray()) {
+                s.SendRestarting();
                 // cancel everyone.
                 s._cancellationTokenSource.Cancel();
             }
@@ -300,6 +301,10 @@ namespace CoApp.Toolkit.Engine {
         private readonly Queue<UrlEncodedMessage> _outputQueue = new Queue<UrlEncodedMessage>();
 
         private void QueueResponseMessage(UrlEncodedMessage response) {
+            if( IsCancelled ) {
+                return;
+            }
+
             Logger.Message("adding message to queue: {0}".format(response));
             Disconnect();
 
@@ -310,6 +315,11 @@ namespace CoApp.Toolkit.Engine {
 
         private void SendQueuedMessages() {
             while (_outputQueue.Any() && _responsePipe != null) {
+               
+                if (IsCancelled) {
+                    return;
+                }
+
                 try {
                     _responsePipe.WriteLineAsync(_outputQueue.Peek().ToString()).ContinueWith(antecedent => {
                         lock (_outputQueue) {
@@ -333,6 +343,10 @@ namespace CoApp.Toolkit.Engine {
         /// <remarks>
         /// </remarks>
         public void WriteAsync(UrlEncodedMessage message) {
+            if (IsCancelled) {
+                return;
+            }
+
             if (Connected) {
                 try {
                     try {
@@ -537,10 +551,18 @@ namespace CoApp.Toolkit.Engine {
         }
 
         private void WriteErrorsOnException(Task task) {
+            if (IsCancelled) {
+                return;
+            }
+
             if (task != null) {
                 task.ContinueWith(antecedent => {
                     if (antecedent.Exception != null) {
                         foreach (var failure in antecedent.Exception.Flatten().InnerExceptions.Where(failure => failure.GetType() != typeof(AggregateException))) {
+                            if (IsCancelled) {
+                                return;
+                            }
+
                             Logger.Error(failure);
                             WriteAsync(new UrlEncodedMessage("unexpected-failure") {
                             {"type", failure.GetType().ToString()},
@@ -561,6 +583,10 @@ namespace CoApp.Toolkit.Engine {
         /// </remarks>
         private Task Dispatch(UrlEncodedMessage requestMessage) {
             Logger.Message("Request:{0}".format(requestMessage.ToSmallerString()));
+            if (IsCancelled) {
+                SendCancellationRequested("Service is shutting down");
+                return null;
+            }
 
             switch (requestMessage.Command) {
                 case "find-packages":
@@ -780,28 +806,10 @@ namespace CoApp.Toolkit.Engine {
                 case "stop-service":
                     if (PackageManagerSession.Invoke.CheckForPermission(PermissionPolicy.StopService)) {
                         _cancellationTokenSource.Cancel();
-                        EngineService.Stop();
+                        EngineService.RequestStop();
                         return "Shutting down".AsResultTask();
                     }
                     return null; // "Unable to Stop Service".AsResultTask();
-
-                case "get-engine-status" :
-                    return Task.Factory.StartNew(() => {
-                        // at this point the only thing we are monitoring is the InstalledPackagesFeed.
-                        new PackageManagerMessages {
-                            RequestId = requestMessage["rqid"],
-                        }.Extend(_messages).Register();
-
-                        var percent = 0;
-                        do {
-                            Thread.Sleep(10);
-                            var p = InstalledPackageFeed.Instance.Progress;
-                            if( p > percent) {
-                                percent =p ;
-                                WriteAsync(new UrlEncodedMessage("engine-status") { { "percent-complete", percent }, });
-                            }
-                        } while (percent < 100);
-                    });
 
                 case "set-logging" :
                     try {
@@ -1082,6 +1090,14 @@ namespace CoApp.Toolkit.Engine {
 
         private void SendNoFeedsFound() {
             WriteAsync(new UrlEncodedMessage("no-feeds-found"));
+        }
+
+        private void SendRestarting() {
+            WriteAsync(new UrlEncodedMessage("restarting"));
+        }
+
+        private void SendShuttingDown() {
+            WriteAsync(new UrlEncodedMessage("shutting-down"));
         }
 
         #endregion

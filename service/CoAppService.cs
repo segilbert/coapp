@@ -17,46 +17,21 @@ namespace CoApp.Service {
     using Toolkit.Win32;
 
     public class CoAppService : ServiceBase {
-        public static bool IsInstalled {
-            get {
-                return EngineServiceManager.IsServiceInstalled;
-            }
-        }
 
         public CoAppService() {
             ServiceName = EngineServiceManager.CoAppServiceName;
         }
 
-        public static void StartService() {
-            EngineServiceManager.TryToStartService();
-        }
-
-        public static void StopService() {
-            if (IsInstalled) {
-                EngineServiceManager.TryToStopService();
-            }
-        }
-
-        public static bool IsRunning {
-            get {
-                return EngineServiceManager.IsServiceRunning;
-            }
-        }
-
         protected override void OnStart(string[] args) {
-            EngineService.Start();
+            EngineService.Start(false);
         }
 
         protected override void OnStop() {
-            EngineService.Stop();
-        }
-
-        public static void RunThisProcessAsService() {
-            Run(new CoAppService());
+            EngineService.RequestStop();
         }
 
         public static void Uninstall() {
-            if (IsInstalled) {
+            if (EngineServiceManager.IsServiceInstalled) {
                 // fyi, this will fail in an interesting way if the MMC is running
                 // it won't completely uninstall the service, it'll mark it as deleted.
                 // we should encourage the closing of MMC here before uninstalling :D
@@ -69,7 +44,7 @@ namespace CoApp.Service {
         }
 
         public static void Install(string username = null, string password = null) {
-            if (!IsInstalled) {
+            if (!EngineServiceManager.IsServiceInstalled) {
                 //http://arcanecode.com/2007/05/23/windows-services-in-c-adding-the-installer-part-3/
                 ManagedInstallerClass.InstallHelper(string.IsNullOrEmpty(username) ? new[] {
                     Assembly.GetEntryAssembly().Location
@@ -78,76 +53,36 @@ namespace CoApp.Service {
                 });
             }
         }
-
-        private static string coappBinDirectory;
-        private static string coappInstalledDirectory;
-        private static string canonicalServiceExePath;
-        public static string CoAppRootDirectory { get { return PackageManagerSettings.CoAppRootDirectory; }}
-        public static string CoAppBinDirectory { get { return coappBinDirectory ?? (coappBinDirectory = Path.Combine(CoAppRootDirectory, "bin")); } }
-        public static string CanonicalServiceExePath { get { return canonicalServiceExePath ?? (canonicalServiceExePath = Path.Combine(CoAppBinDirectory, "coapp.service.exe")); } }
-        public static string CoAppInstalledDirectory { get { return coappInstalledDirectory ?? (coappInstalledDirectory = PackageManagerSettings.CoAppInstalledDirectory[Architecture.Any]); } }
-
+        
         public static int AutoInstall() {
-            if (IsInstalled) {
-                StartService();
+            if (EngineServiceManager.IsServiceInstalled) {
+                EngineServiceManager.TryToStartService();
                 return 0;
             }
-            
-            if (!Directory.Exists(CoAppRootDirectory)) {
-                // no coapp directory? 
-                // no way.
-                return 100;
-            }
 
-            Directory.CreateDirectory(CoAppBinDirectory);
-            if (!Directory.Exists(CoAppBinDirectory)) {
-                // we couldn't make the bin dir? 
-                // I don't wann live in such a world...
-                return 200;
-            }
-
-            // Let's find the right one
-            if (Directory.Exists(CoAppInstalledDirectory)) {
-                var searchDirectory = Path.Combine(CoAppInstalledDirectory, "outercurve foundation");
-                if (!Directory.Exists(searchDirectory)) {
-                    // hmm. No outercurve directory.
-                    // lets just use the .installed directory 
-                    searchDirectory = CoAppInstalledDirectory;
-                }
-
-                // get all of the coapp.service.exes and pick the one with the highest version
-                var serviceExes = searchDirectory.FindFilesSmarter(@"**\coapp.service.exe").OrderByDescending(Version).ToArray();
-
-                // ah, so we found some did we?
-                if (serviceExes.Where(each => !Symlink.IsSymlink(each)).Any(AutoInstallService)) {
+            var serviceExe = EngineServiceManager.CoAppServiceExecutablePath;
+            if( serviceExe != null ) {
+                if( AutoInstallService(serviceExe) ) {
                     return 0;
                 }
             }
 
-            // ok, so we tried installing every exe we could find.
-            // What about the EXE we're currently running? 
-            // if it's somewhere in the %coapp% directory, 
-            // I vote we try creating a symlink for this, and install it.
-            var thisEXE = Assembly.GetEntryAssembly().Location;
-            if (thisEXE.StartsWith(CoAppRootDirectory, StringComparison.CurrentCultureIgnoreCase)) {
-                // it's here somewhere.
-                // do it.
-                if (AutoInstallService(thisEXE)) {
-                    // yay!
-                    return 0;
-                }
-            }
+            return 1;
 
-            // fargle-bargle.
-            // Ok, I'm thinkin' there is not really any coapp installed at all.
-            // we're outta here.
-            return 300;
         }
 
         private static bool AutoInstallService(string path) {
             if (!File.Exists(path)) {
                 return false;
             }
+
+            var root = PackageManagerSettings.CoAppRootDirectory;
+            var coappBinDirectory = Path.Combine(root, "bin");
+            if( !Directory.Exists(coappBinDirectory)) {
+                Directory.CreateDirectory(coappBinDirectory);
+            }
+            var canonicalServiceExePath = Path.Combine(coappBinDirectory, "coapp.service.exe");
+
 
             if (Symlink.IsSymlink(path)) {
                 // we found a symlink,
@@ -159,22 +94,23 @@ namespace CoApp.Service {
             }
             
             try {
-                Symlink.MakeFileLink(CanonicalServiceExePath, path);
+                Symlink.MakeFileLink(canonicalServiceExePath, path);
 
                 // hey we found one where it's supposed to be!
-                var processStartInfo = new ProcessStartInfo(CanonicalServiceExePath) {
+                var processStartInfo = new ProcessStartInfo(canonicalServiceExePath) {
                     Arguments = "--start",
                     CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    UseShellExecute = false,
                 };
 
                 var process = Process.Start(processStartInfo);
                 process.WaitForExit();
 
                 // after it exits, lets see if we've got an installed service
-                if (IsInstalled) {
+                if (EngineServiceManager.IsServiceInstalled) {
                     // YAY!. We're outta here!
-                    StartService();
+                    EngineServiceManager.TryToStartService();
                     return true;
                 }
             }
@@ -184,30 +120,7 @@ namespace CoApp.Service {
             return false;
         }
 
-        private static ulong Version(string path) {
-            try {
-                var info = FileVersionInfo.GetVersionInfo(path);
-                var fv = info.FileVersion;
-                if (!String.IsNullOrEmpty(fv)) {
-                    fv = fv.Substring(0, fv.PositionOfFirstCharacterNotIn("0123456789.".ToCharArray()));
-                }
-
-                if (String.IsNullOrEmpty(fv)) {
-                    return 0;
-                }
-
-                var vers = fv.Split('.');
-                var major = vers.Length > 0 ? vers[0].ToInt32() : 0;
-                var minor = vers.Length > 1 ? vers[1].ToInt32() : 0;
-                var build = vers.Length > 2 ? vers[2].ToInt32() : 0;
-                var revision = vers.Length > 3 ? vers[3].ToInt32() : 0;
-
-                return (((UInt64)major) << 48) + (((UInt64)minor) << 32) + (((UInt64)build) << 16) + (UInt64)revision;
-            }
-            catch {
-                return 0;
-            }
-        }
+       
 
     }
 }

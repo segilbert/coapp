@@ -160,7 +160,7 @@ namespace CoApp.Toolkit.Engine.Model.Atom {
             if (pub != null) {
                 Model.PackageDetails.Publisher = new Identity {
                     Name = pub.Name,
-                    Location = pub.Uri.ToUri(),
+                    Location = pub.Uri != null ? pub.Uri.ToUri() : null,
                     Email = pub.Email
                 };
             }

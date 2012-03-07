@@ -219,11 +219,16 @@ namespace CoApp.Toolkit.Win32 {
         public static extern SafeWaitHandle CreateEvent(IntPtr lpSecurityAttributes, bool isManualReset, bool initialState, string name);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern SafeWaitHandle OpenEvent(int desiredAccess, bool inheritHandle, string name);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool SetEvent(SafeWaitHandle handle);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool ResetEvent(SafeWaitHandle handle);
 
+        [DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+        public static extern int WaitForSingleObject(SafeWaitHandle handle, int dwMilliseconds);
 
 #if !COAPP_ENGINE_CORE
         /// <summary>

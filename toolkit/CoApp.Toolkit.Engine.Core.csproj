@@ -304,6 +304,7 @@
     <Compile Include="Tasks\CoTask.cs" />
     <Compile Include="Tasks\TriggeredProperty.cs" />
     <Compile Include="Text\HttpUtility.cs" />
+    <Compile Include="Utility\MultifactorProgressTracker.cs" />
     <Compile Include="Win32\AdminPrivilege.cs" />
     <Compile Include="Win32\Advapi32.cs" />
     <Compile Include="Win32\AllocationType.cs" />
