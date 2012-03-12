@@ -222,27 +222,20 @@ namespace CoApp.Toolkit.Engine {
             // make sure coapp is properly set up.
             Task.Factory.StartNew(() => {
                 try {
-                    var stage = new ProgressFactor(ProgressWeight.Tiny);
-                    var packageScan = new ProgressFactor(ProgressWeight.Medium);
-                    var progress = new MultifactorProgressTracker {stage, packageScan};
-                    progress.ProgressChanged += (p) => { Signals.EngineStartupStatus = p; };
+                    Logger.Warning("CoApp Startup Beginning------------------------------------------");
 
                     // this ensures that composition rules are run for toolkit.
-                    stage.Progress = 5;
+                    Signals.EngineStartupStatus = 5;
                     Package.EnsureCanonicalFoldersArePresent();
-                    stage.Progress = 25;
+                    Signals.EngineStartupStatus = 10;
                     var v = Package.GetCurrentPackageVersion("coapp.toolkit", "1e373a58e25250cb");
-                    stage.Progress = 50;
+                    Signals.EngineStartupStatus = 95;
                     Logger.Warning("CoApp Version : " + v);
-                    stage.Progress = 100;
-                    do {
-                        Thread.Sleep(1);
-                        packageScan.Progress = InstalledPackageFeed.Instance.Progress;
-                    } while (InstalledPackageFeed.Instance.Progress < 100);
-
                     // Completes startup. 
-                    packageScan.Progress = 100;
+
+                    Signals.EngineStartupStatus = 100;
                     Signals.Available = true;
+                    Logger.Warning("CoApp Startup Finished------------------------------------------");
                 } catch (Exception e ) {
                     Logger.Error(e);
                     RequestStop();

@@ -43,11 +43,6 @@ namespace CoApp.Toolkit.Utility {
         public delegate void Changed(int progress);
         public event Changed ProgressChanged;
 
-        private void RecalcTotal() {
-            _total = _factors.Sum(each => each.Weight * 100);
-            Updated();
-        }
-
         public void Updated() {
             var progress = _factors.Sum(each => each.Weight * each.Progress);
             progress = (progress * 100 / _total);
@@ -67,7 +62,9 @@ namespace CoApp.Toolkit.Utility {
         public void Add( ProgressFactor factor) {
             _factors.Add(factor);
             factor.Tracker = this;
-            RecalcTotal();
+
+            _total = _factors.Sum(each => each.Weight * 100);
+            Updated();
         }
 
         public IEnumerator GetEnumerator() {

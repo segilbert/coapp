@@ -34,8 +34,6 @@ namespace CoApp.Toolkit.Engine.Client {
         public event PropertyChangedEventHandler PropertyChanged;
         public event PropertyChangedEventHandler Ready;
         public event PropertyChangedEventHandler Finished;
-        private bool verbose;
-        private PackageManager packageManager;
         private Package _specifiedPackage;
         private Package _upgradedPackage;
         private bool _automaticallyUpgrade = true;
@@ -72,7 +70,6 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-
         public Package Package { get {
             return AutomaticallyUpgrade ?  UpgradedPackage ?? SpecifiedPackage : SpecifiedPackage;
         } }
@@ -80,21 +77,17 @@ namespace CoApp.Toolkit.Engine.Client {
         public bool HasPackage { get { return Package != null; }}
 
         public Installer(string filename)   {
-            if (Keyboard.Modifiers == ModifierKeys.Shift) {
-                Logger.Errors = true;
-                Logger.Messages = true;
-                Logger.Warnings = true;
-                verbose = true;
-            }
-
             // we'll take it from here...
             try {
-                
                 MsiFilename = filename;
                 InstallTask = Task.Factory.StartNew(StartInstall);
                 
                 // if we got this far, CoApp must be running. 
-                Application.ResourceAssembly = Assembly.GetExecutingAssembly();
+                try {
+                    Application.ResourceAssembly = Assembly.GetExecutingAssembly();
+                }
+                catch { }
+
                 var window = new InstallerMainWindow(this);
                 window.ShowDialog();
 
@@ -106,21 +99,36 @@ namespace CoApp.Toolkit.Engine.Client {
             }
         }
 
-
         /// <summary>
         /// Main install process 
         /// </summary>
         internal void StartInstall() {
-            InitMessageHandlers();
-
-            ConnectToPackageManager();
-
+            _messages = new PackageManagerMessages {
+                UnexpectedFailure = UnexpectedFailure,
+                NoPackagesFound = NoPackagesFound,
+                PermissionRequired = OperationRequiresPermission,
+                Error = MessageArgumentError,
+                RequireRemoteFile =
+                    (canonicalName, remoteLocations, localFolder, force) =>
+                        Downloader.GetRemoteFile(
+                            canonicalName, remoteLocations, localFolder, force, new RemoteFileMessages {
+                                Progress = (itemUri, percent) => {
+                                    "Downloading {0}".format(itemUri.AbsoluteUri).PrintProgressBar(percent);
+                                },
+                            }, _messages),
+                OperationCancelled = CancellationRequested,
+                PackageSatisfiedBy = (original, satisfiedBy) => {
+                    original.SatisfiedBy = satisfiedBy;
+                },
+                PackageBlocked = BlockedPackage,
+                UnknownPackage = UnknownPackage,
+            };
             LoadPackageDetails();
         }
 
         private void ProbeForNewerPackageInfo() {
             if (AutomaticallyUpgrade) {
-                packageManager.GetPackages(SpecifiedPackage.Name + "-*-" +SpecifiedPackage.Architecture + "-"+SpecifiedPackage.PublicKeyToken , latest: true, forceScan: true, messages: _messages).ContinueWith((antecedent) => {
+                PackageManager.Instance.GetPackages(SpecifiedPackage.Name + "-*-" + SpecifiedPackage.Architecture + "-" + SpecifiedPackage.PublicKeyToken, latest: true, forceScan: true, messages: _messages).ContinueWith((antecedent) => {
                     if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty()) {
                         UpgradedPackage = null;
                         // DOERROR
@@ -128,7 +136,7 @@ namespace CoApp.Toolkit.Engine.Client {
                         return;
                     }
 
-                    packageManager.GetPackageDetails(antecedent.Result.FirstOrDefault().CanonicalName, _messages).ContinueWith((antecedent2) => {
+                    PackageManager.Instance.GetPackageDetails(antecedent.Result.FirstOrDefault().CanonicalName, _messages).ContinueWith((antecedent2) => {
                         if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty()) {
                             OnReady();
                             // DOERROR
@@ -149,14 +157,14 @@ namespace CoApp.Toolkit.Engine.Client {
         }
 
         private void LoadPackageDetails() {
-            packageManager.GetPackages(Path.GetFullPath(MsiFilename), latest: false, messages: _messages).ContinueWith((antecedent) => {
+            PackageManager.Instance.GetPackages(Path.GetFullPath(MsiFilename), latest: false, messages: _messages).ContinueWith((antecedent) => {
                 if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty() ) {
                     // DOERROR
                     OnReady();
                     return;
                 }
 
-                packageManager.GetPackageDetails(antecedent.Result.FirstOrDefault().CanonicalName, _messages).ContinueWith((antecedent2) => {
+                PackageManager.Instance.GetPackageDetails(antecedent.Result.FirstOrDefault().CanonicalName, _messages).ContinueWith((antecedent2) => {
                     if (antecedent.IsFaulted || antecedent.Result.IsNullOrEmpty()) {
                         OnReady();
                         // DOERROR
@@ -189,35 +197,6 @@ namespace CoApp.Toolkit.Engine.Client {
             if (Finished != null) {
                 Finished(this, new PropertyChangedEventArgs("Finished"));
             }
-        }
-
-        private void ConnectToPackageManager() {
-            packageManager = PackageManager.Instance;
-            PackageManager.Instance.ConnectAndWait("PackageInstaller", null, 5000);    
-            packageManager.SetLogging(true, true, true);
-        }
-
-        private void InitMessageHandlers() {
-            _messages = new PackageManagerMessages {
-                UnexpectedFailure = UnexpectedFailure,
-                NoPackagesFound = NoPackagesFound,
-                PermissionRequired = OperationRequiresPermission,
-                Error = MessageArgumentError,
-                RequireRemoteFile =
-                    (canonicalName, remoteLocations, localFolder, force) =>
-                        Downloader.GetRemoteFile(
-                            canonicalName, remoteLocations, localFolder, force, new RemoteFileMessages {
-                                Progress = (itemUri, percent) => {
-                                    "Downloading {0}".format(itemUri.AbsoluteUri).PrintProgressBar(percent);
-                                },
-                            }, _messages),
-                OperationCancelled = CancellationRequested,
-                PackageSatisfiedBy = (original, satisfiedBy) => {
-                    original.SatisfiedBy = satisfiedBy;
-                },
-                PackageBlocked = BlockedPackage,
-                UnknownPackage = UnknownPackage,
-            };
         }
 
         private void ExtractTrickyPackageInfo() {
@@ -265,10 +244,6 @@ namespace CoApp.Toolkit.Engine.Client {
                 OnFinished();
                 return;
             }
-
-
-            ConnectToPackageManager();
-
             // otherwise, try again?
             Install();
         }
@@ -280,8 +255,6 @@ namespace CoApp.Toolkit.Engine.Client {
                 OnFinished();
                 return;
             }
-
-            ConnectToPackageManager();
             // otherwise, try again?
             Remove();
         }
@@ -392,7 +365,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public void Install() {
             if( !IsWorking) {
                 IsWorking = true;
-                packageManager.InstallPackage(Package.CanonicalName, autoUpgrade: false, messages: new PackageManagerMessages {
+                PackageManager.Instance.InstallPackage(Package.CanonicalName, autoUpgrade: false, messages: new PackageManagerMessages {
                     InstallingPackageProgress = (canonicalName, progress, overallProgress) => { Progress = overallProgress; },
                     InstalledPackage = (canonicalName) => { Package.GetPackage(canonicalName).IsInstalled = true; },
                     OperationCancelled = CancellationRequestedDuringInstall,
@@ -403,7 +376,7 @@ namespace CoApp.Toolkit.Engine.Client {
         public void Remove() {
             if (!IsWorking) {
                 IsWorking = true;
-                packageManager.RemovePackage(Package.CanonicalName, messages: new PackageManagerMessages {
+                PackageManager.Instance.RemovePackage(Package.CanonicalName, messages: new PackageManagerMessages {
                     RemovingPackageProgress= (canonicalName, progress) => {
                         Progress = progress;
                     },

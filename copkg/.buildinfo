@@ -53,6 +53,18 @@ package {
     ";
 }
 
+install {
+    default: false;
+    set : cfg = "Release";
+    uses : package;
+    build-command: @"
+    for /F %%G in ('dir /s /b /o-n  coapp.toolkit*.msi') do ( 
+        coapp install %%G
+        goto :eof
+    )
+    ";
+}
+
 sign { 
     // builds all the binaries in "Release" mode and digitally signs and 
     // strong-names the binaries.

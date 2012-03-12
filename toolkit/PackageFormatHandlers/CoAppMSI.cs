@@ -12,15 +12,13 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
     using System;
     using System.IO;
     using System.Linq;
-    using System.Collections.Generic;
     using Crypto;
     using Engine;
     using Engine.Exceptions;
     using Engine.Model.Atom;
     using Extensions;
     using Microsoft.Deployment.WindowsInstaller;
-    using Win32;
-
+    
     /// <summary>
     /// A representation of an CoApp MSI file
     /// </summary>
@@ -40,13 +38,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// <remarks></remarks>
         internal static bool IsCoAppPackageFile(string path) {
             try {
-                if (IsPossiblyCoAppPackage(path)) {
-                    if (Verifier.HasValidSignature(path)) {
-                        var packageProperties = GetMsiProperties(path);
-                        return (packageProperties.ContainsKey("CoAppCompositionData") &&
-                                packageProperties.ContainsKey("CoAppPackageFeed"));
-                    }
-                }
+                return HasCoAppProperties(path) && Verifier.HasValidSignature(path);
             } catch {
             }
             return false;
@@ -58,13 +50,14 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        internal static bool IsPossiblyCoAppPackage(string localPackagePath) {
+        internal static bool HasCoAppProperties(string localPackagePath) {
             lock (typeof (MSIBase)) {
                 try {
                     using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
-                        var view = database.OpenView( "SELECT Value FROM Property WHERE Property='CoAppPackageFeed' OR Property='CoAppCompositionData'");
-                        view.Execute();
-                        return view.Count() == 2;
+                        using (var view = database.OpenView("SELECT Value FROM Property WHERE Property='CoAppPackageFeed' OR Property='CoAppCompositionData'")) {
+                            view.Execute();
+                            return view.Count() == 2;
+                        }
                     }
                 } catch {
                     return false;

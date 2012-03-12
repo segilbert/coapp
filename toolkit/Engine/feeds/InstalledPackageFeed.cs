@@ -43,39 +43,56 @@ namespace CoApp.Toolkit.Engine.Feeds {
         public int Progress { get; set; }
 
         protected void Scan() {
-            if (!Scanned || Stale) {
-                LastScanned = DateTime.Now;
+            lock (this) {
+                if (!Scanned || Stale) {
+                    LastScanned = DateTime.Now;
 
-                // add the cached package directory, 'cause on backlevel platform, they taint the MSI in the installed files folder.
-                var installedFiles = MSIBase.InstalledMSIFilenames.Union(PackageManagerSettings.CoAppPackageCache.FindFilesSmarter("*.msi")).ToArray();
-                
-                for (var i = 0; i < installedFiles.Length;i++ ) {
-                    var packageFilename = installedFiles[i];
+                    // add the cached package directory, 'cause on backlevel platform, they taint the MSI in the installed files folder.
+                    var installedFiles =
+                        MSIBase.InstalledMSIFilenames.Union(PackageManagerSettings.CoAppPackageCache.FindFilesSmarter("*.msi")).ToArray();
 
-                    Progress = (i*100)/installedFiles.Length;
+                    /*
+                    for (var i = 0; i < installedFiles.Length;i++ ) {
+                        var packageFilename = installedFiles[i];
 
-                    var lookup = File.GetCreationTime(packageFilename).Ticks + packageFilename.GetHashCode();
+                        Progress = (i*100)/installedFiles.Length;
 
-                    if( _nonCoAppMSIFiles.Contains(lookup) ) {
-                        // already identified as a not-coapp-package.
-                        continue;
-                    }
+                        var lookup = File.GetCreationTime(packageFilename).Ticks + packageFilename.GetHashCode();
 
-                    var pkg = Package.GetPackageFromFilename(packageFilename);
-
-                    if (pkg != null) { 
-                        if (pkg.IsInstalled) {
-                            _packageList.Add(pkg);
+                        if( _nonCoAppMSIFiles.Contains(lookup) ) {
+                            // already identified as a not-coapp-package.
+                            continue;
                         }
-                    } else {
-                        _nonCoAppMSIFiles.Add(lookup);
+
+                        var pkg = Package.GetPackageFromFilename(packageFilename);
+
+                        if (pkg != null && pkg.IsInstalled) { 
+                            _packageList.Add(pkg);
+                        } 
                     }
+
+                     * */
+                    var count = installedFiles.Length;
+
+                    installedFiles.AsParallel().ForAll(each => {
+                        count--;
+                        Progress = (count - installedFiles.Length)*100/installedFiles.Length;
+                        var lookup = File.GetCreationTime(each).Ticks + each.GetHashCode();
+
+                        if (!_nonCoAppMSIFiles.Contains(lookup)) {
+                            var pkg = Package.GetPackageFromFilename(each);
+
+                            if (pkg != null && pkg.IsInstalled) {
+                                _packageList.Add(pkg);
+                            }
+                        }
+                    });
+
+                    SaveCache();
+                    Progress = 100;
+                    Scanned = true;
+                    Stale = false;
                 }
-                
-                SaveCache();
-                Progress = 100;
-                Scanned = true;
-                Stale = false;
             }
         }
 

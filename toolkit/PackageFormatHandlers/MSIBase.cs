@@ -28,7 +28,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
         internal MsiProperties(string fileName ) {
             Filename = fileName;
         }
-
     }
 
     /// <summary>
@@ -114,6 +113,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             }
         }
 
+        /*
         /// <summary>
         /// Scans Windows for all the installed MSIs.
         /// </summary>
@@ -128,6 +128,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
                 Package.GetPackageFromFilename(p.LocalPackage); // let the package manager figure out if this is a package we care about.
             }
         }
+        */
 
         /// <summary>
         /// Installs the specified package.
@@ -174,9 +175,7 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             try {
                 lock (typeof (MSIBase)) {
                     using (var database = new Database(localPackagePath, DatabaseOpenMode.ReadOnly)) {
-                        var info = database.Tables["Property"];
-                        using (var view = database.OpenView("SELECT Property, Value FROM Property ")) {
-                            //WHERE Property='CoAppPackageFeed' OR Property='CoAppCompositionData'
+                        using (var view = database.OpenView("SELECT Property, Value FROM Property")) {
                             view.Execute();
 
                             var result = new MsiProperties(localPackagePath);
@@ -187,10 +186,9 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
 
                             try {
                                 //  GS01: this seems hinkey too... the local package is sometimes getting added twice. prollly a race condition somewhere.
-                                if (SessionCache<MsiProperties>.Value[localPackagePath] != null) {
-                                    return SessionCache<MsiProperties>.Value[localPackagePath];
-                                }
-
+                                // if (SessionCache<MsiProperties>.Value[localPackagePath] != null) {
+                                   //  return SessionCache<MsiProperties>.Value[localPackagePath];
+                                // }
                                 SessionCache<MsiProperties>.Value[localPackagePath] = result;
                             }
                             catch {
@@ -204,10 +202,6 @@ namespace CoApp.Toolkit.PackageFormatHandlers {
             catch (InstallerException) {
                 throw new InvalidPackageException(InvalidReason.NotValidMSI, localPackagePath);
             }
-
         }
-
-
-
     }
 }

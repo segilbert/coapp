@@ -71,24 +71,24 @@ namespace CoApp.Toolkit.Win32 {
             }
         }
 
-        internal static void ForceProcessToReloadEnvironment(string processName) {
-            var processes = Process.GetProcessesByName(processName);
-            
-            // load the rehash dll into the target processes
-            if( processes.Any()) {
-                foreach( var proc in processes ) {
-                    Logger.Message("Rehash: Going to rehash pid:{0} -- '{1}'",proc.Id, processName);
-                    DoRehash(proc.Id);
-                }
-            }
-
-            // signal rehash to proceed.
-           
+        internal static void ForceProcessToReloadEnvironment(params string[] processNames) {
             Task.Factory.StartNew(() => {
-                Thread.Sleep(1000);
+                foreach (var processName in processNames) {
+                    var processes = Process.GetProcessesByName(processName);
+
+                    // load the rehash dll into the target processes
+                    if (processes.Any()) {
+                        foreach (var proc in processes) {
+                            Logger.Message("Rehash: Going to rehash pid:{0} -- '{1}'", proc.Id, processName);
+                            DoRehash(proc.Id);
+                        }
+                    }
+                }
+
+                // signal rehash to proceed.
                 Logger.Message("Rehash: Triggering Global Event");
                 Kernel32.SetEvent(_globalResetEvent);
-                Thread.Sleep(1000); // give everyone a chance to wake up and do their job
+                Thread.Sleep(200); // give everyone a chance to wake up and do their job
                 Kernel32.ResetEvent(_globalResetEvent);
             });
         }

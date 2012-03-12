@@ -26,8 +26,7 @@ namespace CoApp.Toolkit.Win32 {
 
         public static void BroadcastChange() {
 #if COAPP_ENGINE_CORE
-            Rehash.ForceProcessToReloadEnvironment("explorer");
-            Rehash.ForceProcessToReloadEnvironment("services");
+            Rehash.ForceProcessToReloadEnvironment("explorer", "services");
 #else
             Task.Factory.StartNew(() => {
                 User32.SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, "Environment", SMTO_ABORTIFHUNG, 1000, IntPtr.Zero);
